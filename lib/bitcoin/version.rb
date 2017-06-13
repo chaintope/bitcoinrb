@@ -1,3 +1,3 @@
-module Bitcoinrb
+module Bitcoin
   VERSION = "0.1.0"
 end

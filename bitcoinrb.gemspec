@@ -1,11 +1,11 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'bitcoinrb/version'
+require 'bitcoin/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "bitcoinrb"
-  spec.version       = Bitcoinrb::VERSION
+  spec.version       = Bitcoin::VERSION
   spec.authors       = ["azuchi"]
   spec.email         = ["azuchi@haw.co.jp"]
 
