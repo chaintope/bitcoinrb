@@ -1,0 +1,23 @@
+--- !ruby/object:Bitcoin::ChainParams
+network: "testnet"
+magic_head: "\x0B\x11\x09\x07"
+message_magic: "Bitcoin Signed Message:\n"
+address_version: "6f"
+p2sh_version: "c4"
+privkey_version: "ef"
+extended_privkey_version: "04358394"
+extended_pubkey_version: "043587cf"
+default_port: 18333
+protocol_version: 70001
+retarget_interval: 2016
+retarget_time: 1209600 # 2 weeks
+target_spacing: 600 # block interval
+max_money: 21000000
+bip34_height: 227931
+genesis_hash: "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
+proof_of_work_limit: 0x1d00ffff
+dns_seeds:
+  - "testnet-seed.bitcoin.jonasschnelli.ch"
+  - "seed.tbtc.petertodd.org"
+  - "testnet-seed.bluematt.me"
+  - "testnet-seed.bitcoin.schildbach.de"

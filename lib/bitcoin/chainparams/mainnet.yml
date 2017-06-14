@@ -1,0 +1,24 @@
+--- !ruby/object:Bitcoin::ChainParams
+network: "mainnet"
+magic_head: "\xF9\xBE\xB4\xD9"
+message_magic: "Bitcoin Signed Message:\n"
+address_version: "00"
+p2sh_version: "05"
+privkey_version: "80"
+extended_privkey_version: "0488ade4"
+extended_pubkey_version: "0488b21e"
+default_port: 8333
+protocol_version: 70001
+retarget_interval: 2016
+retarget_time: 1209600 # 2 weeks
+target_spacing: 600 # block interval
+max_money: 21000000
+bip34_height: 227931
+genesis_hash: "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+proof_of_work_limit: 0x1d00ffff
+dns_seeds:
+  - "seed.bitcoin.sipa.be"
+  - "dnsseed.bluematt.me"
+  - "dnsseed.bitcoin.dashjr.org"
+  - "seed.bitcoinstats.com"
+  - "seed.bitcoin.jonasschnelli.ch"

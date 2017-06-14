@@ -1,5 +1,7 @@
-require "bitcoin/version"
+require 'bitcoin/version'
 
 module Bitcoin
-  # Your code goes here...
+
+  autoload :ChainParams, 'bitcoin/chain_params'
+
 end
