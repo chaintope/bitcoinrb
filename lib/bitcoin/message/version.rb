@@ -18,7 +18,7 @@ module Bitcoin
       attr_accessor :start_height
       attr_accessor :relay
 
-      def initialize
+      def initialize(opts = {})
         @version = Bitcoin.chain_params.protocol_version
         @services = SERVICE_UNMAMED
         @timestamp = Time.now.to_i
@@ -28,6 +28,7 @@ module Bitcoin
         @user_agent = Bitcoin::Message::USER_AGENT
         @start_height = 0
         @relay = true
+        opts.each { |k, v| send "#{k}=", v }
       end
 
       def self.parse_from_payload(payload)

@@ -21,4 +21,14 @@ describe Bitcoin::Message::Version do
     end
   end
 
+  describe 'specify opts' do
+    subject {
+      Bitcoin::Message::Version.new(start_height: 500, remote_addr: '83.243.59.57:8333')
+    }
+    it 'should be applied.' do
+      expect(subject.start_height).to eq(500)
+      expect(subject.remote_addr).to eq('83.243.59.57:8333')
+    end
+  end
+
 end
