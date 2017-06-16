@@ -1,9 +1,14 @@
 require 'bitcoin/version'
+require 'eventmachine'
+require 'securerandom'
 
 module Bitcoin
 
+  autoload :Util, 'bitcoin/util'
   autoload :ChainParams, 'bitcoin/chain_params'
   autoload :Logger, 'bitcoin/logger'
+
+  extend Util
 
   @chain_param = :mainnet
 
@@ -30,6 +35,19 @@ module Bitcoin
   # base dir path that store blockchain data and wallet data
   def self.base_dir
     "#{Dir.home}/.bitcoinrb"
+  end
+
+
+  class ::String
+    # binary convert to hex string
+    def bth
+      unpack('H*').first
+    end
+
+    # hex string convert to binary
+    def htb
+      [self].pack('H*')
+    end
   end
 
 end
