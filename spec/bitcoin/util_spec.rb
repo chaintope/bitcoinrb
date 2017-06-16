@@ -34,4 +34,9 @@ describe Bitcoin::Util do
     expect(util.pack_boolean(false)).to eq([0x00].pack('C'))
   end
 
+  it 'should unpack boolean' do
+    expect(util.unpack_boolean([0xff].pack('C')).first).to be true
+    expect(util.unpack_boolean([0x00].pack('C')).first).to be false
+  end
+
 end

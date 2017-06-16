@@ -45,6 +45,11 @@ module Bitcoin
       b ? [0xFF].pack('C') : [0x00].pack('C')
     end
 
+    def unpack_boolean(payload)
+      data, payload = payload.unpack('Ca*')
+      [(data.zero? ? false : true), payload]
+    end
+
   end
 
 end
