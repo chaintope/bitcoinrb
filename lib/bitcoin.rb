@@ -6,6 +6,8 @@ module Bitcoin
 
   autoload :Util, 'bitcoin/util'
   autoload :ChainParams, 'bitcoin/chain_params'
+  autoload :Message, 'bitcoin/message'
+  autoload :Connection, 'bitcoin/connection'
   autoload :Logger, 'bitcoin/logger'
 
   extend Util
