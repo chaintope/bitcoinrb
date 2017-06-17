@@ -1,6 +1,6 @@
 --- !ruby/object:Bitcoin::ChainParams
 network: "regtest"
-magic_head: "\xFA\xBF\xB5\xDA"
+magic_head: "FABFB5DA"
 message_magic: "Bitcoin Signed Message:\n"
 address_version: "6f"
 p2sh_version: "c4"
