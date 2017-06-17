@@ -3,7 +3,7 @@ module Bitcoin
   module Message
 
     # https://bitcoin.org/en/developer-reference#version
-    class Version
+    class Version < Base
 
       SERVICE_UNMAMED = 0 # not full node
       SERVICE_NODE_NETWORK = 1 # full node
@@ -40,12 +40,16 @@ module Bitcoin
         v.remote_addr = v.unpack_addr(remote_addr)
         v.local_addr = v.unpack_addr(local_addr)
         v.nonce = nonce
-        user_agent, rest = Bitcoin.unpack_var_string(rest)
+        user_agent, rest = unpack_var_string(rest)
         start_height, rest = rest.unpack('Va*')
         v.user_agent = user_agent
         v.start_height = start_height
         v.relay = v.unpack_relay_field(rest).first
         v
+      end
+
+      def command
+        'version'
       end
 
       def to_payload
@@ -54,9 +58,9 @@ module Bitcoin
           pack_addr(local_addr),
           pack_addr(remote_addr),
           [nonce].pack('Q'),
-          Bitcoin.pack_var_string(user_agent),
+          pack_var_string(user_agent),
           [start_height].pack('V'),
-          Bitcoin.pack_boolean(relay)
+          pack_boolean(relay)
         ].join
       end
 
@@ -72,7 +76,7 @@ module Bitcoin
       end
 
       def unpack_relay_field(payload)
-        ( version >= 70001 && payload ) ? Bitcoin.unpack_boolean(payload) : [ true, nil ]
+        ( version >= 70001 && payload ) ? unpack_boolean(payload) : [ true, nil ]
       end
 
     end
