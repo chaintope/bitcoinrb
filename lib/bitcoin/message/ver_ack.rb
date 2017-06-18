@@ -3,7 +3,7 @@ module Bitcoin
 
     # verack message
     # https://bitcoin.org/en/developer-reference#verack
-    class Verack < Base
+    class VerAck < Base
 
       def command
         'verack'

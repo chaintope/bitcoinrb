@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-describe Bitcoin::Message::Verack do
+describe Bitcoin::Message::VerAck do
 
   subject {
-    Bitcoin::Message::Verack.new
+    Bitcoin::Message::VerAck.new
   }
 
   it 'should be generate verack message' do
