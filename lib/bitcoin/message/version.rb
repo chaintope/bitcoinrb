@@ -5,9 +5,6 @@ module Bitcoin
     # https://bitcoin.org/en/developer-reference#version
     class Version < Base
 
-      SERVICE_UNMAMED = 0 # not full node
-      SERVICE_NODE_NETWORK = 1 # full node
-
       attr_accessor :version
       attr_accessor :services
       attr_accessor :timestamp
@@ -20,7 +17,7 @@ module Bitcoin
 
       def initialize(opts = {})
         @version = Bitcoin.chain_params.protocol_version
-        @services = SERVICE_UNMAMED
+        @services = Bitcoin::Message::SERVICE_UNMAMED
         @timestamp = Time.now.to_i
         @local_addr = "127.0.0.1:#{Bitcoin.chain_params.default_port}"
         @remote_addr = "127.0.0.1:#{Bitcoin.chain_params.default_port}"
