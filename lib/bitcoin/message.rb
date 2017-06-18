@@ -3,10 +3,12 @@ module Bitcoin
 
     autoload :Handler, 'bitcoin/message/handler'
     autoload :Base, 'bitcoin/message/base'
+    autoload :Inventory, 'bitcoin/message/inventory'
     autoload :Version, 'bitcoin/message/version'
     autoload :VerAck, 'bitcoin/message/ver_ack'
     autoload :Ping, 'bitcoin/message/ping'
     autoload :Pong, 'bitcoin/message/pong'
+    autoload :NotFound, 'bitcoin/message/not_found'
     autoload :Error, 'bitcoin/message/error'
 
     HEADER_SIZE = 24
