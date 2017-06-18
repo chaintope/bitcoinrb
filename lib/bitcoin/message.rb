@@ -6,6 +6,7 @@ module Bitcoin
     autoload :Version, 'bitcoin/message/version'
     autoload :Verack, 'bitcoin/message/verack'
     autoload :Ping, 'bitcoin/message/ping'
+    autoload :Pong, 'bitcoin/message/pong'
     autoload :Error, 'bitcoin/message/error'
 
     HEADER_SIZE = 24
