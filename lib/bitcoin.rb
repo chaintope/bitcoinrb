@@ -1,6 +1,7 @@
 require 'bitcoin/version'
 require 'eventmachine'
 require 'securerandom'
+require 'json'
 
 module Bitcoin
 
