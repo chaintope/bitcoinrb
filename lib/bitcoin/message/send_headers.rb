@@ -5,9 +5,7 @@ module Bitcoin
     # https://bitcoin.org/en/developer-reference#sendheaders
     class SendHeaders < Base
 
-      def command
-        'sendheaders'
-      end
+      COMMAND = 'sendheaders'
 
       def to_payload
         ''

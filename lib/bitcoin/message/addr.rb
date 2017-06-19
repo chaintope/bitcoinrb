@@ -7,14 +7,12 @@ module Bitcoin
     # https://bitcoin.org/en/developer-reference#addr
     class Addr < Base
 
+      COMMAND = 'addr'
+
       attr_reader :addrs
 
       def initialize(addrs = [])
         @addrs = addrs
-      end
-
-      def command
-        'addr'
       end
 
       def to_payload

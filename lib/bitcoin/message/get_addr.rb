@@ -5,9 +5,7 @@ module Bitcoin
     # https://bitcoin.org/en/developer-reference#getaddr
     class GetAddr < Base
 
-      def command
-        'getaddr'
-      end
+      COMMAND = 'getaddr'
 
       def to_payload
         ''

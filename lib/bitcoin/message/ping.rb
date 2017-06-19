@@ -5,14 +5,12 @@ module Bitcoin
     # https://bitcoin.org/en/developer-reference#ping
     class Ping < Base
 
+      COMMAND = 'ping'
+
       attr_accessor :nonce
 
       def initialize(nonce = SecureRandom.random_number(0xffffffff))
         @nonce = nonce
-      end
-
-      def command
-        'ping'
       end
 
       def to_payload

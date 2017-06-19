@@ -5,6 +5,8 @@ module Bitcoin
     # https://bitcoin.org/en/developer-reference#version
     class Version < Base
 
+      COMMAND = 'version'
+
       attr_accessor :version
       attr_accessor :services
       attr_accessor :timestamp
@@ -43,10 +45,6 @@ module Bitcoin
         v.start_height = start_height
         v.relay = v.unpack_relay_field(rest).first
         v
-      end
-
-      def command
-        'version'
       end
 
       def to_payload

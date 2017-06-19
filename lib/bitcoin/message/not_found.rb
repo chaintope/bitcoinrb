@@ -7,6 +7,8 @@ module Bitcoin
 
       attr_accessor :inventory
 
+      COMMAND = 'notfound'
+
       def initialize(identifier, hash)
         @inventory = Inventory.new(identifier, hash)
       end
@@ -15,10 +17,6 @@ module Bitcoin
         size, inventory_payload = Bitcoin.unpack_var_int(payload)
         inventory = Inventory.parse_from_payload(inventory_payload)
         new(inventory.identifier, inventory.hash)
-      end
-
-      def command
-        'notfound'
       end
 
       def to_payload

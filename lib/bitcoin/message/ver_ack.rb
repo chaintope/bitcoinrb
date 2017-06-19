@@ -5,9 +5,7 @@ module Bitcoin
     # https://bitcoin.org/en/developer-reference#verack
     class VerAck < Base
 
-      def command
-        'verack'
-      end
+      COMMAND = 'verack'
 
       def to_payload
         ''

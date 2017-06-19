@@ -7,14 +7,12 @@ module Bitcoin
       include InventoriesParser
       extend InventoriesParser
 
+      COMMAND = 'inv'
+
       attr_reader :inventories
 
       def initialize(inventories = [])
         @inventories = inventories
-      end
-
-      def command
-        'inv'
       end
 
     end

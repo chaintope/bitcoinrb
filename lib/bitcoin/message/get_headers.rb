@@ -7,7 +7,9 @@ module Bitcoin
       include HeadersParser
       extend HeadersParser
 
-      # protocol version
+      COMMAND = 'getheaders'
+
+          # protocol version
       attr_accessor :version
 
       # block header hashes
@@ -19,10 +21,6 @@ module Bitcoin
         @version = version
         @hashes = hashes
         @stop_hash = stop_hash
-      end
-
-      def command
-        'getheaders'
       end
 
     end
