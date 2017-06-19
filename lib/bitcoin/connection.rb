@@ -4,12 +4,14 @@ module Bitcoin
   class Connection < EM::Connection
 
     attr_reader :host, :port, :handler, :logger
+    attr_accessor :connected
 
     def initialize(host, port)
       @host = host
       @port = port
       @logger = Bitcoin::Logger.create(:connection)
       @handler = Message::Handler.new(@logger)
+      @connected = false
     end
 
     def post_init
@@ -27,6 +29,11 @@ module Bitcoin
     def close
       logger.info "close connection with #{remote_node}."
       close_connection_after_writing
+    end
+
+    def handshake_done
+      logger.info 'handshake finished.'
+      @connected = true
     end
 
     private

@@ -18,21 +18,21 @@ describe Bitcoin::Message::Handler do
 
     context 'invalid header magic' do
       it 'raise message error' do # mainnet magic
-        expect(subject.connection).to receive(:close).once
+        expect(subject.conn).to receive(:close).once
         subject.handle('f9beb4d976657261636b000000000000000000005df6e0e2'.htb)
       end
     end
 
     context 'invalid header checksum' do
       it 'raise message error' do
-        expect(subject.connection).to receive(:close).once
+        expect(subject.conn).to receive(:close).once
         subject.handle('0b11090776657261636b000000000000000000005df6e0e3'.htb)
       end
     end
 
     context 'correct header' do
       it 'parse message' do
-        expect(subject.connection).not_to receive(:close)
+        expect(subject.conn).not_to receive(:close)
         subject.handle('0b11090776657261636b000000000000000000005df6e0e2'.htb)
       end
     end
