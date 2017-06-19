@@ -11,6 +11,7 @@ module Bitcoin
     autoload :Ping, 'bitcoin/message/ping'
     autoload :Pong, 'bitcoin/message/pong'
     autoload :Inv, 'bitcoin/message/inv'
+    autoload :GetBlocks, 'bitcoin/message/get_blocks'
     autoload :GetData, 'bitcoin/message/get_data'
     autoload :NotFound, 'bitcoin/message/not_found'
     autoload :Error, 'bitcoin/message/error'
