@@ -16,6 +16,7 @@ module Bitcoin
     autoload :GetHeaders, 'bitcoin/message/get_headers'
     autoload :GetAddr, 'bitcoin/message/get_addr'
     autoload :GetData, 'bitcoin/message/get_data'
+    autoload :SendHeaders, 'bitcoin/message/send_headers'
     autoload :NotFound, 'bitcoin/message/not_found'
     autoload :Error, 'bitcoin/message/error'
 
