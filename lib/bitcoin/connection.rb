@@ -23,6 +23,12 @@ module Bitcoin
       handler.handle(data)
     end
 
+    # close network connection.
+    def close
+      logger.info "close connection with #{remote_node}."
+      close_connection_after_writing
+    end
+
     private
 
     def remote_node

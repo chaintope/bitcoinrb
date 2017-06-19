@@ -13,7 +13,7 @@ module Bitcoin
         magic = Bitcoin.chain_params.magic_head.htb
         command_name = command.ljust(12, "\x00")
         payload_size = [payload.bytesize].pack('V')
-        checksum = Digest::SHA256.digest(Digest::SHA256.digest(payload))[0...4]
+        checksum = Bitcoin.double_sha256(payload)[0...4]
         magic << command_name << payload_size << checksum << payload
       end
 

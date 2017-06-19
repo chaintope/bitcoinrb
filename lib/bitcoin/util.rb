@@ -50,6 +50,10 @@ module Bitcoin
       [(data.zero? ? false : true), payload]
     end
 
+    def double_sha256(payload)
+      Digest::SHA256.digest(Digest::SHA256.digest(payload))
+    end
+
   end
 
 end

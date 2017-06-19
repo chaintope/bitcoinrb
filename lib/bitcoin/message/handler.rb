@@ -5,20 +5,38 @@ module Bitcoin
     class Handler
 
       attr_reader :logger
+      attr_reader :connection
 
-      def initialize(logger = Bitcoin::Logger.create(:parser))
+      def initialize(connection, logger = Bitcoin::Logger.create(:parser))
+        @connection = connection
         @logger = logger
       end
 
       # handle p2p message.
       def handle(message)
         logger.info "handle message #{message.bth}"
-        head_magic = Bitcoin.chain_params.magic_head
-        raise Error, "invalid message header. message = #{message}" if message.nil? || message.size < Bitcoin::Message::HEADER_SIZE
+        parse_header(message)
 
-        # parse header
-        magic, command, lenght, checksum = message.unpack("a4A12Va4")
-        raise Error, "invalid header magic. #{magic.bth}" unless magic.bth == head_magic
+      end
+
+      private
+
+      def parse_header(message)
+        head_magic = Bitcoin.chain_params.magic_head
+        raise Error, "invalid message header. message = #{message}" if message.nil? || message.size < HEADER_SIZE
+
+        magic, command, length, checksum = message.unpack('a4A12Va4')
+        unless magic.bth == head_magic
+          logger.error("invalid header magic. #{magic.bth}")
+          connection.close
+        end
+
+        payload = message[HEADER_SIZE...(HEADER_SIZE + length)]
+        unless Bitcoin.double_sha256(payload)[0...4] == checksum
+          logger.error("invalid header checksum. #{checksum}")
+          connection.close
+        end
+
       end
 
     end
