@@ -12,9 +12,13 @@ module Bitcoin
 
       # handle p2p message.
       def handle(message)
-        logger.info "handle message #{message}"
+        logger.info "handle message #{message.bth}"
         head_magic = Bitcoin.chain_params.magic_head
-        raise Error, "invalid message headeer. message = #{message}" if message.nil? || message.size != Bitcoin::Message::HEADER_SIZE
+        raise Error, "invalid message header. message = #{message}" if message.nil? || message.size < Bitcoin::Message::HEADER_SIZE
+
+        # parse header
+        magic, command, lenght, checksum = message.unpack("a4A12Va4")
+        raise Error, "invalid header magic. #{magic.bth}" unless magic.bth == head_magic
       end
 
     end

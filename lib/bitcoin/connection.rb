@@ -14,6 +14,7 @@ module Bitcoin
 
     def post_init
       logger.info "connected. #{remote_node}"
+      begin_handshake
     end
 
     # handle receiving data from remote node.
@@ -31,6 +32,8 @@ module Bitcoin
     # start handshake
     def begin_handshake
       logger.info "begin handshake with #{remote_node}"
+      ver = Bitcoin::Message::Version.new(remote_addr: remote_node)
+      send_data(ver.to_pkt)
     end
 
   end

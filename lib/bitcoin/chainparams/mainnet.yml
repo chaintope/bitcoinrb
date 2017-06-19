@@ -1,6 +1,6 @@
 --- !ruby/object:Bitcoin::ChainParams
 network: "mainnet"
-magic_head: "F9BEB4D9"
+magic_head: "f9beb4d9"
 message_magic: "Bitcoin Signed Message:\n"
 address_version: "00"
 p2sh_version: "05"
