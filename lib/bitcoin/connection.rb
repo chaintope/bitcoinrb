@@ -6,12 +6,16 @@ module Bitcoin
     attr_reader :host, :port, :handler, :logger
     attr_accessor :connected
 
+    # if true, this peer send new block announcements using a headers message rather than an inv message.
+    attr_accessor :sendheaders
+
     def initialize(host, port)
       @host = host
       @port = port
       @logger = Bitcoin::Logger.create(:connection)
       @handler = Message::Handler.new(self, @logger)
       @connected = false
+      @sendheaders = false
     end
 
     def post_init

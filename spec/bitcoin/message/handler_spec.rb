@@ -39,6 +39,13 @@ describe Bitcoin::Message::Handler do
       end
     end
 
+    context 'sendheaders received' do
+      it 'sendheaders flag on' do
+        expect(subject.conn).to receive(:sendheaders=).once
+        subject.handle('0b11090773656e646865616465727300000000005df6e0e2'.htb)
+      end
+    end
+
   end
 
 end

@@ -46,6 +46,8 @@ module Bitcoin
           on_version(Version.parse_from_payload(payload))
         when VerAck::COMMAND
           on_ver_ack
+        when SendHeaders::COMMAND
+          on_send_headers
         else
           conn.close
         end
@@ -59,6 +61,11 @@ module Bitcoin
       def on_ver_ack
         logger.info('receive verack message.')
         conn.handshake_done
+      end
+
+      def on_send_headers
+        logger.info('receive sendheaders message.')
+        conn.sendheaders = true
       end
 
     end
