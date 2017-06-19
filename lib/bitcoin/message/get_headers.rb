@@ -1,9 +1,9 @@
 module Bitcoin
   module Message
 
-    # block message
-    # https://bitcoin.org/en/developer-reference#getblocks
-    class GetBlocks < Base
+    # getheaders message
+    # https://bitcoin.org/en/developer-reference#getheaders
+    class GetHeaders < Base
       include HeadersParser
       extend HeadersParser
 
@@ -22,10 +22,9 @@ module Bitcoin
       end
 
       def command
-        'getblocks'
+        'getheaders'
       end
 
     end
-
   end
 end

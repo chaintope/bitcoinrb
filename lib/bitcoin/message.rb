@@ -5,6 +5,7 @@ module Bitcoin
     autoload :Base, 'bitcoin/message/base'
     autoload :Inventory, 'bitcoin/message/inventory'
     autoload :InventoriesParser, 'bitcoin/message/inventories_parser'
+    autoload :HeadersParser, 'bitcoin/message/headers_parser'
     autoload :Version, 'bitcoin/message/version'
     autoload :VerAck, 'bitcoin/message/ver_ack'
     autoload :Addr, 'bitcoin/message/addr'
@@ -12,6 +13,7 @@ module Bitcoin
     autoload :Pong, 'bitcoin/message/pong'
     autoload :Inv, 'bitcoin/message/inv'
     autoload :GetBlocks, 'bitcoin/message/get_blocks'
+    autoload :GetHeaders, 'bitcoin/message/get_headers'
     autoload :GetData, 'bitcoin/message/get_data'
     autoload :NotFound, 'bitcoin/message/not_found'
     autoload :Error, 'bitcoin/message/error'
@@ -21,5 +23,8 @@ module Bitcoin
 
     SERVICE_UNMAMED = 0 # not full node
     SERVICE_NODE_NETWORK = 1 # full node
+
+    DEFAULT_STOP_HASH = "00"*32
+
   end
 end
