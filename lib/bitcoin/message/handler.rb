@@ -15,8 +15,13 @@ module Bitcoin
       # handle p2p message.
       def handle(message)
         logger.info "handle message #{message.bth}"
-        command, payload = parse_header(message)
-        handle_command(command, payload)
+        begin
+          command, payload = parse_header(message)
+          handle_command(command, payload)
+        rescue Error => e
+          logger.error("invalid header magic. #{e.message}")
+          conn.close
+        end
       end
 
       private
@@ -26,25 +31,23 @@ module Bitcoin
         raise Error, "invalid message header. message = #{message}" if message.nil? || message.size < HEADER_SIZE
 
         magic, command, length, checksum = message.unpack('a4A12Va4')
-        unless magic.bth == head_magic
-          logger.error("invalid header magic. #{magic.bth}")
-          conn.close
-        end
+        raise Error, "invalid header magic. #{magic.bth}" unless magic.bth == head_magic
 
         payload = message[HEADER_SIZE...(HEADER_SIZE + length)]
-        unless Bitcoin.double_sha256(payload)[0...4] == checksum
-          logger.error("header checksum mismatch. #{checksum}")
-          conn.close
-        end
+        raise Error, "header checksum mismatch. #{checksum.bth}" unless Bitcoin.double_sha256(payload)[0...4] == checksum
+
         [command, payload]
       end
 
       def handle_command(command, payload)
+        logger.info("process command #{command}. payload = #{payload.bth}")
         case command
         when Version::COMMAND
           on_version(Version.parse_from_payload(payload))
         when VerAck::COMMAND
           on_ver_ack
+        else
+          conn.close
         end
       end
 

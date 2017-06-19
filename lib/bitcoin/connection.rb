@@ -10,7 +10,7 @@ module Bitcoin
       @host = host
       @port = port
       @logger = Bitcoin::Logger.create(:connection)
-      @handler = Message::Handler.new(@logger)
+      @handler = Message::Handler.new(self, @logger)
       @connected = false
     end
 
@@ -21,7 +21,7 @@ module Bitcoin
 
     # handle receiving data from remote node.
     def receive_data(data)
-      logger.info "receive data from #{remote_node}, dadta : #{data}"
+      logger.info "receive data from #{remote_node}, data : #{data}"
       handler.handle(data)
     end
 

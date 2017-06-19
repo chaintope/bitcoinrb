@@ -11,8 +11,9 @@ describe Bitcoin::Message::Handler do
 
     context 'invalid header size' do
       it 'raise message error' do
-        expect { subject.handle('hoge'.htb) }.to raise_error Bitcoin::Message::Error
-        expect { subject.handle('') }.to raise_error Bitcoin::Message::Error
+        expect(subject.conn).to receive(:close).twice
+        subject.handle('hoge'.htb)
+        subject.handle('')
       end
     end
 
@@ -33,6 +34,7 @@ describe Bitcoin::Message::Handler do
     context 'correct header' do
       it 'parse message' do
         expect(subject.conn).not_to receive(:close)
+        expect(subject.conn).to receive(:handshake_done).once
         subject.handle('0b11090776657261636b000000000000000000005df6e0e2'.htb)
       end
     end
