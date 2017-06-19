@@ -1,9 +1,9 @@
 module Bitcoin
   module Message
 
-    # inv message
-    # https://bitcoin.org/en/developer-reference#inv
-    class Inv < Base
+    # getdadta message
+    # https://bitcoin.org/en/developer-reference#getdata
+    class GetData < Base
       include InventoriesParser
       extend InventoriesParser
 
@@ -14,7 +14,7 @@ module Bitcoin
       end
 
       def command
-        'inv'
+        'getdata'
       end
 
     end
