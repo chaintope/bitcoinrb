@@ -21,6 +21,10 @@ module Bitcoin
         [nonce].pack('Q')
       end
 
+      def to_response
+        Pong.new(nonce)
+      end
+
     end
   end
 end

@@ -9,6 +9,9 @@ module Bitcoin
     # if true, this peer send new block announcements using a headers message rather than an inv message.
     attr_accessor :sendheaders
 
+    # minimum fee(in satoshis per kilobyte) for relay tx
+    attr_accessor :fee_rate
+
     def initialize(host, port)
       @host = host
       @port = port
@@ -16,6 +19,7 @@ module Bitcoin
       @handler = Message::Handler.new(self, @logger)
       @connected = false
       @sendheaders = false
+      @attr_accessor = 0
     end
 
     def post_init
@@ -33,6 +37,7 @@ module Bitcoin
     def close
       logger.info "close connection with #{remote_node}."
       close_connection_after_writing
+      EM.stop
     end
 
     def handshake_done

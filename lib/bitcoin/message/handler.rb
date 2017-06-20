@@ -48,6 +48,12 @@ module Bitcoin
           on_ver_ack
         when SendHeaders::COMMAND
           on_send_headers
+        when FeeFilter::COMMAND
+          on_fee_filter(FeeFilter.parse_from_payload(payload))
+        when Ping::COMMAND
+          on_ping(Ping.parse_from_payload(payload))
+        when Pong::COMMAND
+          on_pong(Pong.parse_from_payload(payload))
         else
           conn.close
         end
@@ -66,6 +72,21 @@ module Bitcoin
       def on_send_headers
         logger.info('receive sendheaders message.')
         conn.sendheaders = true
+      end
+
+      def on_fee_filter(fee_filter)
+        logger.info('receive feefilter message.')
+        conn.fee_rate = fee_filter.fee_rate
+      end
+
+      def on_ping(ping)
+        logger.info('receive ping message')
+        conn.send_data(ping.to_response)
+      end
+
+      def on_pong(pong)
+        logger.info('receive pong message')
+        # TODO calculate response
       end
 
     end
