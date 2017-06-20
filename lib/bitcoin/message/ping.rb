@@ -13,6 +13,10 @@ module Bitcoin
         @nonce = nonce
       end
 
+      def self.parse_from_payload(payload)
+        new(payload.unpack('Q').first)
+      end
+
       def to_payload
         [nonce].pack('Q')
       end
