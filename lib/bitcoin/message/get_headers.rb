@@ -9,7 +9,7 @@ module Bitcoin
 
       COMMAND = 'getheaders'
 
-          # protocol version
+      # protocol version
       attr_accessor :version
 
       # block header hashes

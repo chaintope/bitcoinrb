@@ -16,8 +16,7 @@ module Bitcoin
       def handle(message)
         logger.info "handle message #{message.bth}"
         begin
-          command, payload = parse_header(message)
-          handle_command(command, payload)
+          parse(message)
         rescue Error => e
           logger.error("invalid header magic. #{e.message}")
           conn.close
@@ -25,6 +24,12 @@ module Bitcoin
       end
 
       private
+
+      def parse(message)
+        command, payload, rest = parse_header(message)
+        handle_command(command, payload)
+        parse(rest) if rest && rest.bytesize > 0
+      end
 
       def parse_header(message)
         head_magic = Bitcoin.chain_params.magic_head
@@ -36,7 +41,8 @@ module Bitcoin
         payload = message[HEADER_SIZE...(HEADER_SIZE + length)]
         raise Error, "header checksum mismatch. #{checksum.bth}" unless Bitcoin.double_sha256(payload)[0...4] == checksum
 
-        [command, payload]
+        rest = message[(HEADER_SIZE + length)..-1]
+        [command, payload, rest]
       end
 
       def handle_command(command, payload)
@@ -54,6 +60,8 @@ module Bitcoin
           on_ping(Ping.parse_from_payload(payload))
         when Pong::COMMAND
           on_pong(Pong.parse_from_payload(payload))
+        when GetHeaders::COMMAND
+          on_get_headers(GetHeaders.parse_from_payload(payload))
         else
           conn.close
         end
@@ -87,6 +95,11 @@ module Bitcoin
       def on_pong(pong)
         logger.info('receive pong message')
         # TODO calculate response
+      end
+
+      def on_get_headers(headers)
+        logger.info('receive getheaders message')
+        # TODO
       end
 
     end
