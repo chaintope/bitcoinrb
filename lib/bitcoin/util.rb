@@ -41,6 +41,20 @@ module Bitcoin
       end
     end
 
+    def unpack_var_int_from_io(buf)
+      uchar = buf.read(1).unpack('C').first
+      case uchar
+      when 0xfd
+        buf.read(2).unpack('v').first
+      when 0xfe
+        buf.read(4).unpack('V').first
+      when 0xff
+        buf.read(8).unpack('Q').first
+      else
+        uchar
+      end
+    end
+
     def pack_boolean(b)
       b ? [0xFF].pack('C') : [0x00].pack('C')
     end
