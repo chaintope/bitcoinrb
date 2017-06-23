@@ -11,6 +11,12 @@ module Bitcoin
   autoload :Connection, 'bitcoin/connection'
   autoload :Logger, 'bitcoin/logger'
   autoload :BlockHeader, 'bitcoin/block_header'
+  autoload :Tx, 'bitcoin/tx'
+  autoload :Script, 'bitcoin/script'
+  autoload :TxInput, 'bitcoin/tx_input'
+  autoload :TxOutput, 'bitcoin/tx_output'
+  autoload :OutPoint, 'bitcoin/out_point'
+  autoload :ScriptWitness, 'bitcoin/script_witness'
 
   extend Util
 
@@ -27,12 +33,12 @@ module Bitcoin
   def self.chain_params
     return @current_chain if @current_chain
     case @chain_param
-      when :mainnet
-        Bitcoin::ChainParams.mainnet
-      when :testnet
-        Bitcoin::ChainParams.testnet
-      when :regtest
-        Bitcoin::ChainParams.regtest
+    when :mainnet
+      Bitcoin::ChainParams.mainnet
+    when :testnet
+      Bitcoin::ChainParams.testnet
+    when :regtest
+      Bitcoin::ChainParams.regtest
     end
   end
 
