@@ -9,6 +9,7 @@ module Bitcoin
     autoload :Version, 'bitcoin/message/version'
     autoload :VerAck, 'bitcoin/message/ver_ack'
     autoload :Addr, 'bitcoin/message/addr'
+    autoload :Block, 'bitcoin/message/block'
     autoload :Ping, 'bitcoin/message/ping'
     autoload :Pong, 'bitcoin/message/pong'
     autoload :Inv, 'bitcoin/message/inv'
