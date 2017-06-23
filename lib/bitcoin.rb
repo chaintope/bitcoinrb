@@ -10,6 +10,7 @@ module Bitcoin
   autoload :Message, 'bitcoin/message'
   autoload :Connection, 'bitcoin/connection'
   autoload :Logger, 'bitcoin/logger'
+  autoload :BlockHeader, 'bitcoin/block_header'
 
   extend Util
 
