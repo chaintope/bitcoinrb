@@ -62,8 +62,10 @@ module Bitcoin
           on_pong(Pong.parse_from_payload(payload))
         when GetHeaders::COMMAND
           on_get_headers(GetHeaders.parse_from_payload(payload))
+        when Block::COMMAND
+          on_block(Block.parse_from_payload(payload))
         else
-          conn.close
+          conn.close("with command #{command}")
         end
       end
 
@@ -99,6 +101,11 @@ module Bitcoin
 
       def on_get_headers(headers)
         logger.info('receive getheaders message')
+        # TODO
+      end
+
+      def on_block(block)
+        logger.info('receive block message')
         # TODO
       end
 
