@@ -66,6 +66,10 @@ module Bitcoin
           on_get_headers(GetHeaders.parse_from_payload(payload))
         when Block::COMMAND
           on_block(Block.parse_from_payload(payload))
+        when Tx::COMMAND
+          on_tx(Tx.parse_from_payload(payload))
+        when NotFound::COMMAND
+          on_not_found(NotFound.parse_from_payload(payload))
         else
           conn.close("with command #{command}")
         end
@@ -113,6 +117,16 @@ module Bitcoin
 
       def on_block(block)
         logger.info("receive block message. #{block.to_json}")
+        # TODO
+      end
+
+      def on_tx(tx)
+        logger.info("receive tx message. #{tx.to_json}")
+        # TODO
+      end
+
+      def on_not_found(not_found)
+        logger.info("receive notfound message. #{not_found.to_json}")
         # TODO
       end
 
