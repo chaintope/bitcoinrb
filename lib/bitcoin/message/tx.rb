@@ -2,6 +2,7 @@ module Bitcoin
   module Message
 
     # tx message
+    # https://bitcoin.org/en/developer-reference#tx
     class Tx < Base
 
       COMMAND = 'tx'
