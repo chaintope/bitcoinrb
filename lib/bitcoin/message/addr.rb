@@ -15,6 +15,16 @@ module Bitcoin
         @addrs = addrs
       end
 
+      def self.parse_from_payload(payload)
+        buf = StringIO.new(payload)
+        addr_count = Bitcoin.unpack_var_int_from_io(buf)
+        addr = new
+        addr_count.times do
+          addr.addrs << NetworkAddr.parse_from_payload(buf)
+        end
+        addr
+      end
+
       def to_payload
         Bitcoin.pack_var_int(addrs.length) << addrs.map(&:to_payload).join
       end
@@ -39,6 +49,17 @@ module Bitcoin
       def initialize
         @time = Time.now.to_i
         @services = Bitcoin::Message::SERVICE_NODE_NETWORK
+      end
+
+      def self.parse_from_payload(payload)
+        buf = payload.is_a?(String) ? StringIO.new(payload) : payload
+        addr = new
+        addr.time = buf.read(4).unpack('V').first
+        addr.services = buf.read(8).unpack('Q').first
+        ip = IPAddr::new_ntoh(buf.read(16))
+        addr.ip = ip.ipv4_mapped? ? ip.native : ip.to_s
+        addr.port = buf.read(2).unpack('n').first
+        addr
       end
 
       def to_payload

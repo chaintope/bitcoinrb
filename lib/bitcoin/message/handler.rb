@@ -52,6 +52,8 @@ module Bitcoin
           on_version(Version.parse_from_payload(payload))
         when VerAck::COMMAND
           on_ver_ack
+        when Addr::COMMAND
+          on_addr(Addr.parse_from_payload(payload))
         when SendHeaders::COMMAND
           on_send_headers
         when FeeFilter::COMMAND
@@ -79,33 +81,38 @@ module Bitcoin
         conn.handshake_done
       end
 
+      def on_addr(addr)
+        logger.info("receive addr message. #{addr.to_json}")
+        # TODO
+      end
+
       def on_send_headers
         logger.info('receive sendheaders message.')
         conn.sendheaders = true
       end
 
       def on_fee_filter(fee_filter)
-        logger.info('receive feefilter message.')
+        logger.info("receive feefilter message. #{fee_filter.to_json}")
         conn.fee_rate = fee_filter.fee_rate
       end
 
       def on_ping(ping)
-        logger.info('receive ping message')
+        logger.info("receive ping message. #{ping.to_json}")
         conn.send_data(ping.to_response)
       end
 
       def on_pong(pong)
-        logger.info('receive pong message')
+        logger.info("receive pong message. #{pong.to_json}")
         # TODO calculate response
       end
 
       def on_get_headers(headers)
-        logger.info('receive getheaders message')
+        logger.info("receive getheaders message. #{headers.to_json}")
         # TODO
       end
 
       def on_block(block)
-        logger.info('receive block message')
+        logger.info("receive block message. #{block.to_json}")
         # TODO
       end
 
