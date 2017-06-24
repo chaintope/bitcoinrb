@@ -72,8 +72,6 @@ module Bitcoin
       inputs.length == 1 && inputs.first.coinbase?
     end
 
-    private
-
     def witness?
       !inputs.find { |i| !i.script_witness.empty? }.nil?
     end

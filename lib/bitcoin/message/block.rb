@@ -7,10 +7,14 @@ module Bitcoin
 
       attr_accessor :header
       attr_accessor :transactions
+      attr_accessor :use_segwit
 
-      def initialize(header, transactions = [])
+      COMMAND = 'block'
+
+      def initialize(header, transactions = [], use_segwit = false)
         @header = header
         @transactions = transactions
+        @use_segwit = use_segwit
       end
 
       def self.parse_from_payload(payload)
@@ -26,12 +30,9 @@ module Bitcoin
         new(header, transactions)
       end
 
-      def command
-        'block'
-      end
-
       def to_payload
-
+        header.to_payload << Bitcoin.pack_var_int(transactions.size) <<
+          transactions.map{|t|use_segwit ? t.to_payload : t.serialize_old_format}.join
       end
 
     end
