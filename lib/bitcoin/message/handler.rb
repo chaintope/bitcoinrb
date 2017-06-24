@@ -70,6 +70,8 @@ module Bitcoin
           on_tx(Tx.parse_from_payload(payload))
         when NotFound::COMMAND
           on_not_found(NotFound.parse_from_payload(payload))
+        when MemPool::COMMAND
+          on_mem_pool
         else
           conn.close("with command #{command}")
         end
@@ -128,6 +130,11 @@ module Bitcoin
       def on_not_found(not_found)
         logger.info("receive notfound message. #{not_found.to_json}")
         # TODO
+      end
+
+      def on_mem_pool
+        logger.info('receive mempool message.')
+        # TODO return mempool tx
       end
 
     end
