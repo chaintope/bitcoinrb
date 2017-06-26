@@ -72,7 +72,10 @@ module Bitcoin
           on_not_found(NotFound.parse_from_payload(payload))
         when MemPool::COMMAND
           on_mem_pool
+        when Reject::COMMAND
+          on_reject(Reject.parse_from_payload(payload))
         else
+          logger.warn("unsupported command received. #{command}")
           conn.close("with command #{command}")
         end
       end
@@ -135,6 +138,11 @@ module Bitcoin
       def on_mem_pool
         logger.info('receive mempool message.')
         # TODO return mempool tx
+      end
+
+      def on_reject(reject)
+        logger.warn("receive reject message. #{reject.to_json}")
+        # TODO
       end
 
     end

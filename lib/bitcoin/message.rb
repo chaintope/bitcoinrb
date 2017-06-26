@@ -23,6 +23,7 @@ module Bitcoin
     autoload :MemPool, 'bitcoin/message/mem_pool'
     autoload :NotFound, 'bitcoin/message/not_found'
     autoload :Error, 'bitcoin/message/error'
+    autoload :Reject, 'bitcoin/message/reject'
 
     HEADER_SIZE = 24
     USER_AGENT = "/bitcoinrb:#{Bitcoin::VERSION}/"
