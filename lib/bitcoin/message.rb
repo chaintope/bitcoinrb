@@ -11,6 +11,7 @@ module Bitcoin
     autoload :Addr, 'bitcoin/message/addr'
     autoload :Block, 'bitcoin/message/block'
     autoload :FilterLoad, 'bitcoin/message/filter_load'
+    autoload :FilterClear, 'bitcoin/message/filter_clear'
     autoload :Tx, 'bitcoin/message/tx'
     autoload :Ping, 'bitcoin/message/ping'
     autoload :Pong, 'bitcoin/message/pong'
