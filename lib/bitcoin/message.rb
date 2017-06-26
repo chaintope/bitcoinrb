@@ -16,6 +16,7 @@ module Bitcoin
     autoload :Inv, 'bitcoin/message/inv'
     autoload :GetBlocks, 'bitcoin/message/get_blocks'
     autoload :GetHeaders, 'bitcoin/message/get_headers'
+    autoload :Headers, 'bitcoin/message/headers'
     autoload :GetAddr, 'bitcoin/message/get_addr'
     autoload :GetData, 'bitcoin/message/get_data'
     autoload :SendHeaders, 'bitcoin/message/send_headers'
