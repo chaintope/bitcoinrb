@@ -10,6 +10,7 @@ module Bitcoin
     autoload :VerAck, 'bitcoin/message/ver_ack'
     autoload :Addr, 'bitcoin/message/addr'
     autoload :Block, 'bitcoin/message/block'
+    autoload :FilterLoad, 'bitcoin/message/filter_load'
     autoload :Tx, 'bitcoin/message/tx'
     autoload :Ping, 'bitcoin/message/ping'
     autoload :Pong, 'bitcoin/message/pong'
