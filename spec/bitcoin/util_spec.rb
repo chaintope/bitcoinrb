@@ -39,4 +39,9 @@ describe Bitcoin::Util do
     expect(util.unpack_boolean([0x00].pack('C')).first).to be false
   end
 
+  it 'should convert byte to bit' do
+    expect(util.byte_to_bit('b50f'.htb)).to eq('1010110111110000')
+    expect(util.byte_to_bit('5f1f00'.htb)).to eq('111110101111100000000000')
+  end
+
 end

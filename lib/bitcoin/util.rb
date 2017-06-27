@@ -68,6 +68,11 @@ module Bitcoin
       Digest::SHA256.digest(Digest::SHA256.digest(payload))
     end
 
+    # byte convert to the sequence of bits packed eight in a byte with the least significant bit first.
+    def byte_to_bit(byte)
+      byte.unpack('b*').first
+    end
+
   end
 
 end
