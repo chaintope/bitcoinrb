@@ -13,6 +13,7 @@ module Bitcoin
     autoload :FilterLoad, 'bitcoin/message/filter_load'
     autoload :FilterAdd, 'bitcoin/message/filter_add'
     autoload :FilterClear, 'bitcoin/message/filter_clear'
+    autoload :MerkleBlock, 'bitcoin/message/merkle_block'
     autoload :Tx, 'bitcoin/message/tx'
     autoload :Ping, 'bitcoin/message/ping'
     autoload :Pong, 'bitcoin/message/pong'
