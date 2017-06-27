@@ -7,6 +7,7 @@ module Bitcoin
 
       COMMAND = 'filteradd'
 
+      # element must be sent in the byte order they would use when appearing in a raw transaction;
       attr_accessor :element
 
       def initialize(element)
@@ -14,11 +15,11 @@ module Bitcoin
       end
 
       def self.parse_from_payload(payload)
-        new(Bitcoin.unpack_var_string(payload).first.reverse.bth)
+        new(Bitcoin.unpack_var_string(payload).first.bth)
       end
 
       def to_payload
-        Bitcoin.pack_var_string(element.htb.reverse)
+        Bitcoin.pack_var_string(element.htb)
       end
 
     end
