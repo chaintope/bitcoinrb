@@ -17,12 +17,7 @@ describe Bitcoin::Message::FilterLoad do
 
   describe 'to_pkt' do
     subject {
-      f = Bitcoin::Message::FilterLoad.new
-      f.filter = [181, 15]
-      f.func_count = 11
-      f.tweak = 0
-      f.flag = 0
-      f.to_pkt
+      Bitcoin::Message::FilterLoad.new([181, 15], 11, 0, 0).to_pkt
     }
     it 'should be generate' do
       expect(subject).to eq('0b11090766696c7465726c6f616400000c0000008b7f507b02b50f0b0000000000000000'.htb)

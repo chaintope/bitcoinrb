@@ -16,15 +16,21 @@ module Bitcoin
       attr_accessor :tweak
       attr_accessor :flag
 
+      def initialize(filter, func_count, tweak = 0, flag = BLOOM_UPDATE_ALL)
+        @filter = filter
+        @func_count = func_count
+        @tweak = tweak
+        @flag = flag
+      end
+
       def self.parse_from_payload(payload)
         buf = StringIO.new(payload)
-        f = new
         filter_count = Bitcoin.unpack_var_int_from_io(buf)
-        f.filter = buf.read(filter_count).unpack('C*')
-        f.func_count = buf.read(4).unpack('V').first
-        f.tweak = buf.read(4).unpack('V').first
-        f.flag = buf.read(1).unpack('C').first
-        f
+        filter = buf.read(filter_count).unpack('C*')
+        func_count = buf.read(4).unpack('V').first
+        tweak = buf.read(4).unpack('V').first
+        flag = buf.read(1).unpack('C').first
+        new(filter, func_count, tweak, flag)
       end
 
       def to_payload
