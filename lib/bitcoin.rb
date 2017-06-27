@@ -17,6 +17,7 @@ module Bitcoin
   autoload :TxOutput, 'bitcoin/tx_output'
   autoload :OutPoint, 'bitcoin/out_point'
   autoload :ScriptWitness, 'bitcoin/script_witness'
+  autoload :MerkleTree, 'bitcoin/merkle_tree'
 
   extend Util
 

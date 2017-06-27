@@ -14,7 +14,6 @@ module Bitcoin
 
       def initialize
         @hashes = []
-        @flags = []
       end
 
       def self.parse_from_payload(payload)
