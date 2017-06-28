@@ -48,4 +48,36 @@ describe Bitcoin::MerkleTree do
     end
   end
 
+  describe 'build partial merkle tree' do
+
+    context 'not include tx' do
+      subject {
+        hashes = ['5be239fdd6c626d196288bd2a4175258dc772370be25d52ea46a09ece54f6f9f']
+        Bitcoin::MerkleTree.build_partial(37, hashes, Bitcoin.byte_to_bit('00'.htb))
+      }
+      it 'should be build' do
+        expect(subject.merkle_root).to eq('5be239fdd6c626d196288bd2a4175258dc772370be25d52ea46a09ece54f6f9f')
+      end
+    end
+
+    context 'include tx' do
+      subject {
+        hashes = ['5be239fdd6c626d196288bd2a4175258dc772370be25d52ea46a09ece54f6f9f',
+                  '25dee3cc8c0530022bbff38cdb1db3be64db02f65850a11ca03babe60c11fe1f',
+                  '9fb3eff6dd0418ae234dbe14a149fbe2e24540286d64078320a4a9bd9b439f64',
+                  'be3cb4790792625ac41892849c2dc71ac680be0a64e9e0712480c6f30fca1679',
+                  '13b68228983f635b7570259ee6f183a711374865761c74b59428ef27340b47c5',
+                  '40ddc1b9e6ca0468bddce7446311e017fadeec71c288d75561e3e4d6ce7063d5',
+                  'c3982fa65a45a199f3da9b1f7d2267de34a8691e895e910897e5d414b37172d5',
+                  'e275bf259be142545769e80aa6421282994a9570277861efd0918f2a1fa8e4f3',
+                  '43b1b38dc7acc589c2aeb9d458911cc477cc7aa9b523a7bcb6b247ab170db93a']
+        Bitcoin::MerkleTree.build_partial(37, hashes, Bitcoin.byte_to_bit('5f1f00'.htb))
+      }
+      it 'should be build' do
+        expect(subject.merkle_root).to eq('efe9af7a4024ca7fa104b5c82ff83c4b7be4a7b8df29faf5162658c44e0e388c')
+      end
+    end
+
+  end
+
 end
