@@ -25,7 +25,7 @@ module Bitcoin
     # https://bitcoin.org/en/developer-reference#creating-a-merkleblock-message
     def self.build_partial(tx_count, hashes, flags)
       flags = flags.each_char.map(&:to_i)
-      root = build_initial_tree( tx_count.times.map{Node.new})
+      root = build_initial_tree( Array.new(tx_count) { Node.new })
       current_node = root
       hash_index = 0
       flags.each do |f|
