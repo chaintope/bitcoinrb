@@ -29,6 +29,7 @@ module Bitcoin
     autoload :NotFound, 'bitcoin/message/not_found'
     autoload :Error, 'bitcoin/message/error'
     autoload :Reject, 'bitcoin/message/reject'
+    autoload :SendCmpct, 'bitcoin/message/send_cmpct'
 
     HEADER_SIZE = 24
     USER_AGENT = "/bitcoinrb:#{Bitcoin::VERSION}/"

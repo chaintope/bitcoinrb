@@ -76,6 +76,8 @@ module Bitcoin
           on_mem_pool
         when Reject::COMMAND
           on_reject(Reject.parse_from_payload(payload))
+        when SendCmpct::COMMAND
+          on_send_cmpct(SendCmpct.parse_from_payload(payload))
         else
           logger.warn("unsupported command received. #{command}")
           conn.close("with command #{command}")
@@ -150,6 +152,11 @@ module Bitcoin
       def on_reject(reject)
         logger.warn("receive reject message. #{reject.to_json}")
         # TODO
+      end
+
+      def on_send_cmpct(cmpct)
+        logger.info("receive sendcmpct message. #{cmpct.to_json}")
+        # TODO if mode is high and version is 1, relay block with cmpctblock message
       end
 
     end

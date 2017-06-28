@@ -8,7 +8,7 @@ privkey_version: "ef"
 extended_privkey_version: "04358394"
 extended_pubkey_version: "043587cf"
 default_port: 18444
-protocol_version: 70013
+protocol_version: 70015
 retarget_interval: 2016
 retarget_time: 1209600 # 2 weeks
 target_spacing: 600 # block interval
