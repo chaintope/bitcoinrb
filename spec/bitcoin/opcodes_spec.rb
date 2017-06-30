@@ -14,4 +14,18 @@ describe Bitcoin::Opcodes do
     end
   end
 
+  describe '#defined?' do
+    context 'defined' do
+      it 'should be true' do
+        expect(Bitcoin::Opcodes.defined?(Bitcoin::Opcodes::OP_DROP)).to be true
+      end
+    end
+
+    context 'undefined' do
+      it 'should be false' do
+        expect(Bitcoin::Opcodes.defined?(0xfff)).to be false
+      end
+    end
+  end
+
 end

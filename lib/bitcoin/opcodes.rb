@@ -146,5 +146,11 @@ module Bitcoin
     def name_to_opcode(name)
       NAME_MAP[name]
     end
+
+    # whether opcode is predefined opcode
+    def defined?(opcode)
+      !opcode_to_name(opcode).nil?
+    end
+
   end
 end
