@@ -2,6 +2,7 @@ require 'bitcoin/version'
 require 'eventmachine'
 require 'securerandom'
 require 'json'
+require 'base58'
 
 module Bitcoin
 
@@ -18,6 +19,7 @@ module Bitcoin
   autoload :OutPoint, 'bitcoin/out_point'
   autoload :ScriptWitness, 'bitcoin/script_witness'
   autoload :MerkleTree, 'bitcoin/merkle_tree'
+  autoload :Opcodes, 'bitcoin/opcodes'
 
   extend Util
 

@@ -3,6 +3,8 @@ module Bitcoin
   # https://bitcoin.org/en/developer-reference#opcodes
   module Opcodes
 
+    module_function
+
     # https://en.bitcoin.it/wiki/Script#Constants
     OP_FALSE, OP_0 = 0x00
     OP_TRUE, OP_1 = 0x51
@@ -28,7 +30,7 @@ module Bitcoin
     OP_1NEGATE = 0x79
 
     # https://en.bitcoin.it/wiki/Script#Flow_control
-    OP_NOP9 = 0x61
+    OP_NOP = 0x61
     OP_IF = 0x63
     OP_NOTIF = 0x64
     OP_ELSE = 0x67
@@ -134,5 +136,15 @@ module Bitcoin
     OP_NOP9 = 0xb8
     OP_NOP10 = 0xb9
 
+    OPCODES_MAP = Hash[*constants.grep(/^OP_/).map { |c| [const_get(c), c.to_s] }.flatten]
+    NAME_MAP = Hash[*constants.grep(/^OP_/).map { |c| [c.to_s, const_get(c)] }.flatten]
+
+    def opcode_to_name(opcode)
+      OPCODES_MAP[opcode]
+    end
+
+    def name_to_opcode(name)
+      NAME_MAP[name]
+    end
   end
 end
