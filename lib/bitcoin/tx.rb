@@ -33,12 +33,12 @@ module Bitcoin
       end
 
       in_count.times do
-        tx.inputs << TxInput.parse_from_payload(buf)
+        tx.inputs << TxIn.parse_from_payload(buf)
       end
 
       out_count = Bitcoin.unpack_var_int_from_io(buf)
       out_count.times do
-        tx.outputs << TxOutput.parse_from_payload(buf)
+        tx.outputs << TxOut.parse_from_payload(buf)
       end
 
       if witness

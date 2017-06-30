@@ -1,7 +1,7 @@
 module Bitcoin
 
   # transaction input
-  class TxInput
+  class TxIn
 
     attr_accessor :out_point
     attr_accessor :script_sig

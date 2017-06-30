@@ -1,7 +1,7 @@
 module Bitcoin
 
   # transaction output
-  class TxOutput
+  class TxOut
 
     attr_accessor :value
     attr_accessor :script_pubkey
