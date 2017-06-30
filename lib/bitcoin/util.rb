@@ -73,6 +73,11 @@ module Bitcoin
       byte.unpack('b*').first
     end
 
+    # generate sha256-ripemd160 hash for value
+    def hash160(value)
+      Digest::RMD160.hexdigest(Digest::SHA256.digest(value.htb))
+    end
+
   end
 
 end
