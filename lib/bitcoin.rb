@@ -20,6 +20,7 @@ module Bitcoin
   autoload :ScriptWitness, 'bitcoin/script_witness'
   autoload :MerkleTree, 'bitcoin/merkle_tree'
   autoload :Opcodes, 'bitcoin/opcodes'
+  autoload :Node, 'bitcoin/node'
 
   extend Util
 
