@@ -1,6 +1,6 @@
 require 'daemon_spawn'
 module Bitcoin
-  module Node
+  module Nodes
     module SPV
 
       # SPV node daemon
