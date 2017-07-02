@@ -1,0 +1,49 @@
+#!/usr/bin/env ruby
+require 'thor'
+require 'bitcoin'
+require 'bitcoin/node/spv/daemon'
+
+class Bitcoinrbd < Thor
+
+  option :mode, default: 'spv'
+  option :network, default: 'mainnet'
+  desc 'start', 'start bitcoinrbd daemon process'
+  def start
+    raise ArgumentError, 'currently only support spv mode.' unless options[:mode] == 'spv'
+    execute_daemon(setup_base_dir(options[:network]), ['start'])
+  end
+
+  option :mode, default: 'spv'
+  option :network, default: 'mainnet'
+  desc 'stop', 'start bitcoinrbd daemon process'
+  def stop
+    execute_daemon(setup_base_dir(options[:network]), ['stop'])
+  end
+
+  def execute_daemon(base_dir, cmd_args)
+    Bitcoin::Node::SPV::Daemon.spawn!({working_dir: base_dir,
+                                     log_file: "#{base_dir}/bitcoinrbd.log",
+                                     pid_file: "#{base_dir}/bitcoinrbd.pid",
+                                     sync_log: true,
+                                     singleton: true}, cmd_args)
+  end
+
+  private
+
+  def setup_base_dir(network)
+    case network
+    when 'mainnet'
+      base_dir = Bitcoin.base_dir
+    when 'testnet'
+      base_dir = "#{Bitcoin.base_dir}/testnet3"
+    when 'regtest'
+      base_dir = "#{Bitcoin.base_dir}/regtest"
+    else
+      raise ArgumentError, 'Unsupported network specified.'
+    end
+    FileUtils.mkdir_p(base_dir)
+    base_dir
+  end
+end
+
+Bitcoinrbd.start(ARGV)

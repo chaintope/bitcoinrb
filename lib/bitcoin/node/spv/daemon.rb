@@ -1,3 +1,4 @@
+require 'daemon_spawn'
 module Bitcoin
   module Node
     module SPV

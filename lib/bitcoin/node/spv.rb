@@ -5,7 +5,7 @@ module Bitcoin
     module SPV
 
       autoload :CLI, 'bitcoin/node/spv/cli'
-      autoload :Daemon, 'bitcoin/node/daemon'
+      autoload :Daemon, 'bitcoin/node/spv/daemon'
 
     end
 
