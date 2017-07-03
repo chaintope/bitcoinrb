@@ -2,7 +2,6 @@ require 'bitcoin/version'
 require 'eventmachine'
 require 'securerandom'
 require 'json'
-require 'base58'
 
 module Bitcoin
 
@@ -21,6 +20,7 @@ module Bitcoin
   autoload :MerkleTree, 'bitcoin/merkle_tree'
   autoload :Opcodes, 'bitcoin/opcodes'
   autoload :Node, 'bitcoin/nodes'
+  autoload :Base58, 'bitcoin/base58'
 
   extend Util
 
