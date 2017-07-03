@@ -54,4 +54,16 @@ describe Bitcoin::Util do
     end
   end
 
+  describe '#encode_base58_address' do
+    subject {
+      hash160 = '46c2fbfbecc99a63148fa076de58cf29b0bcf0b0'
+      version = '6f'
+      util.encode_base58_address(version + hash160)
+    }
+    it 'should be encoded' do
+      expect(subject).to eq('mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1')
+    end
+  end
+
+
 end
