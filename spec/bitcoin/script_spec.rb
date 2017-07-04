@@ -20,20 +20,31 @@ describe Bitcoin::Script do
 
   describe 'p2pkh script' do
     subject { Bitcoin::Script.to_p2pkh('46c2fbfbecc99a63148fa076de58cf29b0bcf0b0') }
-    it 'should be generate P2PKH script' do
-      expect(subject.to_payload.bytesize).to eq(25)
-      expect(subject.to_payload).to eq('76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac'.htb)
-      expect(subject.to_s).to eq('OP_DUP OP_HASH160 46c2fbfbecc99a63148fa076de58cf29b0bcf0b0 OP_EQUALVERIFY OP_CHECKSIG')
-      expect(subject.p2pkh?).to be true
-      expect(subject.p2sh?).to be false
-      expect(subject.p2wpkh?).to be false
-      expect(subject.to_addr).to eq('mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1')
+
+    context 'mainnet', network: :mainnet do
+      it 'should be generate P2PKH script' do
+        expect(subject.to_payload.bytesize).to eq(25)
+        expect(subject.to_payload).to eq('76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac'.htb)
+        expect(subject.to_s).to eq('OP_DUP OP_HASH160 46c2fbfbecc99a63148fa076de58cf29b0bcf0b0 OP_EQUALVERIFY OP_CHECKSIG')
+        expect(subject.p2pkh?).to be true
+        expect(subject.p2sh?).to be false
+        expect(subject.p2wpkh?).to be false
+        expect(subject.to_addr).to eq('17T9tBC2dSpusL1rhT4T4AV4if963Tpfym')
+      end
     end
+
+    context 'testnet' do
+      it 'should be generate P2PKH script' do
+        expect(subject.to_addr).to eq('mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1')
+      end
+    end
+
   end
 
   describe 'p2wpkh script' do
+    subject { Bitcoin::Script.to_p2wpkh('46c2fbfbecc99a63148fa076de58cf29b0bcf0b0') }
+
     context 'mainnet', network: :mainnet do
-      subject { Bitcoin::Script.to_p2wpkh('46c2fbfbecc99a63148fa076de58cf29b0bcf0b0') }
       it 'should be generate P2WPKH script' do
         expect(subject.to_payload.bytesize).to eq(22)
         expect(subject.to_payload).to eq('001446c2fbfbecc99a63148fa076de58cf29b0bcf0b0'.htb)
@@ -46,7 +57,6 @@ describe Bitcoin::Script do
     end
 
     context 'testnet' do
-      subject { Bitcoin::Script.to_p2wpkh('46c2fbfbecc99a63148fa076de58cf29b0bcf0b0') }
       it 'should be generate P2WPKH script' do
         expect(subject.to_addr).to eq('tb1qgmp0h7lvexdxx9y05pmdukx09xcteu9sx2h4ya')
       end
