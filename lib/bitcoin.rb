@@ -18,9 +18,11 @@ module Bitcoin
   autoload :OutPoint, 'bitcoin/out_point'
   autoload :ScriptWitness, 'bitcoin/script_witness'
   autoload :MerkleTree, 'bitcoin/merkle_tree'
+  autoload :Key, 'bitcoin/key'
   autoload :Opcodes, 'bitcoin/opcodes'
   autoload :Node, 'bitcoin/nodes'
   autoload :Base58, 'bitcoin/base58'
+  autoload :Secp256k1, 'bitcoin/secp256k1'
 
   extend Util
 
@@ -51,6 +53,11 @@ module Bitcoin
     "#{Dir.home}/.bitcoinrb"
   end
 
+  # get secp implementation module
+  def self.secp_impl
+    path = ENV['SECP256K1_LIB_PATH']
+    (path && File.exist?(path)) ? Bitcoin::Secp256k1::Native : Bitcoin::Secp256k1::Ruby
+  end
 
   class ::String
     # binary convert to hex string
