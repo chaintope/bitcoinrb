@@ -166,6 +166,7 @@ module Bitcoin
     def p2wpkh_addr
       return nil unless p2wpkh?
       segwit_addr = Bech32::SegwitAddr.new
+      segwit_addr.hrp = Bitcoin.chain_params.bech32_hrp
       segwit_addr.script_pubkey = to_payload.bth
       segwit_addr.addr
     end

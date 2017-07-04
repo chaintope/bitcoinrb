@@ -10,6 +10,7 @@ module Bitcoin
     attr_reader :message_magic
     attr_reader :address_version
     attr_reader :p2sh_version
+    attr_reader :bech32_hrp
     attr_reader :privkey_version
     attr_reader :extended_privkey_version
     attr_reader :extended_pubkey_version
