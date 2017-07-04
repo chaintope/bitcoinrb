@@ -31,6 +31,19 @@ describe Bitcoin::Script do
     end
   end
 
+  describe 'p2wpkh script' do
+    subject { Bitcoin::Script.to_p2wpkh('46c2fbfbecc99a63148fa076de58cf29b0bcf0b0') }
+    it 'should be generate P2WPKH script' do
+      expect(subject.to_payload.bytesize).to eq(22)
+      expect(subject.to_payload).to eq('001446c2fbfbecc99a63148fa076de58cf29b0bcf0b0'.htb)
+      expect(subject.to_s).to eq('0 46c2fbfbecc99a63148fa076de58cf29b0bcf0b0')
+      expect(subject.p2pkh?).to be false
+      expect(subject.p2sh?).to be false
+      expect(subject.p2wpkh?).to be true
+      expect(subject.to_addr).to eq('bc1qgmp0h7lvexdxx9y05pmdukx09xcteu9svvvxlw')
+    end
+  end
+
   describe 'parse from payload' do
     subject {
       Bitcoin::Script.parse_from_payload('76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac'.htb)

@@ -32,7 +32,7 @@ module Bitcoin
 
     # get pay to witness pubkey hash address
     def p2wpkh
-      # Bitcoin::Script.to_p2wpkh(pub_key).addr
+      Bitcoin::Script.to_p2wpkh(pub_key).addr
     end
 
     def compressed?

@@ -6,8 +6,8 @@ module Bitcoin
     module_function
 
     # https://en.bitcoin.it/wiki/Script#Constants
-    OP_FALSE, OP_0 = 0x00
-    OP_TRUE, OP_1 = 0x51
+    OP_FALSE = OP_0 = 0x00
+    OP_TRUE = OP_1 = 0x51
     OP_2 = 0x52
     OP_3 = 0x53
     OP_4 = 0x54
@@ -116,8 +116,8 @@ module Bitcoin
     OP_CHECKMULTISIGVERIFY = 0xaf
 
     # https://en.bitcoin.it/wiki/Script#Locktime
-    OP_CHECKLOCKTIMEVERIFY, OP_NOP2 = 0xb1
-    OP_CHECKSEQUENCEVERIFY, OP_NOP3 = 0xb2
+    OP_CHECKLOCKTIMEVERIFY = OP_NOP2 = 0xb1
+    OP_CHECKSEQUENCEVERIFY = OP_NOP3 = 0xb2
 
     # https://en.bitcoin.it/wiki/Script#Reserved_words
     OP_RESERVED = 0x50

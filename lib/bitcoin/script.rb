@@ -2,8 +2,9 @@ module Bitcoin
 
   # bitcoin script
   class Script
-
     include Bitcoin::Opcodes
+
+    WITNESS_VERSION = 0x00
 
     attr_accessor :chunks
 
@@ -11,8 +12,14 @@ module Bitcoin
       @chunks = []
     end
 
+    # generate P2PKH script
     def self.to_p2pkh(pubkey_hash)
       new << OP_DUP << OP_HASH160 << pubkey_hash << OP_EQUALVERIFY << OP_CHECKSIG
+    end
+
+    # generate P2WPKH script
+    def self.to_p2wpkh(pubkey_hash)
+      new << WITNESS_VERSION << pubkey_hash
     end
 
     def self.parse_from_payload(payload)
@@ -46,17 +53,25 @@ module Bitcoin
 
     def to_addr
       return p2pkh_addr if p2pkh?
+      return p2wpkh_addr if p2wpkh?
       return nil if p2wpkh?
       return nil if p2sh?
     end
 
+    # whether this script is a P2PKH format script.
     def p2pkh?
       return false unless chunks.size == 5
       [OP_DUP, OP_HASH160, OP_EQUALVERIFY, OP_CHECKSIG] ==
           (chunks[0..1]+ chunks[3..4]).map(&:ord) && chunks[2].bytesize == 21
     end
 
+    # whether this script is a P2WPKH format script.
     def p2wpkh?
+      return false unless chunks.size == 2
+      chunks[0].ord == WITNESS_VERSION && chunks[1].bytesize == 21
+    end
+
+    def p2wsh?
       false
     end
 
@@ -104,7 +119,9 @@ module Bitcoin
     end
 
     def to_s
-      chunks.map { |c| Script.opcode?(c) ? Opcodes.opcode_to_name(c.ord) : Script.pushed_data(c) }.join(' ')
+      str = chunks.map { |c|Script.opcode?(c) ? Opcodes.opcode_to_name(c.ord) : Script.pushed_data(c) }.join(' ')
+      str.gsub!(/OP_0/, '0') if p2wpkh? || p2wsh?
+      str
     end
 
     # determine where the data is an opcode.
@@ -115,7 +132,8 @@ module Bitcoin
     # determine where the data is a pushdadta.
     def self.pushdata?(data)
       # the minimum value of opcode is pushdata operation.
-      data.each_byte.next <= OP_PUSHDATA4
+      first_byte = data.each_byte.next
+      OP_0 < first_byte && first_byte <= OP_PUSHDATA4
     end
 
     # get pushed data in pushdata bytes
@@ -123,12 +141,12 @@ module Bitcoin
       opcode = data.each_byte.next
       offset = 1
       case opcode
-        when OP_PUSHDATA1
-          offset += 1
-        when OP_PUSHDATA2
-          offset += 2
-        when OP_PUSHDATA4
-          offset += 4
+      when OP_PUSHDATA1
+        offset += 1
+      when OP_PUSHDATA2
+        offset += 2
+      when OP_PUSHDATA4
+        offset += 4
       end
       data[offset..-1].bth
     end
@@ -142,6 +160,14 @@ module Bitcoin
       return nil unless hash160.htb.bytesize == 20
       hex = Bitcoin.chain_params.address_version + hash160
       Bitcoin.encode_base58_address(hex)
+    end
+
+    # generate p2wpkh address. if script dose not p2wpkh, return nil.
+    def p2wpkh_addr
+      return nil unless p2wpkh?
+      segwit_addr = Bech32::SegwitAddr.new
+      segwit_addr.script_pubkey = to_payload.bth
+      segwit_addr.addr
     end
 
   end
