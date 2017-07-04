@@ -121,6 +121,7 @@ module Bitcoin
     def to_s
       str = chunks.map { |c|Script.opcode?(c) ? Opcodes.opcode_to_name(c.ord) : Script.pushed_data(c) }.join(' ')
       str.gsub!(/OP_0/, '0') if p2wpkh? || p2wsh?
+      str.gsub!(/OP_FALSE/, '0') if p2wpkh? || p2wsh?
       str
     end
 
