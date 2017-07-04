@@ -1,4 +1,5 @@
 require 'spec_helper'
+include Bitcoin::Opcodes
 
 describe Bitcoin::Script do
 
@@ -27,6 +28,25 @@ describe Bitcoin::Script do
       expect(subject.p2sh?).to be false
       expect(subject.p2wpkh?).to be false
       expect(subject.to_addr).to eq('mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1')
+    end
+  end
+
+  describe 'parse from payload' do
+    subject {
+      Bitcoin::Script.parse_from_payload('76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac'.htb)
+    }
+    it 'should be parsed' do
+      expect(subject.to_s).to eq('OP_DUP OP_HASH160 46c2fbfbecc99a63148fa076de58cf29b0bcf0b0 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(subject.p2pkh?).to be true
+    end
+  end
+
+  describe 'opcode?/pushdata?' do
+    it 'should be judged' do
+      expect(Bitcoin::Script.opcode?(OP_DUP.chr)).to be true
+      expect(Bitcoin::Script.opcode?(OP_HASH160.chr)).to be true
+      expect(Bitcoin::Script.opcode?('1446c2fbfbecc99a63148fa076de58cf29b0bcf0b0'.htb)).to be false
+      expect(Bitcoin::Script.opcode?(OP_PUSHDATA1.chr)).to be false
     end
   end
 

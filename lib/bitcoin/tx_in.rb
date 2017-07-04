@@ -18,7 +18,9 @@ module Bitcoin
       hash, index = buf.read(36).unpack('a32V')
       i.out_point = OutPoint.new(hash.reverse.bth, index)
       sig_length = Bitcoin.unpack_var_int_from_io(buf)
-      i.script_sig = Script.new(buf.read(sig_length))
+      sig = buf.read(sig_length)
+      i.script_sig = Script.new
+      i.script_sig.chunks[0] = sig
       i.sequence = buf.read(4).unpack('V').first
       i
     end
@@ -29,8 +31,8 @@ module Bitcoin
 
     def to_payload
       p = out_point.to_payload
-      p << Bitcoin.pack_var_int(script_sig.payload.bytesize)
-      p << script_sig.payload << [sequence].pack('V')
+      p << Bitcoin.pack_var_int(script_sig.to_payload.bytesize)
+      p << script_sig.to_payload << [sequence].pack('V')
     end
 
   end

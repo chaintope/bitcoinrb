@@ -15,6 +15,31 @@ module Bitcoin
       new << OP_DUP << OP_HASH160 << pubkey_hash << OP_EQUALVERIFY << OP_CHECKSIG
     end
 
+    def self.parse_from_payload(payload)
+      s = new
+      buf = StringIO.new(payload)
+      until buf.eof?
+        opcode = buf.read(1)
+        if opcode?(opcode)
+          s << opcode.ord
+        else
+          pushcode = opcode.ord
+          len = case pushcode
+                when OP_PUSHDATA1
+                  buf.read(1)
+                when OP_PUSHDATA2
+                  buf.read(2)
+                when OP_PUSHDATA4
+                  buf.read(4)
+                else
+                  pushcode if pushcode < OP_PUSHDATA1
+                end
+          s << buf.read(len).bth if len
+        end
+      end
+      s
+    end
+
     def to_payload
       chunks.join
     end
@@ -79,24 +104,22 @@ module Bitcoin
     end
 
     def to_s
-      chunks.map { |c| opcode?(c) ? Opcodes.opcode_to_name(c.ord) : pushed_data(c) }.join(' ')
+      chunks.map { |c| Script.opcode?(c) ? Opcodes.opcode_to_name(c.ord) : Script.pushed_data(c) }.join(' ')
     end
 
-    private
-
     # determine where the data is an opcode.
-    def opcode?(data)
+    def self.opcode?(data)
       !pushdata?(data)
     end
 
     # determine where the data is a pushdadta.
-    def pushdata?(data)
+    def self.pushdata?(data)
       # the minimum value of opcode is pushdata operation.
       data.each_byte.next <= OP_PUSHDATA4
     end
 
     # get pushed data in pushdata bytes
-    def pushed_data(data)
+    def self.pushed_data(data)
       opcode = data.each_byte.next
       offset = 1
       case opcode
@@ -110,10 +133,12 @@ module Bitcoin
       data[offset..-1].bth
     end
 
+    private
+
     # generate p2pkh address. if script dose not p2pkh, return nil.
     def p2pkh_addr
       return nil unless p2pkh?
-      hash160 = pushed_data(chunks[2])
+      hash160 = Script.pushed_data(chunks[2])
       return nil unless hash160.htb.bytesize == 20
       hex = Bitcoin.chain_params.address_version + hash160
       Bitcoin.encode_base58_address(hex)

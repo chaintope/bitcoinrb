@@ -15,11 +15,11 @@ module Bitcoin
       buf = payload.is_a?(String) ? StringIO.new(payload) : payload
       value = buf.read(8).unpack('Q').first
       script_size = Bitcoin.unpack_var_int_from_io(buf)
-      new(value, Script.new(buf.read(script_size)))
+      new(value, Script.parse_from_payload(buf.read(script_size)))
     end
 
     def to_payload
-      s = script_pubkey.payload
+      s = script_pubkey.to_payload
       [value].pack('Q') << Bitcoin.pack_var_int(s.length) << s
     end
 
