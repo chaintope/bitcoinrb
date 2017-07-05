@@ -152,5 +152,19 @@ module Bitcoin
       !opcode_to_name(opcode).nil?
     end
 
+    def small_int_to_opcode(int)
+      return OP_0 if int == 0
+      return OP_1NEGATE if int == -1
+      return OP_1 + (int - 1) if int >= 1 && int <= 16
+      raise ArgumentError, 'invalid opcode'
+    end
+
+    def opcode_to_small_int(opcode)
+      return 0 if opcode == ''.b || opcode == OP_0
+      return -1 if opcode == OP_1NEGATE
+      return opcode - (OP_1 - 1) if opcode >= OP_1 && opcode <= OP_16
+      nil
+    end
+
   end
 end

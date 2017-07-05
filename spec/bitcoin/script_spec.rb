@@ -38,7 +38,6 @@ describe Bitcoin::Script do
         expect(subject.to_addr).to eq('mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1')
       end
     end
-
   end
 
   describe 'p2wpkh script' do
@@ -62,6 +61,32 @@ describe Bitcoin::Script do
       end
     end
 
+  end
+
+  describe 'p2sh script' do
+    subject {
+      k1 = '021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9'
+      k2 = '032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35'
+      Bitcoin::Script.to_p2sh_multisig_script(1, [k1, k2])
+    }
+    context 'mainnet', network: :mainnet do
+      it 'should be generate P2SH script' do
+        expect(subject.length).to eq(2)
+        expect(subject[0].to_payload.bth).to eq('a9147620a79e8657d066cff10e21228bf983cf546ac687')
+        expect(subject[0].to_s).to eq('OP_HASH160 7620a79e8657d066cff10e21228bf983cf546ac6 OP_EQUAL')
+        expect(subject[0].to_addr).to eq('3CTcn59uJ89wCsQbeiy8AGLydXE9mh6Yrr')
+        expect(subject[1].to_payload.bth).to eq('5121021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e921032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e3552ae')
+        expect(subject[1].to_s).to eq('1 021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9 032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35 2 OP_CHECKMULTISIG')
+        expect(subject[1].to_addr).to be nil
+      end
+    end
+
+    context 'testnet' do
+      it 'should be generate P2SH script' do
+        expect(subject[0].to_addr).to eq('2N41pqp5vuafHQf39KraznDLEqsSKaKmrij')
+        expect(subject[1].to_addr).to be nil
+      end
+    end
   end
 
   describe 'parse from payload' do

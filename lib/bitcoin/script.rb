@@ -22,6 +22,16 @@ module Bitcoin
       new << WITNESS_VERSION << pubkey_hash
     end
 
+    # generate m of n multisig p2sh script
+    # @param [String] m the number of signatures required for multisig
+    # @param [Array] pubkeys array of public keys that compose multisig
+    # @return [Script, Script] first element is p2sh script, second one is redeem script.
+    def self.to_p2sh_multisig_script(m, pubkeys)
+      redeem_script = new << m << pubkeys << pubkeys.size << OP_CHECKMULTISIG
+      p2sh_script = new << OP_HASH160 << Bitcoin.hash160(redeem_script.to_payload.bth) << OP_EQUAL
+      [p2sh_script, redeem_script]
+    end
+
     def self.parse_from_payload(payload)
       s = new
       buf = StringIO.new(payload)
@@ -54,8 +64,8 @@ module Bitcoin
     def to_addr
       return p2pkh_addr if p2pkh?
       return p2wpkh_addr if p2wpkh?
-      return nil if p2wpkh?
-      return nil if p2sh?
+      return nil if p2wsh?
+      return p2sh_addr if p2sh?
     end
 
     # whether this script is a P2PKH format script.
@@ -76,7 +86,8 @@ module Bitcoin
     end
 
     def p2sh?
-      false
+      return false unless chunks.size == 3
+      OP_HASH160 == chunks[0].ord && OP_EQUAL == chunks[2].ord && chunks[1].bytesize == 21
     end
 
     # append object to payload
@@ -85,6 +96,9 @@ module Bitcoin
         append_opcode(obj)
       elsif obj.is_a?(String)
         append_data(obj.b)
+      elsif obj.is_a?(Array)
+        obj.each { |o| self.<< o}
+        self
       end
     end
 
@@ -92,6 +106,7 @@ module Bitcoin
     # @param [Integer] opcode append opcode which defined by Bitcoin::Opcodes
     # @return [Script] return self
     def append_opcode(opcode)
+      opcode = Opcodes.small_int_to_opcode(opcode) if -1 <= opcode && opcode <= 16
       raise ArgumentError, "specified invalid opcode #{opcode}." unless Opcodes.defined?(opcode)
       chunks << opcode.chr
       self
@@ -119,10 +134,14 @@ module Bitcoin
     end
 
     def to_s
-      str = chunks.map { |c|Script.opcode?(c) ? Opcodes.opcode_to_name(c.ord) : Script.pushed_data(c) }.join(' ')
-      str.gsub!(/OP_0/, '0') if p2wpkh? || p2wsh?
-      str.gsub!(/OP_FALSE/, '0') if p2wpkh? || p2wsh?
-      str
+      chunks.map { |c|
+        if Script.opcode?(c)
+          v = Opcodes.opcode_to_small_int(c.ord)
+          v ? v : Opcodes.opcode_to_name(c.ord)
+        else
+          Script.pushed_data(c)
+        end
+      }.join(' ')
     end
 
     # determine where the data is an opcode.
@@ -170,6 +189,15 @@ module Bitcoin
       segwit_addr.hrp = Bitcoin.chain_params.bech32_hrp
       segwit_addr.script_pubkey = to_payload.bth
       segwit_addr.addr
+    end
+
+    # generate p2sh address. if script dose not p2sh, return nil.
+    def p2sh_addr
+      return nil unless p2sh?
+      hash160 = Script.pushed_data(chunks[1])
+      return nil unless hash160.htb.bytesize == 20
+      hex = Bitcoin.chain_params.p2sh_version + hash160
+      Bitcoin.encode_base58_address(hex)
     end
 
   end

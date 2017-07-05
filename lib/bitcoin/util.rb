@@ -74,8 +74,8 @@ module Bitcoin
     end
 
     # generate sha256-ripemd160 hash for value
-    def hash160(value)
-      Digest::RMD160.hexdigest(Digest::SHA256.digest(value.htb))
+    def hash160(hex)
+      Digest::RMD160.hexdigest(Digest::SHA256.digest(hex.htb))
     end
 
     def encode_base58_address(hex)
