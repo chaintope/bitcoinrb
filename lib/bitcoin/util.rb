@@ -64,8 +64,12 @@ module Bitcoin
       [(data.zero? ? false : true), payload]
     end
 
+    def sha256(payload)
+      Digest::SHA256.digest(payload)
+    end
+
     def double_sha256(payload)
-      Digest::SHA256.digest(Digest::SHA256.digest(payload))
+      sha256(sha256(payload))
     end
 
     # byte convert to the sequence of bits packed eight in a byte with the least significant bit first.

@@ -27,9 +27,24 @@ module Bitcoin
     # @param [Array] pubkeys array of public keys that compose multisig
     # @return [Script, Script] first element is p2sh script, second one is redeem script.
     def self.to_p2sh_multisig_script(m, pubkeys)
-      redeem_script = new << m << pubkeys << pubkeys.size << OP_CHECKMULTISIG
+      redeem_script = to_multisig_script(m, pubkeys)
       p2sh_script = new << OP_HASH160 << Bitcoin.hash160(redeem_script.to_payload.bth) << OP_EQUAL
       [p2sh_script, redeem_script]
+    end
+
+    # generate m of n multisig script
+    # @param [String] m the number of signatures required for multisig
+    # @param [Array] pubkeys array of public keys that compose multisig
+    # @return [Script] multisig script.
+    def self.to_multisig_script(m, pubkeys)
+      new << m << pubkeys << pubkeys.size << OP_CHECKMULTISIG
+    end
+
+    # generate p2wsh script for +redeem_script+
+    # @param [Script] redeem_script target redeem script
+    # @param [Script] p2wsh script
+    def self.to_p2wsh(redeem_script)
+      new << WITNESS_VERSION << Bitcoin.sha256(redeem_script.to_payload).bth
     end
 
     # generate script from string.
@@ -79,7 +94,7 @@ module Bitcoin
     def to_addr
       return p2pkh_addr if p2pkh?
       return p2wpkh_addr if p2wpkh?
-      return nil if p2wsh?
+      return p2wsh_addr if p2wsh?
       return p2sh_addr if p2sh?
     end
 
@@ -97,7 +112,8 @@ module Bitcoin
     end
 
     def p2wsh?
-      false
+      return false unless chunks.size == 2
+      chunks[0].ord == WITNESS_VERSION && chunks[1].bytesize == 33
     end
 
     def p2sh?
@@ -199,11 +215,7 @@ module Bitcoin
 
     # generate p2wpkh address. if script dose not p2wpkh, return nil.
     def p2wpkh_addr
-      return nil unless p2wpkh?
-      segwit_addr = Bech32::SegwitAddr.new
-      segwit_addr.hrp = Bitcoin.chain_params.bech32_hrp
-      segwit_addr.script_pubkey = to_payload.bth
-      segwit_addr.addr
+      p2wpkh? ? bech32_addr : nil
     end
 
     # generate p2sh address. if script dose not p2sh, return nil.
@@ -213,6 +225,19 @@ module Bitcoin
       return nil unless hash160.htb.bytesize == 20
       hex = Bitcoin.chain_params.p2sh_version + hash160
       Bitcoin.encode_base58_address(hex)
+    end
+
+    # generate p2wsh address. if script dose not p2wsh, return nil.
+    def p2wsh_addr
+      p2wsh? ? bech32_addr : nil
+    end
+
+    # return bech32 address for payload
+    def bech32_addr
+      segwit_addr = Bech32::SegwitAddr.new
+      segwit_addr.hrp = Bitcoin.chain_params.bech32_hrp
+      segwit_addr.script_pubkey = to_payload.bth
+      segwit_addr.addr
     end
 
   end
