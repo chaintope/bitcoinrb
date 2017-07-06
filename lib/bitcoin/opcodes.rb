@@ -156,7 +156,7 @@ module Bitcoin
       return OP_0 if int == 0
       return OP_1NEGATE if int == -1
       return OP_1 + (int - 1) if int >= 1 && int <= 16
-      raise ArgumentError, 'invalid opcode'
+      nil
     end
 
     def opcode_to_small_int(opcode)
