@@ -28,7 +28,7 @@ module Bitcoin
     # @return [Script, Script] first element is p2sh script, second one is redeem script.
     def self.to_p2sh_multisig_script(m, pubkeys)
       redeem_script = to_multisig_script(m, pubkeys)
-      p2sh_script = new << OP_HASH160 << Bitcoin.hash160(redeem_script.to_payload.bth) << OP_EQUAL
+      p2sh_script = new << OP_HASH160 << redeem_script.to_hash160 << OP_EQUAL
       [p2sh_script, redeem_script]
     end
 
@@ -44,7 +44,7 @@ module Bitcoin
     # @param [Script] redeem_script target redeem script
     # @param [Script] p2wsh script
     def self.to_p2wsh(redeem_script)
-      new << WITNESS_VERSION << Bitcoin.sha256(redeem_script.to_payload).bth
+      new << WITNESS_VERSION << redeem_script.to_sha256
     end
 
     # generate script from string.
@@ -200,6 +200,16 @@ module Bitcoin
         offset += 4
       end
       data[offset..-1].bth
+    end
+
+    # generate sha-256 hash for payload
+    def to_sha256
+      Bitcoin.sha256(to_payload).bth
+    end
+
+    # generate hash160 hash for payload
+    def to_hash160
+      Bitcoin.hash160(to_payload.bth)
     end
 
     private
