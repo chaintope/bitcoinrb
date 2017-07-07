@@ -11,6 +11,11 @@ module Bitcoin
       def generate_key(compressed: true)
         # TODO
       end
+
+      def sign_data(privkey, data)
+        # TODO
+      end
+
     end
 
   end

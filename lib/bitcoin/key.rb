@@ -34,6 +34,16 @@ module Bitcoin
       Base58.encode(hex)
     end
 
+    # sign +data+ with private key
+    def sign(data)
+      sign_data(data, priv_key)
+    end
+
+    # verify signature using public key
+    def verify(sig, origin)
+      verify_sig(origin, sig, pub_key)
+    end
+
     # get pay to pubkey hash address
     def to_p2pkh
       Bitcoin::Script.to_p2pkh(Bitcoin.hash160(pub_key)).to_addr

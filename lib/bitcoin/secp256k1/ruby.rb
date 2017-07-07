@@ -11,7 +11,7 @@ module Bitcoin
 
       module_function
 
-      # generete ecdsa private key and public key
+      # generate ecdsa private key and public key
       def generate_key_pair(compressed: true)
         private_key = 1 + SecureRandom.random_number(GROUP.order - 1)
         public_key = GROUP.generator.multiply_by_scalar(private_key)
@@ -35,6 +35,33 @@ module Bitcoin
         public_key = GROUP.generator.multiply_by_scalar(private_key)
         pubkey = ECDSA::Format::PointOctetString.encode(public_key, compression: compressed)
         pubkey.bth
+      end
+
+      # sign data.
+      # @param [String] data a data to be signed
+      # @param [String] privkey a private key using sign
+      # @return [String] signature data with binary format
+      def sign_data(data, privkey)
+        digest = Digest::SHA2.digest(data)
+        private_key = ECDSA::Format::IntegerOctetString.decode(privkey.htb)
+        signature = nil
+        while signature.nil?
+          # TODO support rfc 6979 https://tools.ietf.org/html/rfc6979
+          temp_key = 1 + SecureRandom.random_number(GROUP.order - 1)
+          signature = ECDSA.sign(GROUP, private_key, digest, temp_key)
+        end
+        ECDSA::Format::SignatureDerString.encode(signature) # signature with DER format
+      end
+
+      # verify signature using public key
+      # @param [String] data a original message
+      # @param [String] sig a signature for +data+ with binary format
+      # @param [String] pubkey a public key corresponding to the private key used for sign
+      # @return [Boolean] verify result
+      def verify_sig(data, sig, pubkey)
+        public_key = ECDSA::Format::PointOctetString.decode(pubkey.htb, GROUP)
+        signature = ECDSA::Format::SignatureDerString.decode(sig)
+        ECDSA.valid_signature?(public_key, data, signature)
       end
 
     end
