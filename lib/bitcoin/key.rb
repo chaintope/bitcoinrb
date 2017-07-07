@@ -35,12 +35,12 @@ module Bitcoin
     end
 
     # get pay to pubkey hash address
-    def p2pkh
+    def to_p2pkh
       Bitcoin::Script.to_p2pkh(Bitcoin.hash160(pub_key)).to_addr
     end
 
     # get pay to witness pubkey hash address
-    def p2wpkh
+    def to_p2wpkh
       Bitcoin::Script.to_p2wpkh(pub_key).addr
     end
 
