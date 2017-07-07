@@ -25,6 +25,15 @@ module Bitcoin
       new(priv_key: key, compressed: compressed)
     end
 
+    # export private key with wif format
+    def to_wif
+      version = Bitcoin.chain_params.privkey_version
+      hex = version + priv_key
+      hex += '01' if compressed?
+      hex += Bitcoin.calc_checksum(hex)
+      Base58.encode(hex)
+    end
+
     # get pay to pubkey hash address
     def p2pkh
       Bitcoin::Script.to_p2pkh(Bitcoin.hash160(pub_key)).to_addr
