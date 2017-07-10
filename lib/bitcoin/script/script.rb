@@ -121,6 +121,14 @@ module Bitcoin
       OP_HASH160 == chunks[0].ord && OP_EQUAL == chunks[2].ord && chunks[1].bytesize == 21
     end
 
+    # whether data push only script which dose not include other opcode
+    def push_only?
+      chunks.each do |c|
+        return false if Script.opcode?(c)
+      end
+      true
+    end
+
     # append object to payload
     def <<(obj)
       if obj.is_a?(Integer)
