@@ -13,7 +13,7 @@ module Bitcoin
   autoload :Logger, 'bitcoin/logger'
   autoload :BlockHeader, 'bitcoin/block_header'
   autoload :Tx, 'bitcoin/tx'
-  autoload :Script, 'bitcoin/script'
+  autoload :Script, 'bitcoin/script/script'
   autoload :TxIn, 'bitcoin/tx_in'
   autoload :TxOut, 'bitcoin/tx_out'
   autoload :OutPoint, 'bitcoin/out_point'
