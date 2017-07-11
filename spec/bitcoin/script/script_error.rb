@@ -6,7 +6,7 @@ module Bitcoin
     SCRIPT_ERR_OK = 0
     SCRIPT_ERR_UNKNOWN_ERROR = 1
     SCRIPT_ERR_EVAL_FALSE = 2
-    SCRIPT_ERR_OP_= 3
+    SCRIPT_ERR_OP_RETURN = 3
 
     # Max sizes
     SCRIPT_ERR_SCRIPT_SIZE = 10
