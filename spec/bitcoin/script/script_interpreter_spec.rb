@@ -9,6 +9,7 @@ describe Bitcoin::ScriptInterpreter do
       it r[4] do
         script_sig = parse_json_script(r[0])
         script_pubkey = parse_json_script(r[1])
+        puts script_pubkey.to_s
         flags = r[2]
         expected_err_code = Bitcoin::ScriptError.name_to_code('SCRIPT_ERR_' + r[3])
         i = Bitcoin::ScriptInterpreter.new
@@ -20,12 +21,10 @@ describe Bitcoin::ScriptInterpreter do
   end
 
   def parse_json_script(json_script)
-    script = Bitcoin::Script.new
-    json_script.split(' ').each do |v|
-      opcode = Bitcoin::Opcodes.name_to_opcode('OP_' + v)
-      script << opcode if opcode
-    end
-    script
+    script = json_script.split(' ').map do |v|
+      Bitcoin::Opcodes.name_to_opcode('OP_' + v) ? 'OP_' + v : v
+    end.join(' ')
+    Bitcoin::Script.from_string(script)
   end
 
 end
