@@ -4,7 +4,23 @@ module Bitcoin
   class Script
     include Bitcoin::Opcodes
 
+    # witness version
     WITNESS_VERSION = 0x00
+
+    # Maximum script length in bytes
+    MAX_SCRIPT_SIZE = 10000
+
+    # Maximum number of public keys per multisig
+    MAX_PUBKEYS_PER_MULTISIG = 20
+
+    # Maximum number of non-push operations per script
+    MAX_OPS_PER_SCRIPT = 201
+
+    # Maximum number of bytes pushable to the stack
+    MAX_SCRIPT_ELEMENT_SIZE = 520
+
+    # Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp.
+    LOCKTIME_THRESHOLD = 500000000
 
     attr_accessor :chunks
 
@@ -129,6 +145,11 @@ module Bitcoin
       true
     end
 
+    # whether this script has witness program.
+    def witness_program?
+      p2wpkh? || p2wsh?
+    end
+
     # append object to payload
     def <<(obj)
       if obj.is_a?(Integer)
@@ -218,6 +239,11 @@ module Bitcoin
     # generate hash160 hash for payload
     def to_hash160
       Bitcoin.hash160(to_payload.bth)
+    end
+
+    # script size
+    def size
+      to_payload.bytesize
     end
 
     private

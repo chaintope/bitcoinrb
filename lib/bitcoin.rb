@@ -14,6 +14,8 @@ module Bitcoin
   autoload :BlockHeader, 'bitcoin/block_header'
   autoload :Tx, 'bitcoin/tx'
   autoload :Script, 'bitcoin/script/script'
+  autoload :ScriptInterpreter, 'bitcoin/script/script_interpreter'
+  autoload :ScriptError, 'bitcoin/script/script_error'
   autoload :TxIn, 'bitcoin/tx_in'
   autoload :TxOut, 'bitcoin/tx_out'
   autoload :OutPoint, 'bitcoin/out_point'
