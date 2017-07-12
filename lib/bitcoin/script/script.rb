@@ -67,12 +67,15 @@ module Bitcoin
     def self.from_string(string)
       script = new
       string.split(' ').each do |v|
-        opcode = Opcodes.name_to_opcode(v)
-        if opcode
-          script << opcode
+        if v =~ /^\d/ && Opcodes.small_int_to_opcode(v.to_i)
+          script << v.to_i
         else
-          v = v.to_i if v =~ /^\d/ && Opcodes.small_int_to_opcode(v.to_i)
-          script << v
+          opcode = Opcodes.name_to_opcode(v)
+          if opcode
+            script << opcode
+          else
+            script << v
+          end
         end
       end
       script

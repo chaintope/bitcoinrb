@@ -96,7 +96,7 @@ module Bitcoin
           else
             to_i
           end
-      OP_0 < d && d <= OP_PUSHDATA4
+      Bitcoin::Opcodes::OP_0 < d && d <= Bitcoin::Opcodes::OP_PUSHDATA4
     end
 
   end
