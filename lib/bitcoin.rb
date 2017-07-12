@@ -96,7 +96,7 @@ module Bitcoin
           else
             to_i
           end
-      Bitcoin::Opcodes::OP_0 < d && d <= Bitcoin::Opcodes::OP_PUSHDATA4
+      Bitcoin::Opcodes.opcode_to_small_int(d) || Bitcoin::Opcodes::OP_0 < d && d <= Bitcoin::Opcodes::OP_PUSHDATA4
     end
 
   end

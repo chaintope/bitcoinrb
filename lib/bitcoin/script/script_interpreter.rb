@@ -50,15 +50,19 @@ module Bitcoin
     end
 
     def eval_script(script)
-
       begin
         script.chunks.each do |c|
           if c.pushdata?
-            @stack << c
+            if c.bytesize == 1 && Opcodes.small_int_to_opcode(c.ord)
+              @stack << c.ord
+            else
+              @stack << c
+            end
           else
             opcode = c.ord
             if Opcodes.opcode_to_small_int(opcode)
-              @stack << opcode
+              hoge = Opcodes.opcode_to_small_int(opcode)
+              @stack << Opcodes.opcode_to_small_int(opcode)
             else
               case opcode
                 when OP_DEPTH

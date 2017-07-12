@@ -67,16 +67,26 @@ module Bitcoin
     def self.from_string(string)
       script = new
       string.split(' ').each do |v|
-        if v =~ /^\d/ && Opcodes.small_int_to_opcode(v.to_i)
-          script << v.to_i
-        else
-          opcode = Opcodes.name_to_opcode(v)
-          if opcode
-            script << opcode
+        opcode = Opcodes.name_to_opcode(v)
+        if opcode
+          if v =~ /^\d/ && Opcodes.small_int_to_opcode(v.ord)
+            script << v.ord
           else
-            script << v
+            script << opcode
           end
+        else
+          script << v
         end
+        # if v =~ /^\d/ && Opcodes.small_int_to_opcode(v.to_i)
+        #   script << v.to_i
+        # else
+        #   opcode = Opcodes.name_to_opcode(v)
+        #   if opcode
+        #     script << opcode
+        #   else
+        #     script << v
+        #   end
+        # end
       end
       script
     end
@@ -199,10 +209,10 @@ module Bitcoin
     def to_s
       chunks.map { |c|
         if c.pushdata?
-          Script.pushed_data(c)
-        else
           v = Opcodes.opcode_to_small_int(c.ord)
-          v ? v : Opcodes.opcode_to_name(c.ord)
+          v ? v : Script.pushed_data(c)
+        else
+          Opcodes.opcode_to_name(c.ord)
         end
       }.join(' ')
     end

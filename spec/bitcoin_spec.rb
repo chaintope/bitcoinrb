@@ -25,6 +25,7 @@ describe Bitcoin do
       expect(OP_HASH160.chr.pushdata?).to be false
       expect('1446c2fbfbecc99a63148fa076de58cf29b0bcf0b0'.htb.pushdata?).to be true
       expect(OP_PUSHDATA1.chr.pushdata?).to be true
+      expect(1.chr.pushdata?).to be true
     end
   end
 
