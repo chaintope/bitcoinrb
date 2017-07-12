@@ -53,32 +53,32 @@ module Bitcoin
 
       begin
         script.chunks.each do |c|
-          if Script.opcode?(c)
+          if c.pushdata?
+            @stack << c
+          else
             opcode = c.ord
             if Opcodes.opcode_to_small_int(opcode)
               @stack << opcode
             else
               case opcode
-              when OP_DEPTH
-                @stack << @stack.size
-              when OP_EQUAL, OP_EQUALVERIFY
-                return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if @stack.size < 2
-                e1, e2 = @stack.pop(2)
-                result = e1 == e2
-                @stack << result
-                if opcode == OP_EQUALVERIFY
-                  if result
-                    @stack.pop
-                  else
-                    return set_error(ScriptError::SCRIPT_ERR_EQUALVERIFY)
+                when OP_DEPTH
+                  @stack << @stack.size
+                when OP_EQUAL, OP_EQUALVERIFY
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if @stack.size < 2
+                  e1, e2 = @stack.pop(2)
+                  result = e1 == e2
+                  @stack << result
+                  if opcode == OP_EQUALVERIFY
+                    if result
+                      @stack.pop
+                    else
+                      return set_error(ScriptError::SCRIPT_ERR_EQUALVERIFY)
+                    end
                   end
-                end
-              else
-                return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
+                else
+                  return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
             end
-          else
-            @stack << c
           end
         end
       rescue Exception => e

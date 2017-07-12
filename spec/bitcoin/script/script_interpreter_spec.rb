@@ -22,7 +22,8 @@ describe Bitcoin::ScriptInterpreter do
 
   def parse_json_script(json_script)
     script = json_script.split(' ').map do |v|
-      Bitcoin::Opcodes.name_to_opcode('OP_' + v) ? 'OP_' + v : v
+      v = Bitcoin::Opcodes.name_to_opcode(v) ? v : Bitcoin::Opcodes.name_to_opcode('OP_' + v)
+      v
     end.join(' ')
     Bitcoin::Script.from_string(script)
   end
