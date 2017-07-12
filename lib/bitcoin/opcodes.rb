@@ -6,8 +6,8 @@ module Bitcoin
     module_function
 
     # https://en.bitcoin.it/wiki/Script#Constants
-    OP_FALSE = OP_0 = 0x00
-    OP_TRUE = OP_1 = 0x51
+    OP_0 = 0x00
+    OP_1 = 0x51
     OP_2 = 0x52
     OP_3 = 0x53
     OP_4 = 0x54
@@ -140,10 +140,12 @@ module Bitcoin
     NAME_MAP = Hash[*constants.grep(/^OP_/).map { |c| [c.to_s, const_get(c)] }.flatten]
 
     def opcode_to_name(opcode)
+      return OPCODES_MAP[opcode].delete('OP_') if opcode == OP_0 || (opcode <= OP_16 && opcode >= OP_1)
       OPCODES_MAP[opcode]
     end
 
     def name_to_opcode(name)
+      return NAME_MAP['OP_' + name] if name =~ /^\d/ && name.to_i < 17 && name.to_i > -1
       NAME_MAP[name]
     end
 

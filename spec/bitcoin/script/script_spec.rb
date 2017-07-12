@@ -132,15 +132,6 @@ describe Bitcoin::Script do
     end
   end
 
-  describe 'opcode?/pushdata?' do
-    it 'should be judged' do
-      expect(Bitcoin::Script.opcode?(OP_DUP.chr)).to be true
-      expect(Bitcoin::Script.opcode?(OP_HASH160.chr)).to be true
-      expect(Bitcoin::Script.opcode?('1446c2fbfbecc99a63148fa076de58cf29b0bcf0b0'.htb)).to be false
-      expect(Bitcoin::Script.opcode?(OP_PUSHDATA1.chr)).to be false
-    end
-  end
-
   describe '#from_string' do
     it 'should be generate' do
       p2pkh = Bitcoin::Script.from_string('OP_DUP OP_HASH160 46c2fbfbecc99a63148fa076de58cf29b0bcf0b0 OP_EQUALVERIFY OP_CHECKSIG')

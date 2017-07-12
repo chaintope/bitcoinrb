@@ -83,21 +83,21 @@ module Bitcoin
       buf = StringIO.new(payload)
       until buf.eof?
         opcode = buf.read(1)
-        if opcode?(opcode)
-          s << opcode.ord
-        else
+        if opcode.pushdata?
           pushcode = opcode.ord
           len = case pushcode
-                when OP_PUSHDATA1
-                  buf.read(1)
-                when OP_PUSHDATA2
-                  buf.read(2)
-                when OP_PUSHDATA4
-                  buf.read(4)
-                else
-                  pushcode if pushcode < OP_PUSHDATA1
+                  when OP_PUSHDATA1
+                    buf.read(1)
+                  when OP_PUSHDATA2
+                    buf.read(2)
+                  when OP_PUSHDATA4
+                    buf.read(4)
+                  else
+                    pushcode if pushcode < OP_PUSHDATA1
                 end
           s << buf.read(len).bth if len
+        else
+          s << opcode.ord
         end
       end
       s
@@ -140,7 +140,7 @@ module Bitcoin
     # whether data push only script which dose not include other opcode
     def push_only?
       chunks.each do |c|
-        return false if Script.opcode?(c)
+        return false unless c.pushdata?
       end
       true
     end
@@ -195,25 +195,13 @@ module Bitcoin
 
     def to_s
       chunks.map { |c|
-        if Script.opcode?(c)
+        if c.pushdata?
+          Script.pushed_data(c)
+        else
           v = Opcodes.opcode_to_small_int(c.ord)
           v ? v : Opcodes.opcode_to_name(c.ord)
-        else
-          Script.pushed_data(c)
         end
       }.join(' ')
-    end
-
-    # determine where the data is an opcode.
-    def self.opcode?(data)
-      !pushdata?(data)
-    end
-
-    # determine where the data is a pushdadta.
-    def self.pushdata?(data)
-      # the minimum value of opcode is pushdata operation.
-      first_byte = data.each_byte.next
-      OP_0 < first_byte && first_byte <= OP_PUSHDATA4
     end
 
     # get pushed data in pushdata bytes
