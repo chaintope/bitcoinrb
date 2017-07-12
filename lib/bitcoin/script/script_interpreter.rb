@@ -61,7 +61,6 @@ module Bitcoin
           else
             opcode = c.ord
             if Opcodes.opcode_to_small_int(opcode)
-              hoge = Opcodes.opcode_to_small_int(opcode)
               @stack << Opcodes.opcode_to_small_int(opcode)
             else
               case opcode
