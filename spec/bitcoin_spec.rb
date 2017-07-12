@@ -28,4 +28,15 @@ describe Bitcoin do
     end
   end
 
+  describe '#opcode' do
+    it 'should be return opcode' do
+      expect(OP_DUP.chr.opcode).to eq(OP_DUP)
+      expect(OP_1.chr.opcode).to eq(OP_1)
+      expect(OP_HASH160.chr.opcode).to eq(OP_HASH160)
+      expect(OP_PUSHDATA1.chr.opcode).to eq(OP_PUSHDATA1)
+      expect('1446c2fbfbecc99a63148fa076de58cf29b0bcf0b0'.htb.opcode).to be nil
+      expect(0xc1.chr.opcode).to be nil
+    end
+  end
+
 end
