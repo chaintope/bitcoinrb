@@ -27,7 +27,7 @@ module Bitcoin
     OP_PUSHDATA1 = 0x4c
     OP_PUSHDATA2 = 0x4d
     OP_PUSHDATA4 = 0x4e
-    OP_1NEGATE = 0x79
+    OP_1NEGATE = 0x4f
 
     # https://en.bitcoin.it/wiki/Script#Flow_control
     OP_NOP = 0x61
