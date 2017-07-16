@@ -77,16 +77,6 @@ module Bitcoin
         else
           script << v
         end
-        # if v =~ /^\d/ && Opcodes.small_int_to_opcode(v.to_i)
-        #   script << v.to_i
-        # else
-        #   opcode = Opcodes.name_to_opcode(v)
-        #   if opcode
-        #     script << opcode
-        #   else
-        #     script << v
-        #   end
-        # end
       end
       script
     end
@@ -151,9 +141,9 @@ module Bitcoin
     end
 
     # whether data push only script which dose not include other opcode
-    def push_only?
+    def data_only?
       chunks.each do |c|
-        return false unless c.pushdata?
+        return false if !c.opcode.nil? && c.opcode > OP_16
       end
       true
     end
@@ -166,7 +156,12 @@ module Bitcoin
     # append object to payload
     def <<(obj)
       if obj.is_a?(Integer)
-        append_opcode(obj)
+        obj = Opcodes.small_int_to_opcode(obj) if -1 <= obj && obj <= 16
+        if Opcodes.defined?(obj)
+          append_opcode(obj)
+        else
+          append_int(obj)
+        end
       elsif obj.is_a?(String)
         append_data(obj.b)
       elsif obj.is_a?(Array)
@@ -206,30 +201,37 @@ module Bitcoin
       self
     end
 
+    # append int value which dose not opcode
+    # The stacks hold byte vectors.
+    # When used as numbers, byte vectors are interpreted as little-endian variable-length integers
+    # with the most significant bit determining the sign of the integer.
+    # Thus 0x81 represents -1. 0x80 is another representation of zero (so called negative 0).
+    # Positive 0 is represented by a null-length vector.
+    # Byte vectors are interpreted as Booleans where False is represented by any representation of zero,
+    # and True is represented by any representation of non-zero.
+    def append_int(int)
+      negative = int < 0
+
+      v = if int < 256
+            [int].pack('C')
+          else
+            hex = int.to_s(16)
+            hex = '0' + hex unless hex.length % 2 == 0
+            hex.htb.reverse # change endian
+          end
+      append_data(v.bth)
+      self
+    end
+
     def to_s
       chunks.map { |c|
         if c.pushdata?
           v = Opcodes.opcode_to_small_int(c.ord)
-          v ? v : Script.pushed_data(c)
+          v ? v : c.pushed_data.bth
         else
           Opcodes.opcode_to_name(c.ord)
         end
       }.join(' ')
-    end
-
-    # get pushed data in pushdata bytes
-    def self.pushed_data(data)
-      opcode = data.each_byte.next
-      offset = 1
-      case opcode
-      when OP_PUSHDATA1
-        offset += 1
-      when OP_PUSHDATA2
-        offset += 2
-      when OP_PUSHDATA4
-        offset += 4
-      end
-      data[offset..-1].bth
     end
 
     # generate sha-256 hash for payload
@@ -252,7 +254,7 @@ module Bitcoin
     # generate p2pkh address. if script dose not p2pkh, return nil.
     def p2pkh_addr
       return nil unless p2pkh?
-      hash160 = Script.pushed_data(chunks[2])
+      hash160 = chunks[2].pushed_data.bth
       return nil unless hash160.htb.bytesize == 20
       hex = Bitcoin.chain_params.address_version + hash160
       Bitcoin.encode_base58_address(hex)
@@ -266,7 +268,7 @@ module Bitcoin
     # generate p2sh address. if script dose not p2sh, return nil.
     def p2sh_addr
       return nil unless p2sh?
-      hash160 = Script.pushed_data(chunks[1])
+      hash160 = chunks[1].pushed_data.bth
       return nil unless hash160.htb.bytesize == 20
       hex = Bitcoin.chain_params.p2sh_version + hash160
       Bitcoin.encode_base58_address(hex)

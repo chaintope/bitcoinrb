@@ -88,15 +88,22 @@ module Bitcoin
 
     # whether data push only?
     def pushdata?
-      d = case encoding
-          when Encoding::ASCII_8BIT
-            each_byte.next
-          when Encoding::US_ASCII
-            ord
-          else
-            to_i
-          end
-      Bitcoin::Opcodes.opcode_to_small_int(d) || Bitcoin::Opcodes::OP_0 < d && d <= Bitcoin::Opcodes::OP_PUSHDATA4
+      opcode.nil?
+    end
+
+    def pushed_data
+      if pushdata?
+        offset = 1
+        case opcode
+          when Bitcoin::Opcodes::OP_PUSHDATA1
+            offset += 1
+          when Bitcoin::Opcodes::OP_PUSHDATA2
+            offset += 2
+          when Bitcoin::Opcodes::OP_PUSHDATA4
+            offset += 4
+        end
+        self[offset..-1]
+      end
     end
 
   end

@@ -1,16 +1,29 @@
 module Bitcoin
 
+  SCRIPT_VERIFY_NONE      = 0
+  SCRIPT_VERIFY_P2SH      = (1 << 0)
+  SCRIPT_VERIFY_STRICTENC = (1 << 1)
+  SCRIPT_VERIFY_DERSIG    = (1 << 2)
+  SCRIPT_VERIFY_LOW_S     = (1 << 3)
+  SCRIPT_VERIFY_NULLDUMMY = (1 << 4)
+  SCRIPT_VERIFY_SIGPUSHONLY = (1 << 5)
+  SCRIPT_VERIFY_MINIMALDATA = (1 << 6)
+  SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS = (1 << 7)
+  SCRIPT_VERIFY_CLEANSTACK = (1 << 8)
+
   class ScriptInterpreter
     include Bitcoin::Opcodes
 
     attr_reader :stack
     attr_reader :debug
+    attr_reader :flags
     attr_accessor :error
 
     # initialize runner
-    def initialize
+    def initialize(flags: [])
       @stack = []
       @debug = []
+      @flags = flags
     end
 
     # eval script
@@ -19,7 +32,8 @@ module Bitcoin
     # @param [Bitcoin::ScriptWitness] witness a witness script
     # @return [Boolean] result
     def verify(script_sig, script_pubkey, witness = nil)
-      return set_error(ScriptError::SCRIPT_ERR_SIG_PUSHONLY) unless script_sig.push_only?
+
+      return set_error(ScriptError::SCRIPT_ERR_SIG_PUSHONLY) if flag?(SCRIPT_VERIFY_SIGPUSHONLY) && !script_sig.data_only?
 
       return false unless eval_script(script_sig)
       return false unless eval_script(script_pubkey)
@@ -53,23 +67,24 @@ module Bitcoin
       begin
         script.chunks.each do |c|
           if c.pushdata?
-            if c.bytesize == 1 && Opcodes.small_int_to_opcode(c.ord)
-              @stack << c.ord
-            else
-              @stack << c
-            end
+            # if c.bytesize == 1 && Opcodes.small_int_to_opcode(c.ord)
+            #   @stack << c.ord
+            # else
+              @stack << c.pushed_data.bth
+            # end
           else
             opcode = c.ord
-            if Opcodes.opcode_to_small_int(opcode)
-              @stack << Opcodes.opcode_to_small_int(opcode)
+            small_int = Opcodes.opcode_to_small_int(opcode)
+            if small_int
+              @stack << small_int
             else
               case opcode
                 when OP_DEPTH
                   @stack << @stack.size
                 when OP_EQUAL, OP_EQUALVERIFY
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if @stack.size < 2
-                  e1, e2 = @stack.pop(2)
-                  result = e1 == e2
+                  a, b = pop_string(2)
+                  result = a == b
                   @stack << result
                   if opcode == OP_EQUALVERIFY
                     if result
@@ -78,6 +93,10 @@ module Bitcoin
                       return set_error(ScriptError::SCRIPT_ERR_EQUALVERIFY)
                     end
                   end
+                when OP_ADD
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if @stack.size < 2
+                  a, b = pop_int(2)
+                  @stack << (a + b)
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
@@ -93,6 +112,48 @@ module Bitcoin
       true
     end
 
+    private
+
+    def flag?(flag)
+      (all_flags & flag) != 0
+    end
+
+    def all_flags
+      result = SCRIPT_VERIFY_NONE
+      flags.each{ |f| result |= f }
+      result
+    end
+
+    def pop_int(count)
+      stack.pop(count).map do |s|
+        case s
+          when String
+            s.htb.reverse.bth.to_i(16)
+          else
+            s
+        end
+      end
+    end
+
+    def pop_string(count)
+      stack.pop(count).map do |s|
+        case s
+          when Numeric
+            if s < 256
+              [s].pack('C')
+            else
+              hex = s.to_s(16)
+              hex = '0' + hex unless hex.length % 2 == 0
+              hex.htb.reverse.bth
+            end
+          else
+            s
+        end
+      end
+    end
+
   end
+
+
 
 end
