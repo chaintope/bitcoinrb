@@ -17,10 +17,16 @@ describe Bitcoin::Script do
       end
     end
     context 'int value include' do
-      subject { Bitcoin::Script.new << OP_1NEGATE << 1000 << OP_ADD }
       it 'should be append' do
-        expect(subject.to_payload.bth).to eq('4f02e80393')
-        expect(subject.to_s).to eq('OP_1NEGATE e803 OP_ADD')
+        s = Bitcoin::Script.new << OP_1NEGATE << Bitcoin::Script.encode_number(1000) << OP_ADD
+        expect(s.to_payload.bth).to eq('4f02e80393')
+        expect(s.to_s).to eq('OP_1NEGATE e803 OP_ADD')
+        s = Bitcoin::Script.new << OP_1NEGATE << Bitcoin::Script.encode_number(100) << OP_ADD
+        expect(s.to_payload.bth).to eq('4f016493')
+        # negative value
+        s = Bitcoin::Script.new << OP_1NEGATE << Bitcoin::Script.encode_number(-1000) << OP_ADD
+        expect(s.to_payload.bth).to eq('4f02e88393')
+        expect(s.to_s).to eq('OP_1NEGATE e883 OP_ADD')
       end
     end
   end
@@ -166,6 +172,14 @@ describe Bitcoin::Script do
       expect(Bitcoin::Script.from_string('46c2fbfbecc99a63148fa076de58cf29b0bcf0b0 OP_EQUAL').data_only?).to be false
       expect(Bitcoin::Script.from_string('46c2fbfbecc99a63148fa076de58cf29b0bcf0b0').data_only?).to be true
       expect(Bitcoin::Script.from_string('3044022009ea34cf915708efa8d0fb8a784d4d9e3108ca8da4b017261dd029246c857ebc02201ae570e2d8a262bd9a2a157f473f4089f7eae5a8f54ff9f114f624557eda742001 02effb2edfcf826d43027feae226143bdac058ad2e87b7cec26f97af2d357ddefa').data_only?).to be true
+    end
+  end
+
+  describe '#encode_number' do
+    it 'should be encoded' do
+      expect(Bitcoin::Script.encode_number(1000)).to eq('e803')
+      expect(Bitcoin::Script.encode_number(100)).to eq('64')
+      expect(Bitcoin::Script.encode_number(-1000)).to eq('e883')
     end
   end
 

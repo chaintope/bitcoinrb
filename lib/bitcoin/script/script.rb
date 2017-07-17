@@ -69,11 +69,7 @@ module Bitcoin
       string.split(' ').each do |v|
         opcode = Opcodes.name_to_opcode(v)
         if opcode
-          if v =~ /^\d/ && Opcodes.small_int_to_opcode(v.ord)
-            script << v.ord
-          else
-            script << opcode
-          end
+          script << (v =~ /^\d/ && Opcodes.small_int_to_opcode(v.ord) ? v.ord : opcode)
         else
           script << v
         end
@@ -156,12 +152,7 @@ module Bitcoin
     # append object to payload
     def <<(obj)
       if obj.is_a?(Integer)
-        obj = Opcodes.small_int_to_opcode(obj) if -1 <= obj && obj <= 16
-        if Opcodes.defined?(obj)
-          append_opcode(obj)
-        else
-          append_int(obj)
-        end
+        append_opcode(obj)
       elsif obj.is_a?(String)
         append_data(obj.b)
       elsif obj.is_a?(Array)
@@ -201,28 +192,6 @@ module Bitcoin
       self
     end
 
-    # append int value which dose not opcode
-    # The stacks hold byte vectors.
-    # When used as numbers, byte vectors are interpreted as little-endian variable-length integers
-    # with the most significant bit determining the sign of the integer.
-    # Thus 0x81 represents -1. 0x80 is another representation of zero (so called negative 0).
-    # Positive 0 is represented by a null-length vector.
-    # Byte vectors are interpreted as Booleans where False is represented by any representation of zero,
-    # and True is represented by any representation of non-zero.
-    def append_int(int)
-      negative = int < 0
-
-      v = if int < 256
-            [int].pack('C')
-          else
-            hex = int.to_s(16)
-            hex = '0' + hex unless hex.length % 2 == 0
-            hex.htb.reverse # change endian
-          end
-      append_data(v.bth)
-      self
-    end
-
     def to_s
       chunks.map { |c|
         if c.pushdata?
@@ -247,6 +216,30 @@ module Bitcoin
     # script size
     def size
       to_payload.bytesize
+    end
+
+    # encode int value to script number hex.
+    # The stacks hold byte vectors.
+    # When used as numbers, byte vectors are interpreted as little-endian variable-length integers
+    # with the most significant bit determining the sign of the integer.
+    # Thus 0x81 represents -1. 0x80 is another representation of zero (so called negative 0).
+    # Positive 0 is represented by a null-length vector.
+    # Byte vectors are interpreted as Booleans where False is represented by any representation of zero,
+    # and True is represented by any representation of non-zero.
+    def self.encode_number(i)
+      negative = i < 0
+
+      hex = i.abs.to_s(16)
+      hex = '0' + hex unless (hex.length % 2).zero?
+      v = hex.htb.reverse # change endian
+
+      v[-1] = [v[-1].unpack('C').first | 0x81].pack('C') if negative
+      v.bth
+    end
+
+    # decode script number hex to int value
+    def self.decode_number(s)
+
     end
 
     private

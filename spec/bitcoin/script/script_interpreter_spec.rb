@@ -49,7 +49,9 @@ describe Bitcoin::ScriptInterpreter do
       elsif v =~ /^'.*'$/
         script << v[1..-2].bth
       elsif v =~ /^-?\d+$/
-        script << v.to_i
+        v = v.to_i
+        v = Bitcoin::Opcodes.small_int_to_opcode(v) if -1 <= v && v <= 16
+        script << (Bitcoin::Opcodes.defined?(v) ? v : Bitcoin::Script.encode_number(v))
       else
         opcode = Bitcoin::Opcodes.name_to_opcode(v)
         opcode = Bitcoin::Opcodes.name_to_opcode('OP_' + v) unless opcode
