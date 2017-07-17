@@ -9,7 +9,8 @@ describe Bitcoin::ScriptInterpreter do
         ["1 2", "2 EQUALVERIFY 1 EQUAL", "P2SH,STRICTENC", "OK", "Similarly whitespace around and between symbols"],
         ["0x01 0x0b", "11 EQUAL", "P2SH,STRICTENC", "OK", "push 1 byte"],
         ["0x02 0x417a", "'Az' EQUAL", "P2SH,STRICTENC", "OK"],
-        ["0x4f 1000 ADD","999 EQUAL", "P2SH,STRICTENC", "OK"]
+        ["0x4f 1000 ADD","999 EQUAL", "P2SH,STRICTENC", "OK"],
+        ["0x4c 0x01 0x07","7 EQUAL", "P2SH,STRICTENC", "OK", "0x4c is OP_PUSHDATA1"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do

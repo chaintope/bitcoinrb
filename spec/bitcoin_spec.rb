@@ -42,6 +42,7 @@ describe Bitcoin do
   describe '#pushed_data' do
     it 'should get pushed data' do
       expect('010b'.htb.pushed_data).to eq('0b'.htb)
+      expect('4c0107')
     end
   end
 

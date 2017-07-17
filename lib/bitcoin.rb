@@ -76,34 +76,34 @@ module Bitcoin
     # get opcode
     def opcode
       d = case encoding
-            when Encoding::ASCII_8BIT
-              each_byte.next
-            when Encoding::US_ASCII
-              ord
-            else
-              to_i
+          when Encoding::ASCII_8BIT
+            each_byte.next
+          when Encoding::US_ASCII
+            ord
+          else
+            to_i
           end
       Bitcoin::Opcodes.defined?(d) ? d : nil
     end
 
     # whether data push only?
     def pushdata?
-      opcode.nil?
+      o = opcode
+      o.nil? || (Bitcoin::Opcodes::OP_PUSHDATA1 <= opcode && opcode <= Bitcoin::Opcodes::OP_PUSHDATA4)
     end
 
     def pushed_data
-      if pushdata?
-        offset = 1
-        case opcode
-          when Bitcoin::Opcodes::OP_PUSHDATA1
-            offset += 1
-          when Bitcoin::Opcodes::OP_PUSHDATA2
-            offset += 2
-          when Bitcoin::Opcodes::OP_PUSHDATA4
-            offset += 4
-        end
-        self[offset..-1]
+      return nil unless pushdata?
+      offset = 1
+      case opcode
+      when Bitcoin::Opcodes::OP_PUSHDATA1
+        offset += 1
+      when Bitcoin::Opcodes::OP_PUSHDATA2
+        offset += 2
+      when Bitcoin::Opcodes::OP_PUSHDATA4
+        offset += 4
       end
+      self[offset..-1]
     end
 
   end
