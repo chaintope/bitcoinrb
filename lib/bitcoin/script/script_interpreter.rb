@@ -187,8 +187,13 @@ module Bitcoin
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   stack.insert(-3, stack.last)
                 when OP_ABS
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   v = pop_int
                   stack << v.abs
+                when OP_BOOLAND
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
+                  a, b = pop_int(2)
+                  stack << ((!a.zero? && !b.zero?) ? 1 : 0)
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
