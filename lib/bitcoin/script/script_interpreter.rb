@@ -106,8 +106,11 @@ module Bitcoin
                   stack << (a + b)
                 when OP_IF, OP_NOTIF
                   return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if stack.size < 1
-                  result = pop_bool
-                  result = !result if opcode == OP_NOTIF
+                  result = false
+                  if need_exec
+                    result = pop_bool
+                    result = !result if opcode == OP_NOTIF
+                  end
                   flow_stack << result
                 when OP_ELSE
                   return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if flow_stack.size < 1
