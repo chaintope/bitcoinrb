@@ -106,6 +106,9 @@ module Bitcoin
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_int(2)
                   stack << (a + b)
+                when OP_1ADD
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
+                  stack << pop_int + 1
                 when OP_IF, OP_NOTIF
                   result = false
                   if need_exec

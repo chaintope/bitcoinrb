@@ -34,8 +34,8 @@ module Bitcoin
     end
 
     # close network connection.
-    def close
-      logger.info "close connection with #{remote_node}."
+    def close(msg = '')
+      logger.info "close connection with #{remote_node}. #{msg}"
       close_connection_after_writing
       EM.stop
     end
@@ -43,6 +43,8 @@ module Bitcoin
     def handshake_done
       logger.info 'handshake finished.'
       @connected = true
+      # send_data(Message::SendCmpct.new(0, 1))
+
     end
 
     private
@@ -54,7 +56,8 @@ module Bitcoin
     # start handshake
     def begin_handshake
       logger.info "begin handshake with #{remote_node}"
-      ver = Bitcoin::Message::Version.new(remote_addr: remote_node)
+      ver = Bitcoin::Message::Version.new(remote_addr: remote_node, start_height: 1150660)
+      logger.info "send version message. #{ver.to_json}"
       send_data(ver.to_pkt)
     end
 
