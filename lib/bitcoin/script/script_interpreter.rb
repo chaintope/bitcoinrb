@@ -220,6 +220,10 @@ module Bitcoin
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_int(2)
                   stack << (a < b ? 1 : 0)
+                when OP_GREATERTHAN
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
+                  a, b = pop_int(2)
+                  stack << (a > b ? 1 : 0)
                 when OP_NOT
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << (pop_int == 0 ? 1 : 0)
