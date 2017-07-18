@@ -80,11 +80,11 @@ module Bitcoin
             stack << c.pushed_data.bth
           else
             opcode = c.ord
+            next unless (need_exec || (OP_IF <= opcode && opcode <= OP_ENDIF))
             small_int = Opcodes.opcode_to_small_int(opcode)
             if small_int
               stack << small_int
             else
-              next unless (need_exec || (OP_IF <= opcode && opcode <= OP_ENDIF))
               case opcode
                 when OP_DEPTH
                   stack << stack.size

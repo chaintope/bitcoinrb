@@ -4,7 +4,7 @@ describe Bitcoin::ScriptInterpreter do
 
   describe 'run' do
     script_json = fixture_file('script_tests.json').select{ |j|j.size > 3}
-    script_json = [
+    script_json= [
         ["", "DEPTH 0 EQUAL", "P2SH,STRICTENC", "OK", "Test the test: we should have an empty stack after scriptSig evaluation"],
         ["1 2", "2 EQUALVERIFY 1 EQUAL", "P2SH,STRICTENC", "OK", "Similarly whitespace around and between symbols"],
         ["0x01 0x0b", "11 EQUAL", "P2SH,STRICTENC", "OK", "push 1 byte"],
@@ -15,7 +15,8 @@ describe Bitcoin::ScriptInterpreter do
         ["1","NOP", "P2SH,STRICTENC", "OK"],
         ["0", "IF VER ELSE 1 ENDIF", "P2SH,STRICTENC", "OK", "VER non-functional (ok if not executed)"],
         ["1", "DUP IF ENDIF", "P2SH,STRICTENC", "OK"],
-        ["1 0", "NOTIF IF 1 ELSE 0 ENDIF ENDIF", "P2SH,STRICTENC", "OK"]
+        ["1 0", "NOTIF IF 1 ELSE 0 ENDIF ENDIF", "P2SH,STRICTENC", "OK"],
+        ["1", "IF 1 ELSE 0 ELSE 1 ENDIF ADD 2 EQUAL", "P2SH,STRICTENC", "OK"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
