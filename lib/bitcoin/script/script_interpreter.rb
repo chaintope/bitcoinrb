@@ -207,10 +207,17 @@ module Bitcoin
     end
 
     def cast_to_bool(v)
-      v.each_byte.with_index do |b, i|
-        return !(i == (v.bytesize - 1) && b == 0x80)  unless b == 0
+      case v
+        when Numeric
+          return v != 0
+        when String
+          v.each_byte.with_index do |b, i|
+            return !(i == (v.bytesize - 1) && b == 0x80)  unless b == 0
+          end
+          false
+        else
+          false
       end
-      false
     end
 
   end
