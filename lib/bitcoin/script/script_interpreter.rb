@@ -22,14 +22,14 @@ module Bitcoin
     include Bitcoin::Opcodes
 
     attr_reader :stack
+    attr_reader :alt_stack
     attr_reader :debug
     attr_reader :flags
     attr_accessor :error
 
     # initialize runner
     def initialize(flags: [])
-      @stack = []
-      @debug = []
+      @stack, @alt_stack, @debug = [], [], []
       @flags = flags
     end
 
@@ -130,6 +130,15 @@ module Bitcoin
                 when OP_VERIFY
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   return set_error(ScriptError::SCRIPT_ERR_VERIFY) unless pop_bool
+                when OP_TOALTSTACK
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
+                  alt_stack << stack.pop
+                when OP_FROMALTSTACK
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_ALTSTACK_OPERATION) if alt_stack.size < 1
+                  stack << alt_stack.pop
+                when OP_DROP
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
+                  stack.pop
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
