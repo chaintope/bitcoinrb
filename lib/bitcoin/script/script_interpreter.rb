@@ -179,6 +179,10 @@ module Bitcoin
                   tmp = stack.last
                   stack[-1] = stack[-2]
                   stack[-2] = tmp
+                when OP_2SWAP
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 4
+                  2.times {stack << stack[-4]}
+                  2.times {stack.delete_at(-5)}
                 when OP_TUCK
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   stack.insert(-3, stack.last)
