@@ -46,7 +46,8 @@ describe Bitcoin::ScriptInterpreter do
         ["0 0 BOOLOR", "NOT", "P2SH,STRICTENC", "OK"],
         ["11 10 1 ADD", "NUMEQUALVERIFY 1", "P2SH,STRICTENC", "OK"],
         ["11 10", "LESSTHAN NOT", "P2SH,STRICTENC", "OK"],
-        ["4 4", "GREATERTHAN NOT", "P2SH,STRICTENC", "OK"]
+        ["4 4", "GREATERTHAN NOT", "P2SH,STRICTENC", "OK"],
+        ["11 10", "LESSTHANOREQUAL NOT", "P2SH,STRICTENC", "OK"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
