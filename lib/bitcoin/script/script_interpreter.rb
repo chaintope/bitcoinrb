@@ -221,10 +221,11 @@ module Bitcoin
                   a, b = pop_int(2)
                   stack << (a < b ? 1 : 0) if opcode == OP_LESSTHAN
                   stack << (a <= b ? 1 : 0) if opcode == OP_LESSTHANOREQUAL
-                when OP_GREATERTHAN
+                when OP_GREATERTHAN, OP_GREATERTHANOREQUAL
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_int(2)
-                  stack << (a > b ? 1 : 0)
+                  stack << (a > b ? 1 : 0) if OP_GREATERTHAN
+                  stack << (a >= b ? 1 : 0) if OP_GREATERTHANOREQUAL
                 when OP_NOT
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << (pop_int == 0 ? 1 : 0)
