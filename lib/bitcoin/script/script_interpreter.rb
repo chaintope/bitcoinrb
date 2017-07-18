@@ -127,6 +127,9 @@ module Bitcoin
                 when OP_SHA1
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << Digest::SHA1.hexdigest(pop_string.htb)
+                when OP_VERIFY
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
+                  return set_error(ScriptError::SCRIPT_ERR_VERIFY) unless pop_bool
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
