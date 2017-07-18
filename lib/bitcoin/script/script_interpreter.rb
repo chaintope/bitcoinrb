@@ -204,13 +204,21 @@ module Bitcoin
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_int(2)
                   stack << ((!a.zero? || !b.zero?) ? 1 : 0)
-                when OP_NUMEQUAL
+                when OP_NUMEQUAL, OP_NUMEQUALVERIFY
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_int(2)
-                  stack << (a == b)
+                  result = a == b
+                  stack << (result ? 1 : 0)
+                  if opcode == OP_NUMEQUALVERIFY
+                    if result
+                      stack.pop
+                    else
+                      return set_error(ScriptError::SCRIPT_ERR_NUMEQUALVERIFY)
+                    end
+                  end
                 when OP_NOT
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
-                  stack << (pop_int == 0)
+                  stack << (pop_int == 0 ? 1 : 0)
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
