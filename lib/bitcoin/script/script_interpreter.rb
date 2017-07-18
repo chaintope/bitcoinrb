@@ -127,6 +127,9 @@ module Bitcoin
                 when OP_2DUP
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   2.times { stack << stack[-2] }
+                when OP_3DUP
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 3
+                  3.times { stack << stack[-3] }
                 when OP_IFDUP
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << stack.last if cast_to_bool(stack.last)
