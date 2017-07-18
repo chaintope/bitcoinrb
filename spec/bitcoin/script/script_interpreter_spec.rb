@@ -39,7 +39,8 @@ describe Bitcoin::ScriptInterpreter do
         ["1 3 5 7", "2SWAP ADD 4 EQUALVERIFY ADD 12 EQUAL", "P2SH,STRICTENC", "OK"],
         ["0 ABS", "0 EQUAL", "P2SH,STRICTENC", "OK"],
         ["1 1 BOOLAND", "NOP", "P2SH,STRICTENC", "OK"],
-        ["1 1ADD", "2 EQUAL", "P2SH,STRICTENC", "OK"]
+        ["1 1ADD", "2 EQUAL", "P2SH,STRICTENC", "OK"],
+        ["111 1SUB", "110 EQUAL", "P2SH,STRICTENC", "OK"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
@@ -81,8 +82,11 @@ describe Bitcoin::ScriptInterpreter do
         script << v[1..-2].bth
       elsif v =~ /^-?\d+$/
         v = v.to_i
-        v = Bitcoin::Opcodes.small_int_to_opcode(v) if -1 <= v && v <= 16
-        script << (Bitcoin::Opcodes.defined?(v) ? v : Bitcoin::Script.encode_number(v))
+        if -1 <= v && v <= 16
+          script << Bitcoin::Opcodes.small_int_to_opcode(v)
+        else
+          script << Bitcoin::Script.encode_number(v)
+        end
       else
         opcode = Bitcoin::Opcodes.name_to_opcode(v)
         opcode = Bitcoin::Opcodes.name_to_opcode('OP_' + v) unless opcode
