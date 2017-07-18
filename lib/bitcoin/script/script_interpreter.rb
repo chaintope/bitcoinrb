@@ -124,6 +124,9 @@ module Bitcoin
                 when OP_DUP
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << stack.last
+                when OP_IFDUP
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
+                  stack << stack.last if cast_to_bool(stack.last)
                 when OP_SHA1
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << Digest::SHA1.hexdigest(pop_string.htb)
@@ -200,7 +203,10 @@ module Bitcoin
 
     # pop the item with the boolean value from the stack.
     def pop_bool
-      v = pop_string.htb
+      cast_to_bool(pop_string.htb)
+    end
+
+    def cast_to_bool(v)
       v.each_byte.with_index do |b, i|
         return !(i == (v.bytesize - 1) && b == 0x80)  unless b == 0
       end
