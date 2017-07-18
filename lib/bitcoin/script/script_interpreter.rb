@@ -77,11 +77,7 @@ module Bitcoin
           need_exec = !flag_stack.include?(false)
 
           if c.pushdata?
-            # if c.bytesize == 1 && Opcodes.small_int_to_opcode(c.ord)
-            #   @stack << c.ord
-            # else
-              @stack << c.pushed_data.bth
-            # end
+            @stack << c.pushed_data.bth
           else
             opcode = c.ord
             small_int = Opcodes.opcode_to_small_int(opcode)
@@ -111,6 +107,9 @@ module Bitcoin
                 when OP_IF
                   return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if @stack.size < 1
                   flag_stack << pop_bool
+                when OP_ELSE
+                  return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if flag_stack.size < 1
+                  flag_stack << !flag_stack.pop
                 when OP_ENDIF
                   return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if flag_stack.empty?
                   flag_stack.pop
