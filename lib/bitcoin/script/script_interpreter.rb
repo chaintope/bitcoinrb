@@ -82,10 +82,12 @@ module Bitcoin
             opcode = c.ord
             next unless (need_exec || (OP_IF <= opcode && opcode <= OP_ENDIF))
             small_int = Opcodes.opcode_to_small_int(opcode)
-            if small_int
+            if small_int && opcode != OP_0
               stack << small_int
             else
               case opcode
+                when OP_0
+                  stack << ''
                 when OP_DEPTH
                   stack << stack.size
                 when OP_EQUAL, OP_EQUALVERIFY
@@ -122,6 +124,9 @@ module Bitcoin
                 when OP_DUP
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << stack.last
+                when OP_SHA1
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
+                  stack << Digest::SHA1.hexdigest(pop_string.htb)
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
@@ -167,9 +172,13 @@ module Bitcoin
       s = stack.pop(count).map do |s|
         case s
           when Numeric
-            hex = s.to_s(16)
-            hex = '0' + hex unless hex.length % 2 == 0
-            hex.htb.reverse.bth
+            if s == 0
+              ''
+            else
+              hex = s.to_s(16)
+              hex = '0' + hex unless hex.length % 2 == 0
+              hex.htb.reverse.bth
+            end
           else
             s
         end
