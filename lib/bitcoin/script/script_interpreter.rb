@@ -170,6 +170,9 @@ module Bitcoin
                   tmp = stack[-1]
                   stack[-1] = stack[-2]
                   stack[-2] = tmp
+                when OP_TUCK
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
+                  stack.insert(-3, stack.last)
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
