@@ -10,6 +10,13 @@ module Bitcoin
   SCRIPT_VERIFY_MINIMALDATA = (1 << 6)
   SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS = (1 << 7)
   SCRIPT_VERIFY_CLEANSTACK = (1 << 8)
+  SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY = (1 << 9) # Verify CHECKLOCKTIMEVERIFY (BIP-65)
+  SCRIPT_VERIFY_CHECKSEQUENCEVERIFY = (1 << 10) # support CHECKSEQUENCEVERIFY opcode (BIP-112)
+  SCRIPT_VERIFY_WITNESS = (1 << 11) # Support segregated witness
+  SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM = (1 << 12) # Making v1-v16 witness program non-standard
+  SCRIPT_VERIFY_MINIMALIF = (1 << 13) # Segwit script only: Require the argument of OP_IF/NOTIF to be exactly 0x01 or empty vector
+  SCRIPT_VERIFY_NULLFAIL = (1 << 14) # Signature(s) must be empty vector if an CHECK(MULTI)SIG operation failed
+  SCRIPT_VERIFY_WITNESS_PUBKEYTYPE = (1 << 15) # Public keys in segregated witness scripts must be compressed
 
   class ScriptInterpreter
     include Bitcoin::Opcodes
