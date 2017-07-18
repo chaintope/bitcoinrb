@@ -148,11 +148,12 @@ module Bitcoin
                 when OP_OVER
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   stack << stack[-2]
-                when OP_PICK
+                when OP_PICK, OP_ROLL
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   pos = pop_int
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if pos < 0 || pos >= stack.size
                   stack << stack[-pos - 1]
+                  stack.delete_at(-pos - 2) if opcode == OP_ROLL
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
