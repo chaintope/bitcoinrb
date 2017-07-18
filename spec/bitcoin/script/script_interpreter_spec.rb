@@ -10,7 +10,8 @@ describe Bitcoin::ScriptInterpreter do
         ["0x01 0x0b", "11 EQUAL", "P2SH,STRICTENC", "OK", "push 1 byte"],
         ["0x02 0x417a", "'Az' EQUAL", "P2SH,STRICTENC", "OK"],
         ["0x4f 1000 ADD","999 EQUAL", "P2SH,STRICTENC", "OK"],
-        ["0x4c 0x01 0x07","7 EQUAL", "P2SH,STRICTENC", "OK", "0x4c is OP_PUSHDATA1"]
+        ["0x4c 0x01 0x07","7 EQUAL", "P2SH,STRICTENC", "OK", "0x4c is OP_PUSHDATA1"],
+        ["0", "IF 0x50 ENDIF 1", "P2SH,STRICTENC", "OK", "0x50 is reserved (ok if not executed)"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
@@ -20,6 +21,7 @@ describe Bitcoin::ScriptInterpreter do
         expected_err_code = Bitcoin::ScriptError.name_to_code('SCRIPT_ERR_' + r[3])
         i = Bitcoin::ScriptInterpreter.new(flags: flags)
         result = i.verify(script_sig, script_pubkey)
+        puts i.error.to_s
         expect(result).to be expected_err_code == Bitcoin::ScriptError::SCRIPT_ERR_OK
         expect(i.error.code).to eq(expected_err_code) unless result
       end

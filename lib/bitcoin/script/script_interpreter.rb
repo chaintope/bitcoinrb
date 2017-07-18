@@ -65,7 +65,10 @@ module Bitcoin
 
     def eval_script(script)
       begin
+        flag_stack = []
         script.chunks.each do |c|
+          need_exec = !flag_stack.include?(false)
+
           if c.pushdata?
             # if c.bytesize == 1 && Opcodes.small_int_to_opcode(c.ord)
             #   @stack << c.ord
@@ -78,6 +81,7 @@ module Bitcoin
             if small_int
               @stack << small_int
             else
+              next unless (need_exec || (OP_IF <= opcode && opcode <= OP_ENDIF))
               case opcode
                 when OP_DEPTH
                   @stack << @stack.size
@@ -97,6 +101,12 @@ module Bitcoin
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if @stack.size < 2
                   a, b = pop_int(2)
                   @stack << (a + b)
+                when OP_IF
+                  return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if @stack.size < 1
+                  flag_stack << pop_bool
+                when OP_ENDIF
+                  return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if flag_stack.empty?
+                  flag_stack.pop
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
@@ -124,8 +134,9 @@ module Bitcoin
       result
     end
 
-    def pop_int(count)
-      stack.pop(count).map do |s|
+    # pop the item with the int value for the number specified by +count+ from the stack.
+    def pop_int(count = 1)
+      i = stack.pop(count).map do |s|
         case s
           when String
             s.htb.reverse.bth.to_i(16)
@@ -133,27 +144,33 @@ module Bitcoin
             s
         end
       end
+      count == 1 ? i.first : i
     end
 
-    def pop_string(count)
-      stack.pop(count).map do |s|
+    # pop the item with the string(hex) value for the number specified by +count+ from the stack.
+    def pop_string(count = 1)
+      s = stack.pop(count).map do |s|
         case s
           when Numeric
-            if s < 256
-              [s].pack('C')
-            else
-              hex = s.to_s(16)
-              hex = '0' + hex unless hex.length % 2 == 0
-              hex.htb.reverse.bth
-            end
+            hex = s.to_s(16)
+            hex = '0' + hex unless hex.length % 2 == 0
+            hex.htb.reverse.bth
           else
             s
         end
       end
+      count == 1 ? s.first : s
+    end
+
+    # pop the item with the boolean value from the stack.
+    def pop_bool
+      v = pop_string.htb
+      v.each_byte.with_index do |b, i|
+        return !(i == (b.bytesize - 1) && byte == 0x80)  unless b == 0
+      end
+      false
     end
 
   end
-
-
 
 end
