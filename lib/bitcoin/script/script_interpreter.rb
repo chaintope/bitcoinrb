@@ -107,9 +107,9 @@ module Bitcoin
                   a, b = pop_int(2)
                   stack << (a + b)
                 when OP_IF, OP_NOTIF
-                  return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if stack.size < 1
                   result = false
                   if need_exec
+                    return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if stack.size < 1
                     result = pop_bool
                     result = !result if opcode == OP_NOTIF
                   end
