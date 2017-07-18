@@ -72,48 +72,51 @@ module Bitcoin
 
     def eval_script(script)
       begin
-        flag_stack = []
+        flow_stack = []
         script.chunks.each do |c|
-          need_exec = !flag_stack.include?(false)
+          need_exec = !flow_stack.include?(false)
 
           if c.pushdata?
-            @stack << c.pushed_data.bth
+            stack << c.pushed_data.bth
           else
             opcode = c.ord
             small_int = Opcodes.opcode_to_small_int(opcode)
             if small_int
-              @stack << small_int
+              stack << small_int
             else
               next unless (need_exec || (OP_IF <= opcode && opcode <= OP_ENDIF))
               case opcode
                 when OP_DEPTH
-                  @stack << @stack.size
+                  stack << stack.size
                 when OP_EQUAL, OP_EQUALVERIFY
-                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if @stack.size < 2
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_string(2)
                   result = a == b
-                  @stack << result
+                  stack << result
                   if opcode == OP_EQUALVERIFY
                     if result
-                      @stack.pop
+                      stack.pop
                     else
                       return set_error(ScriptError::SCRIPT_ERR_EQUALVERIFY)
                     end
                   end
                 when OP_ADD
-                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if @stack.size < 2
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_int(2)
-                  @stack << (a + b)
+                  stack << (a + b)
                 when OP_IF
-                  return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if @stack.size < 1
-                  flag_stack << pop_bool
+                  return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if stack.size < 1
+                  flow_stack << pop_bool
                 when OP_ELSE
-                  return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if flag_stack.size < 1
-                  flag_stack << !flag_stack.pop
+                  return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if flow_stack.size < 1
+                  flow_stack << !flow_stack.pop
                 when OP_ENDIF
-                  return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if flag_stack.empty?
-                  flag_stack.pop
+                  return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if flow_stack.empty?
+                  flow_stack.pop
                 when OP_NOP
+                when OP_DUP
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
+                  stack << stack.last
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
@@ -173,7 +176,7 @@ module Bitcoin
     def pop_bool
       v = pop_string.htb
       v.each_byte.with_index do |b, i|
-        return !(i == (b.bytesize - 1) && byte == 0x80)  unless b == 0
+        return !(i == (v.bytesize - 1) && b == 0x80)  unless b == 0
       end
       false
     end
