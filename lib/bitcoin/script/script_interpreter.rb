@@ -145,6 +145,9 @@ module Bitcoin
                 when OP_NIP
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   stack.delete_at(-2)
+                when OP_OVER
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
+                  stack << stack[-2]
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
