@@ -14,7 +14,8 @@ describe Bitcoin::ScriptInterpreter do
         ["0", "IF 0x50 ENDIF 1", "P2SH,STRICTENC", "OK", "0x50 is reserved (ok if not executed)"],
         ["1","NOP", "P2SH,STRICTENC", "OK"],
         ["0", "IF VER ELSE 1 ENDIF", "P2SH,STRICTENC", "OK", "VER non-functional (ok if not executed)"],
-        ["1", "DUP IF ENDIF", "P2SH,STRICTENC", "OK"]
+        ["1", "DUP IF ENDIF", "P2SH,STRICTENC", "OK"],
+        ["1 0", "NOTIF IF 1 ELSE 0 ENDIF ENDIF", "P2SH,STRICTENC", "OK"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do

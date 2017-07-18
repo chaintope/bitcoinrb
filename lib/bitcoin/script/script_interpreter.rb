@@ -104,9 +104,11 @@ module Bitcoin
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_int(2)
                   stack << (a + b)
-                when OP_IF
+                when OP_IF, OP_NOTIF
                   return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if stack.size < 1
-                  flow_stack << pop_bool
+                  result = pop_bool
+                  result = !result if opcode == OP_NOTIF
+                  flow_stack << result
                 when OP_ELSE
                   return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if flow_stack.size < 1
                   flow_stack << !flow_stack.pop
