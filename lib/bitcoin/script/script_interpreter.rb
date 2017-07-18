@@ -114,6 +114,7 @@ module Bitcoin
                 when OP_ENDIF
                   return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if flag_stack.empty?
                   flag_stack.pop
+                when OP_NOP
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
