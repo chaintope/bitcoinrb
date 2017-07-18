@@ -124,6 +124,9 @@ module Bitcoin
                 when OP_DUP
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << stack.last
+                when OP_2DUP
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
+                  2.times { stack << stack[-2] }
                 when OP_IFDUP
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << stack.last if cast_to_bool(stack.last)
@@ -167,7 +170,7 @@ module Bitcoin
                   2.times { stack.delete_at(-7) }
                 when OP_SWAP
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
-                  tmp = stack[-1]
+                  tmp = stack.last
                   stack[-1] = stack[-2]
                   stack[-2] = tmp
                 when OP_TUCK
