@@ -241,6 +241,7 @@ module Bitcoin
     # decode script number hex to int value
     def self.decode_number(s)
       v = s.htb.reverse
+      return 0 if v.length.zero?
       mbs = v[0].unpack('C').first
       v[0] = [mbs - 0x80].pack('C') unless (mbs & 0x80) == 0
       result = v.bth.to_i(16)
