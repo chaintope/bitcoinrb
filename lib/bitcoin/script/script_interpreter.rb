@@ -252,6 +252,9 @@ module Bitcoin
                   item = Bitcoin::Script.encode_number(item) if item.is_a?(Numeric)
                   size = item.htb.bytesize
                   stack << size
+                when OP_NEGATE
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
+                  stack << -pop_int
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
