@@ -233,13 +233,9 @@ module Bitcoin
       hex = '0' + hex unless (hex.length % 2).zero?
       v = hex.htb.reverse # change endian
 
-      v[-1] = [v[-1].unpack('C').first | 0x81].pack('C') if negative
+      v = v << (negative ? 0x80 : 0x00) unless (v[-1].unpack('C').first & 0x80) == 0
+      v[-1] = [v[-1].unpack('C').first | 0x80].pack('C') if negative
       v.bth
-    end
-
-    # decode script number hex to int value
-    def self.decode_number(s)
-
     end
 
     private
