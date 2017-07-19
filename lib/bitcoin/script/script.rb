@@ -238,6 +238,16 @@ module Bitcoin
       v.bth
     end
 
+    # decode script number hex to int value
+    def self.decode_number(s)
+      v = s.htb.reverse
+      mbs = v[0].unpack('C').first
+      v[0] = [mbs - 0x80].pack('C') unless (mbs & 0x80) == 0
+      result = v.bth.to_i(16)
+      result = -result unless (mbs & 0x80) == 0
+      result
+    end
+
     private
 
     # generate p2pkh address. if script dose not p2pkh, return nil.

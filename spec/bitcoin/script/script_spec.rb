@@ -189,4 +189,18 @@ describe Bitcoin::Script do
     end
   end
 
+  describe '#decode_number' do
+    it 'should be decoded' do
+      expect(Bitcoin::Script.decode_number('e803')).to eq(1000)
+      expect(Bitcoin::Script.decode_number('64')).to eq(100)
+      expect(Bitcoin::Script.decode_number('e883')).to eq(-1000)
+      expect(Bitcoin::Script.decode_number('7f')).to eq(127)
+      expect(Bitcoin::Script.decode_number('8000')).to eq(128)
+      expect(Bitcoin::Script.decode_number('8100')).to eq(129)
+      expect(Bitcoin::Script.decode_number('ff')).to eq(-127)
+      expect(Bitcoin::Script.decode_number('8080')).to eq(-128)
+      expect(Bitcoin::Script.decode_number('8180')).to eq(-129)
+    end
+  end
+
 end
