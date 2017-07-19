@@ -146,6 +146,9 @@ module Bitcoin
                 when OP_IFDUP
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << stack.last if cast_to_bool(stack.last)
+                when OP_RIPEMD160
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
+                  stack << Digest::RMD160.hexdigest(pop_string.htb)
                 when OP_SHA1
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << Digest::SHA1.hexdigest(pop_string.htb)
