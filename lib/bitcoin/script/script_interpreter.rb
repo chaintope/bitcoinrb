@@ -239,6 +239,12 @@ module Bitcoin
                 when OP_NOT
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << (pop_int == 0 ? 1 : 0)
+                when OP_SIZE
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
+                  item = stack.last
+                  item = Bitcoin::Script.encode_number(item) if item.is_a?(Numeric)
+                  size = item.htb.bytesize
+                  stack << size
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
@@ -303,6 +309,7 @@ module Bitcoin
       cast_to_bool(pop_string.htb)
     end
 
+    # see https://github.com/bitcoin/bitcoin/blob/master/src/script/interpreter.cpp#L36-L49
     def cast_to_bool(v)
       case v
         when Numeric

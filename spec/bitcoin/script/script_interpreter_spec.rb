@@ -51,7 +51,11 @@ describe Bitcoin::ScriptInterpreter do
         ["11 10", "GREATERTHANOREQUAL", "P2SH,STRICTENC", "OK"],
         ["1 0 MIN", "0 NUMEQUAL", "P2SH,STRICTENC", "OK"],
         ["2147483647 0 MAX", "2147483647 NUMEQUAL", "P2SH,STRICTENC", "OK"],
-        ["0 0 1", "WITHIN", "P2SH,STRICTENC", "OK"]
+        ["0 0 1", "WITHIN", "P2SH,STRICTENC", "OK"],
+        ["0", "SIZE 0 EQUAL", "P2SH,STRICTENC", "OK"],
+        ["1", "SIZE 1 EQUAL", "P2SH,STRICTENC", "OK"],
+        ["127", "SIZE 1 EQUAL", "P2SH,STRICTENC", "OK"],
+        ["128", "SIZE 2 EQUAL", "P2SH,STRICTENC", "OK"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
