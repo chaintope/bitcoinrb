@@ -280,7 +280,7 @@ module Bitcoin
       i = stack.pop(count).map do |s|
         case s
           when String
-            s.htb.reverse.bth.to_i(16)
+            Script.decode_number(s)
           else
             s
         end
