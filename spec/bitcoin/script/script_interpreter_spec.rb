@@ -63,7 +63,8 @@ describe Bitcoin::ScriptInterpreter do
         ["-1 -1 ADD", "-2 EQUAL", "P2SH,STRICTENC", "OK"],
         ["11 10 1 ADD", "NUMNOTEQUAL NOT", "P2SH,STRICTENC", "OK"],
         ["''", "RIPEMD160 0x14 0x9c1185a5c5e9fc54612808977ee8f548b2258d31 EQUAL", "P2SH,STRICTENC", "OK"],
-        ["''", "SHA256 0x20 0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 EQUAL", "P2SH,STRICTENC", "OK"]
+        ["''", "SHA256 0x20 0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 EQUAL", "P2SH,STRICTENC", "OK"],
+        ["''", "DUP HASH160 SWAP SHA256 RIPEMD160 EQUAL", "P2SH,STRICTENC", "OK"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
