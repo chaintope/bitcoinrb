@@ -227,6 +227,7 @@ module Bitcoin
     # Byte vectors are interpreted as Booleans where False is represented by any representation of zero,
     # and True is represented by any representation of non-zero.
     def self.encode_number(i)
+      return '' if i == 0
       negative = i < 0
 
       hex = i.abs.to_s(16)

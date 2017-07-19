@@ -300,13 +300,7 @@ module Bitcoin
       s = stack.pop(count).map do |s|
         case s
           when Numeric
-            if s == 0
-              ''
-            else
-              hex = s.to_s(16)
-              hex = '0' + hex unless hex.length % 2 == 0
-              hex.htb.reverse.bth
-            end
+            Script.encode_number(s)
           else
             s
         end

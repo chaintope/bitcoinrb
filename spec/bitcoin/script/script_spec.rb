@@ -186,6 +186,7 @@ describe Bitcoin::Script do
       expect(Bitcoin::Script.encode_number(-127)).to eq('ff')
       expect(Bitcoin::Script.encode_number(-128)).to eq('8080')
       expect(Bitcoin::Script.encode_number(-129)).to eq('8180')
+      expect(Bitcoin::Script.encode_number(0)).to eq('')
     end
   end
 
@@ -200,6 +201,7 @@ describe Bitcoin::Script do
       expect(Bitcoin::Script.decode_number('ff')).to eq(-127)
       expect(Bitcoin::Script.decode_number('8080')).to eq(-128)
       expect(Bitcoin::Script.decode_number('8180')).to eq(-129)
+      expect(Bitcoin::Script.decode_number('')).to eq(0)
     end
   end
 
