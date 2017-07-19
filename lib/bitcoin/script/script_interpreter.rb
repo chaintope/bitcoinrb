@@ -255,6 +255,10 @@ module Bitcoin
                 when OP_NEGATE
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << -pop_int
+                when OP_NUMNOTEQUAL
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION)  if stack.size < 2
+                  a, b = pop_int(2)
+                  stack << (a == b ? 0 : 1)
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
