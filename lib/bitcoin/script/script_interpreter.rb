@@ -134,6 +134,16 @@ module Bitcoin
                   return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if flow_stack.empty?
                   flow_stack.pop
                 when OP_NOP
+                when OP_NOP1, OP_NOP4..OP_NOP10
+                  return set_error(ScriptError::SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS) if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
+                when OP_CHECKLOCKTIMEVERIFY
+                  return set_error(ScriptError::SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS) if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
+                  # TODO implement
+                when OP_CHECKSEQUENCEVERIFY
+                  return set_error(ScriptError::SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS) if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
+                  # TODO implement
                 when OP_DUP
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << stack.last
