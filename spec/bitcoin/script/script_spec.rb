@@ -205,4 +205,14 @@ describe Bitcoin::Script do
     end
   end
 
+  describe '#subscript' do
+    subject {
+      Bitcoin::Script.new << OP_DUP << OP_HASH160 << 'pubkeyhash' << OP_EQUALVERIFY << OP_CHECKSIG
+    }
+    it 'should be split' do
+      expect(subject.subscript(0..-1)).to eq(subject)
+      expect(subject.subscript(3..-1)).to eq(Bitcoin::Script.new << OP_EQUALVERIFY << OP_CHECKSIG)
+    end
+  end
+
 end

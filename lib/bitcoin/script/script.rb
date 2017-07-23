@@ -250,6 +250,18 @@ module Bitcoin
       result
     end
 
+    # subscript this script to the specified range.
+    def subscript(*args)
+      s = self.class.new
+      s.chunks = chunks[*args]
+      s
+    end
+
+    def ==(other)
+      return false unless other
+      chunks == other.chunks
+    end
+
     private
 
     # generate p2pkh address. if script dose not p2pkh, return nil.
