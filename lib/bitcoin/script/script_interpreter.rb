@@ -94,7 +94,7 @@ module Bitcoin
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_string(2)
                   result = a == b
-                  stack << result
+                  stack << (result ? 1 : 0)
                   if opcode == OP_EQUALVERIFY
                     if result
                       stack.pop
