@@ -257,6 +257,13 @@ module Bitcoin
       s
     end
 
+    # removes chunks matching subscript byte-for-byte and returns as a new object.
+    def find_and_delete(subscript)
+      raise ArgumentError, 'subscript must be Bitcoin::Script' unless subscript.is_a?(Script)
+      diff = to_payload.bth.gsub(subscript.to_payload.bth, '')
+      Script.parse_from_payload(diff.htb)
+    end
+
     def ==(other)
       return false unless other
       chunks == other.chunks

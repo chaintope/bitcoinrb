@@ -215,4 +215,26 @@ describe Bitcoin::Script do
     end
   end
 
+  describe '#find_and_delete' do
+    context 'single opcode' do
+      subject {
+        s = Bitcoin::Script.new << OP_DUP << OP_HASH160 << 'pubkeyhash' << OP_EQUALVERIFY << OP_CHECKSIG
+        s.find_and_delete(Bitcoin::Script.new << OP_HASH160)
+      }
+      it 'should be delete' do
+        expect(subject).to eq(Bitcoin::Script.new << OP_DUP << 'pubkeyhash' << OP_EQUALVERIFY << OP_CHECKSIG)
+      end
+    end
+
+    context 'subsequence' do
+      subject {
+        s = Bitcoin::Script.new << OP_1 << OP_3 << OP_1 << OP_2 << OP_1 << OP_2 << OP_1 << OP_3
+        s.find_and_delete(Bitcoin::Script.new << OP_1 << OP_2 << OP_1)
+      }
+      it 'should be delete' do
+        expect(subject).to eq(Bitcoin::Script.new << OP_1 << OP_3 << OP_2 << OP_1 << OP_3)
+      end
+    end
+  end
+
 end
