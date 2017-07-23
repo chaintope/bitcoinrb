@@ -73,7 +73,8 @@ module Bitcoin
     def eval_script(script)
       begin
         flow_stack = []
-        script.chunks.each do |c|
+        last_code_separator_index = 0
+        script.chunks.each_with_index do |c, index|
           need_exec = !flow_stack.include?(false)
 
           if c.pushdata?
@@ -281,6 +282,8 @@ module Bitcoin
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION)  if stack.size < 2
                   a, b = pop_int(2)
                   stack << (a == b ? 0 : 1)
+                when OP_CODESEPARATOR
+                  last_code_separator_index = index + 1
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
