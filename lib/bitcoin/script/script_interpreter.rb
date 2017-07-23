@@ -145,7 +145,7 @@ module Bitcoin
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   # TODO implement
                 when OP_CHECKSEQUENCEVERIFY
-                  unless flag?(OP_CHECKSEQUENCEVERIFY)
+                  unless flag?(SCRIPT_VERIFY_CHECKSEQUENCEVERIFY)
                     return set_error(ScriptError::SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS) if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
                     next
                   end
