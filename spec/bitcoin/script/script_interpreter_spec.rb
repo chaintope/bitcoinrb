@@ -68,7 +68,8 @@ describe Bitcoin::ScriptInterpreter do
         ["''", "DUP HASH256 SWAP SHA256 SHA256 EQUAL", "P2SH,STRICTENC", "OK"],
         ["1","NOP1 CHECKLOCKTIMEVERIFY CHECKSEQUENCEVERIFY NOP4 NOP5 NOP6 NOP7 NOP8 NOP9 NOP10 1 EQUAL", "P2SH,STRICTENC", "OK"],
         ["0 0 1", "EQUAL EQUAL", "P2SH,STRICTENC", "OK", "OP_0 and bools must have identical byte representations"],
-        ["NOP", "CODESEPARATOR 1", "P2SH,STRICTENC", "OK"]
+        ["NOP", "CODESEPARATOR 1", "P2SH,STRICTENC", "OK"],
+        ["NOP", "CHECKLOCKTIMEVERIFY 1", "P2SH,STRICTENC", "OK"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do

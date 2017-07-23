@@ -138,11 +138,17 @@ module Bitcoin
                 when OP_NOP1, OP_NOP4..OP_NOP10
                   return set_error(ScriptError::SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS) if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
                 when OP_CHECKLOCKTIMEVERIFY
-                  return set_error(ScriptError::SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS) if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
+                  unless flag?(SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY)
+                    return set_error(ScriptError::SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS) if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
+                    next
+                  end
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   # TODO implement
                 when OP_CHECKSEQUENCEVERIFY
-                  return set_error(ScriptError::SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS) if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
+                  unless flag?(OP_CHECKSEQUENCEVERIFY)
+                    return set_error(ScriptError::SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS) if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
+                    next
+                  end
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   # TODO implement
                 when OP_DUP
