@@ -99,6 +99,66 @@ module Bitcoin
       inputs.map { |i| i.script_witness.to_payload }.join
     end
 
+    # get signature hash
+    def sighash_for_input(input_index: nil, hash_type: Script::SIGHASH_TYPE[:all], script_pubkey: nil, amount: nil)
+      raise ArgumentError, 'input_index must be specified.' unless input_index
+      raise ArgumentError, 'does not exist input corresponding to input_index.' if input_index >= inputs.size
+      raise ArgumentError, 'script_pubkey must be specified.' unless script_pubkey
+
+      script = Script.parse_from_payload(script_pubkey)
+      if script.witness_program?
+        raise ArgumentError, 'amount must be specified.' unless amount
+      else
+        sighash_for_legacy(input_index, script, hash_type)
+      end
+    end
+
+    private
+
+    # generate sighash with legacy format
+    def sighash_for_legacy(index, script_pubkey, hash_type)
+      ins = inputs.map.with_index do |i, idx|
+        if idx == index
+          i.to_payload(script_pubkey)
+        else
+          case hash_type & 0x1f
+            when Script::SIGHASH_TYPE[:none], Script::SIGHASH_TYPE[:single]
+              i.to_payload(Bitcoin::Script.new, 0)
+            else
+              i.to_payload(Bitcoin::Script.new)
+          end
+        end
+      end
+
+      outs = outputs.map(&:to_payload)
+      out_size = Bitcoin.pack_var_int(outputs.size)
+
+      case hash_type & 0x1f
+        when Script::SIGHASH_TYPE[:none]
+          outs = ''
+          out_size = Bitcoin.pack_var_int(0)
+        when Script::SIGHASH_TYPE[:single]
+          return "\x01".ljust(32, "\x00") if index >= outputs.size
+          outs = outputs[0...(index + 1)].map.with_index { |o, idx| (idx == index) ? o.to_payload : o.to_empty_payload }.join
+          out_size = Bitcoin.pack_var_int(index + 1)
+      end
+
+      if hash_type & Script::SIGHASH_TYPE[:anyonecanpay] != 0
+        ins = [ins[index]]
+      end
+
+      buf = [[version].pack('V'), Bitcoin.pack_var_int(ins.size),
+          ins, out_size, outs, [lock_time, hash_type].pack('VV')].join
+
+      Bitcoin.double_sha256(buf)
+    end
+
+    # generate sighash with BIP-143 format
+    # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
+    def sighash_for_witness
+      # TODO
+    end
+
   end
 
 end

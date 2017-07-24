@@ -23,6 +23,10 @@ module Bitcoin
       [value].pack('Q') << Bitcoin.pack_var_int(s.length) << s
     end
 
+    def to_empty_payload
+      'ffffffffffffffff00'.htb
+    end
+
   end
 
 end

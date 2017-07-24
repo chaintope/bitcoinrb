@@ -29,7 +29,7 @@ module Bitcoin
       out_point.coinbase?
     end
 
-    def to_payload
+    def to_payload(script_sig = @script_sig, sequence = @sequence)
       p = out_point.to_payload
       p << Bitcoin.pack_var_int(script_sig.to_payload.bytesize)
       p << script_sig.to_payload << [sequence].pack('V')
