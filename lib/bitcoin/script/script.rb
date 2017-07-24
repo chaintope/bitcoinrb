@@ -22,6 +22,9 @@ module Bitcoin
     # Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp.
     LOCKTIME_THRESHOLD = 500000000
 
+    # Signature hash types/flags
+    SIGHASH_TYPE = { all: 1, none: 2, single: 3, anyonecanpay: 128 }
+
     attr_accessor :chunks
 
     def initialize
