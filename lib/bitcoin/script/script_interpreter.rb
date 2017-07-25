@@ -31,6 +31,8 @@ module Bitcoin
     attr_accessor :error
     attr_reader :checker
 
+    DISABLE_OPCODES = [OP_CAT, OP_SUBSTR, OP_LEFT, OP_RIGHT, OP_INVERT, OP_AND, OP_OR, OP_XOR, OP_2MUL, OP_2DIV, OP_DIV, OP_MUL, OP_MOD, OP_LSHIFT, OP_RSHIFT]
+
     # initialize runner
     def initialize(flags: [], checker: TxChecker.new)
       @stack, @alt_stack, @debug = [], [], []
@@ -86,6 +88,7 @@ module Bitcoin
             stack << c.pushed_data.bth
           else
             opcode = c.ord
+            return set_error(ScriptError::SCRIPT_ERR_DISABLED_OPCODE) if DISABLE_OPCODES.include?(opcode)
             next unless (need_exec || (OP_IF <= opcode && opcode <= OP_ENDIF))
             small_int = Opcodes.opcode_to_small_int(opcode)
             if small_int && opcode != OP_0
