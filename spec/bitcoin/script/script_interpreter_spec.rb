@@ -71,15 +71,25 @@ describe Bitcoin::ScriptInterpreter do
         ["NOP", "CODESEPARATOR 1", "P2SH,STRICTENC", "OK"],
         ["NOP", "CHECKLOCKTIMEVERIFY 1", "P2SH,STRICTENC", "OK"],
         ["NOP", "CHECKSEQUENCEVERIFY 1", "P2SH,STRICTENC", "OK"],
-        ["0", "0x21 0x02865c40293a680cb9c020e7b1e106d8c1916d3cef99aa431a56d253e69256dac0 CHECKSIG NOT", "STRICTENC", "OK"],
+        ["0", "0x21 0x02865c40293a680cb9c020e7b1e106d8c1916d3cef99aa431a56d253e69256dac0 CHECKSIG NOT", "STRICTENC", "OK"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
+        if r[0].is_a?(Array)
+          r[0] = r[0].join(' ')
+          script_pubkey = r[2]
+          flags = r[3]
+          error_code = r[4]
+        else
+          script_pubkey = r[1]
+          flags = r[2]
+          error_code = r[3]
+        end
         script_sig = parse_json_script(r[0])
-        script_pubkey = parse_json_script(r[1])
+        script_pubkey = parse_json_script(script_pubkey)
         tx = build_dummy_tx(script_sig, '')
-        flags = r[2].split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}
-        expected_err_code = Bitcoin::ScriptError.name_to_code('SCRIPT_ERR_' + r[3])
+        flags = flags.split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}
+        expected_err_code = Bitcoin::ScriptError.name_to_code('SCRIPT_ERR_' + error_code)
         i = Bitcoin::ScriptInterpreter.new(flags: flags, checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0))
         result = i.verify(script_sig, script_pubkey)
         puts i.error.to_s
