@@ -16,7 +16,7 @@ module Bitcoin
   autoload :Script, 'bitcoin/script/script'
   autoload :ScriptInterpreter, 'bitcoin/script/script_interpreter'
   autoload :ScriptError, 'bitcoin/script/script_error'
-  autoload :SignatureChecker, 'bitcoin/script/signature_checker'
+  autoload :TxChecker, 'bitcoin/script/tx_checker'
   autoload :TxIn, 'bitcoin/tx_in'
   autoload :TxOut, 'bitcoin/tx_out'
   autoload :OutPoint, 'bitcoin/out_point'

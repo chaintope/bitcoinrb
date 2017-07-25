@@ -32,7 +32,7 @@ module Bitcoin
     attr_reader :checker
 
     # initialize runner
-    def initialize(flags: [], checker: SignatureChecker.new)
+    def initialize(flags: [], checker: TxChecker.new)
       @stack, @alt_stack, @debug = [], [], []
       @flags = flags
       @checker = checker

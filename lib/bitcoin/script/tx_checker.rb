@@ -1,5 +1,5 @@
 module Bitcoin
-  class SignatureChecker
+  class TxChecker
 
     attr_reader :tx
     attr_reader :input_index
@@ -29,6 +29,14 @@ module Bitcoin
       end
       key = Bitcoin::Key.new(pubkey: pubkey)
       key.verify(sig, sighash)
+    end
+
+    def check_locktime
+      # TODO
+    end
+
+    def check_sequence
+      # TODO
     end
 
   end

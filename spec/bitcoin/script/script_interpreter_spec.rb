@@ -80,7 +80,7 @@ describe Bitcoin::ScriptInterpreter do
         tx = build_dummy_tx(script_sig, '')
         flags = r[2].split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}
         expected_err_code = Bitcoin::ScriptError.name_to_code('SCRIPT_ERR_' + r[3])
-        i = Bitcoin::ScriptInterpreter.new(flags: flags, checker: Bitcoin::SignatureChecker.new(tx: tx, input_index: 0))
+        i = Bitcoin::ScriptInterpreter.new(flags: flags, checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0))
         result = i.verify(script_sig, script_pubkey)
         puts i.error.to_s
         expect(result).to be expected_err_code == Bitcoin::ScriptError::SCRIPT_ERR_OK
