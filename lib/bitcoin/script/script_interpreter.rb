@@ -50,7 +50,7 @@ module Bitcoin
 
       return false unless eval_script(script_sig, SIGVERSION[:base])
       return false unless eval_script(script_pubkey, SIGVERSION[:base])
-      return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || stack.last == false
+      return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || stack.last == 0
 
       if script_pubkey.witness_program?
         return set_error(ScriptError::SCRIPT_ERR_WITNESS_MALLEATED) unless script_sig.size == 0
@@ -150,7 +150,9 @@ module Bitcoin
                     next
                   end
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
-                  # TODO implement
+                  locktime = pop_int
+                  return set_error(ScriptError::SCRIPT_ERR_NEGATIVE_LOCKTIME) if locktime < 0
+                  return set_error(ScriptError::SCRIPT_ERR_UNSATISFIED_LOCKTIME) unless checker.check_locktime(locktime)
                 when OP_CHECKSEQUENCEVERIFY
                   unless flag?(SCRIPT_VERIFY_CHECKSEQUENCEVERIFY)
                     return set_error(ScriptError::SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS) if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
@@ -267,8 +269,8 @@ module Bitcoin
                 when OP_GREATERTHAN, OP_GREATERTHANOREQUAL
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_int(2)
-                  stack << (a > b ? 1 : 0) if OP_GREATERTHAN
-                  stack << (a >= b ? 1 : 0) if OP_GREATERTHANOREQUAL
+                  stack << (a > b ? 1 : 0) if opcode == OP_GREATERTHAN
+                  stack << (a >= b ? 1 : 0) if opcode == OP_GREATERTHANOREQUAL
                 when OP_MIN
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   stack << pop_int(2).min
@@ -333,6 +335,8 @@ module Bitcoin
         puts e.backtrace
         return set_error(ScriptError::SCRIPT_ERR_UNKNOWN_ERROR)
       end
+
+      return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) unless flow_stack.empty?
 
       set_error(ScriptError::SCRIPT_ERR_OK)
       true
