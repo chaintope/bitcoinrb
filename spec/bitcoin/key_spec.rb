@@ -38,4 +38,27 @@ describe Bitcoin::Key do
     end
   end
 
+  describe '#compress_or_uncompress_pubkey?' do
+    it 'should be checked' do
+      expect(Bitcoin::Key.compress_or_uncompress_pubkey?('02865c40293a680cb9c020e7b1e106d8c1916d3cef99aa431a56d253e69256dac0')).to be true
+      expect(Bitcoin::Key.compress_or_uncompress_pubkey?('030efdac25af91a7d2227481a72d467d3cbfbf9593c39da48590dcf2d10b266f47')).to be true
+      expect(Bitcoin::Key.compress_or_uncompress_pubkey?('04a232272863a59dfd3f5f643bfc7558711ce59df1fb1f3102b19aedb4f241db8f1fc4286d3ab3f8b6c60fc0e0d9f827745b09f1473c8f6ae6f915653765f5d313')).to be true
+      expect(Bitcoin::Key.compress_or_uncompress_pubkey?('02a232272863a59dfd3f5f643bfc7558711ce59df1fb1f3102b19aedb4f241db8f1fc4286d3ab3f8b6c60fc0e0d9f827745b09f1473c8f6ae6f915653765f5d313')).to be false
+      expect(Bitcoin::Key.compress_or_uncompress_pubkey?('03a232272863a59dfd3f5f643bfc7558711ce59df1fb1f3102b19aedb4f241db8f1fc4286d3ab3f8b6c60fc0e0d9f827745b09f1473c8f6ae6f915653765f5d313')).to be false
+      expect(Bitcoin::Key.compress_or_uncompress_pubkey?('')).to be false
+      expect(Bitcoin::Key.compress_or_uncompress_pubkey?('000efdac25af91a7d2227481a72d467d3cbfbf9593c39da48590dcf2d10b266f47')).to be false
+      expect(Bitcoin::Key.compress_or_uncompress_pubkey?('040efdac25af91a7d2227481a72d467d3cbfbf9593c39da48590dcf2d10b266f47')).to be false
+    end
+  end
+
+  describe '#compress__pubkey?' do
+    it 'should be checked' do
+      expect(Bitcoin::Key.compress_pubkey?('02865c40293a680cb9c020e7b1e106d8c1916d3cef99aa431a56d253e69256dac0')).to be true
+      expect(Bitcoin::Key.compress_pubkey?('030efdac25af91a7d2227481a72d467d3cbfbf9593c39da48590dcf2d10b266f47')).to be true
+      expect(Bitcoin::Key.compress_pubkey?('04a232272863a59dfd3f5f643bfc7558711ce59df1fb1f3102b19aedb4f241db8f1fc4286d3ab3f8b6c60fc0e0d9f827745b09f1473c8f6ae6f915653765f5d313')).to be false
+      expect(Bitcoin::Key.compress_or_uncompress_pubkey?('')).to be false
+      expect(Bitcoin::Key.compress_or_uncompress_pubkey?('040efdac25af91a7d2227481a72d467d3cbfbf9593c39da48590dcf2d10b266f47')).to be false
+    end
+  end
+
 end
