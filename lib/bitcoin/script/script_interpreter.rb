@@ -21,8 +21,7 @@ module Bitcoin
   class ScriptInterpreter
     include Bitcoin::Opcodes
 
-    SIGVERSION_BASE = 0
-    SIGVERSION_WITNESS_V0 = 1
+    SIGVERSION = {base: 0, witness_v0: 1}
 
     attr_reader :stack
     attr_reader :alt_stack
@@ -49,8 +48,8 @@ module Bitcoin
 
       return set_error(ScriptError::SCRIPT_ERR_SIG_PUSHONLY) if flag?(SCRIPT_VERIFY_SIGPUSHONLY) && !script_sig.data_only?
 
-      return false unless eval_script(script_sig, SIGVERSION_BASE)
-      return false unless eval_script(script_pubkey, SIGVERSION_BASE)
+      return false unless eval_script(script_sig, SIGVERSION[:base])
+      return false unless eval_script(script_pubkey, SIGVERSION[:base])
       return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || stack.last == false
 
       if script_pubkey.witness_program?
@@ -303,7 +302,7 @@ module Bitcoin
                   sig, pubkey = pop_string(2)
 
                   subscript = script.subscript(last_code_separator_index..-1)
-                  if sig_version == SIGVERSION_BASE
+                  if sig_version == SIGVERSION[:base]
                     subscript = subscript.find_and_delete(Script.new << sig)
                   end
 
@@ -457,7 +456,7 @@ module Bitcoin
       end
       # Only compressed keys are accepted in segwit
       if flag?(SCRIPT_VERIFY_WITNESS_PUBKEYTYPE) &&
-          sig_version == SIGVERSION_WITNESS_V0 && !Key.compress_pubkey?(pubkey)
+          sig_version == SIGVERSION[:witness_v0] && !Key.compress_pubkey?(pubkey)
         return set_error(ScriptError::SCRIPT_ERR_WITNESS_PUBKEYTYPE)
       end
       true
