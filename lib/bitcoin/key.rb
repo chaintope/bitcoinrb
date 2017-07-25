@@ -11,7 +11,7 @@ module Bitcoin
       extend Bitcoin.secp_impl
       @priv_key = priv_key
       if pubkey
-        @pubkey = pubkey
+        @pub_key = pubkey
       else
         @pub_key = generate_pubkey(priv_key, compressed: compressed) if priv_key
       end
