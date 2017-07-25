@@ -320,6 +320,8 @@ module Bitcoin
                       return set_error(SCRIPT_ERR_CHECKSIGVERIFY)
                     end
                   end
+                when OP_RETURN
+                  return set_error(ScriptError::SCRIPT_ERR_OP_RETURN)
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
