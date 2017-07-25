@@ -18,6 +18,7 @@ module Bitcoin
   SCRIPT_VERIFY_NULLFAIL = (1 << 14) # Signature(s) must be empty vector if an CHECK(MULTI)SIG operation failed
   SCRIPT_VERIFY_WITNESS_PUBKEYTYPE = (1 << 15) # Public keys in segregated witness scripts must be compressed
 
+  MAX_SCRIPT_SIZE =
   class ScriptInterpreter
     include Bitcoin::Opcodes
 
@@ -77,6 +78,7 @@ module Bitcoin
     end
 
     def eval_script(script, sig_version)
+      return set_error(ScriptError::SCRIPT_ERR_SCRIPT_SIZE) if script.size > Script::MAX_SCRIPT_SIZE
       begin
         flow_stack = []
         last_code_separator_index = 0
