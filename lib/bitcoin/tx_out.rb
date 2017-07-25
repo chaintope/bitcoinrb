@@ -6,7 +6,7 @@ module Bitcoin
     attr_accessor :value
     attr_accessor :script_pubkey
 
-    def initialize(value, script_pubkey)
+    def initialize(value: 0, script_pubkey: nil)
       @value = value
       @script_pubkey = script_pubkey
     end
@@ -15,7 +15,7 @@ module Bitcoin
       buf = payload.is_a?(String) ? StringIO.new(payload) : payload
       value = buf.read(8).unpack('Q').first
       script_size = Bitcoin.unpack_var_int_from_io(buf)
-      new(value, Script.parse_from_payload(buf.read(script_size)))
+      new(value: value, script_pubkey: Script.parse_from_payload(buf.read(script_size)))
     end
 
     def to_payload

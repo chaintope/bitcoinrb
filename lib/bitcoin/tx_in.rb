@@ -8,8 +8,11 @@ module Bitcoin
     attr_accessor :sequence
     attr_accessor :script_witness
 
-    def initialize
-      @script_witness = ScriptWitness.new
+    def initialize(out_point: nil, script_sig: nil, script_witness: ScriptWitness.new, sequence: 0)
+      @out_point = out_point
+      @script_sig = script_sig
+      @script_witness = script_witness
+      @sequence = sequence
     end
 
     def self.parse_from_payload(payload)

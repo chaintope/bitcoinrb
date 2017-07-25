@@ -16,6 +16,8 @@ module Bitcoin
     def initialize
       @inputs = []
       @outputs = []
+      @version = 1
+      @lock_time = 0
     end
 
     def self.parse_from_payload(payload)
@@ -100,16 +102,19 @@ module Bitcoin
     end
 
     # get signature hash
+    # @param [Integer] input_index input index.
+    # @param [Integer] hash_type signature hash type
+    # @param [Bitcoin::Script] script_pubkey locked script
+    # @param [Integer] amount bitcoin amount locked in input. required for witness input only.
     def sighash_for_input(input_index: nil, hash_type: Script::SIGHASH_TYPE[:all], script_pubkey: nil, amount: nil)
       raise ArgumentError, 'input_index must be specified.' unless input_index
       raise ArgumentError, 'does not exist input corresponding to input_index.' if input_index >= inputs.size
       raise ArgumentError, 'script_pubkey must be specified.' unless script_pubkey
 
-      script = Script.parse_from_payload(script_pubkey)
-      if script.witness_program?
+      if script_pubkey.witness_program?
         raise ArgumentError, 'amount must be specified.' unless amount
       else
-        sighash_for_legacy(input_index, script, hash_type)
+        sighash_for_legacy(input_index, script_pubkey, hash_type)
       end
     end
 

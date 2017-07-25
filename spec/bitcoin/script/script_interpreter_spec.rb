@@ -70,15 +70,17 @@ describe Bitcoin::ScriptInterpreter do
         ["0 0 1", "EQUAL EQUAL", "P2SH,STRICTENC", "OK", "OP_0 and bools must have identical byte representations"],
         ["NOP", "CODESEPARATOR 1", "P2SH,STRICTENC", "OK"],
         ["NOP", "CHECKLOCKTIMEVERIFY 1", "P2SH,STRICTENC", "OK"],
-        ["NOP", "CHECKSEQUENCEVERIFY 1", "P2SH,STRICTENC", "OK"]
+        ["NOP", "CHECKSEQUENCEVERIFY 1", "P2SH,STRICTENC", "OK"],
+        ["0", "0x21 0x02865c40293a680cb9c020e7b1e106d8c1916d3cef99aa431a56d253e69256dac0 CHECKSIG NOT", "STRICTENC", "OK"],
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
         script_sig = parse_json_script(r[0])
         script_pubkey = parse_json_script(r[1])
+        tx = build_dummy_tx(script_sig, '')
         flags = r[2].split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}
         expected_err_code = Bitcoin::ScriptError.name_to_code('SCRIPT_ERR_' + r[3])
-        i = Bitcoin::ScriptInterpreter.new(flags: flags)
+        i = Bitcoin::ScriptInterpreter.new(flags: flags, checker: Bitcoin::SignatureChecker.new(tx: tx, input_index: 0))
         result = i.verify(script_sig, script_pubkey)
         puts i.error.to_s
         expect(result).to be expected_err_code == Bitcoin::ScriptError::SCRIPT_ERR_OK
@@ -124,6 +126,13 @@ describe Bitcoin::ScriptInterpreter do
       end
     end
     script
+  end
+
+  def build_dummy_tx(script_sig, txid)
+    tx = Bitcoin::Tx.new
+    tx.inputs << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new(txid, 0), script_sig: script_sig)
+    tx.outputs << Bitcoin::TxOut.new(script_pubkey: Bitcoin::Script.new)
+    tx
   end
 
 end

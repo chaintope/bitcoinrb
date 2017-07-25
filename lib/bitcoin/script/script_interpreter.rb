@@ -21,16 +21,21 @@ module Bitcoin
   class ScriptInterpreter
     include Bitcoin::Opcodes
 
+    SIGVERSION_BASE = 0
+    SIGVERSION_WITNESS_V0 = 1
+
     attr_reader :stack
     attr_reader :alt_stack
     attr_reader :debug
     attr_reader :flags
     attr_accessor :error
+    attr_reader :checker
 
     # initialize runner
-    def initialize(flags: [])
+    def initialize(flags: [], checker: SignatureChecker.new)
       @stack, @alt_stack, @debug = [], [], []
       @flags = flags
+      @checker = checker
     end
 
     # eval script
@@ -42,8 +47,8 @@ module Bitcoin
 
       return set_error(ScriptError::SCRIPT_ERR_SIG_PUSHONLY) if flag?(SCRIPT_VERIFY_SIGPUSHONLY) && !script_sig.data_only?
 
-      return false unless eval_script(script_sig)
-      return false unless eval_script(script_pubkey)
+      return false unless eval_script(script_sig, SIGVERSION_BASE)
+      return false unless eval_script(script_pubkey, SIGVERSION_BASE)
       return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || stack.last == false
 
       if script_pubkey.witness_program?
@@ -70,7 +75,7 @@ module Bitcoin
 
     end
 
-    def eval_script(script)
+    def eval_script(script, sig_version)
       begin
         flow_stack = []
         last_code_separator_index = 0
@@ -290,6 +295,29 @@ module Bitcoin
                   stack << (a == b ? 0 : 1)
                 when OP_CODESEPARATOR
                   last_code_separator_index = index + 1
+                when OP_CHECKSIG, OP_CHECKSIGVERIFY
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION)  if stack.size < 2
+                  sig, pubkey = pop_string(2)
+
+                  subscript = script.subscript(last_code_separator_index..-1)
+                  if sig_version == SIGVERSION_BASE
+                    subscript = subscript.find_and_delete(Script.new << sig)
+                  end
+
+                  return false if !check_pubkey_encoding(pubkey, sig_version) || !check_signature_encoding(sig) # error already set.
+
+                  success = checker.check_sig(sig, pubkey, subscript, sig_version)
+
+                  stack.pop(2)
+                  stack << (success ? 1 : 0)
+
+                  if opcode == OP_CHECKSIGVERIFY
+                    if success
+                      stack.pop
+                    else
+                      return set_error(SCRIPT_ERR_CHECKSIGVERIFY)
+                    end
+                  end
                 else
                   return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE)
               end
@@ -298,6 +326,7 @@ module Bitcoin
         end
       rescue Exception => e
         puts e
+        puts e.backtrace
         return set_error(ScriptError::SCRIPT_ERR_UNKNOWN_ERROR)
       end
 
@@ -361,6 +390,74 @@ module Bitcoin
         else
           false
       end
+    end
+
+    def check_signature_encoding(sig)
+      return true if sig.size.zero?
+      if (flag?(SCRIPT_VERIFY_DERSIG) || flag?(SCRIPT_VERIFY_LOW_S) || flag?(SCRIPT_VERIFY_STRICTENC)) && !valid_signature_encoding?(sig)
+        return set_error(ScriptError::SCRIPT_ERR_SIG_DER)
+      elsif flag?(SCRIPT_VERIFY_LOW_S) && !low_der_signature?(sig)
+        return false
+      elsif flag?(SCRIPT_VERIFY_STRICTENC) && !defined_hashtype_signature?(sig)
+        return set_error(ScriptError::SCRIPT_ERR_SIG_HASHTYPE)
+      end
+      true
+    end
+
+    def valid_signature_encoding?(sig)
+      return false if sig.bytesize < 9 || sig.bytesize > 73
+
+      s = sig.unpack('C*')
+      return false if s[0] != 0x30 || s[1] != s.size
+
+      len_r = s[3]
+      return false if 5 + len_r >= s.size
+      len_s = s[5 + len_r]
+      return false unless len_r + len_s + 5 == s.size
+
+      return false unless s[2] == 0x02
+
+      return false if len_r == 0
+
+      val_r = s.slice(4, len_r)
+      return false unless val_r[0] & 0x80 == 0
+
+      return false if len_r > 1 && (val_r[0] == 0x00) && !(val_r[1] & 0x80 != 0)
+
+      val_s = s.slice(6 + len_r, len_s)
+      return false unless s[6 + len_r - 2] == 0x02
+
+      return false if len_s == 0
+      return false unless (val_s[0] & 0x80) == 0
+
+      return false if len_s > 1 && (val_s[0] == 0x00) && !(val_s[1] & 0x80)
+
+      true
+    end
+
+    def low_der_signature?(sig)
+      return set_error(ScriptError::SCRIPT_ERR_SIG_DER) unless valid_signature_encoding?(sig)
+      Key.low_signature?(sig)
+    end
+
+    def defined_hashtype_signature?(sig)
+      return false if sig.empty?
+      s = sig.unpack('C*')
+      hash_type = s[-1] & (~(SIGHASH_TYPE[:anyonecanpay]))
+      return false if hash_type < SIGHASH_TYPE[:all] || hash_type > SIGHASH_TYPE[:single]
+      true
+    end
+
+    def check_pubkey_encoding(pubkey, sig_version)
+      if flag?(SCRIPT_VERIFY_STRICTENC) && !Key.compress_or_uncompress_pubkey?(pubkey)
+        return set_error(ScriptError::SCRIPT_ERR_PUBKEYTYPE)
+      end
+      # Only compressed keys are accepted in segwit
+      if flag?(SCRIPT_VERIFY_WITNESS_PUBKEYTYPE) &&
+          sig_version == SIGVERSION_WITNESS_V0 && !Key.compress_pubkey?(pubkey)
+        return set_error(ScriptError::SCRIPT_ERR_WITNESS_PUBKEYTYPE)
+      end
+      true
     end
 
   end
