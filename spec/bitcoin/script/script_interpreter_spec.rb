@@ -75,7 +75,8 @@ describe Bitcoin::ScriptInterpreter do
         ["2 2 0 IF DIV ELSE 1 ENDIF", "NOP", "P2SH,STRICTENC", "DISABLED_OPCODE", "DIV disabled"],
         ["1", "RETURN 'data'", "P2SH,STRICTENC", "OP_RETURN", "canonical prunable txout format"],
         ["1", "NOP1 CHECKLOCKTIMEVERIFY CHECKSEQUENCEVERIFY NOP4 NOP5 NOP6 NOP7 NOP8 NOP9 NOP10 2 EQUAL", "P2SH,STRICTENC", "EVAL_FALSE"],
-        ["1 0 1", "WITHIN NOT", "P2SH,STRICTENC", "OK"]
+        ["1 0 1", "WITHIN NOT", "P2SH,STRICTENC", "OK"],
+        ["0 1", "OVER DEPTH 3 EQUALVERIFY", "P2SH,STRICTENC", "EVAL_FALSE"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
