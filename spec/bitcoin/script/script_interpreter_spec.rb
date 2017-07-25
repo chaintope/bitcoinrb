@@ -76,7 +76,8 @@ describe Bitcoin::ScriptInterpreter do
         ["1", "RETURN 'data'", "P2SH,STRICTENC", "OP_RETURN", "canonical prunable txout format"],
         ["1", "NOP1 CHECKLOCKTIMEVERIFY CHECKSEQUENCEVERIFY NOP4 NOP5 NOP6 NOP7 NOP8 NOP9 NOP10 2 EQUAL", "P2SH,STRICTENC", "EVAL_FALSE"],
         ["1 0 1", "WITHIN NOT", "P2SH,STRICTENC", "OK"],
-        ["0 1", "OVER DEPTH 3 EQUALVERIFY", "P2SH,STRICTENC", "EVAL_FALSE"]
+        ["0 1", "OVER DEPTH 3 EQUALVERIFY", "P2SH,STRICTENC", "EVAL_FALSE"],
+        ["1", "IF 0xba ELSE 1 ENDIF", "P2SH,STRICTENC", "BAD_OPCODE", "opcodes above NOP10 invalid if executed"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
@@ -114,6 +115,7 @@ describe Bitcoin::ScriptInterpreter do
     json_script.split(' ').map do |v|
       if v[0, 2] == '0x'
         data = v[2..-1].htb
+        tmp = data.bth
         if data.pushed_data
           code = data.pushed_data.bth.to_i(16)
           opcode = Bitcoin::Opcodes.name_to_opcode('OP_' + code.to_s)

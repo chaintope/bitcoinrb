@@ -50,7 +50,7 @@ module Bitcoin
 
       return false unless eval_script(script_sig, SIGVERSION[:base])
       return false unless eval_script(script_pubkey, SIGVERSION[:base])
-      return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !pop_bool
+      return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !cast_to_bool(stack.last)
 
       if script_pubkey.witness_program?
         return set_error(ScriptError::SCRIPT_ERR_WITNESS_MALLEATED) unless script_sig.size == 0
@@ -83,7 +83,7 @@ module Bitcoin
         script.chunks.each_with_index do |c, index|
           need_exec = !flow_stack.include?(false)
 
-          if c.pushdata?
+          if need_exec && c.pushdata?
             stack << c.pushed_data.bth
           else
             opcode = c.ord

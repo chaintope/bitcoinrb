@@ -52,12 +52,15 @@ describe Bitcoin::Opcodes do
     context 'defined' do
       it 'should be true' do
         expect(Bitcoin::Opcodes.defined?(Bitcoin::Opcodes::OP_DROP)).to be true
+        expect(Bitcoin::Opcodes.defined?(0xb9.chr.opcode)).to be true
       end
     end
 
     context 'undefined' do
       it 'should be false' do
+        expect(Bitcoin::Opcodes.defined?(0xc1.chr.opcode)).to be false
         expect(Bitcoin::Opcodes.defined?(0xfff)).to be false
+        expect(Bitcoin::Opcodes.defined?(0xba.chr.opcode)).to be false
       end
     end
   end
