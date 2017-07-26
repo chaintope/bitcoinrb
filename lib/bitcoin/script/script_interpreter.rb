@@ -324,6 +324,56 @@ module Bitcoin
                       return set_error(SCRIPT_ERR_CHECKSIGVERIFY)
                     end
                   end
+                when OP_CHECKMULTISIG, OP_CHECKMULTISIGVERIFY
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION)  if stack.size < 1
+                  pubkey_count = pop_int
+                  unless (0..Script::MAX_PUBKEYS_PER_MULTISIG).include?(pubkey_count)
+                    return set_error(ScriptError::SCRIPT_ERR_PUBKEY_COUNT)
+                  end
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < pubkey_count
+
+                  pubkeys = pop_string(pubkey_count)
+
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION)  if stack.size < 1
+
+                  sig_count = pop_int
+                  return set_error(ScriptError::SCRIPT_ERR_SIG_COUNT) if sig_count < 0 || sig_count > pubkey_count
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < (sig_count + 1)
+
+                  sigs = pop_string(sig_count)
+                  stack.pop # Bitcoin-core removes an extra item from the stack
+                  
+                  subscript = script.subscript(last_code_separator_index..-1)
+
+                  if sig_version == SIGVERSION[:base]
+                    sigs.each do |sig|
+                      subscript = subscript.find_and_delete(Script.new << sig)
+                    end
+                  end
+
+                  success = true
+                  while success && sig_count > 0
+                    sig = sigs.pop
+                    pubkey = pubkeys.pop
+                    return false if !check_pubkey_encoding(pubkey, sig_version) || !check_signature_encoding(sig) # error already set.
+                    ok = checker.check_sig(sig, pubkey, subscript, sig_version)
+                    if ok
+                      sig_count -= 1
+                    else
+                      sigs << sig
+                    end
+                    pubkey_count -= 1
+                    success = false if sig_count > pubkey_count
+                  end
+
+                  stack << (success ? 1 : 0)
+                  if opcode == OP_CHECKMULTISIGVERIFY
+                    if success
+                      stack.pop
+                    else
+                      return set_error(ScriptError::SCRIPT_ERR_CHECKMULTISIGVERIFY)
+                    end
+                  end
                 when OP_RETURN
                   return set_error(ScriptError::SCRIPT_ERR_OP_RETURN)
                 else
