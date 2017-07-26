@@ -84,7 +84,8 @@ describe Bitcoin::ScriptInterpreter do
          "SCRIPT_SIZE",
          "10,001-byte scriptPubKey"],
         ["", "0 0 0 CHECKMULTISIG VERIFY DEPTH 0 EQUAL", "P2SH,STRICTENC", "OK", "CHECKMULTISIG is allowed to have zero keys and/or sigs"],
-        ["549755813888", "0x06 0xFFFFFFFF7F EQUAL", "P2SH,STRICTENC", "OK"]
+        ["549755813888", "0x06 0xFFFFFFFF7F EQUAL", "P2SH,STRICTENC", "OK"],
+        ["0 0", "1 0x21 0x02865c40293a680cb9c020e7b1e106d8c1916d3cef99aa431a56d253e69256dac0 1 CHECKMULTISIG NOT", "STRICTENC", "OK"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do

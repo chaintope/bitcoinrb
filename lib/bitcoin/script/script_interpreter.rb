@@ -333,6 +333,7 @@ module Bitcoin
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < pubkey_count
 
                   pubkeys = pop_string(pubkey_count)
+                  pubkeys = [pubkeys] if pubkeys.is_a?(String)
 
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION)  if stack.size < 1
 
@@ -341,6 +342,7 @@ module Bitcoin
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < (sig_count + 1)
 
                   sigs = pop_string(sig_count)
+                  sigs = [sigs] if sigs.is_a?(String)
                   stack.pop # Bitcoin-core removes an extra item from the stack
                   
                   subscript = script.subscript(last_code_separator_index..-1)
