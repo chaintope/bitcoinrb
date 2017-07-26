@@ -83,7 +83,8 @@ describe Bitcoin::ScriptInterpreter do
          "P2SH,STRICTENC",
          "SCRIPT_SIZE",
          "10,001-byte scriptPubKey"],
-        ["", "0 0 0 CHECKMULTISIG VERIFY DEPTH 0 EQUAL", "P2SH,STRICTENC", "OK", "CHECKMULTISIG is allowed to have zero keys and/or sigs"]
+        ["", "0 0 0 CHECKMULTISIG VERIFY DEPTH 0 EQUAL", "P2SH,STRICTENC", "OK", "CHECKMULTISIG is allowed to have zero keys and/or sigs"],
+        ["549755813888", "0x06 0xFFFFFFFF7F EQUAL", "P2SH,STRICTENC", "OK"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
@@ -118,16 +119,25 @@ describe Bitcoin::ScriptInterpreter do
       json_script.gsub!(/0x([0-9a-fA-F]+)\s+0x/, "0x\\1")
     end
     script = Bitcoin::Script.new
+    need_push = false
     json_script.split(' ').map do |v|
+      if need_push
+        script.chunks[-1] = script.chunks[-1] + Bitcoin::Opcodes.name_to_opcode('OP_' + v).to_s(16).htb
+        need_push = false
+        next
+      end
       if v[0, 2] == '0x'
         data = v[2..-1].htb
-        tmp = data.bth
         if data.pushed_data
           code = data.pushed_data.bth.to_i(16)
           opcode = Bitcoin::Opcodes.name_to_opcode('OP_' + code.to_s)
           if opcode
             script << code
           else
+            len = data[0].ord
+            unless len + 1 == data.bytesize
+              need_push = true
+            end
             script.chunks << data
           end
         else
