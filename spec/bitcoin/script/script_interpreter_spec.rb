@@ -85,7 +85,13 @@ describe Bitcoin::ScriptInterpreter do
          "10,001-byte scriptPubKey"],
         ["", "0 0 0 CHECKMULTISIG VERIFY DEPTH 0 EQUAL", "P2SH,STRICTENC", "OK", "CHECKMULTISIG is allowed to have zero keys and/or sigs"],
         ["549755813888", "0x06 0xFFFFFFFF7F EQUAL", "P2SH,STRICTENC", "OK"],
-        ["0 0", "1 0x21 0x02865c40293a680cb9c020e7b1e106d8c1916d3cef99aa431a56d253e69256dac0 1 CHECKMULTISIG NOT", "STRICTENC", "OK"]
+        ["0 0", "1 0x21 0x02865c40293a680cb9c020e7b1e106d8c1916d3cef99aa431a56d253e69256dac0 1 CHECKMULTISIG NOT", "STRICTENC", "OK"],
+        [
+            "0 0x47 0x3044022044dc17b0887c161bb67ba9635bf758735bdde503e4b0a0987f587f14a4e1143d022009a215772d49a85dae40d8ca03955af26ad3978a0ff965faa12915e9586249a501 0x47 0x3044022044dc17b0887c161bb67ba9635bf758735bdde503e4b0a0987f587f14a4e1143d022009a215772d49a85dae40d8ca03955af26ad3978a0ff965faa12915e9586249a501",
+            "2 0 0x21 0x02865c40293a680cb9c020e7b1e106d8c1916d3cef99aa431a56d253e69256dac0 2 CHECKMULTISIG NOT",
+            "STRICTENC", "OK",
+            "2-of-2 CHECKMULTISIG NOT with the second pubkey invalid, and both signatures validly encoded. Valid pubkey fails, and CHECKMULTISIG exits early, prior to evaluation of second invalid pubkey."
+        ]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
@@ -114,14 +120,10 @@ describe Bitcoin::ScriptInterpreter do
   end
 
   def parse_json_script(json_script)
-    oldsize = json_script.size + 1
-    while json_script.size != oldsize
-      oldsize = json_script.size
-      json_script.gsub!(/0x([0-9a-fA-F]+)\s+0x/, "0x\\1")
-    end
+    converted_script = convert_json(json_script)
     script = Bitcoin::Script.new
     need_push = false
-    json_script.split(' ').map do |v|
+    converted_script.map do |v|
       if need_push
         script.chunks[-1] = script.chunks[-1] + Bitcoin::Opcodes.name_to_opcode('OP_' + v).to_s(16).htb
         need_push = false
@@ -167,6 +169,32 @@ describe Bitcoin::ScriptInterpreter do
     tx.inputs << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new(txid, 0), script_sig: script_sig)
     tx.outputs << Bitcoin::TxOut.new(script_pubkey: Bitcoin::Script.new)
     tx
+  end
+
+  def convert_json(json_script)
+    split_json = json_script.split(' ')
+    converted = []
+    concat = false
+    process_pos = 0
+    while process_pos != split_json.size
+      current_item = split_json[process_pos]
+      content = current_item.start_with?('0x') ? current_item[2..-1] : current_item
+      if concat
+        if current_item.start_with?('0x') && split_json[process_pos-1].size == 4
+          converted[-1] = converted[-1] + content
+        else
+          converted << current_item
+          concat = false
+        end
+      else
+        converted << current_item
+      end
+      if current_item.start_with?('0x') && current_item.size == 4
+        concat = true
+      end
+      process_pos += 1
+    end
+    converted
   end
 
 end

@@ -339,11 +339,10 @@ module Bitcoin
 
                   sig_count = pop_int
                   return set_error(ScriptError::SCRIPT_ERR_SIG_COUNT) if sig_count < 0 || sig_count > pubkey_count
-                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < (sig_count + 1)
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < (sig_count)
 
                   sigs = pop_string(sig_count)
                   sigs = [sigs] if sigs.is_a?(String)
-                  stack.pop # Bitcoin-core removes an extra item from the stack
                   
                   subscript = script.subscript(last_code_separator_index..-1)
 
@@ -367,6 +366,15 @@ module Bitcoin
                     pubkey_count -= 1
                     success = false if sig_count > pubkey_count
                   end
+
+                  # A bug causes CHECKMULTISIG to consume one extra argument whose contents were not checked in any way.
+                  # Unfortunately this is a potential source of mutability,
+                  # so optionally verify it is exactly equal to zero prior to removing it from the stack.
+                  return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION)  if stack.size < 1
+                  if flag?(SCRIPT_VERIFY_NULLDUMMY) && stack[-1].size > 0
+                    return set_error(ScriptError::SCRIPT_ERR_SIG_NULLDUMMY)
+                  end
+                  stack.pop
 
                   stack << (success ? 1 : 0)
                   if opcode == OP_CHECKMULTISIGVERIFY
@@ -466,16 +474,18 @@ module Bitcoin
       true
     end
 
-    def valid_signature_encoding?(sig)
+    # check +sig+ (hex) is correct der encoding.
+    def valid_signature_encoding?(signature)
+      sig = signature.htb
       return false if sig.bytesize < 9 || sig.bytesize > 73
 
       s = sig.unpack('C*')
-      return false if s[0] != 0x30 || s[1] != s.size
+      return false if s[0] != 0x30 || s[1] != s.size - 3
 
       len_r = s[3]
       return false if 5 + len_r >= s.size
       len_s = s[5 + len_r]
-      return false unless len_r + len_s + 5 == s.size
+      return false unless len_r + len_s + 7 == s.size
 
       return false unless s[2] == 0x02
 
@@ -502,11 +512,12 @@ module Bitcoin
       Key.low_signature?(sig)
     end
 
-    def defined_hashtype_signature?(sig)
+    def defined_hashtype_signature?(signature)
+      sig = signature.htb
       return false if sig.empty?
       s = sig.unpack('C*')
-      hash_type = s[-1] & (~(SIGHASH_TYPE[:anyonecanpay]))
-      return false if hash_type < SIGHASH_TYPE[:all] || hash_type > SIGHASH_TYPE[:single]
+      hash_type = s[-1] & (~(Script::SIGHASH_TYPE[:anyonecanpay]))
+      return false if hash_type < Script::SIGHASH_TYPE[:all] || hash_type > Script::SIGHASH_TYPE[:single]
       true
     end
 
