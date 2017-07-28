@@ -59,9 +59,13 @@ module Bitcoin
       # @param [String] pubkey a public key corresponding to the private key used for sign
       # @return [Boolean] verify result
       def verify_sig(data, sig, pubkey)
-        k = ECDSA::Format::PointOctetString.decode(pubkey.htb, GROUP)
-        signature = ECDSA::Format::SignatureDerString.decode(sig)
-        ECDSA.valid_signature?(k, data, signature)
+        begin
+          k = ECDSA::Format::PointOctetString.decode(pubkey.htb, GROUP)
+          signature = ECDSA::Format::SignatureDerString.decode(sig)
+          ECDSA.valid_signature?(k, data, signature)
+        rescue Exception
+          false
+        end
       end
 
     end

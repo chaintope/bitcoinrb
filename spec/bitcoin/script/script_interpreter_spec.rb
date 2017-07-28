@@ -91,7 +91,8 @@ describe Bitcoin::ScriptInterpreter do
             "2 0 0x21 0x02865c40293a680cb9c020e7b1e106d8c1916d3cef99aa431a56d253e69256dac0 2 CHECKMULTISIG NOT",
             "STRICTENC", "OK",
             "2-of-2 CHECKMULTISIG NOT with the second pubkey invalid, and both signatures validly encoded. Valid pubkey fails, and CHECKMULTISIG exits early, prior to evaluation of second invalid pubkey."
-        ]
+        ],
+        ["0x25 0x30220220000000000000000000000000000000000000000000000000000000000000000000", "0 CHECKSIG NOT", "", "OK", "Missing S is correctly encoded"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
