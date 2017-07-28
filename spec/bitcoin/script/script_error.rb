@@ -65,10 +65,12 @@ module Bitcoin
     NAME_MAP = Hash[*constants.grep(/^SCRIPT_ERR_/).map { |c| [c.to_s, const_get(c)] }.flatten]
 
     attr_accessor :code
+    attr_accessor :extra_msg
 
-    def initialize(code)
+    def initialize(code, extra_msg = '')
       raise 'invalid error code.' unless ERRCODES_MAP[code]
       @code = code
+      @extra_msg = extra_msg
     end
 
     def to_s
@@ -154,7 +156,7 @@ module Bitcoin
       when SCRIPT_ERR_UNKNOWN_ERROR, SCRIPT_ERR_ERROR_COUNT
         'unknown error'
       else
-        'unknown error'
+        extra_msg ? extra_msg : 'unknown error'
       end
     end
 

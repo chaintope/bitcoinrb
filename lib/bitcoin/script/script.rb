@@ -25,6 +25,9 @@ module Bitcoin
     # Signature hash types/flags
     SIGHASH_TYPE = { all: 1, none: 2, single: 3, anyonecanpay: 128 }
 
+    # Maximum number length in bytes
+    DEFAULT_MAX_NUM_SIZE = 4
+
     attr_accessor :chunks
 
     def initialize

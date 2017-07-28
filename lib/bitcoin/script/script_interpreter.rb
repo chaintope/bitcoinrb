@@ -64,8 +64,8 @@ module Bitcoin
       true
     end
 
-    def set_error(err_code)
-      @error = ScriptError.new(err_code)
+    def set_error(err_code, extra_message = nil)
+      @error = ScriptError.new(err_code, extra_message)
       false
     end
 
@@ -395,7 +395,7 @@ module Bitcoin
       rescue Exception => e
         puts e
         puts e.backtrace
-        return set_error(ScriptError::SCRIPT_ERR_UNKNOWN_ERROR)
+        return set_error(ScriptError::SCRIPT_ERR_UNKNOWN_ERROR, e.message)
       end
 
       return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) unless flow_stack.empty?
@@ -424,6 +424,11 @@ module Bitcoin
             Script.decode_number(s)
           else
             s
+        end
+      end
+      i.map do |i|
+        if Script.encode_number(i).htb.bytesize > Script::DEFAULT_MAX_NUM_SIZE
+          raise '"script number overflow"'
         end
       end
       count == 1 ? i.first : i
