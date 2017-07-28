@@ -93,7 +93,12 @@ describe Bitcoin::ScriptInterpreter do
             "2-of-2 CHECKMULTISIG NOT with the second pubkey invalid, and both signatures validly encoded. Valid pubkey fails, and CHECKMULTISIG exits early, prior to evaluation of second invalid pubkey."
         ],
         ["0x25 0x30220220000000000000000000000000000000000000000000000000000000000000000000", "0 CHECKSIG NOT", "", "OK", "Missing S is correctly encoded"],
-        ["2147483648 0 ADD", "NOP", "P2SH,STRICTENC", "UNKNOWN_ERROR", "arithmetic operands must be in range [-2^31...2^31] "]
+        ["2147483648 0 ADD", "NOP", "P2SH,STRICTENC", "UNKNOWN_ERROR", "arithmetic operands must be in range [-2^31...2^31] "],
+        ["1",
+         "0x61616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161",
+         "P2SH,STRICTENC",
+         "OP_COUNT",
+         ">201 opcodes executed. 0x61 is NOP"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
@@ -133,20 +138,16 @@ describe Bitcoin::ScriptInterpreter do
       end
       if v[0, 2] == '0x'
         data = v[2..-1].htb
-        if data.pushed_data
-          code = data.pushed_data.bth.to_i(16)
-          opcode = Bitcoin::Opcodes.name_to_opcode('OP_' + code.to_s)
-          if opcode
-            script << code
+        buf = StringIO.new(data)
+        until buf.eof?
+          d = buf.read(1)
+          if d.opcode?
+            script.chunks << d
           else
-            len = data[0].ord
-            unless len + 1 == data.bytesize
-              need_push = true
-            end
-            script.chunks << data
+            len = d.unpack('C*').first
+            need_push = (buf.size - buf.pos) !=  len
+            script.chunks << (d + buf.read(len))
           end
-        else
-          script.chunks << data
         end
       elsif v =~ /^'.*'$/
         script << v[1..-2].bth

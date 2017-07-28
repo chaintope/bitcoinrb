@@ -82,6 +82,7 @@ module Bitcoin
       begin
         flow_stack = []
         last_code_separator_index = 0
+        op_count = 0
         script.chunks.each_with_index do |c, index|
           need_exec = !flow_stack.include?(false)
 
@@ -89,6 +90,9 @@ module Bitcoin
             stack << c.pushed_data.bth
           else
             opcode = c.ord
+            if opcode > OP_16 && (op_count += 1) > Script::MAX_OPS_PER_SCRIPT
+              return set_error(ScriptError::SCRIPT_ERR_OP_COUNT)
+            end
             return set_error(ScriptError::SCRIPT_ERR_DISABLED_OPCODE) if DISABLE_OPCODES.include?(opcode)
             next unless (need_exec || (OP_IF <= opcode && opcode <= OP_ENDIF))
             small_int = Opcodes.opcode_to_small_int(opcode)
@@ -330,6 +334,10 @@ module Bitcoin
                   unless (0..Script::MAX_PUBKEYS_PER_MULTISIG).include?(pubkey_count)
                     return set_error(ScriptError::SCRIPT_ERR_PUBKEY_COUNT)
                   end
+
+                  op_count += pubkey_count
+                  return set_error(ScriptError::SCRIPT_ERR_OP_COUNT) if op_count > Script::MAX_OPS_PER_SCRIPT
+
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < pubkey_count
 
                   pubkeys = pop_string(pubkey_count)
