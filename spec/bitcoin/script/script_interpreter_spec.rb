@@ -98,7 +98,8 @@ describe Bitcoin::ScriptInterpreter do
          "0x61616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161",
          "P2SH,STRICTENC",
          "OP_COUNT",
-         ">201 opcodes executed. 0x61 is NOP"]
+         ">201 opcodes executed. 0x61 is NOP"],
+        ["0x09 0x00000000 0x00000000 0x10", "", "P2SH,STRICTENC", "OK", "equals zero when cast to Int64"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
@@ -132,8 +133,10 @@ describe Bitcoin::ScriptInterpreter do
     need_push = false
     converted_script.map do |v|
       if need_push
-        script.chunks[-1] = script.chunks[-1] + Bitcoin::Opcodes.name_to_opcode('OP_' + v).to_s(16).htb
-        need_push = false
+        push_item = v.start_with?('0x') ? v[2..-1] : v
+        len = script.chunks[-1].unpack('C*').first
+        script.chunks[-1] = script.chunks[-1] + push_item.htb
+        need_push = script.chunks[-1].bytesize - 1 != len
         next
       end
       if v[0, 2] == '0x'
@@ -153,11 +156,7 @@ describe Bitcoin::ScriptInterpreter do
         script << v[1..-2].bth
       elsif v =~ /^-?\d+$/
         v = v.to_i
-        if -1 <= v && v <= 16
-          script << Bitcoin::Opcodes.small_int_to_opcode(v)
-        else
-          script << Bitcoin::Script.encode_number(v)
-        end
+        script << (-1 <= v && v <= 16 ? Bitcoin::Opcodes.small_int_to_opcode(v) : Bitcoin::Script.encode_number(v))
       else
         opcode = Bitcoin::Opcodes.name_to_opcode(v)
         opcode = Bitcoin::Opcodes.name_to_opcode('OP_' + v) unless opcode
