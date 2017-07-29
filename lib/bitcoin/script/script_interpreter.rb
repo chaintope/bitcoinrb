@@ -30,6 +30,7 @@ module Bitcoin
     attr_reader :flags
     attr_accessor :error
     attr_reader :checker
+    attr_reader :require_minimal
 
     DISABLE_OPCODES = [OP_CAT, OP_SUBSTR, OP_LEFT, OP_RIGHT, OP_INVERT, OP_AND, OP_OR, OP_XOR, OP_2MUL, OP_2DIV, OP_DIV, OP_MUL, OP_MOD, OP_LSHIFT, OP_RSHIFT]
 
@@ -38,6 +39,7 @@ module Bitcoin
       @stack, @alt_stack, @debug = [], [], []
       @flags = flags
       @checker = checker
+      @require_minimal = flag?(SCRIPT_VERIFY_MINIMALDATA)
     end
 
     # eval script
@@ -83,7 +85,6 @@ module Bitcoin
         flow_stack = []
         last_code_separator_index = 0
         op_count = 0
-        require_minimal = flag?(SCRIPT_VERIFY_MINIMALDATA)
 
         script.chunks.each_with_index do |c, index|
           need_exec = !flow_stack.include?(false)
@@ -432,15 +433,17 @@ module Bitcoin
     def pop_int(count = 1)
       i = stack.pop(count).map do |s|
         case s
-          when String
-            Script.decode_number(s)
-          else
-            s
-        end
-      end
-      i.map do |i|
-        if Script.encode_number(i).htb.bytesize > Script::DEFAULT_MAX_NUM_SIZE
-          raise '"script number overflow"'
+        when String
+          data = s.htb
+          raise '"script number overflow"' if data.bytesize > Script::DEFAULT_MAX_NUM_SIZE
+          if require_minimal && data.bytesize > 0
+            if data.bytes[-1] & 0x7f == 0 && (data.bytesize <= 1 || data.bytes[data.bytesize - 2] & 0x80 ==0)
+              raise 'non-minimally encoded script number'
+            end
+          end
+          Script.decode_number(s)
+        else
+          s
         end
       end
       count == 1 ? i.first : i
@@ -450,10 +453,10 @@ module Bitcoin
     def pop_string(count = 1)
       s = stack.pop(count).map do |s|
         case s
-          when Numeric
-            Script.encode_number(s)
-          else
-            s
+        when Numeric
+          Script.encode_number(s)
+        else
+          s
         end
       end
       count == 1 ? s.first : s
@@ -550,8 +553,21 @@ module Bitcoin
       true
     end
 
-    def minimal_push?(value, opcode)
-
+    def minimal_push?(data, opcode)
+      if data.bytesize.zero?
+        return opcode == OP_0
+      elsif data.bytesize == 1 && data.bytes[0] >= 1 && data.bytes[0] <= 16
+        return opcode == OP_1 + (data.bytes[0] - 1)
+      elsif data.bytesize == 1 && data.bytes[0] == 0x81
+        return opcode == OP_1NEGATE
+      elsif data.bytesize <= 75
+        return opcode == data.bytesize
+      elsif data.bytesize <= 255
+        return opcode == OP_PUSHDATA1
+      elsif data.bytesize <= 65535
+        return opcode == OP_PUSHDATA2
+      end
+      true
     end
 
   end
