@@ -101,7 +101,8 @@ describe Bitcoin::ScriptInterpreter do
          ">201 opcodes executed. 0x61 is NOP"],
         ["0x09 0x00000000 0x00000000 0x10", "", "P2SH,STRICTENC", "OK", "equals zero when cast to Int64"],
         ["0x4c 0x00", "DROP 1", "MINIMALDATA", "MINIMALDATA", "Empty vector minimally represented by OP_0"],
-        ["0x01 0x00", "NOT DROP 1", "MINIMALDATA", "UNKNOWN_ERROR", "numequals 0"]
+        ["0x01 0x00", "NOT DROP 1", "MINIMALDATA", "UNKNOWN_ERROR", "numequals 0"],
+        ["0 0x01 1", "HASH160 0x14 0xda1745e9b549bd0bfa1a569971c77eba30cd5a4b EQUAL", "P2SH,STRICTENC", "OK", "Very basic P2SH"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
@@ -133,9 +134,18 @@ describe Bitcoin::ScriptInterpreter do
     converted_script = convert_json(json_script)
     script = Bitcoin::Script.new
     need_push = false
+    puts "converted_script = #{converted_script}"
     converted_script.map do |v|
+      puts "v = #{v}"
       if need_push
-        push_item = v.start_with?('0x') ? v[2..-1] : v
+        if v.start_with?('0x')
+          push_item = v[2..-1]
+        elsif v =~ /^-?\d+$/
+          tmp = v.to_i
+          push_item = (-1 <= tmp && tmp <= 16 ? Bitcoin::Opcodes.small_int_to_opcode(tmp) : Bitcoin::Script.encode_number(v)).to_s(16)
+        else
+          push_item = Bitcoin::Opcodes.name_to_opcode('OP_' + v).to_s(16)
+        end
         len = script.chunks[-1].unpack('C*').first
         script.chunks[-1] = script.chunks[-1] + push_item.htb
         need_push = script.chunks[-1].bytesize - 1 != len
@@ -150,8 +160,9 @@ describe Bitcoin::ScriptInterpreter do
             script.chunks << d
           else
             len = d.unpack('C*').first
-            need_push = (buf.size - buf.pos) !=  len
-            script.chunks << (d + buf.read(len))
+            rest = (buf.size - buf.pos)
+            need_push = rest < len
+            script.chunks << (d + buf.read(len)) if rest > 0
           end
         end
       elsif v =~ /^'.*'$/
@@ -165,6 +176,7 @@ describe Bitcoin::ScriptInterpreter do
         script << opcode
       end
     end
+    puts "script = #{script}"
     script
   end
 
