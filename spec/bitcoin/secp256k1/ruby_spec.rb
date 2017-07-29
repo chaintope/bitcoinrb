@@ -51,7 +51,7 @@ describe Bitcoin::Secp256k1::Ruby do
       pub_key = '0292ee82d9add0512294723f2c363aee24efdeb3f258cdaf5118a4fcf5263e92c9'
       sig = Bitcoin::Secp256k1::Ruby.sign_data(message, priv_key)
 
-      expect(Bitcoin::Secp256k1::Ruby.verify_sig(message, sig, pub_key))
+      expect(Bitcoin::Secp256k1::Ruby.verify_sig(message, sig, pub_key)).to be true
     end
   end
 

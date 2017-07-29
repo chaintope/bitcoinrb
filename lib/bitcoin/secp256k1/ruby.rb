@@ -62,7 +62,8 @@ module Bitcoin
         begin
           k = ECDSA::Format::PointOctetString.decode(pubkey.htb, GROUP)
           signature = ECDSA::Format::SignatureDerString.decode(sig)
-          ECDSA.valid_signature?(k, data, signature)
+          digest = Digest::SHA2.digest(data)
+          ECDSA.valid_signature?(k, digest, signature)
         rescue Exception
           false
         end
