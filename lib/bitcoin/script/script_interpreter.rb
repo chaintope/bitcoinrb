@@ -18,8 +18,8 @@ module Bitcoin
   SCRIPT_VERIFY_NULLFAIL = (1 << 14) # Signature(s) must be empty vector if an CHECK(MULTI)SIG operation failed
   SCRIPT_VERIFY_WITNESS_PUBKEYTYPE = (1 << 15) # Public keys in segregated witness scripts must be compressed
 
-  MAX_SCRIPT_SIZE =
   class ScriptInterpreter
+
     include Bitcoin::Opcodes
 
     SIGVERSION = {base: 0, witness_v0: 1}
@@ -83,13 +83,17 @@ module Bitcoin
         flow_stack = []
         last_code_separator_index = 0
         op_count = 0
+        require_minimal = flag?(SCRIPT_VERIFY_MINIMALDATA)
+
         script.chunks.each_with_index do |c, index|
           need_exec = !flow_stack.include?(false)
-
+          opcode = c.opcode
           if need_exec && c.pushdata?
+            if require_minimal && !minimal_push?(c.pushed_data, opcode)
+              return set_error(ScriptError::SCRIPT_ERR_MINIMALDATA)
+            end
             stack << c.pushed_data.bth
           else
-            opcode = c.ord
             if opcode > OP_16 && (op_count += 1) > Script::MAX_OPS_PER_SCRIPT
               return set_error(ScriptError::SCRIPT_ERR_OP_COUNT)
             end
@@ -544,6 +548,10 @@ module Bitcoin
         return set_error(ScriptError::SCRIPT_ERR_WITNESS_PUBKEYTYPE)
       end
       true
+    end
+
+    def minimal_push?(value, opcode)
+
     end
 
   end

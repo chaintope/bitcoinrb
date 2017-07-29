@@ -99,7 +99,8 @@ describe Bitcoin::ScriptInterpreter do
          "P2SH,STRICTENC",
          "OP_COUNT",
          ">201 opcodes executed. 0x61 is NOP"],
-        ["0x09 0x00000000 0x00000000 0x10", "", "P2SH,STRICTENC", "OK", "equals zero when cast to Int64"]
+        ["0x09 0x00000000 0x00000000 0x10", "", "P2SH,STRICTENC", "OK", "equals zero when cast to Int64"],
+        ["0x4c 0x00", "DROP 1", "MINIMALDATA", "MINIMALDATA", "Empty vector minimally represented by OP_0"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
