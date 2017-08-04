@@ -4,16 +4,16 @@ module Bitcoin
   class Key
 
     attr_accessor :priv_key
-    attr_accessor :pub_key
+    attr_accessor :pubkey
     attr_accessor :compressed
 
     def initialize(priv_key: nil, pubkey: nil, compressed: true)
       extend Bitcoin.secp_impl
       @priv_key = priv_key
       if pubkey
-        @pub_key = pubkey
+        @pubkey = pubkey
       else
-        @pub_key = generate_pubkey(priv_key, compressed: compressed) if priv_key
+        @pubkey = generate_pubkey(priv_key, compressed: compressed) if priv_key
       end
       @compressed = compressed
     end
@@ -45,21 +45,29 @@ module Bitcoin
 
     # verify signature using public key
     def verify(sig, origin)
-      verify_sig(origin, sig, pub_key)
+      verify_sig(origin, sig, pubkey)
     end
 
     # get pay to pubkey hash address
     def to_p2pkh
-      Bitcoin::Script.to_p2pkh(Bitcoin.hash160(pub_key)).to_addr
+      Bitcoin::Script.to_p2pkh(Bitcoin.hash160(pubkey)).to_addr
     end
 
     # get pay to witness pubkey hash address
     def to_p2wpkh
-      Bitcoin::Script.to_p2wpkh(Bitcoin.hash160(pub_key)).to_addr
+      Bitcoin::Script.to_p2wpkh(Bitcoin.hash160(pubkey)).to_addr
     end
 
     def compressed?
       @compressed
+    end
+
+    # generate pubkey ec point
+    # @return [ECDSA::Point]
+    def to_point
+      p = pubkey
+      p ||= generate_pubkey(priv_key, compressed: compressed)
+      ECDSA::Format::PointOctetString.decode(p.htb, Bitcoin::Secp256k1::GROUP)
     end
 
     # check +pubkey+ (hex) is compress or uncompress pubkey.
