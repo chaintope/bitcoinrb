@@ -29,6 +29,7 @@ module Bitcoin
   autoload :Node, 'bitcoin/nodes'
   autoload :Base58, 'bitcoin/base58'
   autoload :Secp256k1, 'bitcoin/secp256k1'
+  autoload :Mnemonic, 'bitcoin/mnemonic'
 
   extend Util
 
