@@ -19,7 +19,7 @@ module Bitcoin
 
       def initialize(opts = {})
         @version = Bitcoin.chain_params.protocol_version
-        @services = Bitcoin::Message::SERVICE_NODE_NETWORK
+        @services = Bitcoin::Message::SERVICE_FLAGS[:network]
         @timestamp = Time.now.to_i
         @local_addr = "127.0.0.1:#{Bitcoin.chain_params.default_port}"
         @remote_addr = "127.0.0.1:#{Bitcoin.chain_params.default_port}"

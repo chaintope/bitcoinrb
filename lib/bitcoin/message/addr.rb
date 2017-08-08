@@ -48,7 +48,7 @@ module Bitcoin
 
       def initialize
         @time = Time.now.to_i
-        @services = Bitcoin::Message::SERVICE_NODE_NETWORK
+        @services = Bitcoin::Message::SERVICE_FLAGS[:network]
       end
 
       def self.parse_from_payload(payload)

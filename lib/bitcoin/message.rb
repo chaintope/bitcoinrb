@@ -34,8 +34,7 @@ module Bitcoin
     HEADER_SIZE = 24
     USER_AGENT = "/bitcoinrb:#{Bitcoin::VERSION}/"
 
-    SERVICE_UNMAMED = 0 # not full node
-    SERVICE_NODE_NETWORK = 1 # full node
+    SERVICE_FLAGS = {none: 0, network: 1 << 0, getutxo: 1 << 1, bloom: 1 << 2, witness: 1 << 3, xthin: 1 << 4}
 
     DEFAULT_STOP_HASH = "00"*32
 
