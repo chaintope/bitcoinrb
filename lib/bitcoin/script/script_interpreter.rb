@@ -25,7 +25,6 @@ module Bitcoin
     SIGVERSION = {base: 0, witness_v0: 1}
 
     attr_reader :stack
-    attr_reader :alt_stack
     attr_reader :debug
     attr_reader :flags
     attr_accessor :error
@@ -36,7 +35,7 @@ module Bitcoin
 
     # initialize runner
     def initialize(flags: [], checker: TxChecker.new)
-      @stack, @alt_stack, @debug = [], [], []
+      @stack, @debug = [], []
       @flags = flags
       @checker = checker
       @require_minimal = flag?(SCRIPT_VERIFY_MINIMALDATA)
@@ -102,6 +101,7 @@ module Bitcoin
       return set_error(ScriptError::SCRIPT_ERR_SCRIPT_SIZE) if script.size > Script::MAX_SCRIPT_SIZE
       begin
         flow_stack = []
+        alt_stack = []
         last_code_separator_index = 0
         op_count = 0
 

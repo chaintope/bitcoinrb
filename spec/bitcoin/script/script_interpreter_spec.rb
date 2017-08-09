@@ -109,7 +109,8 @@ describe Bitcoin::ScriptInterpreter do
             "P2SH",
             "EQUALVERIFY",
             "P2SH(P2PKH), bad sig"
-        ]
+        ],
+        ["1 TOALTSTACK", "FROMALTSTACK 1", "P2SH,STRICTENC", "INVALID_ALTSTACK_OPERATION", "alt stack not shared between sig/pubkey"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
