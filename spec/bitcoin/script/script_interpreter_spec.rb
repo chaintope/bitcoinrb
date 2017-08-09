@@ -102,7 +102,14 @@ describe Bitcoin::ScriptInterpreter do
         ["0x09 0x00000000 0x00000000 0x10", "", "P2SH,STRICTENC", "OK", "equals zero when cast to Int64"],
         ["0x4c 0x00", "DROP 1", "MINIMALDATA", "MINIMALDATA", "Empty vector minimally represented by OP_0"],
         ["0x01 0x00", "NOT DROP 1", "MINIMALDATA", "UNKNOWN_ERROR", "numequals 0"],
-        ["0 0x01 1", "HASH160 0x14 0xda1745e9b549bd0bfa1a569971c77eba30cd5a4b EQUAL", "P2SH,STRICTENC", "OK", "Very basic P2SH"]
+        ["0 0x01 1", "HASH160 0x14 0xda1745e9b549bd0bfa1a569971c77eba30cd5a4b EQUAL", "P2SH,STRICTENC", "OK", "Very basic P2SH"],
+        [
+            "0x47 0x304402204e2eb034be7b089534ac9e798cf6a2c79f38bcb34d1b179efd6f2de0841735db022071461beb056b5a7be1819da6a3e3ce3662831ecc298419ca101eb6887b5dd6a401 0x19 0x76a9147cf9c846cd4882efec4bf07e44ebdad495c94f4b88ac",
+            "HASH160 0x14 0x2df519943d5acc0ef5222091f9dfe3543f489a82 EQUAL",
+            "P2SH",
+            "EQUALVERIFY",
+            "P2SH(P2PKH), bad sig"
+        ]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
@@ -134,9 +141,7 @@ describe Bitcoin::ScriptInterpreter do
     converted_script = convert_json(json_script)
     script = Bitcoin::Script.new
     need_push = false
-    puts "converted_script = #{converted_script}"
     converted_script.map do |v|
-      puts "v = #{v}"
       if need_push
         if v.start_with?('0x')
           push_item = v[2..-1]
@@ -176,7 +181,6 @@ describe Bitcoin::ScriptInterpreter do
         script << opcode
       end
     end
-    puts "script = #{script}"
     script
   end
 

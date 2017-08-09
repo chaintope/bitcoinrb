@@ -51,17 +51,36 @@ module Bitcoin
 
       return set_error(ScriptError::SCRIPT_ERR_SIG_PUSHONLY) if flag?(SCRIPT_VERIFY_SIGPUSHONLY) && !script_sig.data_only?
 
+      stack_copy = nil
+
       return false unless eval_script(script_sig, SIGVERSION[:base])
+
+      stack_copy = stack.dup if flag?(SCRIPT_VERIFY_P2SH)
+
       return false unless eval_script(script_pubkey, SIGVERSION[:base])
+
       return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !cast_to_bool(stack.last)
 
-      if script_pubkey.witness_program?
+      if flag?(SCRIPT_VERIFY_WITNESS) && script_pubkey.witness_program?
         return set_error(ScriptError::SCRIPT_ERR_WITNESS_MALLEATED) unless script_sig.size == 0
         return false unless verify_witness_program(witness, 0, script_pubkey)
       end
 
-      if script_pubkey.p2sh?
-        # TODO
+      if flag?(SCRIPT_VERIFY_P2SH) && script_pubkey.p2sh?
+        return set_error(ScriptError::SCRIPT_ERR_SIG_PUSHONLY) unless script_sig.data_only?
+        tmp = stack
+        @stack = stack_copy
+        raise 'stack cannot be empty.' if stack.empty?
+        begin
+          redeem_script = Bitcoin::Script.parse_from_payload(stack.pop.htb)
+        rescue Exception => e
+          return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE, "Failed to parse serialized redeem script for P2SH. #{e.message}")
+        end
+        return false unless eval_script(redeem_script, SIGVERSION[:base])
+        return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !cast_to_bool(stack.last)
+        if flag?(SCRIPT_VERIFY_WITNESS) && redeem_script.witness_program?
+          # TODO
+        end
       end
       true
     end
