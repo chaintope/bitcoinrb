@@ -93,6 +93,10 @@ module Bitcoin
       !pushdata?
     end
 
+    def push_opcode?
+      [Bitcoin::Opcodes::OP_PUSHDATA1, Bitcoin::Opcodes::OP_PUSHDATA2, Bitcoin::Opcodes::OP_PUSHDATA4].include?(opcode)
+    end
+
     # whether data push only?
     def pushdata?
       opcode <= Bitcoin::Opcodes::OP_PUSHDATA4
