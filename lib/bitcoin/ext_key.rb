@@ -22,7 +22,7 @@ module Bitcoin
       ext_key.depth = ext_key.number = 0
       ext_key.parent_fingerprint = '00000000'
       l = Bitcoin.hmac_sha512('Bitcoin seed', seed)
-      left = OpenSSL::BN.new(l[0..31].bth, 16).to_i
+      left = l[0..31].bth.to_i(16)
       raise 'invalid key' if left >= CURVE_ORDER || left == 0
       ext_key.key = Bitcoin::Key.new(priv_key: l[0..31].bth)
       ext_key.chain_code = l[32..-1]
@@ -95,11 +95,11 @@ module Bitcoin
         data = key.pubkey.htb << [number].pack('N')
       end
       l = Bitcoin.hmac_sha512(chain_code, data)
-      left = OpenSSL::BN.new(l[0..31].bth, 16).to_i
+      left = l[0..31].bth.to_i(16)
       raise 'invalid key' if left >= CURVE_ORDER
-      child_priv = OpenSSL::BN.new((left + OpenSSL::BN.new(key.priv_key, 16).to_i) % CURVE_ORDER)
-      raise 'invalid key ' if child_priv.to_i >= CURVE_ORDER
-      new_key.key = Bitcoin::Key.new(priv_key: child_priv.to_i.to_s(16).rjust(64, '0'))
+      child_priv = (left + key.priv_key.to_i(16)) % CURVE_ORDER
+      raise 'invalid key ' if child_priv >= CURVE_ORDER
+      new_key.key = Bitcoin::Key.new(priv_key: child_priv.to_s(16).rjust(64, '0'))
       new_key.chain_code = l[32..-1]
       new_key
     end
@@ -179,9 +179,9 @@ module Bitcoin
       raise 'hardened key is not support' if number > (2**31 -1)
       data = pub.htb << [number].pack('N')
       l = Bitcoin.hmac_sha512(chain_code, data)
-      left = OpenSSL::BN.new(l[0..31].bth, 16)
-      raise 'invalid key' if left.to_i >= CURVE_ORDER
-      p1 = Bitcoin::Secp256k1::GROUP.generator.multiply_by_scalar(left.to_i)
+      left = l[0..31].bth.to_i(16)
+      raise 'invalid key' if left >= CURVE_ORDER
+      p1 = Bitcoin::Secp256k1::GROUP.generator.multiply_by_scalar(left)
       p2 = Bitcoin::Key.new(pubkey: pubkey).to_point
       new_key.pubkey = ECDSA::Format::PointOctetString.encode(p1 + p2, compression: true).bth
       new_key.chain_code = l[32..-1]
