@@ -112,6 +112,8 @@ module Bitcoin
             if require_minimal && !minimal_push?(c.pushed_data, opcode)
               return set_error(ScriptError::SCRIPT_ERR_MINIMALDATA)
             end
+            puts "c = #{c.bth}"
+            return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE) unless verify_pushdata_length(c)
             stack << c.pushed_data.bth
           else
             if opcode > OP_16 && (op_count += 1) > Script::MAX_OPS_PER_SCRIPT
@@ -587,6 +589,26 @@ module Bitcoin
         return opcode == OP_PUSHDATA2
       end
       true
+    end
+
+    def verify_pushdata_length(chunk)
+      buf = StringIO.new(chunk)
+      opcode = buf.read(1).ord
+      offset = 1
+      len = case opcode
+              when OP_PUSHDATA1
+                offset += 1
+                buf.read(1).unpack('C').first
+              when OP_PUSHDATA2
+                offset += 2
+                buf.read(2).unpack('v').first
+              when OP_PUSHDATA4
+                offset += 4
+                buf.read(4).unpack('V').first
+              else
+                opcode
+            end
+      chunk.bytesize == len + offset
     end
 
   end

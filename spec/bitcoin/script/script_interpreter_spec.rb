@@ -113,7 +113,9 @@ describe Bitcoin::ScriptInterpreter do
         ["0 IF 0x4c 0x00 ENDIF 1", "", "MINIMALDATA", "OK", "non-minimal PUSHDATA1 ignored"],
         ["0x4e 0x01000000 0x09","9 EQUAL", "P2SH,STRICTENC", "OK", "0x4e is OP_PUSHDATA4"],
         ["0x4c 0x01 0x07","7 EQUAL", "P2SH,STRICTENC", "OK", "0x4c is OP_PUSHDATA1"],
-        ["0x4c 0 0x01 1", "HASH160 0x14 0xda1745e9b549bd0bfa1a569971c77eba30cd5a4b EQUAL", "P2SH,STRICTENC", "OK"]
+        ["0x4c 0 0x01 1", "HASH160 0x14 0xda1745e9b549bd0bfa1a569971c77eba30cd5a4b EQUAL", "P2SH,STRICTENC", "OK"],
+        ["0 IF 0x4c 0x00000000 ENDIF 1", "", "MINIMALDATA", "OK", "non-minimal PUSHDATA4 ignored"],
+        ["0x4c01","0x01 NOP", "P2SH,STRICTENC","BAD_OPCODE", "PUSHDATA1 with not enough bytes"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do

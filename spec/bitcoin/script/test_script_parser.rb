@@ -14,17 +14,19 @@ module Bitcoin
       words.each do |w|
         next if w.empty?
         latest_chunk = script.chunks.last
-        puts "latest_chunk = #{latest_chunk.bth}" if latest_chunk
         if sufficient_length?(latest_chunk)
           if w =~ /^-?\d+$/ # when integer
             num = w.to_i
             data = (num >= -1 && num <= 16) ? num : Bitcoin::Script.encode_number( num)
             script << data
           elsif w.start_with?('0x') && w[2..-1].length > 0 && hex?(w[2..-1]) # when hex
-            buf = StringIO.new(w[2..-1].htb)
-            until buf.eof?
-              head = buf.read(1)
-              script.chunks << head
+            if w[2..-1].htb[0].push_opcode?
+              script.chunks << w[2..-1].htb
+            else
+              buf = StringIO.new(w[2..-1].htb)
+              until buf.eof?
+                script.chunks << buf.read(1)
+              end
             end
           elsif w.size >= 2 && w.start_with?("'") && w.end_with?("'")
             script << w[1..-2].bth
@@ -42,7 +44,6 @@ module Bitcoin
           end
           script.chunks[-1] = latest_chunk + append_data
         end
-
       end
       puts "payload = #{script.to_payload.bth}"
       puts "to_s = #{script.to_s}"
@@ -69,6 +70,7 @@ module Bitcoin
       opcode = buf.read(1).ord
       return false if OP_PUSHDATA1 <= opcode && opcode <= OP_PUSHDATA4 && buf.eof?
       len = read_length(opcode, buf)
+      return true if len == 0
       rest = (buf.size - buf.pos)
       rest == len
     end
