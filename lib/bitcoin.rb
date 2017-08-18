@@ -42,6 +42,7 @@ module Bitcoin
   autoload :Store, 'bitcoin/store'
   autoload :RPC, 'bitcoin/rpc'
   autoload :Wallet, 'bitcoin/wallet'
+  autoload :BloomFilter, 'bitcoin/bloom_filter'
 
   require_relative 'bitcoin/constants'
 
