@@ -10,7 +10,6 @@ describe Bitcoin::ScriptInterpreter do
         ["0x01 0x0b", "11 EQUAL", "P2SH,STRICTENC", "OK", "push 1 byte"],
         ["0x02 0x417a", "'Az' EQUAL", "P2SH,STRICTENC", "OK"],
         ["0x4f 1000 ADD","999 EQUAL", "P2SH,STRICTENC", "OK"],
-        ["0x4c 0x01 0x07","7 EQUAL", "P2SH,STRICTENC", "OK", "0x4c is OP_PUSHDATA1"],
         ["0", "IF 0x50 ENDIF 1", "P2SH,STRICTENC", "OK", "0x50 is reserved (ok if not executed)"],
         ["1","NOP", "P2SH,STRICTENC", "OK"],
         ["0", "IF VER ELSE 1 ENDIF", "P2SH,STRICTENC", "OK", "VER non-functional (ok if not executed)"],
@@ -110,10 +109,15 @@ describe Bitcoin::ScriptInterpreter do
             "EQUALVERIFY",
             "P2SH(P2PKH), bad sig"
         ],
-        ["1 TOALTSTACK", "FROMALTSTACK 1", "P2SH,STRICTENC", "INVALID_ALTSTACK_OPERATION", "alt stack not shared between sig/pubkey"]
+        ["1 TOALTSTACK", "FROMALTSTACK 1", "P2SH,STRICTENC", "INVALID_ALTSTACK_OPERATION", "alt stack not shared between sig/pubkey"],
+        ["0 IF 0x4c 0x00 ENDIF 1", "", "MINIMALDATA", "OK", "non-minimal PUSHDATA1 ignored"],
+        ["0x4e 0x01000000 0x09","9 EQUAL", "P2SH,STRICTENC", "OK", "0x4e is OP_PUSHDATA4"],
+        ["0x4c 0x01 0x07","7 EQUAL", "P2SH,STRICTENC", "OK", "0x4c is OP_PUSHDATA1"],
+        ["0x4c 0 0x01 1", "HASH160 0x14 0xda1745e9b549bd0bfa1a569971c77eba30cd5a4b EQUAL", "P2SH,STRICTENC", "OK"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
+        puts r.inspect
         if r[0].is_a?(Array)
           r[0] = r[0].join(' ')
           script_pubkey = r[2]
@@ -124,8 +128,8 @@ describe Bitcoin::ScriptInterpreter do
           flags = r[2]
           error_code = r[3]
         end
-        script_sig = parse_json_script(r[0])
-        script_pubkey = parse_json_script(script_pubkey)
+        script_sig = Bitcoin::TestScriptParser.parse_script(r[0])
+        script_pubkey = Bitcoin::TestScriptParser.parse_script(script_pubkey)
         tx = build_dummy_tx(script_sig, '')
         flags = flags.split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}
         expected_err_code = Bitcoin::ScriptError.name_to_code('SCRIPT_ERR_' + error_code)
@@ -138,84 +142,11 @@ describe Bitcoin::ScriptInterpreter do
     end
   end
 
-  def parse_json_script(json_script)
-    converted_script = convert_json(json_script)
-    script = Bitcoin::Script.new
-    need_push = false
-    converted_script.map do |v|
-      if need_push
-        if v.start_with?('0x')
-          push_item = v[2..-1]
-        elsif v =~ /^-?\d+$/
-          tmp = v.to_i
-          push_item = (-1 <= tmp && tmp <= 16 ? Bitcoin::Opcodes.small_int_to_opcode(tmp) : Bitcoin::Script.encode_number(v)).to_s(16)
-        else
-          push_item = Bitcoin::Opcodes.name_to_opcode('OP_' + v).to_s(16)
-        end
-        len = script.chunks[-1].unpack('C*').first
-        script.chunks[-1] = script.chunks[-1] + push_item.htb
-        need_push = script.chunks[-1].bytesize - 1 != len
-        next
-      end
-      if v[0, 2] == '0x'
-        data = v[2..-1].htb
-        buf = StringIO.new(data)
-        until buf.eof?
-          d = buf.read(1)
-          if d.opcode?
-            script.chunks << d
-          else
-            len = d.unpack('C*').first
-            rest = (buf.size - buf.pos)
-            need_push = rest < len
-            script.chunks << (d + buf.read(len)) if rest > 0
-          end
-        end
-      elsif v =~ /^'.*'$/
-        script << v[1..-2].bth
-      elsif v =~ /^-?\d+$/
-        v = v.to_i
-        script << (-1 <= v && v <= 16 ? Bitcoin::Opcodes.small_int_to_opcode(v) : Bitcoin::Script.encode_number(v))
-      else
-        opcode = Bitcoin::Opcodes.name_to_opcode(v)
-        opcode = Bitcoin::Opcodes.name_to_opcode('OP_' + v) unless opcode
-        script << opcode
-      end
-    end
-    script
-  end
-
   def build_dummy_tx(script_sig, txid)
     tx = Bitcoin::Tx.new
     tx.inputs << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new(txid, 0), script_sig: script_sig)
     tx.outputs << Bitcoin::TxOut.new(script_pubkey: Bitcoin::Script.new)
     tx
-  end
-
-  def convert_json(json_script)
-    split_json = json_script.split(' ')
-    converted = []
-    concat = false
-    process_pos = 0
-    while process_pos != split_json.size
-      current_item = split_json[process_pos]
-      content = current_item.start_with?('0x') ? current_item[2..-1] : current_item
-      if concat
-        if current_item.start_with?('0x') && split_json[process_pos-1].size == 4
-          converted[-1] = converted[-1] + content
-        else
-          converted << current_item
-          concat = false
-        end
-      else
-        converted << current_item
-      end
-      if current_item.start_with?('0x') && current_item.size == 4
-        concat = true
-      end
-      process_pos += 1
-    end
-    converted
   end
 
 end

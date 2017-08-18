@@ -15,3 +15,7 @@ def fixture_file(relative_path)
   file = File.read(File.join(File.dirname(__FILE__), 'fixtures', relative_path))
   JSON.parse(file)
 end
+
+module Bitcoin
+  autoload :TestScriptParser, 'bitcoin/script/test_script_parser'
+end

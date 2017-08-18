@@ -92,11 +92,11 @@ module Bitcoin
           pushcode = opcode.ord
           len = case pushcode
                   when OP_PUSHDATA1
-                    buf.read(1)
+                    buf.read(1).unpack('C').first
                   when OP_PUSHDATA2
-                    buf.read(2)
+                    buf.read(2).unpack('v').first
                   when OP_PUSHDATA4
-                    buf.read(4)
+                    buf.read(4).unpack('V').first
                   else
                     pushcode if pushcode < OP_PUSHDATA1
                 end
@@ -158,13 +158,23 @@ module Bitcoin
     # append object to payload
     def <<(obj)
       if obj.is_a?(Integer)
-        append_opcode(obj)
+        push_int(obj)
       elsif obj.is_a?(String)
         append_data(obj.b)
       elsif obj.is_a?(Array)
         obj.each { |o| self.<< o}
         self
       end
+    end
+
+    # push integer to stack.
+    def push_int(n)
+      begin
+        append_opcode(n)
+      rescue ArgumentError
+        append_data(Script.encode_number(n))
+      end
+      self
     end
 
     # append opcode to payload
@@ -181,20 +191,7 @@ module Bitcoin
     # @param [String] data append data. this data is not binary
     # @return [Script] return self
     def append_data(data)
-      data = data.htb
-      size = data.bytesize
-      header = if size < OP_PUSHDATA1
-                 [size].pack('C')
-               elsif size < 0xff
-                 [OP_PUSHDATA1, size].pack('CC')
-               elsif size < 0xffff
-                 [OP_PUSHDATA2, size].pack('Cv')
-               elsif size < 0xffffffff
-                 [OP_PUSHDATA4, size].pack('CV')
-               else
-                 raise ArgumentError, 'data size is too big.'
-               end
-      chunks << (header + data)
+      chunks << Bitcoin::Script.pack_pushdata(data.htb)
       self
     end
 
@@ -254,6 +251,23 @@ module Bitcoin
       result = v.bth.to_i(16)
       result = -result unless (mbs & 0x80) == 0
       result
+    end
+
+    # binary +data+ convert pushdata which contains data length and append PUSHDATA opcode if necessary.
+    def self.pack_pushdata(data)
+      size = data.bytesize
+      header = if size < OP_PUSHDATA1
+                 [size].pack('C')
+               elsif size < 0xff
+                 [OP_PUSHDATA1, size].pack('CC')
+               elsif size < 0xffff
+                 [OP_PUSHDATA2, size].pack('Cv')
+               elsif size < 0xffffffff
+                 [OP_PUSHDATA4, size].pack('CV')
+               else
+                 raise ArgumentError, 'data size is too big.'
+               end
+      header + data
     end
 
     # subscript this script to the specified range.
