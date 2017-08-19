@@ -126,18 +126,18 @@ module Bitcoin
             next unless (need_exec || (OP_IF <= opcode && opcode <= OP_ENDIF))
             small_int = Opcodes.opcode_to_small_int(opcode)
             if small_int && opcode != OP_0
-              stack << small_int
+              push_int(small_int)
             else
               case opcode
                 when OP_0
                   stack << ''
                 when OP_DEPTH
-                  stack << stack.size
+                  push_int(stack.size)
                 when OP_EQUAL, OP_EQUALVERIFY
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_string(2)
                   result = a == b
-                  stack << (result ? 1 : 0)
+                  push_int(result ? 1 : 0)
                   if opcode == OP_EQUALVERIFY
                     if result
                       stack.pop
@@ -147,21 +147,21 @@ module Bitcoin
                   end
                 when OP_0NOTEQUAL
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
-                  stack << (pop_int == 0 ? 0 : 1)
+                  push_int(pop_int == 0 ? 0 : 1)
                 when OP_ADD
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_int(2)
-                  stack << (a + b)
+                  push_int(a + b)
                 when OP_1ADD
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
-                  stack << (pop_int + 1)
+                  push_int(pop_int + 1)
                 when OP_SUB
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_int(2)
-                  stack << (a - b)
+                  push_int(a - b)
                 when OP_1SUB
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
-                  stack << (pop_int - 1)
+                  push_int(pop_int - 1)
                 when OP_IF, OP_NOTIF
                   result = false
                   if need_exec
@@ -275,20 +275,20 @@ module Bitcoin
                 when OP_ABS
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   v = pop_int
-                  stack << v.abs
+                  push_int(v.abs)
                 when OP_BOOLAND
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_int(2)
-                  stack << ((!a.zero? && !b.zero?) ? 1 : 0)
+                  push_int((!a.zero? && !b.zero?) ? 1 : 0)
                 when OP_BOOLOR
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_int(2)
-                  stack << ((!a.zero? || !b.zero?) ? 1 : 0)
+                  push_int((!a.zero? || !b.zero?) ? 1 : 0)
                 when OP_NUMEQUAL, OP_NUMEQUALVERIFY
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_int(2)
                   result = a == b
-                  stack << (result ? 1 : 0)
+                  push_int(result ? 1 : 0)
                   if opcode == OP_NUMEQUALVERIFY
                     if result
                       stack.pop
@@ -299,39 +299,39 @@ module Bitcoin
                 when OP_LESSTHAN, OP_LESSTHANOREQUAL
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_int(2)
-                  stack << (a < b ? 1 : 0) if opcode == OP_LESSTHAN
-                  stack << (a <= b ? 1 : 0) if opcode == OP_LESSTHANOREQUAL
+                  push_int(a < b ? 1 : 0) if opcode == OP_LESSTHAN
+                  push_int(a <= b ? 1 : 0) if opcode == OP_LESSTHANOREQUAL
                 when OP_GREATERTHAN, OP_GREATERTHANOREQUAL
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
                   a, b = pop_int(2)
-                  stack << (a > b ? 1 : 0) if opcode == OP_GREATERTHAN
-                  stack << (a >= b ? 1 : 0) if opcode == OP_GREATERTHANOREQUAL
+                  push_int(a > b ? 1 : 0) if opcode == OP_GREATERTHAN
+                  push_int(a >= b ? 1 : 0) if opcode == OP_GREATERTHANOREQUAL
                 when OP_MIN
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
-                  stack << pop_int(2).min
+                  push_int(pop_int(2).min)
                 when OP_MAX
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 2
-                  stack << pop_int(2).max
+                  push_int(pop_int(2).max)
                 when OP_WITHIN
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 3
                   x, a, b = pop_int(3)
-                  stack << ((a <= x && x < b) ? 1 : 0)
+                  push_int((a <= x && x < b) ? 1 : 0)
                 when OP_NOT
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
-                  stack << (pop_int == 0 ? 1 : 0)
+                  push_int(pop_int == 0 ? 1 : 0)
                 when OP_SIZE
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   item = stack.last
                   item = Bitcoin::Script.encode_number(item) if item.is_a?(Numeric)
                   size = item.htb.bytesize
-                  stack << size
+                  push_int(size)
                 when OP_NEGATE
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
-                  stack << -pop_int
+                  push_int(-pop_int)
                 when OP_NUMNOTEQUAL
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION)  if stack.size < 2
                   a, b = pop_int(2)
-                  stack << (a == b ? 0 : 1)
+                  push_int(a == b ? 0 : 1)
                 when OP_CODESEPARATOR
                   last_code_separator_index = index + 1
                 when OP_CHECKSIG, OP_CHECKSIGVERIFY
@@ -348,7 +348,7 @@ module Bitcoin
                   success = checker.check_sig(sig, pubkey, subscript, sig_version)
 
                   stack.pop(2)
-                  stack << (success ? 1 : 0)
+                  push_int(success ? 1 : 0)
 
                   if opcode == OP_CHECKSIGVERIFY
                     if success
@@ -413,7 +413,7 @@ module Bitcoin
                   end
                   stack.pop
 
-                  stack << (success ? 1 : 0)
+                  push_int(success ? 1 : 0)
                   if opcode == OP_CHECKMULTISIGVERIFY
                     if success
                       stack.pop
@@ -459,21 +459,21 @@ module Bitcoin
     # pop the item with the int value for the number specified by +count+ from the stack.
     def pop_int(count = 1)
       i = stack.pop(count).map do |s|
-        case s
-        when String
-          data = s.htb
-          raise '"script number overflow"' if data.bytesize > Script::DEFAULT_MAX_NUM_SIZE
-          if require_minimal && data.bytesize > 0
-            if data.bytes[-1] & 0x7f == 0 && (data.bytesize <= 1 || data.bytes[data.bytesize - 2] & 0x80 ==0)
-              raise 'non-minimally encoded script number'
-            end
+        data = s.htb
+        raise '"script number overflow"' if data.bytesize > Script::DEFAULT_MAX_NUM_SIZE
+        if require_minimal && data.bytesize > 0
+          if data.bytes[-1] & 0x7f == 0 && (data.bytesize <= 1 || data.bytes[data.bytesize - 2] & 0x80 ==0)
+            raise 'non-minimally encoded script number'
           end
-          Script.decode_number(s)
-        else
-          s
         end
+        Script.decode_number(s)
       end
       count == 1 ? i.first : i
+    end
+
+    # push +i+ into stack as encoded by Script#encode_number
+    def push_int(i)
+      stack << Script.encode_number(i)
     end
 
     # pop the item with the string(hex) value for the number specified by +count+ from the stack.
