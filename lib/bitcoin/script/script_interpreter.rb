@@ -107,13 +107,16 @@ module Bitcoin
 
         script.chunks.each_with_index do |c, index|
           need_exec = !flow_stack.include?(false)
+
+          return set_error(ScriptError::SCRIPT_ERR_PUSH_SIZE) if c.pushdata? && c.pushed_data.bytesize > Script::MAX_SCRIPT_ELEMENT_SIZE
+
           opcode = c.opcode
+
           if need_exec && c.pushdata?
             if require_minimal && !minimal_push?(c.pushed_data, opcode)
               return set_error(ScriptError::SCRIPT_ERR_MINIMALDATA)
             end
             return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE) unless verify_pushdata_length(c)
-            return set_error(ScriptError::SCRIPT_ERR_PUSH_SIZE) if c.pushed_data.bytesize > Script::MAX_SCRIPT_ELEMENT_SIZE
             stack << c.pushed_data.bth
           else
             if opcode > OP_16 && (op_count += 1) > Script::MAX_OPS_PER_SCRIPT
