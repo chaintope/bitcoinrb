@@ -428,6 +428,9 @@ module Bitcoin
               end
             end
           end
+
+          # max stack size check
+          return set_error(ScriptError::SCRIPT_ERR_STACK_SIZE) if stack.size + alt_stack.size > Script::MAX_STACK_SIZE
         end
       rescue Exception => e
         puts e

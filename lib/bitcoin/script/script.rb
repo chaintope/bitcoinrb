@@ -19,6 +19,9 @@ module Bitcoin
     # Maximum number of bytes pushable to the stack
     MAX_SCRIPT_ELEMENT_SIZE = 520
 
+    # Maximum number of size in the stack
+    MAX_STACK_SIZE = 1000
+
     # Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp.
     LOCKTIME_THRESHOLD = 500000000
 
