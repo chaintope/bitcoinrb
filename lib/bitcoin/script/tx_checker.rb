@@ -22,7 +22,7 @@ module Bitcoin
       hash_type = script_sig[-1].unpack('C').first
       sig = script_sig[0..-2]
       sighash = nil
-      if sig_version == ScriptInterpreter::SIGVERSION[:witness_v0]
+      if sig_version == ScriptInterpreter::SIG_VERSION[:witness_v0]
         # TODO
       else
         sighash = tx.sighash_for_input(input_index: input_index, hash_type: hash_type, script_pubkey: script_code)

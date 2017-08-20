@@ -153,9 +153,21 @@ module Bitcoin
       true
     end
 
-    # whether this script has witness program.
+    # A witness program is any valid Script that consists of a 1-byte push opcode followed by a data push between 2 and 40 bytes.
     def witness_program?
-      p2wpkh? || p2wsh?
+      return false if size < 4 || size > 42 || chunks.size < 2
+      opcode = chunks[0].opcode
+      return false if opcode != OP_0 && (opcode < OP_1 || opcode > OP_16)
+      return false unless chunks[1].pushdata?
+      program_size = chunks[1].pushed_data.bytesize
+      program_size >= 2 && program_size <= 40
+    end
+
+    # get witness version and witness program
+    def witness_data
+      version = opcode_to_small_int(chunks[0].opcode)
+      program = chunks[1].pushed_data
+      [version, program]
     end
 
     # append object to payload

@@ -22,7 +22,7 @@ module Bitcoin
 
     include Bitcoin::Opcodes
 
-    SIGVERSION = {base: 0, witness_v0: 1}
+    SIG_VERSION = {base: 0, witness_v0: 1}
 
     attr_reader :stack
     attr_reader :debug
@@ -51,18 +51,22 @@ module Bitcoin
       return set_error(ScriptError::SCRIPT_ERR_SIG_PUSHONLY) if flag?(SCRIPT_VERIFY_SIGPUSHONLY) && !script_sig.data_only?
 
       stack_copy = nil
+      had_witness = false
 
-      return false unless eval_script(script_sig, SIGVERSION[:base])
+      return false unless eval_script(script_sig, SIG_VERSION[:base])
 
       stack_copy = stack.dup if flag?(SCRIPT_VERIFY_P2SH)
 
-      return false unless eval_script(script_pubkey, SIGVERSION[:base])
+      return false unless eval_script(script_pubkey, SIG_VERSION[:base])
 
       return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !cast_to_bool(stack.last)
 
       if flag?(SCRIPT_VERIFY_WITNESS) && script_pubkey.witness_program?
+        had_witness = true
         return set_error(ScriptError::SCRIPT_ERR_WITNESS_MALLEATED) unless script_sig.size == 0
-        return false unless verify_witness_program(witness, 0, script_pubkey)
+        version, program = script_pubkey.witness_data
+        stack_copy = stack.dup
+        return false unless verify_witness_program(witness, version, program)
       end
 
       if flag?(SCRIPT_VERIFY_P2SH) && script_pubkey.p2sh?
@@ -75,7 +79,7 @@ module Bitcoin
         rescue Exception => e
           return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE, "Failed to parse serialized redeem script for P2SH. #{e.message}")
         end
-        return false unless eval_script(redeem_script, SIGVERSION[:base])
+        return false unless eval_script(redeem_script, SIG_VERSION[:base])
         return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !cast_to_bool(stack.last)
         if flag?(SCRIPT_VERIFY_WITNESS) && redeem_script.witness_program?
           # TODO
@@ -93,8 +97,36 @@ module Bitcoin
 
     end
 
-    def verify_witness_program(witness, version, witness_program)
+    def verify_witness_program(witness, version, program)
+      if version == 0
+        if program.bytesize == 32
+          return set_error(ScriptError::SCRIPT_ERR_WITNESS_PROGRAM_WITNESS_EMPTY) if witness.stack.size == 0
+          script_pubkey = Bitcoin::Script.parse_from_payload(witness.stack.last)
+          @stack = witness.stack[0..-2]
+          script_hash = Bitcoin.sha256(script_pubkey.to_payload)
+          return set_error(ScriptError::SCRIPT_ERR_WITNESS_PROGRAM_MISMATCH) unless script_hash == program
+        elsif program.bytesize == 20
+          return set_error(ScriptError::SCRIPT_ERR_WITNESS_PROGRAM_MISMATCH) unless witness.stack.size == 2
+          script_pubkey = Bitcoin::Script.to_p2wpkh(program.bth)
+          @stack = witness.stack
+        else
+          return set_error(ScriptError::SCRIPT_ERR_WITNESS_PROGRAM_WRONG_LENGTH)
+        end
+      elsif flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM)
+        return set_error(ScriptError::SCRIPT_ERR_WITNESS_PROGRAM_WRONG_LENGTH)
+      else
+        return true # Higher version witness scripts return true for future softfork compatibility
+      end
 
+      stack.each do |s| # Disallow stack item size > MAX_SCRIPT_ELEMENT_SIZE in witness stack
+        return set_error(ScriptError::SCRIPT_ERR_PUSH_SIZE) if s.bytesize > Script::MAX_SCRIPT_ELEMENT_SIZE
+      end
+
+      return false unless eval_script(script_pubkey, SIG_VERSION[:witness_v0])
+
+      return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) unless stack.size == 1
+      return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) unless cast_to_bool(stack.last)
+      true
     end
 
     def eval_script(script, sig_version)
@@ -339,7 +371,7 @@ module Bitcoin
                   sig, pubkey = pop_string(2)
 
                   subscript = script.subscript(last_code_separator_index..-1)
-                  if sig_version == SIGVERSION[:base]
+                  if sig_version == SIG_VERSION[:base]
                     subscript = subscript.find_and_delete(Script.new << sig)
                   end
 
@@ -383,7 +415,7 @@ module Bitcoin
                   
                   subscript = script.subscript(last_code_separator_index..-1)
 
-                  if sig_version == SIGVERSION[:base]
+                  if sig_version == SIG_VERSION[:base]
                     sigs.each do |sig|
                       subscript = subscript.find_and_delete(Script.new << sig)
                     end
@@ -574,7 +606,7 @@ module Bitcoin
       end
       # Only compressed keys are accepted in segwit
       if flag?(SCRIPT_VERIFY_WITNESS_PUBKEYTYPE) &&
-          sig_version == SIGVERSION[:witness_v0] && !Key.compress_pubkey?(pubkey)
+          sig_version == SIG_VERSION[:witness_v0] && !Key.compress_pubkey?(pubkey)
         return set_error(ScriptError::SCRIPT_ERR_WITNESS_PUBKEYTYPE)
       end
       true

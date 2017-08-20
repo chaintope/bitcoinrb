@@ -5,8 +5,8 @@ module Bitcoin
 
     attr_reader :stack
 
-    def initialize
-      @stack = []
+    def initialize(stack = [])
+      @stack = stack
     end
 
     def empty?
@@ -16,9 +16,12 @@ module Bitcoin
     def to_payload
       p = Bitcoin.pack_var_int(stack.size)
       p << stack.map { |s|
-        b = s.htb
-        Bitcoin.pack_var_int(b.bytesize) << b
+        Bitcoin.pack_var_int(s.bytesize) << s
       }.join
+    end
+
+    def to_s
+
     end
 
   end

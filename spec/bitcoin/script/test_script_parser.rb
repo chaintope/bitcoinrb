@@ -20,10 +20,11 @@ module Bitcoin
             data = (num >= -1 && num <= 16) ? num : Bitcoin::Script.encode_number( num)
             script << data
           elsif w.start_with?('0x') && w[2..-1].length > 0 && hex?(w[2..-1]) # when hex
-            if w[2..-1].htb[0].push_opcode?
+            data = w[2..-1].htb
+            if data[0].pushdata?
               script.chunks << w[2..-1].htb
             else
-              buf = StringIO.new(w[2..-1].htb)
+              buf = StringIO.new(data)
               until buf.eof?
                 script.chunks << buf.read(1)
               end

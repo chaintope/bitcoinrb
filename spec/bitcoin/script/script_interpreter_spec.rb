@@ -131,28 +131,26 @@ describe Bitcoin::ScriptInterpreter do
          "P2SH,STRICTENC",
          "STACK_SIZE",
          ">1,000 stack size (0x6f is 3DUP)"],
-        ["2147483647", "1ADD 1SUB 1", "P2SH,STRICTENC", "UNKNOWN_ERROR", "We cannot do math on 5-byte integers, even if the result is 4-bytes"]
+        ["2147483647", "1ADD 1SUB 1", "P2SH,STRICTENC", "UNKNOWN_ERROR", "We cannot do math on 5-byte integers, even if the result is 4-bytes"],
+        [["00", 0.00000000 ], "", "0 0x206e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d", "P2SH,WITNESS", "EVAL_FALSE", "Invalid witness script"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
         puts r.inspect
+        witness = nil
         if r[0].is_a?(Array)
-          r[0] = r[0].join(' ')
-          script_pubkey = r[2]
-          flags = r[3]
-          error_code = r[4]
+          witness = Bitcoin::ScriptWitness.new(r[0][0..-2].map{ |v| v.htb })
+          sig, pubkey, flags, error_code = r[1], r[2], r[3], r[4]
         else
-          script_pubkey = r[1]
-          flags = r[2]
-          error_code = r[3]
+          sig, pubkey, flags, error_code = r[0], r[1], r[2], r[3]
         end
-        script_sig = Bitcoin::TestScriptParser.parse_script(r[0])
-        script_pubkey = Bitcoin::TestScriptParser.parse_script(script_pubkey)
+        script_sig = Bitcoin::TestScriptParser.parse_script(sig)
+        script_pubkey = Bitcoin::TestScriptParser.parse_script(pubkey)
         tx = build_dummy_tx(script_sig, '')
         flags = flags.split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}
         expected_err_code = Bitcoin::ScriptError.name_to_code('SCRIPT_ERR_' + error_code)
         i = Bitcoin::ScriptInterpreter.new(flags: flags, checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0))
-        result = i.verify(script_sig, script_pubkey)
+        result = i.verify(script_sig, script_pubkey, witness)
         puts i.error.to_s
         expect(result).to be expected_err_code == Bitcoin::ScriptError::SCRIPT_ERR_OK
         expect(i.error.code).to eq(expected_err_code) unless result

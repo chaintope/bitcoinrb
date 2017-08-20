@@ -48,7 +48,7 @@ module Bitcoin
           witness_count = Bitcoin.unpack_var_int_from_io(buf)
           witness_count.times do
             size = Bitcoin.unpack_var_int_from_io(buf)
-            tx.inputs[i].script_witness.stack << buf.read(size).bth
+            tx.inputs[i].script_witness.stack << buf.read(size)
           end
         end
       end

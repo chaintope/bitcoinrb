@@ -237,4 +237,26 @@ describe Bitcoin::Script do
     end
   end
 
+  describe '#witness_program?' do
+    it 'should be judge' do
+      expect(Bitcoin::Script.from_string('0 6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d').witness_program?).to be true
+      expect(Bitcoin::Script.from_string('0 62').witness_program?).to be false
+      expect(Bitcoin::Script.from_string('0 6234').witness_program?).to be true
+      expect(Bitcoin::Script.from_string('0 6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d0000000000000000').witness_program?).to be true
+      expect(Bitcoin::Script.from_string('0 6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d000000000000000000').witness_program?).to be false
+      expect(Bitcoin::Script.from_string('1 6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d').witness_program?).to be true
+      expect(Bitcoin::Script.from_string('0000 6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d').witness_program?).to be false
+    end
+  end
+
+  describe '#witness_data' do
+    it 'should be return version and program' do
+      script = Bitcoin::Script.from_string('0 6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d')
+      data = script.witness_data
+      expect(data.size).to eq(2)
+      expect(data[0]).to eq(0)
+      expect(data[1].bth).to eq('6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d')
+    end
+  end
+
 end
