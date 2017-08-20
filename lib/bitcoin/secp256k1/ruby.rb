@@ -52,15 +52,14 @@ module Bitcoin
       end
 
       # verify signature using public key
-      # @param [String] data a original message
+      # @param [String] digest a SHA-256 message digest with binary format
       # @param [String] sig a signature for +data+ with binary format
       # @param [String] pubkey a public key corresponding to the private key used for sign
       # @return [Boolean] verify result
-      def verify_sig(data, sig, pubkey)
+      def verify_sig(digest, sig, pubkey)
         begin
           k = ECDSA::Format::PointOctetString.decode(pubkey.htb, GROUP)
           signature = ECDSA::Format::SignatureDerString.decode(sig)
-          digest = Digest::SHA2.digest(data)
           ECDSA.valid_signature?(k, digest, signature)
         rescue Exception
           false

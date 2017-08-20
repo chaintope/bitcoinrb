@@ -132,7 +132,14 @@ describe Bitcoin::ScriptInterpreter do
          "STACK_SIZE",
          ">1,000 stack size (0x6f is 3DUP)"],
         ["2147483647", "1ADD 1SUB 1", "P2SH,STRICTENC", "UNKNOWN_ERROR", "We cannot do math on 5-byte integers, even if the result is 4-bytes"],
-        [["00", 0.00000000 ], "", "0 0x206e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d", "P2SH,WITNESS", "EVAL_FALSE", "Invalid witness script"]
+        [["00", 0.00000000 ], "", "0 0x206e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d", "P2SH,WITNESS", "EVAL_FALSE", "Invalid witness script"],
+        [
+          "0x47 0x304402200a5c6163f07b8d3b013c4d1d6dba25e780b39658d79ba37af7057a3b7f15ffa102201fd9b4eaa9943f734928b99a83592c2e7bf342ea2680f6a2bb705167966b742001",
+          "0x41 0x0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8 CHECKSIG",
+          "",
+          "OK",
+          "P2PK"
+        ]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
@@ -146,7 +153,7 @@ describe Bitcoin::ScriptInterpreter do
         end
         script_sig = Bitcoin::TestScriptParser.parse_script(sig)
         script_pubkey = Bitcoin::TestScriptParser.parse_script(pubkey)
-        tx = build_dummy_tx(script_sig, '')
+        tx = build_spending_tx(script_sig, build_locked_tx(script_pubkey))
         flags = flags.split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}
         expected_err_code = Bitcoin::ScriptError.name_to_code('SCRIPT_ERR_' + error_code)
         i = Bitcoin::ScriptInterpreter.new(flags: flags, checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0))
@@ -161,6 +168,28 @@ describe Bitcoin::ScriptInterpreter do
   def build_dummy_tx(script_sig, txid)
     tx = Bitcoin::Tx.new
     tx.inputs << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new(txid, 0), script_sig: script_sig)
+    tx.outputs << Bitcoin::TxOut.new(script_pubkey: Bitcoin::Script.new)
+    tx
+  end
+
+  def build_locked_tx(script_pubkey)
+    tx = Bitcoin::Tx.new
+    tx.version = 1
+    tx.lock_time = 0
+    coinbase = Bitcoin::Script.new << 0 << 0
+    tx.inputs << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.create_coinbase_outpoint, script_sig: coinbase)
+    tx.outputs << Bitcoin::TxOut.new(script_pubkey: script_pubkey)
+    tx
+  end
+
+  def build_spending_tx(script_sig, locked_tx)
+    tx = Bitcoin::Tx.new
+    tx.version = 1
+    tx.lock_time = 0
+    tx.inputs << Bitcoin::TxIn.new(
+      out_point: Bitcoin::OutPoint.new(locked_tx.txid, 0),
+      script_sig: script_sig
+    )
     tx.outputs << Bitcoin::TxOut.new(script_pubkey: Bitcoin::Script.new)
     tx
   end

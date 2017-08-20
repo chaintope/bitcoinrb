@@ -44,6 +44,9 @@ module Bitcoin
     end
 
     # verify signature using public key
+    # @param [String] sig signature data with binary format
+    # @param [String] origin original message
+    # @return [Boolean] verify result
     def verify(sig, origin)
       verify_sig(origin, sig, pubkey)
     end

@@ -22,6 +22,10 @@ module Bitcoin
       [hash.htb.reverse, index].pack('a32V')
     end
 
+    def self.create_coinbase_outpoint
+      new(COINBASE_HASH, COINBASE_INDEX)
+    end
+
   end
 
 end

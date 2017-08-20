@@ -8,7 +8,9 @@ module Bitcoin
     attr_accessor :sequence
     attr_accessor :script_witness
 
-    def initialize(out_point: nil, script_sig: nil, script_witness: ScriptWitness.new, sequence: 0)
+    DEFAULT_SEQUENCE = 0xFFFFFFFF
+
+    def initialize(out_point: nil, script_sig: nil, script_witness: ScriptWitness.new, sequence: DEFAULT_SEQUENCE)
       @out_point = out_point
       @script_sig = script_sig
       @script_witness = script_witness
