@@ -379,6 +379,10 @@ module Bitcoin
 
                   success = checker.check_sig(sig, pubkey, subscript, sig_version)
 
+                  if !success && flag?(SCRIPT_VERIFY_NULLFAIL) && sig.bytesize > 0
+                    return set_error(ScriptError::SCRIPT_ERR_SIG_NULLFAIL)
+                  end
+
                   stack.pop(2)
                   push_int(success ? 1 : 0)
 

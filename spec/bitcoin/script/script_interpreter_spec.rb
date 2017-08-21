@@ -153,6 +153,13 @@ describe Bitcoin::ScriptInterpreter do
             "",
             "OK",
             "P2PK with too little R padding but no DERSIG"
+        ],
+        [
+            "0x09 0x300602010102010101",
+            "0x21 0x038282263212c609d9ea2a6e3e172de238d8c39cabd5ac1ca10646e23fd5f51508 CHECKSIG NOT",
+            "DERSIG,NULLFAIL",
+            "NULLFAIL",
+            "BIP66 example 4, with DERSIG and NULLFAIL, non-null DER-compliant signature"
         ]
     ]
     script_json.each do| r |
@@ -169,7 +176,7 @@ describe Bitcoin::ScriptInterpreter do
         script_pubkey = Bitcoin::TestScriptParser.parse_script(pubkey)
         tx = build_spending_tx(script_sig, build_locked_tx(script_pubkey))
         flags = flags.split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}
-        expected_err_code = Bitcoin::ScriptError.name_to_code('SCRIPT_ERR_' + error_code)
+        expected_err_code = find_error_code(error_code)
         i = Bitcoin::ScriptInterpreter.new(flags: flags, checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0))
         result = i.verify(script_sig, script_pubkey, witness)
         puts i.error.to_s
@@ -206,6 +213,11 @@ describe Bitcoin::ScriptInterpreter do
     )
     tx.outputs << Bitcoin::TxOut.new(script_pubkey: Bitcoin::Script.new)
     tx
+  end
+
+  def find_error_code(error_code)
+    error_code = 'SIG_NULLFAIL' if error_code == 'NULLFAIL'
+    Bitcoin::ScriptError.name_to_code('SCRIPT_ERR_' + error_code)
   end
 
 end
