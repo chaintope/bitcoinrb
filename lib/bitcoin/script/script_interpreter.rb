@@ -595,7 +595,8 @@ module Bitcoin
 
     def low_der_signature?(sig)
       return set_error(ScriptError::SCRIPT_ERR_SIG_DER) unless valid_signature_encoding?(sig)
-      Key.low_signature?(sig)
+      return set_error(ScriptError::SCRIPT_ERR_SIG_HIGH_S) unless Key.low_signature?(sig)
+      true
     end
 
     def defined_hashtype_signature?(signature)
