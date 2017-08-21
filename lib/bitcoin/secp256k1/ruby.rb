@@ -59,11 +59,22 @@ module Bitcoin
       def verify_sig(digest, sig, pubkey)
         begin
           k = ECDSA::Format::PointOctetString.decode(pubkey.htb, GROUP)
-          signature = ECDSA::Format::SignatureDerString.decode(sig)
+          signature = repack_sig(sig)
           ECDSA.valid_signature?(k, digest, signature)
         rescue Exception
           false
         end
+      end
+
+      # repack signature for OpenSSL 1.0.1k handling of DER signatures
+      # https://github.com/bitcoin/bitcoin/pull/5634/files
+      def repack_sig(sig)
+        sig_array = sig.unpack('C*')
+        len_r = sig_array[3]
+        r = sig_array[4...(len_r+4)].pack('C*').bth
+        len_s = sig_array[len_r + 5]
+        s = sig_array[(len_r + 6)...(len_r + 6 + len_s)].pack('C*').bth
+        ECDSA::Signature.new(r.to_i(16), s.to_i(16))
       end
 
     end

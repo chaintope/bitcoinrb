@@ -554,34 +554,37 @@ module Bitcoin
     end
 
     # check +sig+ (hex) is correct der encoding.
+    # This function is consensus-critical since BIP66.
     def valid_signature_encoding?(signature)
       sig = signature.htb
-      return false if sig.bytesize < 9 || sig.bytesize > 73
+      return false if sig.bytesize < 9 || sig.bytesize > 73 # Minimum and maximum size check
 
       s = sig.unpack('C*')
-      return false if s[0] != 0x30 || s[1] != s.size - 3
+
+      return false if s[0] != 0x30 || s[1] != s.size - 3 # A signature is of type 0x30 (compound). Make sure the length covers the entire signature.
 
       len_r = s[3]
-      return false if 5 + len_r >= s.size
+      return false if 5 + len_r >= s.size # Make sure the length of the S element is still inside the signature.
+
       len_s = s[5 + len_r]
-      return false unless len_r + len_s + 7 == s.size
+      return false unless len_r + len_s + 7 == s.size #Verify that the length of the signature matches the sum of the length of the elements.
 
-      return false unless s[2] == 0x02
+      return false unless s[2] == 0x02 # Check whether the R element is an integer.
 
-      return false if len_r == 0
+      return false if len_r == 0 # Zero-length integers are not allowed for R.
 
-      val_r = s.slice(4, len_r)
-      return false unless val_r[0] & 0x80 == 0
+      return false unless s[4] & 0x80 == 0 # Negative numbers are not allowed for R.
 
-      return false if len_r > 1 && (val_r[0] == 0x00) && !(val_r[1] & 0x80 != 0)
+      # Null bytes at the start of R are not allowed, unless R would otherwise be interpreted as a negative number.
+      return false if len_r > 1 && (s[4] == 0x00) && (s[5] & 0x80 == 0)
 
-      val_s = s.slice(6 + len_r, len_s)
-      return false unless s[6 + len_r - 2] == 0x02
+      return false unless s[len_r + 4] == 0x02 # Check whether the S element is an integer.
 
-      return false if len_s == 0
-      return false unless (val_s[0] & 0x80) == 0
+      return false if len_s == 0 # Zero-length integers are not allowed for S.
+      return false unless (s[len_r + 6] & 0x80) == 0 # Negative numbers are not allowed for S.
 
-      return false if len_s > 1 && (val_s[0] == 0x00) && !(val_s[1] & 0x80)
+      # Null bytes at the start of S are not allowed, unless S would otherwise be interpreted as a negative number.
+      return false if len_s > 1 && (s[len_r + 6] == 0x00) && (s[len_r + 7] & 0x80 == 0)
 
       true
     end

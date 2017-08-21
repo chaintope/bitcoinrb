@@ -139,6 +139,20 @@ describe Bitcoin::ScriptInterpreter do
           "",
           "OK",
           "P2PK"
+        ],
+        [
+            "0x48 0x304502202de8c03fc525285c9c535631019a5f2af7c6454fa9eb392a3756a4917c420edd02210046130bf2baf7cfc065067c8b9e33a066d9c15edcea9feb0ca2d233e3597925b401",
+            "0x21 0x038282263212c609d9ea2a6e3e172de238d8c39cabd5ac1ca10646e23fd5f51508 CHECKSIG",
+            "DERSIG",
+            "SIG_DER",
+            "P2PK with too much S padding"
+        ],
+        [
+            "0x47 0x30440220d7a0417c3f6d1a15094d1cf2a3378ca0503eb8a57630953a9e2987e21ddd0a6502207a6266d686c99090920249991d3d42065b6d43eb70187b219c0db82e4f94d1a201",
+            "0x21 0x038282263212c609d9ea2a6e3e172de238d8c39cabd5ac1ca10646e23fd5f51508 CHECKSIG",
+            "",
+            "OK",
+            "P2PK with too little R padding but no DERSIG"
         ]
     ]
     script_json.each do| r |
