@@ -167,17 +167,23 @@ describe Bitcoin::ScriptInterpreter do
             "LOW_S",
             "SIG_HIGH_S",
             "P2PK with high S"
+        ],
+        [
+          "",
+          "0 0x20 0xb95237b48faaa69eb078e1170be3b5cbb3fddf16d0a991e14ad274f7b33a4f64",
+          "P2SH,WITNESS",
+          "WITNESS_PROGRAM_WITNESS_EMPTY",
+          "P2WSH with empty witness"
         ]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
         puts r.inspect
-        witness = nil
         if r[0].is_a?(Array)
           witness = Bitcoin::ScriptWitness.new(r[0][0..-2].map{ |v| v.htb })
           sig, pubkey, flags, error_code = r[1], r[2], r[3], r[4]
         else
-          sig, pubkey, flags, error_code = r[0], r[1], r[2], r[3]
+          witness, sig, pubkey, flags, error_code = Bitcoin::ScriptWitness.new, r[0], r[1], r[2], r[3]
         end
         script_sig = Bitcoin::TestScriptParser.parse_script(sig)
         script_pubkey = Bitcoin::TestScriptParser.parse_script(pubkey)
