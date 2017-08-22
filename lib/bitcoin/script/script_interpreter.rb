@@ -392,6 +392,7 @@ module Bitcoin
 
                   success = checker.check_sig(sig, pubkey, subscript, sig_version)
 
+                  # https://github.com/bitcoin/bips/blob/master/bip-0146.mediawiki#NULLFAIL
                   if !success && flag?(SCRIPT_VERIFY_NULLFAIL) && sig.bytesize > 0
                     return set_error(ScriptError::SCRIPT_ERR_SIG_NULLFAIL)
                   end
@@ -450,6 +451,13 @@ module Bitcoin
                     end
                     pubkey_count -= 1
                     success = false if sig_count > pubkey_count
+                  end
+
+                  if !success && flag?(SCRIPT_VERIFY_NULLFAIL)
+                    sigs.each do |sig|
+                      # If the operation failed, we require that all signatures must be empty vector
+                      return set_error(ScriptError::SCRIPT_ERR_SIG_NULLFAIL) if sig.bytesize > 0
+                    end
                   end
 
                   # A bug causes CHECKMULTISIG to consume one extra argument whose contents were not checked in any way.
