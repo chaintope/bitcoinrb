@@ -61,6 +61,7 @@ module Bitcoin
 
       return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !cast_to_bool(stack.last)
 
+      # Bare witness programs
       if flag?(SCRIPT_VERIFY_WITNESS) && script_pubkey.witness_program?
         had_witness = true
         return set_error(ScriptError::SCRIPT_ERR_WITNESS_MALLEATED) unless script_sig.size == 0
@@ -69,6 +70,7 @@ module Bitcoin
         return false unless verify_witness_program(witness, version, program)
       end
 
+      # Additional validation for spend-to-script-hash transactions
       if flag?(SCRIPT_VERIFY_P2SH) && script_pubkey.p2sh?
         return set_error(ScriptError::SCRIPT_ERR_SIG_PUSHONLY) unless script_sig.data_only?
         tmp = stack
@@ -85,6 +87,17 @@ module Bitcoin
           # TODO
         end
       end
+
+      # The CLEANSTACK check is only performed after potential P2SH evaluation,
+      # as the non-P2SH evaluation of a P2SH script will obviously not result in a clean stack (the P2SH inputs remain).
+      # The same holds for witness evaluation.
+      if flag?(SCRIPT_VERIFY_CLEANSTACK)
+        # Disallow CLEANSTACK without P2SH, as otherwise a switch CLEANSTACK->P2SH+CLEANSTACK would be possible,
+        # which is not a softfork (and P2SH should be one).
+        raise 'assert' unless flag?(SCRIPT_VERIFY_P2SH)
+        return set_error(ScriptError::SCRIPT_ERR_CLEANSTACK) unless stack.size == 1
+      end
+
       true
     end
 
@@ -383,7 +396,6 @@ module Bitcoin
                     return set_error(ScriptError::SCRIPT_ERR_SIG_NULLFAIL)
                   end
 
-                  stack.pop(2)
                   push_int(success ? 1 : 0)
 
                   if opcode == OP_CHECKSIGVERIFY

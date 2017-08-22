@@ -181,7 +181,8 @@ describe Bitcoin::ScriptInterpreter do
             "",
             "EVAL_FALSE",
             "P2PK NOT with hybrid pubkey but no STRICTENC"
-        ]
+        ],
+        ["11 0x47 0x304402200a5c6163f07b8d3b013c4d1d6dba25e780b39658d79ba37af7057a3b7f15ffa102201fd9b4eaa9943f734928b99a83592c2e7bf342ea2680f6a2bb705167966b742001", "0x41 0x0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8 CHECKSIG", "CLEANSTACK,P2SH", "CLEANSTACK", "P2PK with unnecessary input"]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
