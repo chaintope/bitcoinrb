@@ -58,7 +58,7 @@ module Bitcoin
       # @return [Boolean] verify result
       def verify_sig(digest, sig, pubkey)
         begin
-          k = ECDSA::Format::PointOctetString.decode(pubkey.htb, GROUP)
+          k = ECDSA::Format::PointOctetString.decode(repack_pubkey(pubkey), GROUP)
           signature = repack_sig(sig)
           ECDSA.valid_signature?(k, digest, signature)
         rescue Exception
@@ -75,6 +75,19 @@ module Bitcoin
         len_s = sig_array[len_r + 5]
         s = sig_array[(len_r + 6)...(len_r + 6 + len_s)].pack('C*').bth
         ECDSA::Signature.new(r.to_i(16), s.to_i(16))
+      end
+
+      # if +pubkey+ is hybrid public key format, it convert uncompressed format.
+      # https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2012-June/001578.html
+      def repack_pubkey(pubkey)
+        p = pubkey.htb
+        case p[0]
+          when "\x06", "\x07"
+            p[0] = "\x04"
+            p
+          else
+            pubkey.htb
+        end
       end
 
     end

@@ -174,6 +174,13 @@ describe Bitcoin::ScriptInterpreter do
           "P2SH,WITNESS",
           "WITNESS_PROGRAM_WITNESS_EMPTY",
           "P2WSH with empty witness"
+        ],
+        [
+            "0x47 0x30440220035d554e3153c14950c9993f41c496607a8e24093db0595be7bf875cf64fcf1f02204731c8c4e5daf15e706cec19cdd8f2c5b1d05490e11dab8465ed426569b6e92101",
+            "0x41 0x0679be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8 CHECKSIG NOT",
+            "",
+            "EVAL_FALSE",
+            "P2PK NOT with hybrid pubkey but no STRICTENC"
         ]
     ]
     script_json.each do| r |
