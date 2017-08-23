@@ -195,6 +195,18 @@ describe Bitcoin::ScriptInterpreter do
             "P2SH,WITNESS",
             "OK",
             "Basic P2WPKH"
+        ],
+        [
+            [
+                "30440220069ea3581afaf8187f63feee1fd2bd1f9c0dc71ea7d6e8a8b07ee2ebcf824bf402201a4fdef4c532eae59223be1eda6a397fc835142d4ddc6c74f4aa85b766a5c16f01",
+                "41048282263212c609d9ea2a6e3e172de238d8c39cabd5ac1ca10646e23fd5f5150811f8a8098557dfe45e8256e830b60ace62d613ac2f7b17bed31b6eaff6e26cafac",
+                0.00000000
+            ],
+            "0x22 0x0020ac8ebd9e52c17619a381fa4f71aebb696087c6ef17c960fd0587addad99c0610",
+            "HASH160 0x14 0x61039a003883787c0d6ebc66d97fdabe8e31449d EQUAL",
+            "P2SH,WITNESS",
+            "EVAL_FALSE",
+            "Basic P2SH(P2WSH) with the wrong key"
         ]
     ]
     script_json.each do| r |

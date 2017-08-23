@@ -62,7 +62,6 @@ module Bitcoin
       return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !cast_to_bool(stack.last)
 
       # Bare witness programs
-      tmp = script_pubkey.witness_program?
       if flag?(SCRIPT_VERIFY_WITNESS) && script_pubkey.witness_program?
         had_witness = true
         return set_error(ScriptError::SCRIPT_ERR_WITNESS_MALLEATED) unless script_sig.size == 0
@@ -84,8 +83,15 @@ module Bitcoin
         end
         return false unless eval_script(redeem_script, SIG_VERSION[:base])
         return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !cast_to_bool(stack.last)
+
+        # P2SH witness program
         if flag?(SCRIPT_VERIFY_WITNESS) && redeem_script.witness_program?
-          # TODO
+          had_witness = true
+          # The scriptSig must be _exactly_ a single push of the redeemScript. Otherwise we reintroduce malleability.
+          return set_error(ScriptError::SCRIPT_ERR_WITNESS_MALLEATED_P2SH) unless script_sig == (Bitcoin::Script.new << redeem_script.to_payload.bth)
+
+          version, program = redeem_script.witness_data
+          return false unless verify_witness_program(witness, version, program)
         end
       end
 
@@ -97,6 +103,11 @@ module Bitcoin
         # which is not a softfork (and P2SH should be one).
         raise 'assert' unless flag?(SCRIPT_VERIFY_P2SH)
         return set_error(ScriptError::SCRIPT_ERR_CLEANSTACK) unless stack.size == 1
+      end
+
+      if flag?(SCRIPT_VERIFY_WITNESS)
+        raise 'assert' unless flag?(SCRIPT_VERIFY_P2SH)
+        return set_error(ScriptError::SCRIPT_ERR_WITNESS_UNEXPECTED) if !had_witness && !witness.empty?
       end
 
       true
