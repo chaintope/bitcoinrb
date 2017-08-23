@@ -21,11 +21,12 @@ module Bitcoin
       script_sig = script_sig.htb
       hash_type = script_sig[-1].unpack('C').first
       sig = script_sig[0..-2]
-      sighash = nil
       if sig_version == ScriptInterpreter::SIG_VERSION[:witness_v0]
-        # TODO
+        sighash = tx.sighash_for_input(input_index: input_index, hash_type: hash_type,
+                                       script_code: script_code, amount: amount, sig_version: sig_version)
       else
-        sighash = tx.sighash_for_input(input_index: input_index, hash_type: hash_type, script_pubkey: script_code)
+        sighash = tx.sighash_for_input(input_index: input_index, hash_type: hash_type,
+                                       script_code: script_code, sig_version: sig_version)
       end
       key = Bitcoin::Key.new(pubkey: pubkey)
       key.verify(sig, sighash)

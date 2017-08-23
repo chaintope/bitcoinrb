@@ -62,6 +62,7 @@ module Bitcoin
       return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !cast_to_bool(stack.last)
 
       # Bare witness programs
+      tmp = script_pubkey.witness_program?
       if flag?(SCRIPT_VERIFY_WITNESS) && script_pubkey.witness_program?
         had_witness = true
         return set_error(ScriptError::SCRIPT_ERR_WITNESS_MALLEATED) unless script_sig.size == 0
@@ -120,8 +121,8 @@ module Bitcoin
           return set_error(ScriptError::SCRIPT_ERR_WITNESS_PROGRAM_MISMATCH) unless script_hash == program
         elsif program.bytesize == 20
           return set_error(ScriptError::SCRIPT_ERR_WITNESS_PROGRAM_MISMATCH) unless witness.stack.size == 2
-          script_pubkey = Bitcoin::Script.to_p2wpkh(program.bth)
-          @stack = witness.stack
+          script_pubkey = Bitcoin::Script.to_p2pkh(program.bth)
+          @stack = witness.stack.map{|w|w.bth}
         else
           return set_error(ScriptError::SCRIPT_ERR_WITNESS_PROGRAM_WRONG_LENGTH)
         end

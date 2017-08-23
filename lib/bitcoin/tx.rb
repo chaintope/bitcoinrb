@@ -3,8 +3,8 @@ module Bitcoin
   # Transaction class
   class Tx
 
-    MARKER = 0
-    FLAG = 1
+    MARKER = 0x00
+    FLAG = 0x01
 
     attr_accessor :version
     attr_accessor :marker
@@ -104,27 +104,29 @@ module Bitcoin
     # get signature hash
     # @param [Integer] input_index input index.
     # @param [Integer] hash_type signature hash type
-    # @param [Bitcoin::Script] script_pubkey locked script
+    # @param [Bitcoin::Script] script_code script code
     # @param [Integer] amount bitcoin amount locked in input. required for witness input only.
-    def sighash_for_input(input_index: nil, hash_type: Script::SIGHASH_TYPE[:all], script_pubkey: nil, amount: nil)
+    def sighash_for_input(input_index: nil, hash_type: Script::SIGHASH_TYPE[:all], script_code: nil,
+                          sig_version: ScriptInterpreter::SIG_VERSION[:base], amount: nil)
       raise ArgumentError, 'input_index must be specified.' unless input_index
       raise ArgumentError, 'does not exist input corresponding to input_index.' if input_index >= inputs.size
-      raise ArgumentError, 'script_pubkey must be specified.' unless script_pubkey
+      raise ArgumentError, 'script_pubkey must be specified.' unless script_code
 
-      if script_pubkey.witness_program?
+      if sig_version == ScriptInterpreter::SIG_VERSION[:witness_v0]
         raise ArgumentError, 'amount must be specified.' unless amount
+        sighash_for_witness(input_index, script_code, hash_type, amount)
       else
-        sighash_for_legacy(input_index, script_pubkey, hash_type)
+        sighash_for_legacy(input_index, script_code, hash_type)
       end
     end
 
     private
 
     # generate sighash with legacy format
-    def sighash_for_legacy(index, script_pubkey, hash_type)
+    def sighash_for_legacy(index, script_code, hash_type)
       ins = inputs.map.with_index do |i, idx|
         if idx == index
-          i.to_payload(script_pubkey)
+          i.to_payload(script_code)
         else
           case hash_type & 0x1f
             when Script::SIGHASH_TYPE[:none], Script::SIGHASH_TYPE[:single]
@@ -160,8 +162,28 @@ module Bitcoin
 
     # generate sighash with BIP-143 format
     # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
-    def sighash_for_witness
-      # TODO
+    def sighash_for_witness(index, script_code, hash_type, amount)
+      hash_prevouts = Bitcoin.double_sha256(inputs.map{|i|i.out_point.to_payload}.join)
+      hash_sequence = Bitcoin.double_sha256(inputs.map{|i|[i.sequence].pack('V')}.join)
+      outpoint = inputs[index].out_point.to_payload
+      amount = [amount].pack('Q')
+      nsequence = [inputs[index].sequence].pack('V')
+      hash_outputs = Bitcoin.double_sha256(outputs.map{|o|o.to_payload}.join)
+
+      case (hash_type & 0x1f)
+      when Script::SIGHASH_TYPE[:single]
+        hash_outputs = index >= outputs.size ? "\x00".ljust(32, "\x00") : Bitcoin.double_sha256(outputs[index].to_payload)
+        hash_sequence = "\x00".ljust(32, "\x00")
+      when Script::SIGHASH_TYPE[:none]
+        hash_sequence = hash_outputs = "\x00".ljust(32, "\x00")
+      end
+
+      if (hash_type & Script::SIGHASH_TYPE[:anyonecanpay]) != 0
+        hash_prevouts = hash_sequence ="\x00".ljust(32, "\x00")
+      end
+      buf = [ [version].pack('V'), hash_prevouts, hash_sequence, outpoint, Bitcoin::Script.pack_pushdata(script_code.to_payload),
+              amount, nsequence, hash_outputs, [@lock_time, hash_type].pack('VV')].join
+      Bitcoin.double_sha256(buf)
     end
 
   end

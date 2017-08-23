@@ -21,7 +21,7 @@ module Bitcoin
     end
 
     def to_s
-
+      stack.map{|s|s.bth}.join(' ')
     end
 
   end

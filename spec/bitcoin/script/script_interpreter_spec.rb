@@ -183,7 +183,19 @@ describe Bitcoin::ScriptInterpreter do
             "P2PK NOT with hybrid pubkey but no STRICTENC"
         ],
         ["11 0x47 0x304402200a5c6163f07b8d3b013c4d1d6dba25e780b39658d79ba37af7057a3b7f15ffa102201fd9b4eaa9943f734928b99a83592c2e7bf342ea2680f6a2bb705167966b742001", "0x41 0x0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8 CHECKSIG", "CLEANSTACK,P2SH", "CLEANSTACK", "P2PK with unnecessary input"],
-        ["0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0x09 0x300602010102010101", "0x01 0x14 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0x01 0x14 CHECKMULTISIG NOT", "DERSIG,NULLFAIL", "NULLFAIL", "BIP66-compliant but not NULLFAIL-compliant"]
+        ["0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0x09 0x300602010102010101", "0x01 0x14 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0x01 0x14 CHECKMULTISIG NOT", "DERSIG,NULLFAIL", "NULLFAIL", "BIP66-compliant but not NULLFAIL-compliant"],
+        [
+            [
+                "304402201e7216e5ccb3b61d46946ec6cc7e8c4e0117d13ac2fd4b152197e4805191c74202203e9903e33e84d9ee1dd13fb057afb7ccfb47006c23f6a067185efbc9dd780fc501",
+                "0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8",
+                0.00000001
+            ],
+            "",
+            "0 0x14 0x91b24bf9f5288532960ac687abb035127b1d28a5",
+            "P2SH,WITNESS",
+            "OK",
+            "Basic P2WPKH"
+        ]
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
@@ -191,15 +203,18 @@ describe Bitcoin::ScriptInterpreter do
         if r[0].is_a?(Array)
           witness = Bitcoin::ScriptWitness.new(r[0][0..-2].map{ |v| v.htb })
           sig, pubkey, flags, error_code = r[1], r[2], r[3], r[4]
+          amount = (r[0][-1] * 100_000_000).to_i
         else
           witness, sig, pubkey, flags, error_code = Bitcoin::ScriptWitness.new, r[0], r[1], r[2], r[3]
+          amount = 0
         end
         script_sig = Bitcoin::TestScriptParser.parse_script(sig)
         script_pubkey = Bitcoin::TestScriptParser.parse_script(pubkey)
-        tx = build_spending_tx(script_sig, build_locked_tx(script_pubkey))
+        credit_tx = build_credit_tx(script_pubkey, amount)
+        tx = build_spending_tx(script_sig, credit_tx, witness, amount)
         flags = flags.split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}
         expected_err_code = find_error_code(error_code)
-        i = Bitcoin::ScriptInterpreter.new(flags: flags, checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0))
+        i = Bitcoin::ScriptInterpreter.new(flags: flags, checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0, amount: amount))
         result = i.verify(script_sig, script_pubkey, witness)
         puts i.error.to_s
         expect(result).to be expected_err_code == Bitcoin::ScriptError::SCRIPT_ERR_OK
@@ -215,25 +230,26 @@ describe Bitcoin::ScriptInterpreter do
     tx
   end
 
-  def build_locked_tx(script_pubkey)
+  def build_credit_tx(script_pubkey, amount)
     tx = Bitcoin::Tx.new
     tx.version = 1
     tx.lock_time = 0
     coinbase = Bitcoin::Script.new << 0 << 0
     tx.inputs << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.create_coinbase_outpoint, script_sig: coinbase)
-    tx.outputs << Bitcoin::TxOut.new(script_pubkey: script_pubkey)
+    tx.outputs << Bitcoin::TxOut.new(script_pubkey: script_pubkey, value: amount)
     tx
   end
 
-  def build_spending_tx(script_sig, locked_tx)
+  def build_spending_tx(script_sig, locked_tx, witness, amount)
     tx = Bitcoin::Tx.new
     tx.version = 1
     tx.lock_time = 0
     tx.inputs << Bitcoin::TxIn.new(
       out_point: Bitcoin::OutPoint.new(locked_tx.txid, 0),
-      script_sig: script_sig
+      script_sig: script_sig,
+      script_witness: witness
     )
-    tx.outputs << Bitcoin::TxOut.new(script_pubkey: Bitcoin::Script.new)
+    tx.outputs << Bitcoin::TxOut.new(script_pubkey: Bitcoin::Script.new, value: amount)
     tx
   end
 
