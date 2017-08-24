@@ -9,14 +9,6 @@ describe Bitcoin::Message::Handler do
 
   describe 'handle message' do
 
-    context 'invalid header size' do
-      it 'raise message error' do
-        expect(subject.conn).to receive(:close).twice
-        subject.handle('hoge'.htb)
-        subject.handle('')
-      end
-    end
-
     context 'invalid header magic' do
       it 'raise message error' do # mainnet magic
         expect(subject.conn).to receive(:close).once
@@ -36,6 +28,16 @@ describe Bitcoin::Message::Handler do
         expect(subject.conn).not_to receive(:close)
         expect(subject.conn).to receive(:handshake_done).once
         subject.handle('0b11090776657261636b000000000000000000005df6e0e2'.htb)
+      end
+    end
+
+    context 'segmented packet' do
+      it 'merge message' do
+        expect(subject.conn).not_to receive(:close)
+        expect(subject).to receive(:handle_command).once
+        subject.handle('0b11090770696e67000000000000000008000000'.htb)
+        subject.handle('ed0382b90ffb510779cfe2'.htb)
+        subject.handle('61'.htb)
       end
     end
 

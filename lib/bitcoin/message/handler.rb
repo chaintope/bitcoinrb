@@ -10,6 +10,7 @@ module Bitcoin
       def initialize(conn, logger = Bitcoin::Logger.create(:parser))
         @conn = conn
         @logger = logger
+        @message = ""
       end
 
       # handle p2p message.
@@ -26,22 +27,27 @@ module Bitcoin
       private
 
       def parse(message)
-        command, payload, rest = parse_header(message)
+        @message += message
+        command, payload, rest = parse_header
+        return unless command
+
         handle_command(command, payload)
+        @message = ""
         parse(rest) if rest && rest.bytesize > 0
       end
 
-      def parse_header(message)
+      def parse_header
         head_magic = Bitcoin.chain_params.magic_head
-        raise Error, "invalid message header. message = #{message}" if message.nil? || message.size < HEADER_SIZE
+        return if @message.nil? || @message.size < HEADER_SIZE
 
-        magic, command, length, checksum = message.unpack('a4A12Va4')
+        magic, command, length, checksum = @message.unpack('a4A12Va4')
         raise Error, "invalid header magic. #{magic.bth}" unless magic.bth == head_magic
 
-        payload = message[HEADER_SIZE...(HEADER_SIZE + length)]
+        payload = @message[HEADER_SIZE...(HEADER_SIZE + length)]
+        return if payload.size < length
         raise Error, "header checksum mismatch. #{checksum.bth}" unless Bitcoin.double_sha256(payload)[0...4] == checksum
 
-        rest = message[(HEADER_SIZE + length)..-1]
+        rest = @message[(HEADER_SIZE + length)..-1]
         [command, payload, rest]
       end
 
