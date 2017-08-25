@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["azuchi"]
   spec.email         = ["azuchi@haw.co.jp"]
 
-  spec.summary       = %q{The implementation of Bitcoin Protocol for Ruby.}
-  spec.description   = %q{The implementation of Bitcoin Protocol for Ruby.}
+  spec.summary       = %q{[WIP]The implementation of Bitcoin Protocol for Ruby.}
+  spec.description   = %q{[WIP]The implementation of Bitcoin Protocol for Ruby.}
   spec.homepage      = 'https://github.com/haw-itn/bitcoinrb'
   spec.license       = "MIT"
 
