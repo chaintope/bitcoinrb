@@ -223,7 +223,11 @@ module Bitcoin
                   result = false
                   if need_exec
                     return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if stack.size < 1
-                    result = pop_bool
+                    value = pop_string.htb
+                    if sig_version == SIG_VERSION[:witness_v0] && flag?(SCRIPT_VERIFY_MINIMALIF)
+                      return set_error(ScriptError::SCRIPT_ERR_MINIMALIF) if value.bytesize > 1 || (value.bytesize == 1 && value[0] != 0)
+                    end
+                    result = cast_to_bool(value)
                     result = !result if opcode == OP_NOTIF
                   end
                   flow_stack << result
