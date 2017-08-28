@@ -219,7 +219,19 @@ describe Bitcoin::ScriptInterpreter do
             "P2SH,WITNESS",
             "OK",
             "Basic P2WSH"
-        ]
+        ],
+        [
+            [
+                "304402205ae57ae0534c05ca9981c8a6cdf353b505eaacb7375f96681a2d1a4ba6f02f84022056248e68643b7d8ce7c7d128c9f1f348bcab8be15d094ad5cadd24251a28df8001",
+                "0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8",
+                0.00000000
+            ],
+            "",
+            "1 0x14 0x91b24bf9f5288532960ac687abb035127b1d28a5",
+            "DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM,P2SH,WITNESS",
+            "DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM",
+            "P2WPKH with future witness version"
+        ],
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do

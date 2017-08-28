@@ -138,7 +138,7 @@ module Bitcoin
           return set_error(ScriptError::SCRIPT_ERR_WITNESS_PROGRAM_WRONG_LENGTH)
         end
       elsif flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM)
-        return set_error(ScriptError::SCRIPT_ERR_WITNESS_PROGRAM_WRONG_LENGTH)
+        return set_error(ScriptError::SCRIPT_ERR_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM)
       else
         return true # Higher version witness scripts return true for future softfork compatibility
       end
