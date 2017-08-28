@@ -232,6 +232,19 @@ describe Bitcoin::ScriptInterpreter do
             "DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM",
             "P2WPKH with future witness version"
         ],
+        [
+            [
+                "",
+                "304402202d092ededd1f060609dbf8cb76950634ff42b3e62cf4adb69ab92397b07d742302204ff886f8d0817491a96d1daccdcc820f6feb122ee6230143303100db37dfa79f01",
+                "5121038282263212c609d9ea2a6e3e172de238d8c39cabd5ac1ca10646e23fd5f51508410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b852ae",
+                0.00000001
+            ],
+            "",
+            "0 0x20 0x08a6665ebfd43b02323423e764e185d98d1587f903b81507dbb69bfc41005efa",
+            "P2SH,WITNESS",
+            "OK",
+            "P2WSH CHECKMULTISIG with first key uncompressed and signing with the first key"
+        ],
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
@@ -248,6 +261,9 @@ describe Bitcoin::ScriptInterpreter do
         script_pubkey = Bitcoin::TestScriptParser.parse_script(pubkey)
         credit_tx = build_credit_tx(script_pubkey, amount)
         tx = build_spending_tx(script_sig, credit_tx, witness, amount)
+        puts "script_pubkey = #{script_pubkey.to_payload.bth}"
+        puts ""
+        puts "tx = #{tx.to_payload.bth}"
         flags = flags.split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}
         expected_err_code = find_error_code(error_code)
         i = Bitcoin::ScriptInterpreter.new(flags: flags, checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0, amount: amount))

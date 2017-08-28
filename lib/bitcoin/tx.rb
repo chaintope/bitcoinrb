@@ -181,7 +181,7 @@ module Bitcoin
       if (hash_type & Script::SIGHASH_TYPE[:anyonecanpay]) != 0
         hash_prevouts = hash_sequence ="\x00".ljust(32, "\x00")
       end
-      buf = [ [version].pack('V'), hash_prevouts, hash_sequence, outpoint, Bitcoin::Script.pack_pushdata(script_code.to_payload),
+      buf = [ [version].pack('V'), hash_prevouts, hash_sequence, outpoint, Bitcoin.pack_var_string(script_code.to_payload),
               amount, nsequence, hash_outputs, [@lock_time, hash_type].pack('VV')].join
       Bitcoin.double_sha256(buf)
     end
