@@ -251,7 +251,9 @@ module Bitcoin
                     next
                   end
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
-                  # TODO implement
+                  sequence = pop_int
+                  return set_error(ScriptError::SCRIPT_ERR_NEGATIVE_LOCKTIME) if sequence < 0
+                  return set_error(ScriptError::SCRIPT_ERR_UNSATISFIED_LOCKTIME) unless checker.check_sequence(sequence)
                 when OP_DUP
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << stack.last

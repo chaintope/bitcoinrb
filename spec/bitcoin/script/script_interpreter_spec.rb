@@ -245,6 +245,7 @@ describe Bitcoin::ScriptInterpreter do
             "OK",
             "P2WSH CHECKMULTISIG with first key uncompressed and signing with the first key"
         ],
+        ["-1", "CHECKSEQUENCEVERIFY", "CHECKSEQUENCEVERIFY", "NEGATIVE_LOCKTIME", "CSV automatically fails if stack top is negative"],
     ]
     script_json.each do| r |
       it "should validate script #{r.inspect}" do

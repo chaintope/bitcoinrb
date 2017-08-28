@@ -27,11 +27,11 @@ module Bitcoin
       key.verify(sig, sighash)
     end
 
-    def check_locktime
+    def check_locktime(locktime)
       # TODO
     end
 
-    def check_sequence
+    def check_sequence(sequence)
       # TODO
     end
 
