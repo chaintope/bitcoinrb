@@ -127,7 +127,7 @@ module Bitcoin
         if program.bytesize == 32
           return set_error(ScriptError::SCRIPT_ERR_WITNESS_PROGRAM_WITNESS_EMPTY) if witness.stack.size == 0
           script_pubkey = Bitcoin::Script.parse_from_payload(witness.stack.last)
-          @stack = witness.stack[0..-2]
+          @stack = witness.stack[0..-2].map{|w|w.bth}
           script_hash = Bitcoin.sha256(script_pubkey.to_payload)
           return set_error(ScriptError::SCRIPT_ERR_WITNESS_PROGRAM_MISMATCH) unless script_hash == program
         elsif program.bytesize == 20
