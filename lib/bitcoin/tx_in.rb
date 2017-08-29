@@ -10,6 +10,16 @@ module Bitcoin
 
     DEFAULT_SEQUENCE = 0xFFFFFFFF
 
+    # If this flag set, TxIn#sequence is NOT interpreted as a relative lock-time.
+    SEQUENCE_LOCKTIME_DISABLE_FLAG = (1 << 31)
+
+    # If TxIn#sequence encodes a relative lock-time and this flag is set, the relative lock-time has units of 512 seconds,
+    # otherwise it specifies blocks with a granularity of 1.
+    SEQUENCE_LOCKTIME_TYPE_FLAG = (1 << 22)
+
+    # If TxIn#sequence encodes a relative lock-time, this mask is applied to extract that lock-time from the sequence field.
+    SEQUENCE_LOCKTIME_MASK = 0x0000ffff
+
     def initialize(out_point: nil, script_sig: nil, script_witness: ScriptWitness.new, sequence: DEFAULT_SEQUENCE)
       @out_point = out_point
       @script_sig = script_sig

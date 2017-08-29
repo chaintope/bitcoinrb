@@ -246,18 +246,41 @@ module Bitcoin
                     next
                   end
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
-                  locktime = pop_int
+                  # Note that elsewhere numeric opcodes are limited to operands in the range -2**31+1 to 2**31-1,
+                  # however it is legal for opcodes to produce results exceeding that range.
+                  # This limitation is implemented by CScriptNum's default 4-byte limit.
+                  # If we kept to that limit we'd have a year 2038 problem,
+                  # even though the nLockTime field in transactions themselves is uint32 which only becomes meaningless after the year 2106.
+                  # Thus as a special case we tell CScriptNum to accept up to 5-byte bignums,
+                  # which are good until 2**39-1, well beyond the 2**32-1 limit of the nLockTime field itself.
+                  locktime = cast_to_int(stack.last, 5)
                   return set_error(ScriptError::SCRIPT_ERR_NEGATIVE_LOCKTIME) if locktime < 0
                   return set_error(ScriptError::SCRIPT_ERR_UNSATISFIED_LOCKTIME) unless checker.check_locktime(locktime)
                 when OP_CHECKSEQUENCEVERIFY
                   unless flag?(SCRIPT_VERIFY_CHECKSEQUENCEVERIFY)
-                    return set_error(ScriptError::SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS) if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
+                    if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
+                      return set_error(ScriptError::SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS)
+                    end
                     next
                   end
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
-                  sequence = pop_int
+
+                  # nSequence, like nLockTime, is a 32-bit unsigned integer field.
+                  # See the comment in CHECKLOCKTIMEVERIFY regarding 5-byte numeric operands.
+                  sequence = cast_to_int(stack.last, 5)
+
+                  # In the rare event that the argument may be < 0 due to some arithmetic being done first,
+                  # you can always use 0 MAX CHECKSEQUENCEVERIFY.
                   return set_error(ScriptError::SCRIPT_ERR_NEGATIVE_LOCKTIME) if sequence < 0
-                  return set_error(ScriptError::SCRIPT_ERR_UNSATISFIED_LOCKTIME) unless checker.check_sequence(sequence)
+
+                  # To provide for future soft-fork extensibility,
+                  # if the operand has the disabled lock-time flag set, CHECKSEQUENCEVERIFY behaves as a NOP.
+                  next if (sequence & Bitcoin::TxIn::SEQUENCE_LOCKTIME_DISABLE_FLAG) != 0
+
+                  # Compare the specified sequence number with the input.
+                  unless checker.check_sequence(sequence)
+                    return set_error(ScriptError::SCRIPT_ERR_UNSATISFIED_LOCKTIME)
+                  end
                 when OP_DUP
                   return set_error(ScriptError::SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << stack.last
@@ -532,17 +555,20 @@ module Bitcoin
 
     # pop the item with the int value for the number specified by +count+ from the stack.
     def pop_int(count = 1)
-      i = stack.pop(count).map do |s|
-        data = s.htb
-        raise '"script number overflow"' if data.bytesize > Script::DEFAULT_MAX_NUM_SIZE
-        if require_minimal && data.bytesize > 0
-          if data.bytes[-1] & 0x7f == 0 && (data.bytesize <= 1 || data.bytes[data.bytesize - 2] & 0x80 ==0)
-            raise 'non-minimally encoded script number'
-          end
-        end
-        Script.decode_number(s)
-      end
+      i = stack.pop(count).map{ |s| cast_to_int(s) }
       count == 1 ? i.first : i
+    end
+
+    # cast item to int value.
+    def cast_to_int(s, max_num_size = Script::DEFAULT_MAX_NUM_SIZE)
+      data = s.htb
+      raise '"script number overflow"' if data.bytesize > max_num_size
+      if require_minimal && data.bytesize > 0
+        if data.bytes[-1] & 0x7f == 0 && (data.bytesize <= 1 || data.bytes[data.bytesize - 2] & 0x80 ==0)
+          raise 'non-minimally encoded script number'
+        end
+      end
+      Script.decode_number(s)
     end
 
     # push +i+ into stack as encoded by Script#encode_number

@@ -32,7 +32,30 @@ module Bitcoin
     end
 
     def check_sequence(sequence)
-      # TODO
+      tx_sequence = tx.inputs[input_index].sequence
+      # Fail if the transaction's version number is not set high enough to trigger BIP 68 rules.
+      return false if tx.version < 2
+
+      # Sequence numbers with their most significant bit set are not consensus constrained.
+      # Testing that the transaction's sequence number do not have this bit set prevents using this property to get around a CHECKSEQUENCEVERIFY check.
+      return false unless tx_sequence & Bitcoin::TxIn::SEQUENCE_LOCKTIME_DISABLE_FLAG == 0
+
+      # Mask off any bits that do not have consensus-enforced meaning before doing the integer comparisons
+      locktime_mask = Bitcoin::TxIn::SEQUENCE_LOCKTIME_TYPE_FLAG | Bitcoin::TxIn::SEQUENCE_LOCKTIME_MASK
+      tx_sequence_masked = tx_sequence & locktime_mask
+      sequence_masked = sequence & locktime_mask
+
+      # There are two kinds of nSequence: lock-by-blockheight and lock-by-blocktime,
+      # distinguished by whether sequence_masked < TxIn#SEQUENCE_LOCKTIME_TYPE_FLAG.
+      # We want to compare apples to apples, so fail the script
+      # unless the type of nSequenceMasked being tested is the same as the nSequenceMasked in the transaction.
+      if ((tx_sequence_masked < Bitcoin::TxIn::SEQUENCE_LOCKTIME_TYPE_FLAG && sequence_masked < Bitcoin::TxIn::SEQUENCE_LOCKTIME_TYPE_FLAG) ||
+          (tx_sequence_masked >= Bitcoin::TxIn::SEQUENCE_LOCKTIME_TYPE_FLAG && sequence_masked >= Bitcoin::TxIn::SEQUENCE_LOCKTIME_TYPE_FLAG))
+        return false
+      end
+
+      # Now that we know we're comparing apples-to-apples, the comparison is a simple numeric one.
+      sequence_masked <= tx_sequence_masked
     end
 
   end
