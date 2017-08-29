@@ -225,7 +225,9 @@ module Bitcoin
                     return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if stack.size < 1
                     value = pop_string.htb
                     if sig_version == SIG_VERSION[:witness_v0] && flag?(SCRIPT_VERIFY_MINIMALIF)
-                      return set_error(ScriptError::SCRIPT_ERR_MINIMALIF) if value.bytesize > 1 || (value.bytesize == 1 && value[0] != 0)
+                      if value.bytesize > 1 || (value.bytesize == 1 && value[0].unpack('C').first != 1)
+                        return set_error(ScriptError::SCRIPT_ERR_MINIMALIF)
+                      end
                     end
                     result = cast_to_bool(value)
                     result = !result if opcode == OP_NOTIF
@@ -564,7 +566,7 @@ module Bitcoin
       data = s.htb
       raise '"script number overflow"' if data.bytesize > max_num_size
       if require_minimal && data.bytesize > 0
-        if data.bytes[-1] & 0x7f == 0 && (data.bytesize <= 1 || data.bytes[data.bytesize - 2] & 0x80 ==0)
+        if data.bytes[-1] & 0x7f == 0 && (data.bytesize <= 1 || data.bytes[data.bytesize - 2] & 0x80 == 0)
           raise 'non-minimally encoded script number'
         end
       end
