@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Bitcoin::ScriptInterpreter do
 
-  describe 'run' do
+  describe 'check script_test.json' do
     script_json = fixture_file('script_tests.json').select{ |j|j.size > 3}
     script_json.each do| r |
       it "should validate script #{r.inspect}" do

@@ -215,28 +215,6 @@ describe Bitcoin::Script do
     end
   end
 
-  describe '#find_and_delete' do
-    context 'single opcode' do
-      subject {
-        s = Bitcoin::Script.new << OP_DUP << OP_HASH160 << 'pubkeyhash' << OP_EQUALVERIFY << OP_CHECKSIG
-        s.find_and_delete(Bitcoin::Script.new << OP_HASH160)
-      }
-      it 'should be delete' do
-        expect(subject).to eq(Bitcoin::Script.new << OP_DUP << 'pubkeyhash' << OP_EQUALVERIFY << OP_CHECKSIG)
-      end
-    end
-
-    context 'subsequence' do
-      subject {
-        s = Bitcoin::Script.new << OP_1 << OP_3 << OP_1 << OP_2 << OP_1 << OP_2 << OP_1 << OP_3
-        s.find_and_delete(Bitcoin::Script.new << OP_1 << OP_2 << OP_1)
-      }
-      it 'should be delete' do
-        expect(subject).to eq(Bitcoin::Script.new << OP_1 << OP_3 << OP_2 << OP_1 << OP_3)
-      end
-    end
-  end
-
   describe '#witness_program?' do
     it 'should be judge' do
       expect(Bitcoin::Script.from_string('0 6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d').witness_program?).to be true
@@ -256,6 +234,76 @@ describe Bitcoin::Script do
       expect(data.size).to eq(2)
       expect(data[0]).to eq(0)
       expect(data[1].bth).to eq('6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d')
+    end
+  end
+
+  describe '#find_and_delete' do
+    it 'should be delete' do
+      s = Bitcoin::Script.new << OP_1 << OP_2
+      d = Bitcoin::Script.new
+      expect(s.find_and_delete(d)).to eq(s)
+
+      s = Bitcoin::Script.new << OP_1 << OP_2 << OP_3
+      d = Bitcoin::Script.new << OP_2
+      expect(s.find_and_delete(d)).to eq(Bitcoin::Script.new << OP_1 << OP_3)
+
+      s = Bitcoin::Script.new << OP_3 << OP_1 << OP_3 << OP_3 << OP_4 << OP_3
+      d = Bitcoin::Script.new << OP_3
+      expect(s.find_and_delete(d)).to eq(Bitcoin::Script.new << OP_1 << OP_4)
+
+      s = Bitcoin::Script.parse_from_payload('0302ff03'.htb) # PUSH 0x02ff03 onto stack
+      d = Bitcoin::Script.parse_from_payload('0302ff03'.htb)
+      expect(s.find_and_delete(d)).to eq(Bitcoin::Script.new)
+
+      s = Bitcoin::Script.parse_from_payload('0302ff030302ff03'.htb) # PUSH 0x2ff03 PUSH 0x2ff03
+      d = Bitcoin::Script.parse_from_payload('0302ff03'.htb)
+      expect(s.find_and_delete(d)).to eq(Bitcoin::Script.new)
+
+      s = Bitcoin::Script.parse_from_payload('0302ff030302ff03'.htb)
+      d = Bitcoin::Script.parse_from_payload('02'.htb)
+      expect(s.find_and_delete(d)).to eq(s) # find_and_delete matches entire opcodes
+
+      s = Bitcoin::Script.parse_from_payload('0302ff030302ff03'.htb)
+      d = Bitcoin::Script.parse_from_payload('ff'.htb)
+      expect(s.find_and_delete(d)).to eq(s)
+
+      # This is an odd edge case: strip of the push-three-bytes prefix, leaving 02ff03 which is push-two-bytes:
+      s = Bitcoin::Script.parse_from_payload('0302ff030302ff03'.htb)
+      d = Bitcoin::Script.parse_from_payload('03'.htb)
+      expect(s.find_and_delete(d)).to eq(Bitcoin::Script.new << 'ff03' << 'ff03')
+
+      # Byte sequence that spans multiple opcodes:
+      s = Bitcoin::Script.parse_from_payload('02feed5169'.htb) # PUSH(0xfeed) OP_1 OP_VERIFY
+      d = Bitcoin::Script.parse_from_payload('feed51'.htb)
+      expect(s.find_and_delete(d)).to eq(s) # doesn't match 'inside' opcodes
+
+      s = Bitcoin::Script.parse_from_payload('02feed5169'.htb) # PUSH(0xfeed) OP_1 OP_VERIFY
+      d = Bitcoin::Script.parse_from_payload('02feed51'.htb)
+      expect(s.find_and_delete(d)).to eq(Bitcoin::Script.parse_from_payload('69'.htb))
+
+      s = Bitcoin::Script.parse_from_payload('516902feed5169'.htb)
+      d = Bitcoin::Script.parse_from_payload('feed51'.htb)
+      expect(s.find_and_delete(d)).to eq(s)
+
+      s = Bitcoin::Script.parse_from_payload('516902feed5169'.htb) # PUSH(0xfeed) OP_1 OP_VERIFY
+      d = Bitcoin::Script.parse_from_payload('02feed51'.htb)
+      expect(s.find_and_delete(d)).to eq(Bitcoin::Script.parse_from_payload('516969'.htb))
+
+      s = Bitcoin::Script.new << OP_0 << OP_0 << OP_1 << OP_1
+      d = Bitcoin::Script.new << OP_0 << OP_1
+      expect(s.find_and_delete(d)).to eq(Bitcoin::Script.new << OP_0 << OP_1)
+
+      s = Bitcoin::Script.new << OP_0 << OP_0 << OP_1 << OP_0 << OP_1 << OP_1
+      d = Bitcoin::Script.new << OP_0 << OP_1
+      expect(s.find_and_delete(d)).to eq(Bitcoin::Script.new << OP_0 << OP_1)
+
+      s = Bitcoin::Script.parse_from_payload('0003feed'.htb)
+      d = Bitcoin::Script.parse_from_payload('03feed'.htb)
+      expect(s.find_and_delete(d)).to eq(Bitcoin::Script.parse_from_payload('00'.htb))
+
+      s = Bitcoin::Script.parse_from_payload('0003feed'.htb)
+      d = Bitcoin::Script.parse_from_payload('00'.htb)
+      expect(s.find_and_delete(d)).to eq(Bitcoin::Script.parse_from_payload('03feed'.htb))
     end
   end
 

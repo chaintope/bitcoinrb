@@ -103,7 +103,10 @@ module Bitcoin
                   else
                     pushcode if pushcode < OP_PUSHDATA1
                 end
-          s << buf.read(len).bth if len
+          if len
+            s.chunks << [len].pack('C') if buf.eof?
+            s << buf.read(len).bth unless buf.eof?
+          end
         else
           s << opcode.ord
         end
@@ -295,8 +298,35 @@ module Bitcoin
     # removes chunks matching subscript byte-for-byte and returns as a new object.
     def find_and_delete(subscript)
       raise ArgumentError, 'subscript must be Bitcoin::Script' unless subscript.is_a?(Script)
-      diff = to_payload.bth.gsub(subscript.to_payload.bth, '')
-      Script.parse_from_payload(diff.htb)
+      return self if subscript.chunks.empty?
+      buf = []
+      i = 0
+      result = Script.new
+      chunks.each do |chunk|
+        sub_chunk = subscript.chunks[i]
+        if chunk.start_with?(sub_chunk)
+          if chunk == sub_chunk
+            buf << chunk
+            i += 1
+            (i = 0; buf.clear) if i == subscript.chunks.size # matched the whole subscript
+          else # matched the part of head
+            i = 0
+            tmp = chunk.dup
+            tmp.slice!(sub_chunk)
+            result.chunks << tmp
+          end
+        else
+          result.chunks << buf.join unless buf.empty?
+          if buf.first == chunk
+            i = 1
+            buf = [chunk]
+          else
+            i = 0
+            result.chunks << chunk
+          end
+        end
+      end
+      result
     end
 
     def ==(other)
