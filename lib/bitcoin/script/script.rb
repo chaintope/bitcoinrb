@@ -118,6 +118,10 @@ module Bitcoin
       chunks.join
     end
 
+    def to_hex
+      to_payload.bth
+    end
+
     def to_addr
       return p2pkh_addr if p2pkh?
       return p2wpkh_addr if p2wpkh?
