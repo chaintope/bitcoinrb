@@ -307,4 +307,11 @@ describe Bitcoin::Script do
     end
   end
 
+  describe '#delete_opcode' do
+    it 'should be delete target opcode' do
+      script = Bitcoin::Script.from_string('038479a0fa998cd35259a2ef0a7a5c68662c1474f88ccb6d08a7677bbec7f22041 OP_CHECKSIGVERIFY OP_CODESEPARATOR 038479a0fa998cd35259a2ef0a7a5c68662c1474f88ccb6d08a7677bbec7f22041 OP_CHECKSIGVERIFY OP_CODESEPARATOR 1')
+      expect(script.delete_opcode(Bitcoin::Opcodes::OP_CODESEPARATOR).to_s).to eq('038479a0fa998cd35259a2ef0a7a5c68662c1474f88ccb6d08a7677bbec7f22041 OP_CHECKSIGVERIFY 038479a0fa998cd35259a2ef0a7a5c68662c1474f88ccb6d08a7677bbec7f22041 OP_CHECKSIGVERIFY 1')
+    end
+  end
+
 end

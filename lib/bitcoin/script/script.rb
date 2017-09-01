@@ -333,6 +333,12 @@ module Bitcoin
       result
     end
 
+    # remove all occurences of opcode. Typically it's OP_CODESEPARATOR.
+    def delete_opcode(opcode)
+      @chunks = @chunks.select{|chunk| chunk.ord != opcode}
+      self
+    end
+
     def ==(other)
       return false unless other
       chunks == other.chunks
