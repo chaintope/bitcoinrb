@@ -18,6 +18,32 @@ module Bitcoin
         return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_resoin: 'bad-txns-oversize')
       end
 
+      # Check for negative or overflow output values
+      amount = 0
+      tx.outputs.each do |o|
+        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_resoin: 'bad-txns-vout-negative') if o.value < 0
+        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_resoin: 'bad-txns-vout-toolarge') if MAX_MONEY < o.value
+        amount += o.value
+        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_resoin: 'bad-txns-vout-toolarge') if MAX_MONEY < amount
+      end
+
+      # Check for duplicate inputs - note that this check is slow so we skip it in CheckBlock
+      out_points = tx.inputs.map{|i|i.out_point.to_payload}
+      unless out_points.size == out_points.uniq.size
+        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_resoin: 'bad-txns-inputs-duplicate')
+      end
+
+      if tx.coinbase_tx?
+        if tx.inputs[0].script_sig.size < 2 || tx.inputs[0].script_sig.size > 100
+          return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_resoin: 'bad-cb-length')
+        end
+      else
+        tx.inputs.each do |i|
+          if i.out_point.nil? || !i.out_point.valid?
+            return state.DoS(10, reject_code: Message::Reject::CODE_INVALID, reject_resoin: 'bad-txns-prevout-null')
+          end
+        end
+      end
       true
     end
 
