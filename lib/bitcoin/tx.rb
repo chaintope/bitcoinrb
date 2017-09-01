@@ -126,7 +126,7 @@ module Bitcoin
     def sighash_for_legacy(index, script_code, hash_type)
       ins = inputs.map.with_index do |i, idx|
         if idx == index
-          i.to_payload(script_code)
+          i.to_payload(script_code.delete_opcode(Bitcoin::Opcodes::OP_CODESEPARATOR))
         else
           case hash_type & 0x1f
             when Script::SIGHASH_TYPE[:none], Script::SIGHASH_TYPE[:single]

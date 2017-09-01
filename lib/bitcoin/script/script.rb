@@ -93,19 +93,26 @@ module Bitcoin
         opcode = buf.read(1)
         if opcode.pushdata?
           pushcode = opcode.ord
+          packed_size = nil
           len = case pushcode
                   when OP_PUSHDATA1
-                    buf.read(1).unpack('C').first
+                    packed_size = buf.read(1)
+                    packed_size.unpack('C').first
                   when OP_PUSHDATA2
-                    buf.read(2).unpack('v').first
+                    packed_size = buf.read(2)
+                    packed_size.unpack('v').first
                   when OP_PUSHDATA4
-                    buf.read(4).unpack('V').first
+                    packed_size = buf.read(4)
+                    packed_size.unpack('V').first
                   else
                     pushcode if pushcode < OP_PUSHDATA1
                 end
           if len
             s.chunks << [len].pack('C') if buf.eof?
-            s << buf.read(len).bth unless buf.eof?
+            unless buf.eof?
+              chunk = (packed_size ? (opcode + packed_size) : (opcode)) + buf.read(len)
+              s.chunks << chunk
+            end
           end
         else
           s << opcode.ord
@@ -163,11 +170,18 @@ module Bitcoin
     # A witness program is any valid Script that consists of a 1-byte push opcode followed by a data push between 2 and 40 bytes.
     def witness_program?
       return false if size < 4 || size > 42 || chunks.size < 2
+
       opcode = chunks[0].opcode
+
       return false if opcode != OP_0 && (opcode < OP_1 || opcode > OP_16)
       return false unless chunks[1].pushdata?
-      program_size = chunks[1].pushed_data.bytesize
-      program_size >= 2 && program_size <= 40
+
+      if size == (chunks[1][0].unpack('C').first + 2)
+        program_size = chunks[1].pushed_data.bytesize
+        return program_size >= 2 && program_size <= 40
+      end
+
+      false
     end
 
     # get witness version and witness program

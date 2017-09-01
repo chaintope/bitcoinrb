@@ -116,8 +116,8 @@ module Bitcoin
     OP_CHECKMULTISIGVERIFY = 0xaf
 
     # https://en.bitcoin.it/wiki/Script#Locktime
-    OP_CHECKLOCKTIMEVERIFY = OP_NOP2 = 0xb1
-    OP_CHECKSEQUENCEVERIFY = OP_NOP3 = 0xb2
+    OP_NOP2 = OP_CHECKLOCKTIMEVERIFY = 0xb1
+    OP_NOP3 = OP_CHECKSEQUENCEVERIFY = 0xb2
 
     # https://en.bitcoin.it/wiki/Script#Reserved_words
     OP_RESERVED = 0x50

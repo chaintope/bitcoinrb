@@ -21,16 +21,23 @@ module Bitcoin
             script << data
           elsif w.start_with?('0x') && w[2..-1].length > 0 && hex?(w[2..-1]) # when hex
             data = w[2..-1].htb
+            buf = StringIO.new(data)
             if data[0].pushdata?
-              script.chunks << w[2..-1].htb
+              len = Bitcoin.unpack_var_int_from_io(buf)
+              if buf.size > buf.pos + len
+                script.chunks.concat(Bitcoin::Script.parse_from_payload(data).chunks)
+              else
+                script.chunks << data
+              end
             else
-              buf = StringIO.new(data)
               until buf.eof?
                 script.chunks << buf.read(1)
               end
             end
           elsif w.size >= 2 && w.start_with?("'") && w.end_with?("'")
             script << w[1..-2].bth
+          elsif w.start_with?('OP_')
+            script << Bitcoin::Opcodes.name_to_opcode(w)
           elsif Bitcoin::Opcodes.name_to_opcode('OP_' + w)
             script << Bitcoin::Opcodes.name_to_opcode('OP_' + w)
           else
