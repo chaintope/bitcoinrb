@@ -22,7 +22,7 @@ describe Bitcoin::ScriptInterpreter do
         flags = flags.split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}
         expected_err_code = find_error_code(error_code)
         i = Bitcoin::ScriptInterpreter.new(flags: flags, checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0, amount: amount))
-        result = i.verify(script_sig, script_pubkey, witness)
+        result = i.verify_script(script_sig, script_pubkey, witness)
         puts i.error.to_s
         expect(result).to be expected_err_code == Bitcoin::ScriptError::SCRIPT_ERR_OK
         expect(i.error.code).to eq(expected_err_code) unless result

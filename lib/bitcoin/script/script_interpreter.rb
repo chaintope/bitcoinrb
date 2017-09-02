@@ -28,7 +28,7 @@ module Bitcoin
     # @param [Bitcoin::Script] script_pubkey a script pubkey (locking script)
     # @param [Bitcoin::ScriptWitness] witness a witness script
     # @return [Boolean] result
-    def verify(script_sig, script_pubkey, witness = nil)
+    def verify_script(script_sig, script_pubkey, witness = nil)
 
       return set_error(ScriptError::SCRIPT_ERR_SIG_PUSHONLY) if flag?(SCRIPT_VERIFY_SIGPUSHONLY) && !script_sig.data_only?
 
@@ -41,7 +41,7 @@ module Bitcoin
 
       return false unless eval_script(script_pubkey, SIG_VERSION[:base])
 
-      return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !cast_to_bool(stack.last)
+      return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !cast_to_bool(stack.last.htb)
 
       # Bare witness programs
       if flag?(SCRIPT_VERIFY_WITNESS) && script_pubkey.witness_program?
@@ -98,10 +98,6 @@ module Bitcoin
     def set_error(err_code, extra_message = nil)
       @error = ScriptError.new(err_code, extra_message)
       false
-    end
-
-    def verify_sig
-
     end
 
     def verify_witness_program(witness, version, program)
@@ -585,7 +581,7 @@ module Bitcoin
           return v != 0
         when String
           v.each_byte.with_index do |b, i|
-            return !(i == (v.bytesize - 1) && b == 0x80)  unless b == 0
+            return !(i == (v.bytesize - 1) && b == 0x80) unless b == 0
           end
           false
         else

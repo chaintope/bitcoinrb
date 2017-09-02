@@ -79,7 +79,6 @@ describe Bitcoin::Tx do
     tx_json = fixture_file('tx_valid.json').select{ |j|j.size > 2}
     tx_json.map do |json|
       it "should validate tx #{json.inspect}" do
-        puts "#{json}"
 
         prevout_script_pubkeys = {}
         prevout_script_values = {}
@@ -106,7 +105,7 @@ describe Bitcoin::Tx do
           checker = Bitcoin::TxChecker.new(tx: tx, input_index: index, amount: amount)
           interpreter = Bitcoin::ScriptInterpreter.new(flags: flags, checker: checker)
           script_pubkey = prevout_script_pubkeys[i.out_point.to_payload]
-          result = interpreter.verify(i.script_sig, script_pubkey, witness)
+          result = interpreter.verify_script(i.script_sig, script_pubkey, witness)
           expect(result).to be true
           expect(interpreter.error.code).to eq(Bitcoin::ScriptError::SCRIPT_ERR_OK)
         end
@@ -118,7 +117,6 @@ describe Bitcoin::Tx do
     invalid_tx_json = fixture_file('tx_invalid.json').select{ |j|j.size > 2}
     invalid_tx_json.map do |json|
       it "should validate tx #{json.inspect}" do
-        puts "#{json}"
 
         prevout_script_pubkeys = {}
         prevout_script_values = {}
@@ -144,8 +142,8 @@ describe Bitcoin::Tx do
             checker = Bitcoin::TxChecker.new(tx: tx, input_index: index, amount: amount)
             interpreter = Bitcoin::ScriptInterpreter.new(flags: flags, checker: checker)
             script_pubkey = prevout_script_pubkeys[i.out_point.to_payload]
-            valid = interpreter.verify(i.script_sig, script_pubkey, witness)
-            expect(interpreter.error.code).not_to eq(Bitcoin::ScriptError::SCRIPT_ERR_OK)
+            valid = interpreter.verify_script(i.script_sig, script_pubkey, witness)
+            break unless valid
           end
         end
 
