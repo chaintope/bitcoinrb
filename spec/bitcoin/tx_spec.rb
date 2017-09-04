@@ -39,32 +39,32 @@ describe Bitcoin::Tx do
         # sighash all
         tx = Bitcoin::Tx.parse_from_payload('0100000001c997a5e56e104102fa209c6a852dd90660a20b2d9c352423edce25857fcd3704000000004847304402204e45e16932b8af514961a1d3a1a25fdf3f4f7732e9d624c6c61548ab5fb8cd410220181522ec8eca07de4860a4acdd12909d831cc56cbbac4622082221a8768d1d0901ffffffff0200ca9a3b00000000434104ae1a62fe09c5f51b13905f07f06b99a2f7159b2225f374cd378d71302fa28414e7aab37397f554a7df5f142c21c1b7303b8a0626f1baded5c72a704f7e6cd84cac00286bee0000000043410411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3ac00000000'.htb)
         script_pubkey = Bitcoin::Script.parse_from_payload('410411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3ac'.htb)
-        expect(tx.sighash_for_input(input_index: 0, script_code: script_pubkey).bth).to eq('7a05c6145f10101e9d6325494245adf1297d80f8f38d4d576d57cdba220bcb19')
+        expect(tx.sighash_for_input(input_index: 0, output_script: script_pubkey).bth).to eq('7a05c6145f10101e9d6325494245adf1297d80f8f38d4d576d57cdba220bcb19')
 
         # sighash single
         tx = Bitcoin::Tx.parse_from_payload('0100000002dc38e9359bd7da3b58386204e186d9408685f427f5e513666db735aa8a6b2169000000006a47304402205d8feeb312478e468d0b514e63e113958d7214fa572acd87079a7f0cc026fc5c02200fa76ea05bf243af6d0f9177f241caf606d01fcfd5e62d6befbca24e569e5c27032102100a1a9ca2c18932d6577c58f225580184d0e08226d41959874ac963e3c1b2feffffffffdc38e9359bd7da3b58386204e186d9408685f427f5e513666db735aa8a6b2169010000006b4830450220087ede38729e6d35e4f515505018e659222031273b7366920f393ee3ab17bc1e022100ca43164b757d1a6d1235f13200d4b5f76dd8fda4ec9fc28546b2df5b1211e8df03210275983913e60093b767e85597ca9397fb2f418e57f998d6afbbc536116085b1cbffffffff0140899500000000001976a914fcc9b36d38cf55d7d5b4ee4dddb6b2c17612f48c88ac00000000'.htb)
         script_pubkey = Bitcoin::Script.parse_from_payload('76a914fcc9b36d38cf55d7d5b4ee4dddb6b2c17612f48c88ac'.htb)
-        expect(tx.sighash_for_input(input_index: 0, script_code: script_pubkey,
+        expect(tx.sighash_for_input(input_index: 0, output_script: script_pubkey,
                                     hash_type: Bitcoin::Script::SIGHASH_TYPE[:single]).bth).to eq('23563c6b270661cc38e940cd6f8908177b9c9de7ff5111e73481ec42a112a557')
 
         # sighash all | anyonecanpay
         tx = Bitcoin::Tx.parse_from_payload('0100000002f6044c0ad485f633b41f97d0d793eb2837ae40f738ff6d5f50fdfd10528c1d76010000006b48304502205853c7f1395785bfabb03c57e962eb076ff24d8e4e573b04db13b45ed3ed6ee20221009dc82ae43be9d4b1fe2847754e1d36dad48ba801817d485dc529afc516c2ddb481210305584980367b321fad7f1c1f4d5d723d0ac80c1d80c8ba12343965b48364537affffffff9c6af0df6669bcded19e317e25bebc8c78e48df8ae1fe02a7f030818e71ecd40010000006c4930460221008269c9d7ba0a7e730dd16f4082d29e3684fb7463ba064fd093afc170ad6e0388022100bc6d76373916a3ff6ee41b2c752001fda3c9e048bcff0d81d05b39ff0f4217b2812103aae303d825421545c5bc7ccd5ac87dd5add3bcc3a432ba7aa2f2661699f9f659ffffffff01e0930400000000001976a9145c11f917883b927eef77dc57707aeb853f6d389488ac00000000'.htb)
         script_pubkey = Bitcoin::Script.parse_from_payload('76a9148551e48a53decd1cfc63079a4581bcccfad1a93c88ac'.htb)
-        expect(tx.sighash_for_input(input_index: 0, script_code: script_pubkey,hash_type:
+        expect(tx.sighash_for_input(input_index: 0, output_script: script_pubkey, hash_type:
             Bitcoin::Script::SIGHASH_TYPE[:all] | Bitcoin::Script::SIGHASH_TYPE[:anyonecanpay]).bth).to eq('acf290d5617704f1aad0a0d00a93b60886dac5df3c46b2e49d0344a94670d537')
 
         # sighash single | anyonecanpay
         tx = Bitcoin::Tx.parse_from_payload('0100000001774431e6ccca53548400e2e8bb66865ca2feef7885f09a0199b5fdd0eeb7583e01000000dc004930460221008662e2bfcc4741d92531f566c5765d849e24b45c289607593584fbba938d88cc022100d718e710d5991bdfbdc5b0d52ae8e4d9c1c1c719bcc348003c5e80524a04e16283483045022100fbdbea6b614989b210d269dbf171746a9507bb3dae292bdaf85848a7aa091eca02205d23a46269a904c40076c76eadfdb8f98e7d0349c0bfe5915cca3f8835a4a41683475221034758cefcb75e16e4dfafb32383b709fa632086ea5ca982712de6add93060b17a2103fe96237629128a0ae8c3825af8a4be8fe3109b16f62af19cec0b1eb93b8717e252aeffffffff0280969800000000001976a914f164a82c9b3c5d217c83380792d56a6261f2d17688ac609df200000000001976a9142ab55d985e552653c189b1530aac817c0223cb4c88ac00000000'.htb)
         script_pubkey = Bitcoin::Script.parse_from_payload('a914d0c15a7d41500976056b3345f542d8c944077c8a87'.htb)
-        expect(tx.sighash_for_input(input_index: 0, script_code: script_pubkey,hash_type:
+        expect(tx.sighash_for_input(input_index: 0, output_script: script_pubkey, hash_type:
             Bitcoin::Script::SIGHASH_TYPE[:single] | Bitcoin::Script::SIGHASH_TYPE[:anyonecanpay]).bth).to eq('5e7f5c6e6a9f1a751a1686a88a42416223cccaed0898992961c498901a40dbb1')
 
         # sighash none
-        expect(tx.sighash_for_input(input_index: 0, script_code: script_pubkey,hash_type:
+        expect(tx.sighash_for_input(input_index: 0, output_script: script_pubkey, hash_type:
             Bitcoin::Script::SIGHASH_TYPE[:none]).bth).to eq('736918827173aa332b97c1ebe2f2cdae046034a553932a303238a34609e8b31a')
 
         # sighash none | anyonecanpay
-        expect(tx.sighash_for_input(input_index: 0, script_code: script_pubkey,hash_type:
+        expect(tx.sighash_for_input(input_index: 0, output_script: script_pubkey, hash_type:
             Bitcoin::Script::SIGHASH_TYPE[:none] | Bitcoin::Script::SIGHASH_TYPE[:anyonecanpay]).bth).to eq('a94ba0fd2c08b5b753282f15483901714bb862fd37b9339b38dec31e6d4c793d')
       end
     end

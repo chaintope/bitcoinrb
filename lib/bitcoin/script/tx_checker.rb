@@ -22,7 +22,7 @@ module Bitcoin
       hash_type = script_sig[-1].unpack('C').first
       sig = script_sig[0..-2]
       sighash = tx.sighash_for_input(input_index: input_index, hash_type: hash_type,
-                                     script_code: script_code, amount: amount, sig_version: sig_version)
+                                     output_script: script_code, amount: amount, sig_version: sig_version)
       key = Key.new(pubkey: pubkey)
       key.verify(sig, sighash)
     end

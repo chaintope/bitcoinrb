@@ -103,7 +103,7 @@ module Bitcoin
 
       def sign_data(data, priv_key)
         with_context do |context|
-          secret = FFI::MemoryPointer.new(:uchar, priv_key.bytesize).put_bytes(0, priv_key)
+          secret = FFI::MemoryPointer.new(:uchar, priv_key.htb.bytesize).put_bytes(0, priv_key.htb)
           raise 'priv_key invalid' unless secp256k1_ec_seckey_verify(context, secret)
 
           internal_signature = FFI::MemoryPointer.new(:uchar, 64)

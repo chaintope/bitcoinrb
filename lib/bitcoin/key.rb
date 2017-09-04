@@ -133,7 +133,7 @@ module Bitcoin
     # @return [String] a pubkey which generate from privkey
     def generate_pubkey(privkey, compressed: true)
       private_key = ECDSA::Format::IntegerOctetString.decode(privkey.htb)
-      public_key = Secp256k1::GROUP.generator.multiply_by_scalar(private_key)
+      public_key = ECDSA::Group::Secp256k1.generator.multiply_by_scalar(private_key)
       pubkey = ECDSA::Format::PointOctetString.encode(public_key, compression: compressed)
       pubkey.bth
     end

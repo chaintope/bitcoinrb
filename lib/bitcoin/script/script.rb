@@ -184,6 +184,18 @@ module Bitcoin
       false
     end
 
+    # If this script is witness program, return its script code,
+    # otherwise returns the self payload. ScriptInterpreter does not use this.
+    def to_script_code(skip_separator_index = 0)
+      payload = to_payload
+      if p2wpkh?
+        payload = Script.to_p2pkh(chunks[1].pushed_data.bth).to_payload
+      elsif skip_separator_index > 0
+        payload = subscript_codeseparator(skip_separator_index)
+      end
+      Bitcoin.pack_var_string(payload)
+    end
+
     # get witness version and witness program
     def witness_data
       version = opcode_to_small_int(chunks[0].opcode)
@@ -349,8 +361,21 @@ module Bitcoin
 
     # remove all occurences of opcode. Typically it's OP_CODESEPARATOR.
     def delete_opcode(opcode)
-      @chunks = @chunks.select{|chunk| chunk.ord != opcode}
+      @chunks = chunks.select{|chunk| chunk.ord != opcode}
       self
+    end
+
+    # Returns a script that deleted the script before the index specified by separator_index.
+    def subscript_codeseparator(separator_index)
+      buf = []
+      process_separator_index = 0
+      chunks.each{|chunk|
+        buf << chunk if process_separator_index == separator_index
+        if chunk.ord == OP_CODESEPARATOR && process_separator_index < separator_index
+          process_separator_index += 1
+        end
+      }
+      buf.join
     end
 
     def ==(other)
