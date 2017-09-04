@@ -4,6 +4,7 @@ require 'ecdsa'
 require 'securerandom'
 require 'json'
 require 'bech32'
+require 'ffi'
 
 module Bitcoin
 

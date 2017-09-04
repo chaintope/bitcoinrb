@@ -6,9 +6,10 @@ module Bitcoin
     attr_accessor :priv_key
     attr_accessor :pubkey
     attr_accessor :compressed
+    attr_reader :secp256k1_module
 
     def initialize(priv_key: nil, pubkey: nil, compressed: true)
-      extend Bitcoin.secp_impl
+      @secp256k1_module =  Bitcoin.secp_impl
       @priv_key = priv_key
       if pubkey
         @pubkey = pubkey
@@ -40,7 +41,7 @@ module Bitcoin
 
     # sign +data+ with private key
     def sign(data)
-      sign_data(data, priv_key)
+      secp256k1_module.sign_data(data, priv_key)
     end
 
     # verify signature using public key
@@ -48,7 +49,7 @@ module Bitcoin
     # @param [String] origin original message
     # @return [Boolean] verify result
     def verify(sig, origin)
-      verify_sig(origin, sig, pubkey)
+      secp256k1_module.verify_sig(origin, sig, pubkey)
     end
 
     # get pay to pubkey hash address
@@ -124,6 +125,17 @@ module Bitcoin
 
       c1.size.times{|idx| return c1[idx] - c2[idx] if c1[idx] != c2[idx] }
       0
+    end
+
+    # generate publick key from private key
+    # @param [String] privkey a private key with string format
+    # @param [Boolean] compressed pubkey compressed?
+    # @return [String] a pubkey which generate from privkey
+    def generate_pubkey(privkey, compressed: true)
+      private_key = ECDSA::Format::IntegerOctetString.decode(privkey.htb)
+      public_key = Secp256k1::GROUP.generator.multiply_by_scalar(private_key)
+      pubkey = ECDSA::Format::PointOctetString.encode(public_key, compression: compressed)
+      pubkey.bth
     end
 
   end

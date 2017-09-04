@@ -8,6 +8,11 @@ RSpec.configure do |config|
     else
       Bitcoin.chain_params = :testnet
     end
+    if example.metadata[:use_secp256k1]
+      ENV['SECP256K1_LIB_PATH'] = File.expand_path('lib/libsecp256k1.so', File.dirname(__FILE__))
+    else
+      ENV['SECP256K1_LIB_PATH'] = nil
+    end
   end
 end
 
