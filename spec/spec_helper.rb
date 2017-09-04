@@ -9,7 +9,15 @@ RSpec.configure do |config|
       Bitcoin.chain_params = :testnet
     end
     if example.metadata[:use_secp256k1]
-      ENV['SECP256K1_LIB_PATH'] = File.expand_path('lib/libsecp256k1.so', File.dirname(__FILE__))
+      host_os = RbConfig::CONFIG['host_os']
+      case host_os
+      when /darwin|mac os/
+        ENV['SECP256K1_LIB_PATH'] = File.expand_path('lib/libsecp256k1.dylib', File.dirname(__FILE__))
+      when /linux/
+        ENV['SECP256K1_LIB_PATH'] = File.expand_path('lib/libsecp256k1.so', File.dirname(__FILE__))
+      else
+        raise "#{host_os} is an unsupported os."
+      end
     else
       ENV['SECP256K1_LIB_PATH'] = nil
     end
