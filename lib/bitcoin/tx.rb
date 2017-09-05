@@ -123,6 +123,28 @@ module Bitcoin
       end
     end
 
+    # verify input signature.
+    # @param [Integer] input_index
+    # @param [Bitcoin::Script] script_pubkey the script pubkey for target input.
+    # @param [Integer] amount the amount of bitcoin, require for witness program only.
+    # @param [Array] flags the flags used when execute script interpreter.
+    def verify_input_sig(input_index, script_pubkey, amount: nil, flags: Bitcoin::STANDARD_SCRIPT_VERIFY_FLAGS)
+      script_sig = inputs[input_index].script_sig
+      has_witness = inputs[input_index].has_witness?
+
+      if script_pubkey.p2sh?
+        flags << SCRIPT_VERIFY_P2SH
+        redeem_script = Script.parse_from_payload(script_sig.chunks.last)
+        script_pubkey = redeem_script if redeem_script.p2wpkh?
+      end
+
+      if has_witness
+        verify_input_sig_for_witness(input_index, script_pubkey, amount, flags)
+      else
+        verify_input_sig_for_legacy(input_index, script_pubkey, flags)
+      end
+    end
+
     private
 
     # generate sighash with legacy format
@@ -189,6 +211,28 @@ module Bitcoin
       buf = [ [version].pack('V'), hash_prevouts, hash_sequence, outpoint,
               script_code ,amount, nsequence, hash_outputs, [@lock_time, hash_type].pack('VV')].join
       Bitcoin.double_sha256(buf)
+    end
+
+    # verify input signature for legacy tx.
+    def verify_input_sig_for_legacy(input_index, script_pubkey, flags)
+      script_sig = inputs[input_index].script_sig
+      checker = Bitcoin::TxChecker.new(tx: self, input_index: input_index)
+      interpreter = Bitcoin::ScriptInterpreter.new(checker: checker, flags: flags)
+
+      interpreter.verify_script(script_sig, script_pubkey)
+    end
+
+    # verify input signature for witness tx.
+    def verify_input_sig_for_witness(input_index, script_pubkey, amount, flags)
+      flags << SCRIPT_VERIFY_WITNESS
+      flags << SCRIPT_VERIFY_WITNESS_PUBKEYTYPE
+      checker = Bitcoin::TxChecker.new(tx: self, input_index: input_index, amount: amount)
+      interpreter = Bitcoin::ScriptInterpreter.new(checker: checker, flags: flags)
+      i = inputs[input_index]
+
+      script_sig = i.script_sig
+      witness = i.script_witness
+      interpreter.verify_script(script_sig, script_pubkey, witness)
     end
 
   end

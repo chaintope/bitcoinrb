@@ -49,6 +49,23 @@ module Bitcoin
   SCRIPT_VERIFY_NULLFAIL = (1 << 14) # Signature(s) must be empty vector if an CHECK(MULTI)SIG operation failed
   SCRIPT_VERIFY_WITNESS_PUBKEYTYPE = (1 << 15) # Public keys in segregated witness scripts must be compressed
 
+  MANDATORY_SCRIPT_VERIFY_FLAGS = SCRIPT_VERIFY_P2SH
+
+  # Standard script verification flags that standard transactions will comply with.
+  STANDARD_SCRIPT_VERIFY_FLAGS = [MANDATORY_SCRIPT_VERIFY_FLAGS,
+                                  SCRIPT_VERIFY_DERSIG,
+                                  SCRIPT_VERIFY_STRICTENC,
+                                  SCRIPT_VERIFY_MINIMALDATA,
+                                  SCRIPT_VERIFY_NULLDUMMY,
+                                  SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS,
+                                  SCRIPT_VERIFY_CLEANSTACK,
+                                  SCRIPT_VERIFY_MINIMALIF,
+                                  SCRIPT_VERIFY_NULLFAIL,
+                                  SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY,
+                                  SCRIPT_VERIFY_CHECKSEQUENCEVERIFY,
+                                  SCRIPT_VERIFY_LOW_S,
+                                  SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM]
+
   autoload :Util, 'bitcoin/util'
   autoload :ChainParams, 'bitcoin/chain_params'
   autoload :Message, 'bitcoin/message'

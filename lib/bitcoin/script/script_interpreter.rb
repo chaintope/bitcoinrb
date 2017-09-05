@@ -26,7 +26,7 @@ module Bitcoin
     # @param [Bitcoin::Script] script_pubkey a script pubkey (locking script)
     # @param [Bitcoin::ScriptWitness] witness a witness script
     # @return [Boolean] result
-    def verify_script(script_sig, script_pubkey, witness = nil)
+    def verify_script(script_sig, script_pubkey, witness = ScriptWitness.new)
 
       return set_error(ScriptError::SCRIPT_ERR_SIG_PUSHONLY) if flag?(SCRIPT_VERIFY_SIGPUSHONLY) && !script_sig.data_only?
 
@@ -637,7 +637,7 @@ module Bitcoin
 
     def low_der_signature?(sig)
       return set_error(ScriptError::SCRIPT_ERR_SIG_DER) unless valid_signature_encoding?(sig)
-      return set_error(ScriptError::SCRIPT_ERR_SIG_HIGH_S) unless Key.low_signature?(sig)
+      return set_error(ScriptError::SCRIPT_ERR_SIG_HIGH_S) unless Key.low_signature?(sig.htb)
       true
     end
 

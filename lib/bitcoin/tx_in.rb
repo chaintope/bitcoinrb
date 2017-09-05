@@ -55,6 +55,10 @@ module Bitcoin
       p
     end
 
+    def has_witness?
+      !script_witness.empty?
+    end
+
   end
 
 end
