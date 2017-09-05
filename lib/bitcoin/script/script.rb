@@ -31,6 +31,8 @@ module Bitcoin
     # Maximum number length in bytes
     DEFAULT_MAX_NUM_SIZE = 4
 
+    SIG_VERSION = {base: 0, witness_v0: 1}
+
     attr_accessor :chunks
 
     def initialize
@@ -53,8 +55,13 @@ module Bitcoin
     # @return [Script, Script] first element is p2sh script, second one is redeem script.
     def self.to_p2sh_multisig_script(m, pubkeys)
       redeem_script = to_multisig_script(m, pubkeys)
-      p2sh_script = new << OP_HASH160 << redeem_script.to_hash160 << OP_EQUAL
-      [p2sh_script, redeem_script]
+      [redeem_script.to_p2sh, redeem_script]
+    end
+
+    # generate p2sh script with this as a redeem script
+    # @return [Script] P2SH script
+    def to_p2sh
+      Script.new << OP_HASH160 << to_hash160 << OP_EQUAL
     end
 
     # generate m of n multisig script
