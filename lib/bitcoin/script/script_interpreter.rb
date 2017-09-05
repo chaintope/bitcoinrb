@@ -33,11 +33,11 @@ module Bitcoin
       stack_copy = nil
       had_witness = false
 
-      return false unless eval_script(script_sig, Script::SIG_VERSION[:base])
+      return false unless eval_script(script_sig, :base)
 
       stack_copy = stack.dup if flag?(SCRIPT_VERIFY_P2SH)
 
-      return false unless eval_script(script_pubkey, Script::SIG_VERSION[:base])
+      return false unless eval_script(script_pubkey, :base)
 
       return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !cast_to_bool(stack.last.htb)
 
@@ -61,7 +61,7 @@ module Bitcoin
         rescue Exception => e
           return set_error(ScriptError::SCRIPT_ERR_BAD_OPCODE, "Failed to parse serialized redeem script for P2SH. #{e.message}")
         end
-        return false unless eval_script(redeem_script, Script::SIG_VERSION[:base])
+        return false unless eval_script(redeem_script, :base)
         return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !cast_to_bool(stack.last)
 
         # P2SH witness program
@@ -123,7 +123,7 @@ module Bitcoin
         return set_error(ScriptError::SCRIPT_ERR_PUSH_SIZE) if s.htb.bytesize > Script::MAX_SCRIPT_ELEMENT_SIZE
       end
 
-      return false unless eval_script(script_pubkey, Script::SIG_VERSION[:witness_v0])
+      return false unless eval_script(script_pubkey, :witness_v0)
 
       return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) unless stack.size == 1
       return set_error(ScriptError::SCRIPT_ERR_EVAL_FALSE) unless cast_to_bool(stack.last)
@@ -200,7 +200,7 @@ module Bitcoin
                   if need_exec
                     return set_error(ScriptError::SCRIPT_ERR_UNBALANCED_CONDITIONAL) if stack.size < 1
                     value = pop_string.htb
-                    if sig_version == Script::SIG_VERSION[:witness_v0] && flag?(SCRIPT_VERIFY_MINIMALIF)
+                    if sig_version == :witness_v0 && flag?(SCRIPT_VERIFY_MINIMALIF)
                       if value.bytesize > 1 || (value.bytesize == 1 && value[0].unpack('C').first != 1)
                         return set_error(ScriptError::SCRIPT_ERR_MINIMALIF)
                       end
@@ -403,7 +403,7 @@ module Bitcoin
                   sig, pubkey = pop_string(2)
 
                   subscript = script.subscript(last_code_separator_index..-1)
-                  if sig_version == Script::SIG_VERSION[:base]
+                  if sig_version == :base
                     subscript = subscript.find_and_delete(Script.new << sig)
                   end
 
@@ -451,7 +451,7 @@ module Bitcoin
                   
                   subscript = script.subscript(last_code_separator_index..-1)
 
-                  if sig_version == Script::SIG_VERSION[:base]
+                  if sig_version == :base
                     sigs.each do |sig|
                       subscript = subscript.find_and_delete(Script.new << sig)
                     end
@@ -656,7 +656,7 @@ module Bitcoin
       end
       # Only compressed keys are accepted in segwit
       if flag?(SCRIPT_VERIFY_WITNESS_PUBKEYTYPE) &&
-          sig_version == Script::SIG_VERSION[:witness_v0] && !Key.compress_pubkey?(pubkey)
+          sig_version == :witness_v0 && !Key.compress_pubkey?(pubkey)
         return set_error(ScriptError::SCRIPT_ERR_WITNESS_PUBKEYTYPE)
       end
       true

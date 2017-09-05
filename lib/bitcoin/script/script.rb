@@ -31,7 +31,7 @@ module Bitcoin
     # Maximum number length in bytes
     DEFAULT_MAX_NUM_SIZE = 4
 
-    SIG_VERSION = {base: 0, witness_v0: 1}
+    SIG_VERSION = [:base, :witness_v0]
 
     attr_accessor :chunks
 

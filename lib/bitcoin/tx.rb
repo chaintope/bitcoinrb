@@ -108,13 +108,14 @@ module Bitcoin
     # @param [Integer] amount bitcoin amount locked in input. required for witness input only.
     # @param [Integer] skip_separator_index If output_script is P2WSH and output_script contains any OP_CODESEPARATOR,
     # the script code needs  is the witnessScript but removing everything up to and including the last executed OP_CODESEPARATOR before the signature checking opcode being executed.
-    def sighash_for_input(input_index: nil, hash_type: Script::SIGHASH_TYPE[:all], output_script: nil,
-                          sig_version: Script::SIG_VERSION[:base], amount: nil, skip_separator_index: 0)
+    def sighash_for_input(input_index, output_script, hash_type: Script::SIGHASH_TYPE[:all],
+                          sig_version: :base, amount: nil, skip_separator_index: 0)
       raise ArgumentError, 'input_index must be specified.' unless input_index
       raise ArgumentError, 'does not exist input corresponding to input_index.' if input_index >= inputs.size
       raise ArgumentError, 'script_pubkey must be specified.' unless output_script
+      raise ArgumentError, 'unsupported sig version specified.' unless Script::SIG_VERSION.include?(sig_version)
 
-      if sig_version == Script::SIG_VERSION[:witness_v0]
+      if sig_version == :witness_v0
         raise ArgumentError, 'amount must be specified.' unless amount
         sighash_for_witness(input_index, output_script, hash_type, amount, skip_separator_index)
       else
