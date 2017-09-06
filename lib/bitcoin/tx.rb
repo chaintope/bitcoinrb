@@ -108,12 +108,12 @@ module Bitcoin
     # @param [Integer] amount bitcoin amount locked in input. required for witness input only.
     # @param [Integer] skip_separator_index If output_script is P2WSH and output_script contains any OP_CODESEPARATOR,
     # the script code needs  is the witnessScript but removing everything up to and including the last executed OP_CODESEPARATOR before the signature checking opcode being executed.
-    def sighash_for_input(input_index, output_script, hash_type: Script::SIGHASH_TYPE[:all],
+    def sighash_for_input(input_index, output_script, hash_type: SIGHASH_TYPE[:all],
                           sig_version: :base, amount: nil, skip_separator_index: 0)
       raise ArgumentError, 'input_index must be specified.' unless input_index
       raise ArgumentError, 'does not exist input corresponding to input_index.' if input_index >= inputs.size
       raise ArgumentError, 'script_pubkey must be specified.' unless output_script
-      raise ArgumentError, 'unsupported sig version specified.' unless Script::SIG_VERSION.include?(sig_version)
+      raise ArgumentError, 'unsupported sig version specified.' unless SIG_VERSION.include?(sig_version)
 
       if sig_version == :witness_v0
         raise ArgumentError, 'amount must be specified.' unless amount
@@ -128,7 +128,7 @@ module Bitcoin
     # @param [Bitcoin::Script] script_pubkey the script pubkey for target input.
     # @param [Integer] amount the amount of bitcoin, require for witness program only.
     # @param [Array] flags the flags used when execute script interpreter.
-    def verify_input_sig(input_index, script_pubkey, amount: nil, flags: Bitcoin::STANDARD_SCRIPT_VERIFY_FLAGS)
+    def verify_input_sig(input_index, script_pubkey, amount: nil, flags: STANDARD_SCRIPT_VERIFY_FLAGS)
       script_sig = inputs[input_index].script_sig
       has_witness = inputs[input_index].has_witness?
 
@@ -154,7 +154,7 @@ module Bitcoin
           i.to_payload(script_code.delete_opcode(Bitcoin::Opcodes::OP_CODESEPARATOR))
         else
           case hash_type & 0x1f
-            when Script::SIGHASH_TYPE[:none], Script::SIGHASH_TYPE[:single]
+            when SIGHASH_TYPE[:none], SIGHASH_TYPE[:single]
               i.to_payload(Bitcoin::Script.new, 0)
             else
               i.to_payload(Bitcoin::Script.new)
@@ -166,16 +166,16 @@ module Bitcoin
       out_size = Bitcoin.pack_var_int(outputs.size)
 
       case hash_type & 0x1f
-        when Script::SIGHASH_TYPE[:none]
+        when SIGHASH_TYPE[:none]
           outs = ''
           out_size = Bitcoin.pack_var_int(0)
-        when Script::SIGHASH_TYPE[:single]
+        when SIGHASH_TYPE[:single]
           return "\x01".ljust(32, "\x00") if index >= outputs.size
           outs = outputs[0...(index + 1)].map.with_index { |o, idx| (idx == index) ? o.to_payload : o.to_empty_payload }.join
           out_size = Bitcoin.pack_var_int(index + 1)
       end
 
-      if hash_type & Script::SIGHASH_TYPE[:anyonecanpay] != 0
+      if hash_type & SIGHASH_TYPE[:anyonecanpay] != 0
         ins = [ins[index]]
       end
 
@@ -198,14 +198,14 @@ module Bitcoin
       script_code = script_pubkey_or_script_code.to_script_code(skip_separator_index)
 
       case (hash_type & 0x1f)
-      when Script::SIGHASH_TYPE[:single]
+      when SIGHASH_TYPE[:single]
         hash_outputs = index >= outputs.size ? "\x00".ljust(32, "\x00") : Bitcoin.double_sha256(outputs[index].to_payload)
         hash_sequence = "\x00".ljust(32, "\x00")
-      when Script::SIGHASH_TYPE[:none]
+      when SIGHASH_TYPE[:none]
         hash_sequence = hash_outputs = "\x00".ljust(32, "\x00")
       end
 
-      if (hash_type & Script::SIGHASH_TYPE[:anyonecanpay]) != 0
+      if (hash_type & SIGHASH_TYPE[:anyonecanpay]) != 0
         hash_prevouts = hash_sequence ="\x00".ljust(32, "\x00")
       end
       buf = [ [version].pack('V'), hash_prevouts, hash_sequence, outpoint,

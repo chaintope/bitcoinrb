@@ -24,7 +24,7 @@ describe Bitcoin::ScriptInterpreter do
         i = Bitcoin::ScriptInterpreter.new(flags: flags, checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0, amount: amount))
         result = i.verify_script(script_sig, script_pubkey, witness)
         puts i.error.to_s
-        expect(result).to be expected_err_code == Bitcoin::ScriptError::SCRIPT_ERR_OK
+        expect(result).to be expected_err_code == Bitcoin::SCRIPT_ERR_OK
         expect(i.error.code).to eq(expected_err_code) unless result
       end
     end

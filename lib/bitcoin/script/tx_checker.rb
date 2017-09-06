@@ -32,8 +32,8 @@ module Bitcoin
       # distinguished by whether nLockTime < LOCKTIME_THRESHOLD.
 
       # We want to compare apples to apples, so fail the script unless the type of nLockTime being tested is the same as the nLockTime in the transaction.
-      unless ((tx.lock_time < Script::LOCKTIME_THRESHOLD && locktime < Script::LOCKTIME_THRESHOLD) ||
-          (tx.lock_time >= Script::LOCKTIME_THRESHOLD && locktime >= Script::LOCKTIME_THRESHOLD))
+      unless ((tx.lock_time < LOCKTIME_THRESHOLD && locktime < LOCKTIME_THRESHOLD) ||
+          (tx.lock_time >= LOCKTIME_THRESHOLD && locktime >= LOCKTIME_THRESHOLD))
         return false
       end
 

@@ -4,35 +4,6 @@ module Bitcoin
   class Script
     include Bitcoin::Opcodes
 
-    # witness version
-    WITNESS_VERSION = 0x00
-
-    # Maximum script length in bytes
-    MAX_SCRIPT_SIZE = 10000
-
-    # Maximum number of public keys per multisig
-    MAX_PUBKEYS_PER_MULTISIG = 20
-
-    # Maximum number of non-push operations per script
-    MAX_OPS_PER_SCRIPT = 201
-
-    # Maximum number of bytes pushable to the stack
-    MAX_SCRIPT_ELEMENT_SIZE = 520
-
-    # Maximum number of size in the stack
-    MAX_STACK_SIZE = 1000
-
-    # Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp.
-    LOCKTIME_THRESHOLD = 500000000
-
-    # Signature hash types/flags
-    SIGHASH_TYPE = { all: 1, none: 2, single: 3, anyonecanpay: 128 }
-
-    # Maximum number length in bytes
-    DEFAULT_MAX_NUM_SIZE = 4
-
-    SIG_VERSION = [:base, :witness_v0]
-
     attr_accessor :chunks
 
     def initialize
