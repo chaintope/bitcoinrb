@@ -116,7 +116,7 @@ module Bitcoin
 
     # check whether standard script.
     def standard?
-      p2pkh? | p2sh? | p2wpkh? | p2wsh? | multisig? | op_return?
+      p2pkh? | p2sh? | p2wpkh? | p2wsh? | multisig? | standard_op_return?
     end
 
     # whether this script is a P2PKH format script.
@@ -151,7 +151,12 @@ module Bitcoin
     end
 
     def op_return?
-      chunks[0].ord == OP_RETURN && chunks.size <= 2
+      chunks.size >= 1 && chunks[0].ord == OP_RETURN
+    end
+
+    def standard_op_return?
+      op_return? && size <= MAX_OP_RETURN_RELAY &&
+          (chunks.size == 1 || chunks[1].opcode <= OP_16)
     end
 
     # whether data push only script which dose not include other opcode

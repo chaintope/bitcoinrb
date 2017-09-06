@@ -3,6 +3,11 @@ module Bitcoin
   # Transaction class
   class Tx
 
+    MAX_STANDARD_VERSION = 2
+
+    # The maximum weight for transactions we're willing to relay/mine
+    MAX_STANDARD_TX_WEIGHT = 400000
+
     MARKER = 0x00
     FLAG = 0x01
 
@@ -99,6 +104,49 @@ module Bitcoin
 
     def witness_payload
       inputs.map { |i| i.script_witness.to_payload }.join
+    end
+
+    # check this tx is standard.
+    def standard?
+      return false if version > MAX_STANDARD_VERSION
+      return false if weight > MAX_STANDARD_TX_WEIGHT
+      inputs.each do |i|
+        # Biggest 'standard' txin is a 15-of-15 P2SH multisig with compressed keys (remember the 520 byte limit on redeemScript size).
+        # That works out to a (15*(33+1))+3=513 byte redeemScript, 513+1+15*(73+1)+3=1627
+        # bytes of scriptSig, which we round off to 1650 bytes for some minor future-proofing.
+        # That's also enough to spend a 20-of-20 CHECKMULTISIG scriptPubKey, though such a scriptPubKey is not considered standard.
+        return false if i.script_sig.size > 1650
+        return false unless i.script_sig.push_only?
+      end
+      data_count = 0
+      outputs.each do |o|
+        return false unless o.script_pubkey.standard?
+        data_count += 1 if o.script_pubkey.op_return?
+        # TODO add non P2SH multisig relay(permitbaremultisig)
+        # TODO add dust relay check
+      end
+      return false if data_count > 1
+      true
+    end
+
+    # The serialized transaction size
+    def size
+      to_payload.bytesize
+    end
+
+    # The virtual transaction size (differs from size for witness transactions)
+    def vsize
+      (weight.to_f / 4).ceil
+    end
+
+    # calculate tx weight
+    # weight = (legacy tx payload) * 3 + (witness tx payload)
+    def weight
+      if witness?
+        serialize_old_format.bytesize * (WITNESS_SCALE_FACTOR - 1) + serialize_witness_format.bytesize
+      else
+        serialize_old_format.bytesize * WITNESS_SCALE_FACTOR
+      end
     end
 
     # get signature hash

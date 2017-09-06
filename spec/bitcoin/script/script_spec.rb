@@ -165,17 +165,29 @@ describe Bitcoin::Script do
   end
 
   describe 'op_return script' do
-    subject {
-      Bitcoin::Script.new << OP_RETURN << 'hoge'
-    }
-    it 'should treat as multisig' do
-      expect(subject.p2pkh?).to be false
-      expect(subject.p2sh?).to be false
-      expect(subject.p2wpkh?).to be false
-      expect(subject.p2wsh?).to be false
-      expect(subject.multisig?).to be false
-      expect(subject.op_return?).to be true
-      expect(subject.standard?).to be true
+    context 'within MAX_OP_RETURN_RELAY' do
+      subject {
+        Bitcoin::Script.new << OP_RETURN << '04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38'
+      }
+      it 'should treat as multisig' do
+        expect(subject.p2pkh?).to be false
+        expect(subject.p2sh?).to be false
+        expect(subject.p2wpkh?).to be false
+        expect(subject.p2wsh?).to be false
+        expect(subject.multisig?).to be false
+        expect(subject.op_return?).to be true
+        expect(subject.standard?).to be true
+      end
+    end
+
+    context 'over MAX_OP_RETURN_RELAY' do
+      subject {
+        Bitcoin::Script.new << OP_RETURN << '04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3800'
+      }
+      it 'should correct op_return, but not standard' do
+        expect(subject.op_return?).to be true
+        expect(subject.standard?).to be false
+      end
     end
   end
 

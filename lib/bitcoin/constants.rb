@@ -87,8 +87,10 @@ module Bitcoin
   # Maximum number length in bytes
   DEFAULT_MAX_NUM_SIZE = 4
 
-  SIG_VERSION = [:base, :witness_v0]
+  # 80 bytes of data, +1 for OP_RETURN, +2 for the pushdata opcodes.
+  MAX_OP_RETURN_RELAY = 83
 
+  SIG_VERSION = [:base, :witness_v0]
 
   # for script error
   SCRIPT_ERR_OK = 0

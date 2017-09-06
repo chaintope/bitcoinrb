@@ -1,7 +1,8 @@
 require 'spec_helper'
+include Bitcoin::Opcodes
 
 describe Bitcoin::Tx do
-
+  include Bitcoin::Opcodes
   describe 'parse from payload' do
     context 'coinbase tx' do
       subject {
@@ -149,6 +150,69 @@ describe Bitcoin::Tx do
 
         expect(valid).to be false
       end
+    end
+  end
+
+  describe '#standard?' do
+    it 'should be checked' do
+      tx = Bitcoin::Tx.parse_from_payload('0200000001bd3e71da6a6ec11d022d599fe815eb5395f89b62df8bc189c5b285f499b794b50100000042410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffffffff01804a5d05000000001976a9143101929f93833bd9298b189cf272dc71d5e50ad388ac00000000'.htb)
+      expect(tx.standard?).to be true
+
+      # MAX_OP_RETURN_RELAY-byte TX_NULL_DATA (standard)
+      tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << '04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38'
+      expect(tx.standard?).to be true
+
+      # MAX_OP_RETURN_RELAY+1-byte TX_NULL_DATA (non-standard)
+      tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << '04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3800'
+      expect(tx.standard?).to be false
+
+      # Data payload can be encoded in any way...
+      tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << ''
+      expect(tx.standard?).to be true
+
+      tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << '00' << '01'
+      expect(tx.standard?).to be true
+
+      tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << -1 << 0 << '01' << 2 << 3 << 4 << 5 << 6 << 7 << 8 << 9 << 10 << 11 << 12 << 13 << 14 << 15 << 16
+      expect(tx.standard?).to be true
+
+      tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << 0 << '01' << 2 << 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+      expect(tx.standard?).to be true
+
+      # ...so long as it only contains PUSHDATA's
+      tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << OP_RETURN
+      expect(tx.standard?).to be false
+
+      # TX_NULL_DATA w/o PUSHDATA
+      tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN
+      expect(tx.standard?).to be true
+
+      # Only one TX_NULL_DATA permitted in all cases
+      tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << '04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38'
+      tx.outputs << Bitcoin::TxOut.new(script_pubkey: Bitcoin::Script.new << OP_RETURN << '04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38')
+      expect(tx.standard?).to be false
+
+      tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << '04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38'
+      tx.outputs[1].script_pubkey = Bitcoin::Script.new << OP_RETURN
+      expect(tx.standard?).to be false
+
+      tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN
+      tx.outputs[1].script_pubkey = Bitcoin::Script.new << OP_RETURN
+      expect(tx.standard?).to be false
+    end
+  end
+
+  describe '#weight' do
+    it 'should be calculate' do
+      # P2WPKH
+      tx = Bitcoin::Tx.parse_from_payload('010000000001018015516590902931d31f650f7e0e79a931e01bcb2f73d4ca49195aed2854b5fd0000000000ffffffff0170460d00000000001976a9148911455a265235b2d356a1324af000d4dae0326288ac02473044022009ea34cf915708efa8d0fb8a784d4d9e3108ca8da4b017261dd029246c857ebc02201ae570e2d8a262bd9a2a157f473f4089f7eae5a8f54ff9f114f624557eda7420012102effb2edfcf826d43027feae226143bdac058ad2e87b7cec26f97af2d357ddefa00000000'.htb)
+      expect(tx.vsize).to eq(113)
+      expect(tx.size).to eq(194)
+
+      # non-segwit tx
+      tx = Bitcoin::Tx.parse_from_payload('010000000201e4a0f1fa83c642b91feafae36a0f8fded4158dfa6fd650e046b4364b805684000000006b483045022045c65646abc12c71352335dbec2824b2dbdef9253366b4b83439b2190ce098d2022100eed0b70371d3892f865b43e2bb713ec9e887a50d38f47e8416220daf826d0ab201210259f6658325c4e3ca6fb38f657ffcbf4b1c45ef4f0c1dd86d5f6c0cebb0e09520ffffffff31137db564a7fad07c9db5b6b862786589977c68d1270819030a9079941ca6c9010000006b48304502204354565632eedd30fb9ca5c22bb70ef848afd74f7bed354d267705a6e71ea885022100e6ea6250d29dc109cb59ac66318f1cb2768c13fb0daca7c3d91a3b8d0991e0cb01210259f6658325c4e3ca6fb38f657ffcbf4b1c45ef4f0c1dd86d5f6c0cebb0e09520ffffffff02801d2c04000000001976a914322653c91d6038e08b6d971e4560842c155c8a8888ac80248706000000001976a9143b9722f91a2e50d913dadc3a6a8a88a58a7b859788ac00000000'.htb)
+      expect(tx.vsize).to eq(374)
+      expect(tx.size).to eq(374)
     end
   end
 
