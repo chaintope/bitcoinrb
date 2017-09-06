@@ -28,7 +28,7 @@ module Bitcoin
     # @return [Boolean] result
     def verify_script(script_sig, script_pubkey, witness = ScriptWitness.new)
 
-      return set_error(SCRIPT_ERR_SIG_PUSHONLY) if flag?(SCRIPT_VERIFY_SIGPUSHONLY) && !script_sig.data_only?
+      return set_error(SCRIPT_ERR_SIG_PUSHONLY) if flag?(SCRIPT_VERIFY_SIGPUSHONLY) && !script_sig.push_only?
 
       stack_copy = nil
       had_witness = false
@@ -52,7 +52,7 @@ module Bitcoin
 
       # Additional validation for spend-to-script-hash transactions
       if flag?(SCRIPT_VERIFY_P2SH) && script_pubkey.p2sh?
-        return set_error(SCRIPT_ERR_SIG_PUSHONLY) unless script_sig.data_only?
+        return set_error(SCRIPT_ERR_SIG_PUSHONLY) unless script_sig.push_only?
         tmp = stack
         @stack = stack_copy
         raise 'stack cannot be empty.' if stack.empty?

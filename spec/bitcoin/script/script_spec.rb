@@ -43,6 +43,9 @@ describe Bitcoin::Script do
         expect(subject.p2sh?).to be false
         expect(subject.p2wpkh?).to be false
         expect(subject.p2wsh?).to be false
+        expect(subject.multisig?).to be false
+        expect(subject.op_return?).to be false
+        expect(subject.standard?).to be true
         expect(subject.to_addr).to eq('17T9tBC2dSpusL1rhT4T4AV4if963Tpfym')
       end
     end
@@ -66,6 +69,9 @@ describe Bitcoin::Script do
         expect(subject.p2sh?).to be false
         expect(subject.p2wpkh?).to be true
         expect(subject.p2wsh?).to be false
+        expect(subject.multisig?).to be false
+        expect(subject.op_return?).to be false
+        expect(subject.standard?).to be true
         expect(subject.to_addr).to eq('bc1qgmp0h7lvexdxx9y05pmdukx09xcteu9svvvxlw')
       end
     end
@@ -93,6 +99,9 @@ describe Bitcoin::Script do
         expect(subject[0].p2sh?).to be true
         expect(subject[0].p2wpkh?).to be false
         expect(subject[0].p2wsh?).to be false
+        expect(subject[0].multisig?).to be false
+        expect(subject[0].op_return?).to be false
+        expect(subject[0].standard?).to be true
         expect(subject[0].to_addr).to eq('3CTcn59uJ89wCsQbeiy8AGLydXE9mh6Yrr')
         expect(subject[1].to_payload.bth).to eq('5121021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e921032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e3552ae')
         expect(subject[1].to_s).to eq('1 021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9 032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35 2 OP_CHECKMULTISIG')
@@ -124,6 +133,9 @@ describe Bitcoin::Script do
         expect(subject.p2sh?).to be false
         expect(subject.p2wpkh?).to be false
         expect(subject.p2wsh?).to be true
+        expect(subject.multisig?).to be false
+        expect(subject.op_return?).to be false
+        expect(subject.standard?).to be true
         expect(subject.to_addr).to eq('bc1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607s264w7g')
       end
     end
@@ -132,6 +144,38 @@ describe Bitcoin::Script do
       it 'should be generate P2WSH script' do
         expect(subject.to_addr).to eq('tb1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607sajrpy8')
       end
+    end
+  end
+
+  describe 'multisig script' do
+    subject {
+      k1 = '021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9'
+      k2 = '032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35'
+      Bitcoin::Script.to_multisig_script(1, [k1, k2])
+    }
+    it 'should treat as multisig' do
+      expect(subject.p2pkh?).to be false
+      expect(subject.p2sh?).to be false
+      expect(subject.p2wpkh?).to be false
+      expect(subject.p2wsh?).to be false
+      expect(subject.multisig?).to be true
+      expect(subject.op_return?).to be false
+      expect(subject.standard?).to be true
+    end
+  end
+
+  describe 'op_return script' do
+    subject {
+      Bitcoin::Script.new << OP_RETURN << 'hoge'
+    }
+    it 'should treat as multisig' do
+      expect(subject.p2pkh?).to be false
+      expect(subject.p2sh?).to be false
+      expect(subject.p2wpkh?).to be false
+      expect(subject.p2wsh?).to be false
+      expect(subject.multisig?).to be false
+      expect(subject.op_return?).to be true
+      expect(subject.standard?).to be true
     end
   end
 
@@ -167,11 +211,11 @@ describe Bitcoin::Script do
 
   describe '#push_only?' do
     it 'should be judged' do
-      expect(Bitcoin::Script.new.data_only?).to be true
-      expect(Bitcoin::Script.from_string('0 46c2fbfbecc99a63148fa076de58cf29b0bcf0b0').data_only?).to be true
-      expect(Bitcoin::Script.from_string('46c2fbfbecc99a63148fa076de58cf29b0bcf0b0 OP_EQUAL').data_only?).to be false
-      expect(Bitcoin::Script.from_string('46c2fbfbecc99a63148fa076de58cf29b0bcf0b0').data_only?).to be true
-      expect(Bitcoin::Script.from_string('3044022009ea34cf915708efa8d0fb8a784d4d9e3108ca8da4b017261dd029246c857ebc02201ae570e2d8a262bd9a2a157f473f4089f7eae5a8f54ff9f114f624557eda742001 02effb2edfcf826d43027feae226143bdac058ad2e87b7cec26f97af2d357ddefa').data_only?).to be true
+      expect(Bitcoin::Script.new.push_only?).to be true
+      expect(Bitcoin::Script.from_string('0 46c2fbfbecc99a63148fa076de58cf29b0bcf0b0').push_only?).to be true
+      expect(Bitcoin::Script.from_string('46c2fbfbecc99a63148fa076de58cf29b0bcf0b0 OP_EQUAL').push_only?).to be false
+      expect(Bitcoin::Script.from_string('46c2fbfbecc99a63148fa076de58cf29b0bcf0b0').push_only?).to be true
+      expect(Bitcoin::Script.from_string('3044022009ea34cf915708efa8d0fb8a784d4d9e3108ca8da4b017261dd029246c857ebc02201ae570e2d8a262bd9a2a157f473f4089f7eae5a8f54ff9f114f624557eda742001 02effb2edfcf826d43027feae226143bdac058ad2e87b7cec26f97af2d357ddefa').push_only?).to be true
     end
   end
 
