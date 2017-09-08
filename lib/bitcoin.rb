@@ -122,4 +122,25 @@ module Bitcoin
 
   end
 
+  class ::Object
+
+    def to_json
+      to_h.to_json
+    end
+
+    def to_h
+      instance_variables.inject({}) do |result, var|
+        key = var.to_s
+        key.slice!(0) if key.start_with?('@')
+        value = instance_variable_get(var)
+        if value.is_a?(Array)
+          result.update(key => value.map{|v|v.to_h})
+        else
+          result.update(key => value)
+        end
+      end
+    end
+
+  end
+
 end

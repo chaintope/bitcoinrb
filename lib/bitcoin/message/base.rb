@@ -22,18 +22,6 @@ module Bitcoin
         raise 'to_payload must be implemented in a child class.'
       end
 
-      def to_json
-        to_h.to_json
-      end
-
-      def to_h
-        instance_variables.inject({}) do |result, var|
-          key = var.to_s
-          key.slice!(0) if key.start_with?('@')
-          result.update(key => instance_variable_get(var))
-        end
-      end
-
     end
 
   end
