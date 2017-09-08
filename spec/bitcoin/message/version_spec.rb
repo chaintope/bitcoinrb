@@ -12,7 +12,7 @@ describe Bitcoin::Message::Version do
       Bitcoin::Message::Version.parse_from_payload(version.to_payload)
     }
     it 'should parse payload' do
-      expect(subject.services).to eq(1)
+      expect(subject.services).to eq(13)
       expect(subject.user_agent).to eq(Bitcoin::Message::USER_AGENT)
       expect(subject.local_addr).to eq('83.243.59.57:8333')
       expect(subject.relay).to eq(false)
