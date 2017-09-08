@@ -61,7 +61,7 @@ module Bitcoin
 
   # base dir path that store blockchain data and wallet data
   def self.base_dir
-    "#{Dir.home}/.bitcoinrb"
+    "#{Dir.home}/.bitcoinrb/#{@chain_param}"
   end
 
   # get secp implementation module
