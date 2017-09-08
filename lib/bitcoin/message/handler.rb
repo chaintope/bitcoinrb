@@ -86,6 +86,8 @@ module Bitcoin
           on_reject(Reject.parse_from_payload(payload))
         when SendCmpct::COMMAND
           on_send_cmpct(SendCmpct.parse_from_payload(payload))
+        when Inv::COMMAND
+          on_inv(Inv.parse_from_payload(payload))
         else
           logger.warn("unsupported command received. #{command}")
           conn.close("with command #{command}")
@@ -169,6 +171,11 @@ module Bitcoin
       def on_send_cmpct(cmpct)
         logger.info("receive sendcmpct message. #{cmpct.build_json}")
         # TODO if mode is high and version is 1, relay block with cmpctblock message
+      end
+
+      def on_inv(inv)
+        logger.info("receive inv message. #{inv.build_json}")
+        # TODO
       end
 
     end
