@@ -29,7 +29,7 @@ module Bitcoin
 
     # handle receiving data from remote node.
     def receive_data(data)
-      logger.info "receive data from #{remote_node}, data : #{data}"
+      logger.info "receive data from #{remote_node}"
       handler.handle(data)
     end
 
@@ -43,8 +43,11 @@ module Bitcoin
     def handshake_done
       logger.info 'handshake finished.'
       @connected = true
-      # send_data(Message::SendCmpct.new(0, 1))
+    end
 
+    def send_message(msg)
+      logger.info "send message #{msg.class::COMMAND}"
+      send_data(msg.to_pkt)
     end
 
     private
@@ -56,9 +59,8 @@ module Bitcoin
     # start handshake
     def begin_handshake
       logger.info "begin handshake with #{remote_node}"
-      ver = Bitcoin::Message::Version.new(remote_addr: remote_node, start_height: 1150660)
-      logger.info "send version message. #{ver.to_json}"
-      send_data(ver.to_pkt)
+      ver = Bitcoin::Message::Version.new(remote_addr: remote_node, start_height: 0) # TODO use start_height in wallet
+      send_message(ver)
     end
 
   end

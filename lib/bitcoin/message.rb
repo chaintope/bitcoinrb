@@ -34,7 +34,16 @@ module Bitcoin
     HEADER_SIZE = 24
     USER_AGENT = "/bitcoinrb:#{Bitcoin::VERSION}/"
 
-    SERVICE_FLAGS = {none: 0, network: 1 << 0, getutxo: 1 << 1, bloom: 1 << 2, witness: 1 << 3, xthin: 1 << 4}
+    SERVICE_FLAGS = {
+        none: 0,
+        network: 1 << 0,  # the node is capable of serving the block chain. It is currently set by all Bitcoin Core nodes, and is unset by SPV clients or other peers that just want network services but don't provide them.
+        # getutxo: 1 << 1, # BIP-64. not implemented in Bitcoin Core.
+        bloom: 1 << 2,    # the node is capable and willing to handle bloom-filtered connections. Bitcoin Core nodes used to support this by default, without advertising this bit, but no longer do as of protocol version 70011 (= NO_BLOOM_VERSION)
+        witness: 1 << 3,  # the node can be asked for blocks and transactions including witness data.
+        # xthin: 1 << 4 # support Xtreme Thinblocks. not implemented in Bitcoin Core
+    }
+
+    DEFAULT_SERVICE_FLAGS = SERVICE_FLAGS[:network] | SERVICE_FLAGS[:bloom] | SERVICE_FLAGS[:witness]
 
     DEFAULT_STOP_HASH = "00"*32
 

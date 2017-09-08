@@ -124,8 +124,12 @@ module Bitcoin
 
   class ::Object
 
-    def to_json
-      to_h.to_json
+    def build_json
+      if self.is_a?(Array)
+        "[#{self.map{|o|o.to_h.to_json}.join(',')}]"
+      else
+        to_h.to_json
+      end
     end
 
     def to_h

@@ -58,6 +58,8 @@ module Bitcoin
           on_version(Version.parse_from_payload(payload))
         when VerAck::COMMAND
           on_ver_ack
+        when GetAddr::COMMAND
+          on_get_addr
         when Addr::COMMAND
           on_addr(Addr.parse_from_payload(payload))
         when SendHeaders::COMMAND
@@ -91,8 +93,8 @@ module Bitcoin
       end
 
       def on_version(version)
-        logger.info("receive version message. #{version.to_json}")
-        conn.send_data(VerAck.new.to_pkt)
+        logger.info("receive version message. #{version.build_json}")
+        conn.send_message(VerAck.new)
       end
 
       def on_ver_ack
@@ -100,8 +102,12 @@ module Bitcoin
         conn.handshake_done
       end
 
+      def on_get_addr
+        logger.info('receive getaddr message.')
+      end
+
       def on_addr(addr)
-        logger.info("receive addr message. #{addr.to_json}")
+        logger.info("receive addr message. #{addr.build_json}")
         # TODO
       end
 
@@ -111,42 +117,42 @@ module Bitcoin
       end
 
       def on_fee_filter(fee_filter)
-        logger.info("receive feefilter message. #{fee_filter.to_json}")
+        logger.info("receive feefilter message. #{fee_filter.build_json}")
         conn.fee_rate = fee_filter.fee_rate
       end
 
       def on_ping(ping)
-        logger.info("receive ping message. #{ping.to_json}")
-        conn.send_data(ping.to_response)
+        logger.info("receive ping message. #{ping.build_json}")
+        conn.send_message(ping.to_response)
       end
 
       def on_pong(pong)
-        logger.info("receive pong message. #{pong.to_json}")
+        logger.info("receive pong message. #{pong.build_json}")
         # TODO calculate response
       end
 
       def on_get_headers(headers)
-        logger.info("receive getheaders message. #{headers.to_json}")
+        logger.info("receive getheaders message. #{headers.build_json}")
         # TODO
       end
 
       def on_headers(headers)
-        logger.info("receive headers message. #{headers.to_json}")
+        logger.info("receive headers message. #{headers.build_json}")
         # TODO
       end
 
       def on_block(block)
-        logger.info("receive block message. #{block.to_json}")
+        logger.info("receive block message. #{block.build_json}")
         # TODO
       end
 
       def on_tx(tx)
-        logger.info("receive tx message. #{tx.to_json}")
+        logger.info("receive tx message. #{tx.build_json}")
         # TODO
       end
 
       def on_not_found(not_found)
-        logger.info("receive notfound message. #{not_found.to_json}")
+        logger.info("receive notfound message. #{not_found.build_json}")
         # TODO
       end
 
@@ -156,12 +162,12 @@ module Bitcoin
       end
 
       def on_reject(reject)
-        logger.warn("receive reject message. #{reject.to_json}")
+        logger.warn("receive reject message. #{reject.build_json}")
         # TODO
       end
 
       def on_send_cmpct(cmpct)
-        logger.info("receive sendcmpct message. #{cmpct.to_json}")
+        logger.info("receive sendcmpct message. #{cmpct.build_json}")
         # TODO if mode is high and version is 1, relay block with cmpctblock message
       end
 
