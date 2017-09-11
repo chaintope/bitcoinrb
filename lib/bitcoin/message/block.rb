@@ -35,6 +35,11 @@ module Bitcoin
           transactions.map{|t|use_segwit ? t.to_payload : t.serialize_old_format}.join
       end
 
+      # generate Bitcoin::Block object.
+      def to_block
+        Bitcoin::Block.new(header, transactions)
+      end
+
     end
 
   end

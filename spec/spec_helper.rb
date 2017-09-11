@@ -29,6 +29,10 @@ def fixture_file(relative_path)
   JSON.parse(file)
 end
 
+def load_block(hash)
+  File.read(File.join(File.dirname(__FILE__), 'fixtures', "block/#{hash}"))
+end
+
 module Bitcoin
   autoload :TestScriptParser, 'bitcoin/script/test_script_parser'
 end

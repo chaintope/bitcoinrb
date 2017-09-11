@@ -13,6 +13,7 @@ module Bitcoin
   autoload :Message, 'bitcoin/message'
   autoload :Connection, 'bitcoin/connection'
   autoload :Logger, 'bitcoin/logger'
+  autoload :Block, 'bitcoin/block'
   autoload :BlockHeader, 'bitcoin/block_header'
   autoload :Tx, 'bitcoin/tx'
   autoload :Script, 'bitcoin/script/script'
