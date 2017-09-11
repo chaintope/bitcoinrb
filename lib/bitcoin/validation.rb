@@ -67,9 +67,9 @@ module Bitcoin
       @corruption_possible = false
     end
 
-    def DoS(level, ret: false, reject_code: 0, reject_resoin: '', corruption_in: false, debug_message: '')
+    def DoS(level, ret: false, reject_code: 0, reject_reason: '', corruption_in: false, debug_message: '')
       @reject_code = reject_code
-      @reject_reason = reject_resoin
+      @reject_reason = reject_reason
       @corruption_possible = corruption_in
       @debug_message = debug_message
       return ret if mode == MODE[:error]
