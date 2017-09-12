@@ -15,4 +15,21 @@ describe Bitcoin::Block do
     end
   end
 
+  describe '#valid_merkle_root?' do
+    context 'valid' do
+      it 'should be true' do
+        expect(subject.valid_merkle_root?).to be true
+      end
+    end
+
+    context 'invalid' do
+      it 'should be false' do
+        block = subject
+        coinbase_tx = block.transactions[0]
+        coinbase_tx.inputs[0].script_sig = (coinbase_tx.inputs[0].script_sig << '00')
+        expect(subject.valid_merkle_root?).to be false
+      end
+    end
+  end
+
 end

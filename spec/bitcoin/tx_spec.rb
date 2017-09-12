@@ -202,7 +202,7 @@ describe Bitcoin::Tx do
     end
   end
 
-  describe '#weight' do
+  describe 'calculate size' do
     it 'should be calculate' do
       # P2WPKH
       tx = Bitcoin::Tx.parse_from_payload('010000000001018015516590902931d31f650f7e0e79a931e01bcb2f73d4ca49195aed2854b5fd0000000000ffffffff0170460d00000000001976a9148911455a265235b2d356a1324af000d4dae0326288ac02473044022009ea34cf915708efa8d0fb8a784d4d9e3108ca8da4b017261dd029246c857ebc02201ae570e2d8a262bd9a2a157f473f4089f7eae5a8f54ff9f114f624557eda7420012102effb2edfcf826d43027feae226143bdac058ad2e87b7cec26f97af2d357ddefa00000000'.htb)
