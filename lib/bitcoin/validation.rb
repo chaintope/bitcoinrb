@@ -6,41 +6,41 @@ module Bitcoin
     def check_tx(tx, state)
       # Basic checks that don't depend on any context
       if tx.inputs.empty?
-        return state.DoS(10, reject_code: Message::Reject::CODE_INVALID, reject_resoin: 'bad-txns-vin-empty')
+        return state.DoS(10, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-txns-vin-empty')
       end
 
       if tx.outputs.empty?
-        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_resoin: 'bad-txns-vout-empty')
+        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-txns-vout-empty')
       end
 
       # Size limits (this doesn't take the witness into account, as that hasn't been checked for malleability)
       if tx.serialize_old_format.bytesize * Bitcoin::WITNESS_SCALE_FACTOR > Bitcoin::MAX_BLOCK_WEIGHT
-        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_resoin: 'bad-txns-oversize')
+        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-txns-oversize')
       end
 
       # Check for negative or overflow output values
       amount = 0
       tx.outputs.each do |o|
-        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_resoin: 'bad-txns-vout-negative') if o.value < 0
-        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_resoin: 'bad-txns-vout-toolarge') if MAX_MONEY < o.value
+        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-txns-vout-negative') if o.value < 0
+        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-txns-vout-toolarge') if MAX_MONEY < o.value
         amount += o.value
-        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_resoin: 'bad-txns-vout-toolarge') if MAX_MONEY < amount
+        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-txns-vout-toolarge') if MAX_MONEY < amount
       end
 
       # Check for duplicate inputs - note that this check is slow so we skip it in CheckBlock
       out_points = tx.inputs.map{|i|i.out_point.to_payload}
       unless out_points.size == out_points.uniq.size
-        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_resoin: 'bad-txns-inputs-duplicate')
+        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-txns-inputs-duplicate')
       end
 
       if tx.coinbase_tx?
         if tx.inputs[0].script_sig.size < 2 || tx.inputs[0].script_sig.size > 100
-          return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_resoin: 'bad-cb-length')
+          return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-cb-length')
         end
       else
         tx.inputs.each do |i|
           if i.out_point.nil? || !i.out_point.valid?
-            return state.DoS(10, reject_code: Message::Reject::CODE_INVALID, reject_resoin: 'bad-txns-prevout-null')
+            return state.DoS(10, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-txns-prevout-null')
           end
         end
       end
