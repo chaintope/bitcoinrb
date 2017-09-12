@@ -154,4 +154,8 @@ module Bitcoin
   ERRCODES_MAP = Hash[*constants.grep(/^SCRIPT_ERR_/).map { |c| [const_get(c), c.to_s] }.flatten]
   NAME_MAP = Hash[*constants.grep(/^SCRIPT_ERR_/).map { |c| [c.to_s, const_get(c)] }.flatten]
 
+  # witness commitment
+  WITNESS_COMMITMENT_HEADER = 'aa21a9ed'
+
+  COINBASE_WTXID = '00'* 32
 end

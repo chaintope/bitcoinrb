@@ -370,4 +370,27 @@ describe Bitcoin::Script do
     end
   end
 
+  describe '#witness_commitment' do
+    context 'has commitment' do
+      subject {Bitcoin::Script.parse_from_payload('6a24aa21a9ed670436c55de638c8100326d72998157a61aab2af1a8d4c5785f9093134b78e33'.htb)}
+      it 'should be return commitment hash' do
+        expect(subject.witness_commitment).to eq('670436c55de638c8100326d72998157a61aab2af1a8d4c5785f9093134b78e33')
+      end
+    end
+
+    context 'invalid commitment' do
+      it 'should be return nil' do
+        # push data only
+        script = Bitcoin::Script.parse_from_payload('24aa21a9ed670436c55de638c8100326d72998157a61aab2af1a8d4c5785f9093134b78e33'.htb)
+        expect(script.witness_commitment).to be nil
+        # invalid commitment header
+        script = Bitcoin::Script.parse_from_payload('6a24aa21a9ee670436c55de638c8100326d72998157a61aab2af1a8d4c5785f9093134b78e33'.htb)
+        expect(script.witness_commitment).to be nil
+        # invalid commitment hash length
+        script = Bitcoin::Script.parse_from_payload('6a24aa21a9ed670436c55de638c8100326d72998157a61aab2af1a8d4c5785f9093134b78e'.htb)
+        expect(script.witness_commitment).to be nil
+      end
+    end
+  end
+
 end

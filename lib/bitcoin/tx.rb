@@ -71,6 +71,17 @@ module Bitcoin
       Bitcoin.double_sha256(to_payload).reverse.bth
     end
 
+    # get the witness commitment of coinbase tx.
+    # if this tx does not coinbase or not have commitment, return nil.
+    def witness_commitment
+      return nil unless coinbase_tx?
+      outputs.each do |output|
+        commitment = output.script_pubkey.witness_commitment
+        return commitment if commitment
+      end
+      nil
+    end
+
     def to_payload
       witness? ? serialize_witness_format : serialize_old_format
     end

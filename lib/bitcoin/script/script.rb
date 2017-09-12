@@ -159,6 +159,11 @@ module Bitcoin
           (chunks.size == 1 || chunks[1].opcode <= OP_16)
     end
 
+    def op_return_data
+      return nil unless op_return?
+      chunks[1].pushed_data
+    end
+
     # whether data push only script which dose not include other opcode
     def push_only?
       chunks.each do |c|
@@ -182,6 +187,14 @@ module Bitcoin
       end
 
       false
+    end
+
+    # get witness commitment
+    def witness_commitment
+      return nil if !op_return? || op_return_data.bytesize < 36
+      buf = StringIO.new(op_return_data)
+      return nil unless buf.read(4).bth == WITNESS_COMMITMENT_HEADER
+      buf.read(32).bth
     end
 
     # If this script is witness program, return its script code,

@@ -32,4 +32,26 @@ describe Bitcoin::Block do
     end
   end
 
+  describe '#valid_witness_commitment?' do
+    context 'valid' do
+      it 'should be true'do
+        expect(subject.valid_witness_commitment?).to be true
+      end
+    end
+
+    context 'unsupported reserved value' do
+      it 'should be false' do
+        subject.transactions[0].inputs[0].script_witness.stack[0] = '0000000000000000000000000000000000000000000000000000000000000001'.htb
+        expect(subject.valid_witness_commitment?).to be false
+      end
+    end
+
+    context 'change wtxid' do
+      it 'should be false' do
+        subject.transactions[1].inputs[0].script_witness.stack[0] = '0000000000000000000000000000000000000000000000000000000000000000'.htb
+        expect(subject.valid_witness_commitment?).to be false
+      end
+    end
+  end
+
 end
