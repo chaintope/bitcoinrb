@@ -54,4 +54,26 @@ describe Bitcoin::Block do
     end
   end
 
+  describe '#height' do
+    context 'block version 2' do
+      subject { # height is 21106. testnet first version 2 block.
+        payload = load_block('0000000070b701a5b6a1b965f6a38e0472e70b2bb31b973e4638dec400877581').htb
+        Bitcoin::Message::Block.parse_from_payload(payload).to_block
+      }
+      it 'return block height' do
+        expect(subject.height).to eq(21106)
+      end
+    end
+
+    context 'block versoin 1' do
+      subject { # height is 21105. testnet last version 1 block.
+        payload = load_block('000000009020a075cc7af813d46a1ef24eb2b0035e131937153146cc3711542a').htb
+        Bitcoin::Message::Block.parse_from_payload(payload).to_block
+      }
+      it 'return nil' do
+        expect(subject.height).to be nil
+      end
+    end
+  end
+
 end

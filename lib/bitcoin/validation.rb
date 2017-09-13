@@ -47,6 +47,28 @@ module Bitcoin
       true
     end
 
+    # check proof of work
+    def check_block_header(header, state)
+      header.hash
+      header.bits
+
+    end
+
+    def check_block(block, state)
+      # check block header
+      return false unless check_block_header(block.header, state)
+
+      # check merkle root
+
+      # size limits
+
+      # first tx is coinbase?
+
+      # check tx count
+
+      # check sigop count
+    end
+
   end
 
   class ValidationState
