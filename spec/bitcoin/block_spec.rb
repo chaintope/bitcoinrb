@@ -76,4 +76,12 @@ describe Bitcoin::Block do
     end
   end
 
+  describe '#valid_pow?' do
+    it 'evaluate pow' do
+      expect(subject.valid_pow?).to be true
+      subject.header.bits = 496604799
+      expect(subject.valid_pow?).to be false
+    end
+  end
+
 end

@@ -23,4 +23,27 @@ describe Bitcoin::BlockHeader do
     end
   end
 
+  describe '#bits_to_target' do
+    it 'return difficulty target' do
+      header = Bitcoin::BlockHeader.parse_from_payload('00000020f29ae31fe472fea5a9812cd8bd9d73c7e4491ee62fbaf9b1be20000000000000e4e24580186a17432dee5ada29678f3f5e6b51a451f3b8d09917a2de11dba12d11bd48590bd6001bcd3c87cb'.htb)
+      puts header.bits
+      expect(header.difficulty_target).to eq(0x000000000000d60b000000000000000000000000000000000000000000000000)
+
+      header.bits = 0x1d00ffff
+      expect(header.difficulty_target).to eq(0x00000000ffff0000000000000000000000000000000000000000000000000000)
+
+      header.bits = 0x1b0ffff0
+      expect(header.difficulty_target).to eq(0x00000000000ffff0000000000000000000000000000000000000000000000000)
+
+      header.bits = 0x03000000
+      expect(header.difficulty_target).to eq(0x00)
+
+      header.bits = 0x1b00b5ac
+      expect(header.difficulty_target).to eq(0x000000000000b5ac000000000000000000000000000000000000000000000000)
+
+      header.bits = 0x1c654657
+      expect(header.difficulty_target).to eq(0x0000000065465700000000000000000000000000000000000000000000000000)
+    end
+  end
+
 end
