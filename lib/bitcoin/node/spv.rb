@@ -1,11 +1,16 @@
 module Bitcoin
   module Node
 
-    # SPV module
-    module SPV
+    # SPV class
+    class SPV < DaemonSpawn::Base
 
-      autoload :CLI, 'bitcoin/node/spv/cli'
-      autoload :Daemon, 'bitcoin/node/spv/daemon'
+      def start(args)
+
+      end
+
+      def stop
+
+      end
 
     end
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require 'thor'
 require 'bitcoin'
-require 'bitcoin/node/spv/daemon'
+require 'bitcoin/node/spv'
 
 class Bitcoinrbd < Thor
 
@@ -23,7 +23,7 @@ class Bitcoinrbd < Thor
   end
 
   def execute_daemon(cmd_args)
-    Bitcoin::Nodes::SPV::Daemon.spawn!({working_dir: Bitcoin.base_dir,
+    Bitcoin::Nodes::SPV.spawn!({working_dir: Bitcoin.base_dir,
                                      log_file: "#{Bitcoin.base_dir}/bitcoinrbd.log",
                                      pid_file: "#{Bitcoin.base_dir}/bitcoinrbd.pid",
                                      sync_log: true,
