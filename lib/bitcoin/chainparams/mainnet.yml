@@ -15,7 +15,6 @@ retarget_time: 1209600 # 2 weeks
 target_spacing: 600 # block interval
 max_money: 21000000
 bip34_height: 227931
-genesis_hash: "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
 proof_of_work_limit: 0x1d00ffff
 dns_seeds:
   - "seed.bitcoin.sipa.be"
@@ -23,3 +22,11 @@ dns_seeds:
   - "dnsseed.bitcoin.dashjr.org"
   - "seed.bitcoinstats.com"
   - "seed.bitcoin.jonasschnelli.ch"
+genesis:
+  hash: "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+  merkle_root: "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
+  time: 1231006505
+  nonce: 2083236893
+  bits: 0x1d00ffff
+  version: 1
+  prev_hash: "0000000000000000000000000000000000000000000000000000000000000000"

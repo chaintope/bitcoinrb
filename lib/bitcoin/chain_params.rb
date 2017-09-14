@@ -21,21 +21,21 @@ module Bitcoin
     attr_reader :target_spacing
     attr_reader :max_money
     attr_reader :bip34_height
-    attr_reader :genesis_hash
     attr_reader :proof_of_work_limit
     attr_reader :dns_seeds
+    attr_reader :genesis
 
-    # mainnet params
+    # mainnet genesis
     def self.mainnet
       YAML.load(File.open("#{__dir__}/chainparams/mainnet.yml"))
     end
 
-    # testnet params
+    # testnet genesis
     def self.testnet
       YAML.load(File.open("#{__dir__}/chainparams/testnet.yml"))
     end
 
-    # regtest params
+    # regtest genesis
     def self.regtest
       YAML.load(File.open("#{__dir__}/chainparams/regtest.yml"))
     end
@@ -50,6 +50,13 @@ module Bitcoin
 
     def regtest?
       network == 'regtest'
+    end
+
+    def genesis_block
+      header = Bitcoin::BlockHeader.new(
+          genesis['version'], genesis['prev_hash'], genesis['merkle_root'],
+          genesis['time'], genesis['bits'], genesis['nonce'])
+      Bitcoin::Block.new(header)
     end
 
   end
