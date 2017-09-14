@@ -11,7 +11,6 @@ module Bitcoin
   autoload :Util, 'bitcoin/util'
   autoload :ChainParams, 'bitcoin/chain_params'
   autoload :Message, 'bitcoin/message'
-  autoload :Connection, 'bitcoin/connection'
   autoload :Logger, 'bitcoin/logger'
   autoload :Block, 'bitcoin/block'
   autoload :BlockHeader, 'bitcoin/block_header'
@@ -28,11 +27,12 @@ module Bitcoin
   autoload :Key, 'bitcoin/key'
   autoload :ExtKey, 'bitcoin/ext_key'
   autoload :Opcodes, 'bitcoin/opcodes'
-  autoload :Node, 'bitcoin/nodes'
+  autoload :Node, 'bitcoin/node'
   autoload :Base58, 'bitcoin/base58'
   autoload :Secp256k1, 'bitcoin/secp256k1'
   autoload :Mnemonic, 'bitcoin/mnemonic'
   autoload :ValidationState, 'bitcoin/validation'
+  autoload :Network, 'bitcoin/network'
 
   require_relative 'bitcoin/constants'
 

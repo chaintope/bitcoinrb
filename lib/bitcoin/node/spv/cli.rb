@@ -1,7 +1,7 @@
 require 'thor'
 
 module Bitcoin
-  module Nodes
+  module Node
     module SPV
 
       class CLI < Thor

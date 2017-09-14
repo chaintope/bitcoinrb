@@ -52,69 +52,68 @@ module Bitcoin
       nodes.first
     end
 
-  end
+    # node of merkle tree
+    class Node
 
-  # node of merkle tree
-  class Node
+      attr_accessor :flag
+      attr_accessor :hash
+      attr_accessor :parent
+      attr_accessor :left
+      attr_accessor :right
 
-    attr_accessor :flag
-    attr_accessor :hash
-    attr_accessor :parent
-    attr_accessor :left
-    attr_accessor :right
-
-    def initialize(hash = nil)
-      @hash = hash
-    end
-
-    def left=(node)
-      node.parent = self
-      @left = node
-    end
-
-    def right=(node)
-      node.parent = self
-      @right = node
-    end
-
-    def hash
-      return @hash if @hash
-      self.right = left.dup unless right
-      Digest::SHA256.digest(Digest::SHA256.digest(
-          [right.hash + left.hash].pack('H*').reverse )).reverse.bth
-    end
-
-    def root?
-      parent.nil?
-    end
-
-    def leaf?
-      right.nil? && left.nil?
-    end
-
-    def partial?
-      !flag.nil?
-    end
-
-    def next_partial
-      return nil if root? && (flag.zero? || (left.partial? && right.partial?))
-      return parent.next_partial if flag.zero? || leaf?
-      return left unless left.partial?
-      self.right = left.dup unless right
-      right.partial? ? parent.next_partial : right
-    end
-
-    # calculate the depth of this node in the tree.
-    def depth
-      d = 0
-      current_node = self
-      until current_node.root? do
-        current_node = current_node.parent
-        d += 1
+      def initialize(hash = nil)
+        @hash = hash
       end
-      d
-    end
 
+      def left=(node)
+        node.parent = self
+        @left = node
+      end
+
+      def right=(node)
+        node.parent = self
+        @right = node
+      end
+
+      def hash
+        return @hash if @hash
+        self.right = left.dup unless right
+        Digest::SHA256.digest(Digest::SHA256.digest(
+            [right.hash + left.hash].pack('H*').reverse )).reverse.bth
+      end
+
+      def root?
+        parent.nil?
+      end
+
+      def leaf?
+        right.nil? && left.nil?
+      end
+
+      def partial?
+        !flag.nil?
+      end
+
+      def next_partial
+        return nil if root? && (flag.zero? || (left.partial? && right.partial?))
+        return parent.next_partial if flag.zero? || leaf?
+        return left unless left.partial?
+        self.right = left.dup unless right
+        right.partial? ? parent.next_partial : right
+      end
+
+      # calculate the depth of this node in the tree.
+      def depth
+        d = 0
+        current_node = self
+        until current_node.root? do
+          current_node = current_node.parent
+          d += 1
+        end
+        d
+      end
+
+    end
   end
 
 end
