@@ -158,4 +158,7 @@ module Bitcoin
   WITNESS_COMMITMENT_HEADER = 'aa21a9ed'
 
   COINBASE_WTXID = '00'* 32
+
+  # for message
+  MESSAGE_HEADER_SIZE = 24
 end

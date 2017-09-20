@@ -33,6 +33,7 @@ module Bitcoin
   autoload :Mnemonic, 'bitcoin/mnemonic'
   autoload :ValidationState, 'bitcoin/validation'
   autoload :Network, 'bitcoin/network'
+  autoload :Store, 'bitcoin/store'
 
   require_relative 'bitcoin/constants'
 

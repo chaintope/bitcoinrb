@@ -26,6 +26,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'daemon-spawn'
   spec.add_runtime_dependency 'thor'
   spec.add_runtime_dependency 'ffi'
+  spec.add_runtime_dependency 'parallel'
 
   spec.add_development_dependency "bundler", "~> 1.11"
   spec.add_development_dependency "rake", "~> 10.0"

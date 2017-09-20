@@ -1,7 +1,6 @@
 module Bitcoin
   module Message
 
-    autoload :Handler, 'bitcoin/message/handler'
     autoload :Base, 'bitcoin/message/base'
     autoload :Inventory, 'bitcoin/message/inventory'
     autoload :InventoriesParser, 'bitcoin/message/inventories_parser'
@@ -31,7 +30,6 @@ module Bitcoin
     autoload :Reject, 'bitcoin/message/reject'
     autoload :SendCmpct, 'bitcoin/message/send_cmpct'
 
-    HEADER_SIZE = 24
     USER_AGENT = "/bitcoinrb:#{Bitcoin::VERSION}/"
 
     SERVICE_FLAGS = {
