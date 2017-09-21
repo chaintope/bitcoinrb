@@ -4,13 +4,16 @@ describe Bitcoin::Network::MessageHandler do
 
   class Handler
     include Bitcoin::Network::MessageHandler
-    attr_reader :logger, :host, :port, :sendheaders
+    attr_reader :logger, :peer, :sendheaders
     def initialize
       @message = ''
       @logger = Logger.new(STDOUT)
-      @host = '127.0.0.1'
-      @port = 18332
+      @peer = Bitcoin::Network::Peer.new('127.0.0.1', 18332, nil)
       @sendheaders= false
+    end
+
+    def addr
+      peer.addr
     end
   end
 

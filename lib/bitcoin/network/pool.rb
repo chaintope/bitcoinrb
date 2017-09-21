@@ -39,8 +39,9 @@ module Bitcoin
         Parallel.map(addr_list, in_processes: 3) do |ip|
           if peers.size < MAX_OUTBOUND_CONNECTIONS
             EM.run do
-              peer = EM.connect(ip, port, Peer, ip, port, self)
+              peer = Peer.new(ip, port, self)
               pending_peers << peer
+              peer.connect
             end
           end
         end
@@ -54,19 +55,18 @@ module Bitcoin
         pending_peers.delete(peer)
       end
 
-      def close
-
+      # terminate peers.
+      def terminate
+        peers.each {|peer| peer.close('terminate')}
+        @peers = []
+        @started = false
       end
 
-      def broadcast
-
+      def broadcast(tx)
+        peers.each {|peer| peer.broadcast(tx) }
       end
 
       private
-
-      def lookup_host
-
-      end
 
     end
 

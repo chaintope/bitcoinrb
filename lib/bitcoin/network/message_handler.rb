@@ -83,13 +83,6 @@ module Bitcoin
         end
       end
 
-      # close network connection.
-      def close(msg = '')
-        logger.info "close connection with #{addr}. #{msg}"
-        close_connection_after_writing
-        EM.stop
-      end
-
       def send_message(msg)
         logger.info "send message #{msg.class::COMMAND}"
         send_data(msg.to_pkt)
@@ -108,12 +101,9 @@ module Bitcoin
         post_handshake
       end
 
-      def addr
-        "#{host}:#{port}"
-      end
-
       def on_version(version)
         logger.info("receive version message. #{version.build_json}")
+        @version = version
         send_message(Bitcoin::Message::VerAck.new)
       end
 

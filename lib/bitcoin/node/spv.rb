@@ -17,14 +17,14 @@ module Bitcoin
       # open the node.
       def run
         return if running
+        logger.debug 'SPV node start running.'
         pool.start
-        logger.debug 'SPV node run.'
       end
 
       # close the node.
-      def close
-        pool.close
-        logger.debug 'SPV node close.'
+      def shutdown
+        pool.terminate
+        logger.debug 'SPV node shutdown.'
       end
 
       # broadcast a transaction
