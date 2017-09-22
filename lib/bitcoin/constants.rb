@@ -161,4 +161,10 @@ module Bitcoin
 
   # for message
   MESSAGE_HEADER_SIZE = 24
+
+  # for peer
+  PARALLEL_THREAD = 3
+
+  # Maximum amount of time that a block timestamp is allowed to exceed the current network-adjusted time before the block will be accepted.
+  MAX_FUTURE_BLOCK_TIME = 2 * 60 * 60
 end

@@ -7,7 +7,7 @@ module Bitcoin
     attr_accessor :version
     attr_accessor :prev_hash
     attr_accessor :merkle_root
-    attr_accessor :time
+    attr_accessor :time # unix timestamp
     attr_accessor :bits
     attr_accessor :nonce
 
@@ -36,6 +36,17 @@ module Bitcoin
       mantissa = bits & 0x7fffff
       mantissa *= -1 if (bits & 0x800000) > 0
       (mantissa * 2 ** (8 * (exponent - 3)))
+    end
+
+    # evaluate valid proof of work.
+    def valid_pow?
+      hash.hex < difficulty_target
+    end
+
+    # evaluate valid timestamp.
+    # https://en.bitcoin.it/wiki/Block_timestamp
+    def valid_timestamp?
+      time <= Time.now.to_i + Bitcoin::MAX_FUTURE_BLOCK_TIME
     end
 
     private

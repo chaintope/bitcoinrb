@@ -62,10 +62,5 @@ module Bitcoin
       buf.read(len).reverse.bth.to_i(16)
     end
 
-    # evaluate valid proof of work.
-    def valid_pow?
-      header.hash.hex < header.difficulty_target
-    end
-
   end
 end

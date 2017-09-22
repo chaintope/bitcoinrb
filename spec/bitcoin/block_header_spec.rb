@@ -46,4 +46,44 @@ describe Bitcoin::BlockHeader do
     end
   end
 
+  describe '#valid_pow?' do
+    subject {
+      payload = load_block('0000000000343e7e31a6233667fd6ed5288d60ed7e894ae5d53beb0dffc89170').htb
+      Bitcoin::Message::Block.parse_from_payload(payload).header
+    }
+    it 'evaluate pow' do
+      expect(subject.valid_pow?).to be true
+      subject.bits = 496604799
+      expect(subject.valid_pow?).to be false
+    end
+  end
+
+  describe '#valid_timestamp?' do
+    subject {
+      Bitcoin::BlockHeader.parse_from_payload('00000020f29ae31fe472fea5a9812cd8bd9d73c7e4491ee62fbaf9b1be20000000000000e4e24580186a17432dee5ada29678f3f5e6b51a451f3b8d09917a2de11dba12d11bd48590bd6001bcd3c87cb'.htb)
+    }
+
+    before {
+      Timecop.freeze(Time.utc(2017, 9, 22, 15, 13, 25))
+    }
+
+    context 'too future' do
+      it 'should be false' do
+        subject.time = Time.utc(2017, 9, 22, 17, 13, 26).to_i
+        expect(subject.valid_timestamp?).to be false
+      end
+    end
+
+    context 'recent time' do
+      it 'should be true' do
+        subject.time = Time.utc(2017, 9, 22, 17, 13, 25).to_i
+        expect(subject.valid_timestamp?).to be true
+      end
+    end
+
+    after {
+      Timecop.return
+    }
+  end
+
 end
