@@ -86,4 +86,13 @@ describe Bitcoin::BlockHeader do
     }
   end
 
+  describe '#work' do
+    subject {
+      Bitcoin::BlockHeader.parse_from_payload('000000207d7a225081665d83116ce0f1c3eaf10d26ee917d03fbd7aad6895f9800000000b5c7027f92cbca51da5b758af41b7cc23d43a456d7abd4f54357b492c233347294dccd59ffff001d00ff2046'.htb)
+    }
+    it 'should be calculate' do
+      expect(subject.work).to eq(4295032833)
+    end
+  end
+
 end

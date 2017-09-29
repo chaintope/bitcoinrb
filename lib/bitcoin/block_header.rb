@@ -38,6 +38,11 @@ module Bitcoin
       (mantissa * 2 ** (8 * (exponent - 3)))
     end
 
+    # evaluate block header
+    def valid?
+      valid_pow? && valid_timestamp?
+    end
+
     # evaluate valid proof of work.
     def valid_pow?
       hash.hex < difficulty_target
@@ -47,6 +52,14 @@ module Bitcoin
     # https://en.bitcoin.it/wiki/Block_timestamp
     def valid_timestamp?
       time <= Time.now.to_i + Bitcoin::MAX_FUTURE_BLOCK_TIME
+    end
+
+    # compute chain work of this block.
+    # @return [Integer] a chain work.
+    def work
+      target = difficulty_target
+      return 0 if target < 1
+      (2**256) / (target + 1)
     end
 
     private
