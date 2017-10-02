@@ -220,7 +220,6 @@ describe Bitcoin::Tx do
     sighash_json = fixture_file('sighash.json').select{ |j|j.size > 2}
     sighash_json.each do |json|
       it "should validate tx #{json.inspect}" do
-        puts json.inspect
         tx = Bitcoin::Tx.parse_from_payload(json[0].htb)
         script = Bitcoin::Script.parse_from_payload(json[1].htb)
         index, hash_type, sighash = json[2], json[3], json[4]
