@@ -17,11 +17,12 @@ module Bitcoin
     attr_accessor :parent_fingerprint
 
     # generate master key from seed.
+    # @params [String] seed a seed data with hex format.
     def self.generate_master(seed)
       ext_key = ExtKey.new
       ext_key.depth = ext_key.number = 0
       ext_key.parent_fingerprint = '00000000'
-      l = Bitcoin.hmac_sha512('Bitcoin seed', seed)
+      l = Bitcoin.hmac_sha512('Bitcoin seed', seed.htb)
       left = l[0..31].bth.to_i(16)
       raise 'invalid key' if left >= CURVE_ORDER || left == 0
       ext_key.key = Bitcoin::Key.new(priv_key: l[0..31].bth)

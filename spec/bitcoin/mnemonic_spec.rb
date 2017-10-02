@@ -39,7 +39,7 @@ describe Bitcoin::Mnemonic, network: :mainnet do
           expect(subject.to_mnemonic(entropy)).to eq(mnemonic.split(' '))
           expect(subject.to_entropy(mnemonic.split(' '))).to eq(entropy)
           expect(subject.to_seed(mnemonic.split(' '), passphrase: 'TREZOR')).to eq(seed)
-          xprv = Bitcoin::ExtKey.generate_master(subject.to_seed(mnemonic.split(' '), passphrase: 'TREZOR').htb)
+          xprv = Bitcoin::ExtKey.generate_master(subject.to_seed(mnemonic.split(' '), passphrase: 'TREZOR'))
           expect(xprv.to_base58).to eq(ext_priv_key)
         end
       end
@@ -53,7 +53,7 @@ describe Bitcoin::Mnemonic, network: :mainnet do
           expect(subject.to_mnemonic(vector['entropy'])).to eq(vector['mnemonic'].split('　'))
           expect(subject.to_entropy(vector['mnemonic'].split('　'))).to eq(vector['entropy'])
           expect(subject.to_seed(vector['mnemonic'].split('　'), passphrase: vector['passphrase'])).to eq(vector['seed'])
-          xprv = Bitcoin::ExtKey.generate_master(subject.to_seed(vector['mnemonic'].split('　'), passphrase: vector['passphrase']).htb)
+          xprv = Bitcoin::ExtKey.generate_master(subject.to_seed(vector['mnemonic'].split('　'), passphrase: vector['passphrase']))
           expect(xprv.to_base58).to eq(vector['bip32_xprv'])
         end
       end

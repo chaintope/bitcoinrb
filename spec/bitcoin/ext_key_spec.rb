@@ -7,7 +7,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
   describe 'Test Vector 1' do
 
     before do
-      @master_key = Bitcoin::ExtKey.generate_master('000102030405060708090a0b0c0d0e0f'.htb)
+      @master_key = Bitcoin::ExtKey.generate_master('000102030405060708090a0b0c0d0e0f')
     end
 
     it 'Chain m' do
@@ -85,7 +85,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
 
   describe 'Test Vector 2' do
     before do
-      @master_key = Bitcoin::ExtKey.generate_master('fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542'.htb)
+      @master_key = Bitcoin::ExtKey.generate_master('fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542')
     end
 
     it 'Chain m' do
