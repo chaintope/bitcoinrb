@@ -78,7 +78,7 @@ describe Bitcoin::Tx do
 
   describe 'check tx_valid.json' do
     tx_json = fixture_file('tx_valid.json').select{ |j|j.size > 2}
-    tx_json.map do |json|
+    tx_json.each do |json|
       it "should validate tx #{json.inspect}" do
 
         prevout_script_pubkeys = {}
@@ -116,7 +116,7 @@ describe Bitcoin::Tx do
 
   describe 'check tx_invalid.json' do
     invalid_tx_json = fixture_file('tx_invalid.json').select{ |j|j.size > 2}
-    invalid_tx_json.map do |json|
+    invalid_tx_json.each do |json|
       it "should validate tx #{json.inspect}" do
 
         prevout_script_pubkeys = {}
@@ -213,6 +213,19 @@ describe Bitcoin::Tx do
       tx = Bitcoin::Tx.parse_from_payload('010000000201e4a0f1fa83c642b91feafae36a0f8fded4158dfa6fd650e046b4364b805684000000006b483045022045c65646abc12c71352335dbec2824b2dbdef9253366b4b83439b2190ce098d2022100eed0b70371d3892f865b43e2bb713ec9e887a50d38f47e8416220daf826d0ab201210259f6658325c4e3ca6fb38f657ffcbf4b1c45ef4f0c1dd86d5f6c0cebb0e09520ffffffff31137db564a7fad07c9db5b6b862786589977c68d1270819030a9079941ca6c9010000006b48304502204354565632eedd30fb9ca5c22bb70ef848afd74f7bed354d267705a6e71ea885022100e6ea6250d29dc109cb59ac66318f1cb2768c13fb0daca7c3d91a3b8d0991e0cb01210259f6658325c4e3ca6fb38f657ffcbf4b1c45ef4f0c1dd86d5f6c0cebb0e09520ffffffff02801d2c04000000001976a914322653c91d6038e08b6d971e4560842c155c8a8888ac80248706000000001976a9143b9722f91a2e50d913dadc3a6a8a88a58a7b859788ac00000000'.htb)
       expect(tx.vsize).to eq(374)
       expect(tx.size).to eq(374)
+    end
+  end
+
+  describe 'generate sighash' do
+    sighash_json = fixture_file('sighash.json').select{ |j|j.size > 2}
+    sighash_json.each do |json|
+      it "should validate tx #{json.inspect}" do
+        puts json.inspect
+        tx = Bitcoin::Tx.parse_from_payload(json[0].htb)
+        script = Bitcoin::Script.parse_from_payload(json[1].htb)
+        index, hash_type, sighash = json[2], json[3], json[4]
+        expect(tx.sighash_for_input(index, script, hash_type: hash_type).bth).to eq(sighash.htb.reverse.bth)
+      end
     end
   end
 
