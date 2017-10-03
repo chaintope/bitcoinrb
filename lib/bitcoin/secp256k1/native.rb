@@ -146,7 +146,7 @@ module Bitcoin
           msg32 = FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, data)
           result = secp256k1_ecdsa_verify(context, internal_signature, msg32, internal_pubkey)
 
-          result ? true : false
+          result == 1
         end
       end
 

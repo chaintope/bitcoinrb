@@ -29,13 +29,13 @@ module Bitcoin
       # @param [String] privkey a private key using sign
       # @return [String] signature data with binary format
       def sign_data(data, privkey)
-        digest = Digest::SHA2.digest(data)
+        # digest = Digest::SHA2.digest(data)
         private_key = ECDSA::Format::IntegerOctetString.decode(privkey.htb)
         signature = nil
         while signature.nil?
           # TODO support rfc 6979 https://tools.ietf.org/html/rfc6979
           temp_key = 1 + SecureRandom.random_number(GROUP.order - 1)
-          signature = ECDSA.sign(GROUP, private_key, digest, temp_key)
+          signature = ECDSA.sign(GROUP, private_key, data, temp_key)
         end
         ECDSA::Format::SignatureDerString.encode(signature) # signature with DER format
       end

@@ -19,6 +19,12 @@ module Bitcoin
       @compressed = compressed
     end
 
+    # generate key pair
+    def self.generate
+      priv_key, pubkey = Bitcoin.secp_impl.generate_key_pair
+      new(priv_key: priv_key, pubkey: pubkey)
+    end
+
     # import private key from wif format
     # https://en.bitcoin.it/wiki/Wallet_import_format
     def self.from_wif(wif)

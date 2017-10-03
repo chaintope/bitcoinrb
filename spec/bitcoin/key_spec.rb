@@ -87,4 +87,13 @@ describe Bitcoin::Key do
     end
   end
 
+  describe '#sign and verify' do
+    it 'should be success' do
+      message = 'message'.htb
+      key = Bitcoin::Key.generate
+      sig = key.sign(message)
+      expect(key.verify(sig, message)).to be true
+    end
+  end
+
 end
