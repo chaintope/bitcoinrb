@@ -20,6 +20,13 @@ Or install it yourself as:
 
     $ gem install bitcoinrb
 
+### install LevelDB
+
+* for Ubuntu
+
+    $ sudo apt-get install libleveldb-dev
+
+
 ## Usage
 
 TODO: Write usage instructions here

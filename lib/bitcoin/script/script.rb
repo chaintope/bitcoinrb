@@ -109,9 +109,8 @@ module Bitcoin
 
     def to_addr
       return p2pkh_addr if p2pkh?
-      return p2wpkh_addr if p2wpkh?
-      return p2wsh_addr if p2wsh?
       return p2sh_addr if p2sh?
+      return bech32_addr if witness_program?
     end
 
     # check whether standard script.
