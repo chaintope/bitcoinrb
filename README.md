@@ -4,6 +4,20 @@ Welcome to your new gem! In this directory, you'll find the files you need to be
 
 TODO: Delete this and the text above, and describe your gem
 
+## Requirements
+
+bitcoinrb requires a leveldb library.
+
+### install LevelDB
+
+* for Ubuntu
+
+    $ sudo apt-get install libleveldb-dev
+
++ for Mac
+
+    $ brew install leveldb
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -19,12 +33,6 @@ And then execute:
 Or install it yourself as:
 
     $ gem install bitcoinrb
-
-### install LevelDB
-
-* for Ubuntu
-
-    $ sudo apt-get install libleveldb-dev
 
 
 ## Usage
