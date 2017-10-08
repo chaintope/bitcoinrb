@@ -8,9 +8,16 @@ module Bitcoin
     attr_accessor :compressed
     attr_reader :secp256k1_module
 
+    MIN_PRIV_KEy_MOD_ORDER = 0x01
+    # Order of secp256k1's generator minus 1.
+    MAX_PRIV_KEY_MOD_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140
+
     def initialize(priv_key: nil, pubkey: nil, compressed: true)
       @secp256k1_module =  Bitcoin.secp_impl
       @priv_key = priv_key
+      if @priv_key
+        raise ArgumentError, 'private key is not on curve' unless validate_private_key_range(@priv_key)
+      end
       if pubkey
         @pubkey = pubkey
       else
@@ -142,6 +149,12 @@ module Bitcoin
       public_key = ECDSA::Group::Secp256k1.generator.multiply_by_scalar(private_key)
       pubkey = ECDSA::Format::PointOctetString.encode(public_key, compression: compressed)
       pubkey.bth
+    end
+
+    # check private key range.
+    def validate_private_key_range(private_key)
+      value = private_key.to_i(16)
+      MIN_PRIV_KEy_MOD_ORDER <= value && value <= MAX_PRIV_KEY_MOD_ORDER
     end
 
   end

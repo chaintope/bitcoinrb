@@ -96,4 +96,20 @@ describe Bitcoin::Key do
     end
   end
 
+  describe 'private key range check' do
+    context 'on curve' do
+      it 'not raise error' do
+        expect{Bitcoin::Key.new(priv_key: '01')}.not_to raise_error
+        expect{Bitcoin::Key.new(priv_key: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140')}.not_to raise_error
+      end
+    end
+
+    context 'not on curve' do
+      it 'raise error' do
+        expect{Bitcoin::Key.new(priv_key: '00')}.to raise_error(ArgumentError)
+        expect{Bitcoin::Key.new(priv_key: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141')}.to raise_error(ArgumentError)
+      end
+    end
+  end
+
 end
