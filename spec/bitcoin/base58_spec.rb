@@ -37,4 +37,15 @@ describe Bitcoin::Base58 do
     end
   end
 
+  describe 'invalid base58 keys' do
+    invalid_json = fixture_file('base58_keys_invalid.json')
+    invalid_json.each do |json|
+      it "should be invalid. #{json}" do
+        puts json
+        base58_str = json[0]
+        expect{Bitcoin::Key.from_wif(base58_str)}.to raise_error(ArgumentError)
+      end
+    end
+  end
+
 end

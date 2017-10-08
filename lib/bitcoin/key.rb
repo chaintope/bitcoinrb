@@ -35,12 +35,23 @@ module Bitcoin
     # import private key from wif format
     # https://en.bitcoin.it/wiki/Wallet_import_format
     def self.from_wif(wif)
-      compressed = wif.size == 52
       hex = Base58.decode(wif)
-      version, key, flag, checksum = hex.unpack("a2a64a#{compressed ? 2 : 0}a8")
+      raise ArgumentError, 'data is too short' if hex.htb.bytesize < 4
+      version = hex[0..1]
+      data = hex[2...-8].htb
+      checksum = hex[-8..-1]
       raise ArgumentError, 'invalid version' unless version == Bitcoin.chain_params.privkey_version
-      raise ArgumentError, 'invalid checksum' unless Bitcoin.calc_checksum(version + key + flag) == checksum
-      new(priv_key: key, compressed: compressed)
+      raise ArgumentError, 'invalid checksum' unless Bitcoin.calc_checksum(version + data.bth) == checksum
+      key_len = data.bytesize
+      if key_len == 33 && data[-1].unpack('C').first == 1
+        compressed = true
+        data = data[0..-2]
+      elsif key_len == 32
+        compressed = false
+      else
+        raise ArgumentError, 'Wrong number of bytes for a private key, not 32 or 33'
+      end
+      new(priv_key: data.bth, compressed: compressed)
     end
 
     # export private key with wif format
