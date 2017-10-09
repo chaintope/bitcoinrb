@@ -589,7 +589,7 @@ module Bitcoin
 
     def check_signature_encoding(sig)
       return true if sig.size.zero?
-      if (flag?(SCRIPT_VERIFY_DERSIG) || flag?(SCRIPT_VERIFY_LOW_S) || flag?(SCRIPT_VERIFY_STRICTENC)) && !valid_signature_encoding?(sig)
+      if (flag?(SCRIPT_VERIFY_DERSIG) || flag?(SCRIPT_VERIFY_LOW_S) || flag?(SCRIPT_VERIFY_STRICTENC)) && !Key.valid_signature_encoding?(sig.htb)
         return set_error(SCRIPT_ERR_SIG_DER)
       elsif flag?(SCRIPT_VERIFY_LOW_S) && !low_der_signature?(sig)
         return false
@@ -599,44 +599,8 @@ module Bitcoin
       true
     end
 
-    # check +sig+ (hex) is correct der encoding.
-    # This function is consensus-critical since BIP66.
-    def valid_signature_encoding?(signature)
-      sig = signature.htb
-      return false if sig.bytesize < 9 || sig.bytesize > 73 # Minimum and maximum size check
-
-      s = sig.unpack('C*')
-
-      return false if s[0] != 0x30 || s[1] != s.size - 3 # A signature is of type 0x30 (compound). Make sure the length covers the entire signature.
-
-      len_r = s[3]
-      return false if 5 + len_r >= s.size # Make sure the length of the S element is still inside the signature.
-
-      len_s = s[5 + len_r]
-      return false unless len_r + len_s + 7 == s.size #Verify that the length of the signature matches the sum of the length of the elements.
-
-      return false unless s[2] == 0x02 # Check whether the R element is an integer.
-
-      return false if len_r == 0 # Zero-length integers are not allowed for R.
-
-      return false unless s[4] & 0x80 == 0 # Negative numbers are not allowed for R.
-
-      # Null bytes at the start of R are not allowed, unless R would otherwise be interpreted as a negative number.
-      return false if len_r > 1 && (s[4] == 0x00) && (s[5] & 0x80 == 0)
-
-      return false unless s[len_r + 4] == 0x02 # Check whether the S element is an integer.
-
-      return false if len_s == 0 # Zero-length integers are not allowed for S.
-      return false unless (s[len_r + 6] & 0x80) == 0 # Negative numbers are not allowed for S.
-
-      # Null bytes at the start of S are not allowed, unless S would otherwise be interpreted as a negative number.
-      return false if len_s > 1 && (s[len_r + 6] == 0x00) && (s[len_r + 7] & 0x80 == 0)
-
-      true
-    end
-
     def low_der_signature?(sig)
-      return set_error(SCRIPT_ERR_SIG_DER) unless valid_signature_encoding?(sig)
+      return set_error(SCRIPT_ERR_SIG_DER) unless Key.valid_signature_encoding?(sig.htb)
       return set_error(SCRIPT_ERR_SIG_HIGH_S) unless Key.low_signature?(sig.htb)
       true
     end
