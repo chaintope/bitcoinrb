@@ -1,7 +1,11 @@
+require 'leveldb'
+
 module Bitcoin
   module Store
 
-    autoload :SPVBlockStore, 'bitcoin/store/spv_block_store'
+    autoload :DB, 'bitcoin/store/db'
+    autoload :SPVChainStore, 'bitcoin/store/spv_chain_store'
+    autoload :ChainEntry, 'bitcoin/store/chain_entry'
 
   end
 end

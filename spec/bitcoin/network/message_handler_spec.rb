@@ -8,7 +8,7 @@ describe Bitcoin::Network::MessageHandler do
     def initialize
       @message = ''
       @logger = Logger.new(STDOUT)
-      @peer = Bitcoin::Network::Peer.new('127.0.0.1', 18332, nil)
+      @peer = Bitcoin::Network::Peer.new('127.0.0.1', 18332, Bitcoin::Network::Pool.new)
       @sendheaders= false
     end
 

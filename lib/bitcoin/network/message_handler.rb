@@ -6,7 +6,6 @@ module Bitcoin
 
       # handle p2p message.
       def handle(message)
-        logger.info "handle message #{message.bth}"
         begin
           parse(message)
         rescue Bitcoin::Message::Error => e
@@ -41,7 +40,7 @@ module Bitcoin
       end
 
       def handle_command(command, payload)
-        logger.info("[#{addr}] process command #{command}. payload = #{payload.bth}")
+        logger.info("[#{addr}] process command #{command}.")
         case command
           when Bitcoin::Message::Version::COMMAND
             on_version(Bitcoin::Message::Version.parse_from_payload(payload))
@@ -142,22 +141,22 @@ module Bitcoin
       end
 
       def on_get_headers(headers)
-        logger.info("receive getheaders message. #{headers.build_json}")
+        logger.info('receive getheaders message.')
         # TODO
       end
 
       def on_headers(headers)
-        logger.info("receive headers message. #{headers.build_json}")
-        # TODO
+        logger.info('receive headers message.')
+        peer.handle_headers(headers)
       end
 
       def on_block(block)
-        logger.info("receive block message. #{block.build_json}")
+        logger.info('receive block message.')
         # TODO
       end
 
       def on_tx(tx)
-        logger.info("receive tx message. #{tx.build_json}")
+        logger.info('receive tx message.')
         # TODO
       end
 
@@ -182,10 +181,9 @@ module Bitcoin
       end
 
       def on_inv(inv)
-        logger.info("receive inv message. #{inv.build_json}")
+        logger.info('receive inv message.')
         # TODO
       end
-
 
     end
   end

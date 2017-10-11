@@ -62,6 +62,10 @@ module Bitcoin
       (2**256) / (target + 1)
     end
 
+    def ==(other)
+      other && other.to_payload == to_payload
+    end
+
     private
 
     def calc_hash

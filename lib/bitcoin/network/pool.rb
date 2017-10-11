@@ -36,7 +36,7 @@ module Bitcoin
         logger.debug 'Start connecting other pears.'
         addr_list = peer_discovery.peers
         port = Bitcoin.chain_params.default_port
-        Parallel.map(addr_list, in_processes: 3) do |ip|
+        Parallel.map(addr_list, in_processes: Bitcoin::PARALLEL_THREAD) do |ip|
           if peers.size < MAX_OUTBOUND_CONNECTIONS
             EM.run do
               peer = Peer.new(ip, port, self)
@@ -50,7 +50,11 @@ module Bitcoin
 
       # detect new peer connection.
       def handle_new_peer(peer)
-        logger.debug "connected new peer #{peer.addr}"
+        logger.debug "connected new peer #{peer.addr}."
+        unless peers.find(&:primary?)
+          peer.primary = true
+          peer.start_block_header_download
+        end
         peers << peer
         pending_peers.delete(peer)
       end
@@ -62,11 +66,17 @@ module Bitcoin
         @started = false
       end
 
+      # broadcast tx to connecting peer.
       def broadcast(tx)
         peers.each {|peer| peer.broadcast(tx) }
       end
 
       private
+
+      # get primary peer
+      def primary_peer
+        peers.find(&:primary?)
+      end
 
     end
 
