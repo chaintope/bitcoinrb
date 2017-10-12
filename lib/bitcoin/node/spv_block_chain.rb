@@ -6,7 +6,7 @@ module Bitcoin
       attr_reader :block_store
       attr_reader :logger
 
-      def initialize(block_store = Bitcoin::Store::SPVChainStore.new)
+      def initialize(block_store = Bitcoin::Store::SPVChain.new)
         @logger = Bitcoin::Logger.create(:debug)
         @block_store = block_store
       end

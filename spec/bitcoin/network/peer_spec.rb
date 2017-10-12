@@ -7,7 +7,7 @@ describe Bitcoin::Network::Peer do
   end
 
   subject {
-    peer = Bitcoin::Network::Peer.new('127.0.0.1', 18332, Bitcoin::Network::Pool.new)
+    peer = Bitcoin::Network::Peer.new('127.0.0.1', 18332, Bitcoin::Network::Pool.new(create_test_chain))
     peer.conn = ConnectionMock.new
     peer
   }

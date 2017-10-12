@@ -20,11 +20,11 @@ module Bitcoin
       attr_reader :peer_discovery
       attr_accessor :started
 
-      def initialize
+      def initialize(chain)
         @peers = []
         @pending_peers = []
         @max_outbound = MAX_OUTBOUND_CONNECTIONS
-        @chain = Bitcoin::Node::SPVBlockChain.new
+        @chain = chain
         @logger = Bitcoin::Logger.create(:debug)
         @peer_discovery = PeerDiscovery.new
         @started = false

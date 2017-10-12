@@ -2,16 +2,10 @@ require 'spec_helper'
 require 'tmpdir'
 require 'fileutils'
 
-describe Bitcoin::Store::SPVChainStore do
-
-  TEST_DB_PATH = Dir.tmpdir + '/spv'
-
-  before do
-    FileUtils.rm_r(TEST_DB_PATH) if Dir.exist?(TEST_DB_PATH)
-  end
+describe Bitcoin::Store::SPVChain do
 
   subject {
-    Bitcoin::Store::SPVChainStore.new(Bitcoin::Store::DB::LevelDB.new(TEST_DB_PATH))
+    create_test_chain
   }
 
   it 'should store data' do

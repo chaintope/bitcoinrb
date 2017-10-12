@@ -35,6 +35,13 @@ def load_block(hash)
   File.read(File.join(File.dirname(__FILE__), 'fixtures', "block/#{hash}"))
 end
 
+TEST_DB_PATH = Dir.tmpdir + '/spv'
+
+def create_test_chain
+  FileUtils.rm_r(TEST_DB_PATH) if Dir.exist?(TEST_DB_PATH)
+  Bitcoin::Store::SPVChain.new(Bitcoin::Store::DB::LevelDB.new(TEST_DB_PATH))
+end
+
 module Bitcoin
   autoload :TestScriptParser, 'bitcoin/script/test_script_parser'
 end

@@ -8,7 +8,7 @@ module Bitcoin
         best: 'B'     # value: best block hash.
     }
 
-    class SPVChainStore
+    class SPVChain
 
       attr_reader :db
 

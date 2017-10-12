@@ -9,7 +9,7 @@ module Bitcoin
       attr_accessor :running
 
       def initialize
-        @pool = Bitcoin::Network::Pool.new
+        @pool = Bitcoin::Network::Pool.new(Bitcoin::Store::SPVChain.new)
         @logger = Bitcoin::Logger.create(:debug)
         @running = false
       end
