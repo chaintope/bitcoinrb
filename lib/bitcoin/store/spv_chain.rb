@@ -11,38 +11,47 @@ module Bitcoin
     class SPVChain
 
       attr_reader :db
+      attr_reader :logger
 
       def initialize(db = Bitcoin::Store::DB::LevelDB.new)
         @db = db # TODO multiple db switch
+        @logger = Bitcoin::Logger.create(:debug)
         initialize_block
       end
 
       # get latest block in the store.
       # @return[Bitcoin::Store::ChainEntry]
       def latest_block
-        hash = db.get(KEY_PREFIX[:best])
+        hash = db.best_hash
         return nil unless hash
         find_entry_by_hash(hash)
       end
 
       # find block entry with the specified height.
       def find_entry_by_height(height)
-        hash = db.get(height_key(height))
-        find_entry_by_hash(hash)
+        find_entry_by_hash(db.get_hash_from_height(height))
       end
 
       # find block entry with the specified hash
       def find_entry_by_hash(hash)
-        payload = db.get(KEY_PREFIX[:entry] + hash)
-        puts "payload = #{payload.bth}"
+        payload = db.get_entry_payload_from_hash(hash)
         ChainEntry.parse_from_payload(payload)
       end
 
-      # save block
-      def save_block(entry)
-        db.put(entry.key ,entry.to_payload)
-        db.put(height_key(entry.height), entry.hash)
-        connect_block(entry)
+      # append block header to chain.
+      # @param [Bitcoin::BlockHeader] header a block header.
+      def append_header(header)
+        logger.debug("append header #{header.hash}")
+        raise "this header is invalid. #{header.hash}" unless header.valid?
+        best_block = latest_block
+        current_height = best_block.height
+        unless best_block.hash == header.prev_hash
+          # TODO implements recovery process
+          raise "header's previous hash(#{header.prev_hash}) does not match current best block's(#{best_block.hash})."
+        else
+          entry = Bitcoin::Store::ChainEntry.new(header, current_height + 1)
+          db.save_entry(entry)
+        end
       end
 
       private
@@ -52,25 +61,8 @@ module Bitcoin
         unless latest_block
           block = Bitcoin.chain_params.genesis_block
           genesis = ChainEntry.new(block.header, 0)
-          save_block(genesis)
+          db.save_entry(genesis)
         end
-      end
-
-      # generate height key
-      def height_key(height)
-        KEY_PREFIX[:height] + height.to_s(16).htb.reverse.bth
-      end
-
-      # connect a block to chain.
-      def connect_block(entry)
-        unless entry.genesis?
-          tip_block = find_entry_by_hash(db.get(KEY_PREFIX[:best]))
-          unless tip_block.hash == entry.prev_hash
-            raise "entry(#{entry.hash}) does not reference current best block hash(#{tip_block.hash})"
-          end
-          raise "block height is small than current best block." if tip_block.height > entry.height
-        end
-        db.put(KEY_PREFIX[:best], entry.hash)
       end
 
     end

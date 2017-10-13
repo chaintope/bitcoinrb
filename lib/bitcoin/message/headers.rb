@@ -7,6 +7,7 @@ module Bitcoin
 
       COMMAND = 'headers'
 
+      # Array[Bitcoin::BlockHeader]
       attr_accessor :headers
 
       def initialize(headers = [])

@@ -41,44 +41,50 @@ module Bitcoin
 
       def handle_command(command, payload)
         logger.info("[#{addr}] process command #{command}.")
-        case command
-          when Bitcoin::Message::Version::COMMAND
-            on_version(Bitcoin::Message::Version.parse_from_payload(payload))
-          when Bitcoin::Message::VerAck::COMMAND
-            on_ver_ack
-          when Bitcoin::Message::GetAddr::COMMAND
-            on_get_addr
-          when Bitcoin::Message::Addr::COMMAND
-            on_addr(Bitcoin::Message::Addr.parse_from_payload(payload))
-          when Bitcoin::Message::SendHeaders::COMMAND
-            on_send_headers
-          when Bitcoin::Message::FeeFilter::COMMAND
-            on_fee_filter(Bitcoin::Message::FeeFilter.parse_from_payload(payload))
-          when Bitcoin::Message::Ping::COMMAND
-            on_ping(Bitcoin::Message::Ping.parse_from_payload(payload))
-          when Bitcoin::Message::Pong::COMMAND
-            on_pong(Bitcoin::Message::Pong.parse_from_payload(payload))
-          when Bitcoin::Message::GetHeaders::COMMAND
-            on_get_headers(Bitcoin::Message::GetHeaders.parse_from_payload(payload))
-          when Bitcoin::Message::Headers::COMMAND
-            on_headers(Bitcoin::Message::Headers.parse_from_payload(payload))
-          when Bitcoin::Message::Block::COMMAND
-            on_block(Bitcoin::Message::Block.parse_from_payload(payload))
-          when Bitcoin::Message::Tx::COMMAND
-            on_tx(Bitcoin::Message::Tx.parse_from_payload(payload))
-          when Bitcoin::Message::NotFound::COMMAND
-            on_not_found(Bitcoin::Message::NotFound.parse_from_payload(payload))
-          when Bitcoin::Message::MemPool::COMMAND
-            on_mem_pool
-          when Bitcoin::Message::Reject::COMMAND
-            on_reject(Bitcoin::Message::Reject.parse_from_payload(payload))
-          when Bitcoin::Message::SendCmpct::COMMAND
-            on_send_cmpct(Bitcoin::Message::SendCmpct.parse_from_payload(payload))
-          when Bitcoin::Message::Inv::COMMAND
-            on_inv(Bitcoin::Message::Inv.parse_from_payload(payload))
-          else
-            logger.warn("unsupported command received. #{command}")
-            close("with command #{command}")
+        begin
+          case command
+            when Bitcoin::Message::Version::COMMAND
+              on_version(Bitcoin::Message::Version.parse_from_payload(payload))
+            when Bitcoin::Message::VerAck::COMMAND
+              on_ver_ack
+            when Bitcoin::Message::GetAddr::COMMAND
+              on_get_addr
+            when Bitcoin::Message::Addr::COMMAND
+              on_addr(Bitcoin::Message::Addr.parse_from_payload(payload))
+            when Bitcoin::Message::SendHeaders::COMMAND
+              on_send_headers
+            when Bitcoin::Message::FeeFilter::COMMAND
+              on_fee_filter(Bitcoin::Message::FeeFilter.parse_from_payload(payload))
+            when Bitcoin::Message::Ping::COMMAND
+              on_ping(Bitcoin::Message::Ping.parse_from_payload(payload))
+            when Bitcoin::Message::Pong::COMMAND
+              on_pong(Bitcoin::Message::Pong.parse_from_payload(payload))
+            when Bitcoin::Message::GetHeaders::COMMAND
+              on_get_headers(Bitcoin::Message::GetHeaders.parse_from_payload(payload))
+            when Bitcoin::Message::Headers::COMMAND
+              on_headers(Bitcoin::Message::Headers.parse_from_payload(payload))
+            when Bitcoin::Message::Block::COMMAND
+              on_block(Bitcoin::Message::Block.parse_from_payload(payload))
+            when Bitcoin::Message::Tx::COMMAND
+              on_tx(Bitcoin::Message::Tx.parse_from_payload(payload))
+            when Bitcoin::Message::NotFound::COMMAND
+              on_not_found(Bitcoin::Message::NotFound.parse_from_payload(payload))
+            when Bitcoin::Message::MemPool::COMMAND
+              on_mem_pool
+            when Bitcoin::Message::Reject::COMMAND
+              on_reject(Bitcoin::Message::Reject.parse_from_payload(payload))
+            when Bitcoin::Message::SendCmpct::COMMAND
+              on_send_cmpct(Bitcoin::Message::SendCmpct.parse_from_payload(payload))
+            when Bitcoin::Message::Inv::COMMAND
+              on_inv(Bitcoin::Message::Inv.parse_from_payload(payload))
+            else
+              logger.warn("unsupported command received. #{command}")
+              close("with command #{command}")
+          end
+        rescue Exception => e
+          logger.error("error occurred. #{e.message}")
+          logger.error(e.backtrace)
+          handle_error(e)
         end
       end
 
@@ -183,6 +189,10 @@ module Bitcoin
       def on_inv(inv)
         logger.info('receive inv message.')
         # TODO
+      end
+
+      def handle_error(e)
+        # needs implement by receiver
       end
 
     end

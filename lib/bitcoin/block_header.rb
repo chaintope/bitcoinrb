@@ -3,7 +3,6 @@ module Bitcoin
   # Block Header
   class BlockHeader
 
-    attr_accessor :hash
     attr_accessor :version
     attr_accessor :prev_hash
     attr_accessor :merkle_root
@@ -18,7 +17,6 @@ module Bitcoin
       @time = time
       @bits = bits
       @nonce = nonce
-      @hash = calc_hash
     end
 
     def self.parse_from_payload(payload)
@@ -36,6 +34,11 @@ module Bitcoin
       mantissa = bits & 0x7fffff
       mantissa *= -1 if (bits & 0x800000) > 0
       (mantissa * 2 ** (8 * (exponent - 3)))
+    end
+
+    # block hash
+    def hash
+      calc_hash
     end
 
     # evaluate block header

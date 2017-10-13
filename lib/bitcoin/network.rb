@@ -1,4 +1,3 @@
-require 'parallel'
 require 'eventmachine'
 
 module Bitcoin

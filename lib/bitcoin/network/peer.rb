@@ -50,7 +50,7 @@ module Bitcoin
       def start_block_header_download
         logger.debug "[#{addr}] start block header download."
         get_headers = Bitcoin::Message::GetHeaders.new(
-            Bitcoin.chain_params.protocol_version, [chain.latest_block_header.hash])
+            Bitcoin.chain_params.protocol_version, [chain.latest_block.hash])
         conn.send_message(get_headers)
       end
 
@@ -81,9 +81,19 @@ module Bitcoin
       def handle_headers(headers)
         headers.headers.each do |header|
           break unless header.valid?
-          chain.add_block_header(header)
+          chain.append_header(header)
         end
         start_block_header_download # next header download
+      end
+
+      # handle error
+      def handle_error(e)
+        pool.handle_error(e)
+      end
+
+      # close peer connection.
+      def close(msg = '')
+        conn.close(msg)
       end
 
     end

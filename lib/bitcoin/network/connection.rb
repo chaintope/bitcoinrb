@@ -51,6 +51,10 @@ module Bitcoin
         EM.stop
       end
 
+      def handle_error(e)
+        peer.handle_error(e)
+      end
+
     end
 
   end
