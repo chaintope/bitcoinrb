@@ -7,7 +7,7 @@ describe Bitcoin::Network::Peer do
   end
 
   subject {
-    peer = Bitcoin::Network::Peer.new('127.0.0.1', 18332, Bitcoin::Network::Pool.new(create_test_chain))
+    peer = Bitcoin::Network::Peer.new('210.196.254.100', 18333, Bitcoin::Network::Pool.new(create_test_chain))
     peer.conn = ConnectionMock.new
     peer
   }
@@ -37,6 +37,20 @@ describe Bitcoin::Network::Peer do
       end
     end
 
+  end
+
+  describe '#to_network_addr' do
+    before {
+      opts = {version:70015, services: 13, timestamp: 1507879363, local_addr: "0.0.0.0:0", remote_addr: "94.130.106.254:63446", nonce: 1561841459448609851, user_agent: "/Satoshi:0.14.2/", start_height: 1210117, relay: true}
+      subject.conn.version = Bitcoin::Message::Version.new(opts)
+    }
+    it 'should be generate' do
+      network_addr = subject.to_network_addr
+      expect(network_addr.ip).to eq('210.196.254.100')
+      expect(network_addr.port).to eq(18333)
+      expect(network_addr.services).to eq(13)
+      expect(network_addr.time).to eq(1507879363)
+    end
   end
 
 end

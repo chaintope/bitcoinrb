@@ -96,6 +96,18 @@ module Bitcoin
         conn.close(msg)
       end
 
+      # generate Bitcoin::Message::NetworkAddr object from this peer info.
+      # @return [Bitcoin::Message::NetworkAddr]
+      def to_network_addr
+        v = version_msg
+        addr = Bitcoin::Message::NetworkAddr.new
+        addr.time = v.timestamp
+        addr.services = v.services
+        addr.ip = host
+        addr.port = port
+        addr
+      end
+
     end
 
   end

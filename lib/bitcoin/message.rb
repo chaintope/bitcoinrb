@@ -8,6 +8,7 @@ module Bitcoin
     autoload :Version, 'bitcoin/message/version'
     autoload :VerAck, 'bitcoin/message/ver_ack'
     autoload :Addr, 'bitcoin/message/addr'
+    autoload :NetworkAddr, 'bitcoin/message/network_addr'
     autoload :Block, 'bitcoin/message/block'
     autoload :FilterLoad, 'bitcoin/message/filter_load'
     autoload :FilterAdd, 'bitcoin/message/filter_add'
