@@ -84,7 +84,7 @@ module Bitcoin
         rescue Exception => e
           logger.error("error occurred. #{e.message}")
           logger.error(e.backtrace)
-          handle_error(e)
+          peer.handle_error(e)
         end
       end
 
@@ -189,10 +189,6 @@ module Bitcoin
       def on_inv(inv)
         logger.info('receive inv message.')
         # TODO
-      end
-
-      def handle_error(e)
-        # needs implement by receiver
       end
 
     end
