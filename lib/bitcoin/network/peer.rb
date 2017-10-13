@@ -108,6 +108,12 @@ module Bitcoin
         addr
       end
 
+      # send +addr+ message to remote peer
+      def send_addrs
+        addrs = pool.peers.select{|p|p != self}.map(&:to_network_addr)
+        conn.send_message(Bitcoin::Message::Addr.new(addrs))
+      end
+
     end
 
   end

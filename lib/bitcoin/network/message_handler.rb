@@ -119,6 +119,7 @@ module Bitcoin
 
       def on_get_addr
         logger.info('receive getaddr message.')
+        peer.send_addrs
       end
 
       def on_addr(addr)

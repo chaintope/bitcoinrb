@@ -69,4 +69,11 @@ describe Bitcoin::Network::MessageHandler do
     end
   end
 
+  describe 'corresponds to get_addr' do
+    it 'should send addr message' do
+      expect(subject.peer).to receive(:send_addrs)
+      subject.handle('0b110907676574616464720000000000000000005df6e0e2'.htb)
+    end
+  end
+
 end
