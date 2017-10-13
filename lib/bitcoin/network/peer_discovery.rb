@@ -24,8 +24,9 @@ module Bitcoin
             Socket.getaddrinfo(seed, Bitcoin.chain_params.default_port).map{|a|a[2]}.uniq
           rescue SocketError => e
             logger.error "SocketError occurred when load DNS seed: #{seed}, error: #{e.message}"
+            nil
           end
-        }.flatten
+        }.flatten.compact
       end
 
     end
