@@ -167,4 +167,7 @@ module Bitcoin
 
   # Maximum amount of time that a block timestamp is allowed to exceed the current network-adjusted time before the block will be accepted.
   MAX_FUTURE_BLOCK_TIME = 2 * 60 * 60
+
+  # Size of set to pick median time from.
+  MEDIAN_TIME_SPAN = 11
 end

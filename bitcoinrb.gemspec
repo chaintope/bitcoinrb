@@ -4,6 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'bitcoin/version'
 
 Gem::Specification.new do |spec|
+
   spec.name          = "bitcoinrb"
   spec.version       = Bitcoin::VERSION
   spec.authors       = ["azuchi"]
@@ -28,6 +29,9 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'ffi'
   spec.add_runtime_dependency 'leb128', '~> 1.0.0'
   spec.add_runtime_dependency 'leveldb-ruby'
+  spec.add_runtime_dependency 'eventmachine_httpserver'
+  spec.add_runtime_dependency 'rest-client'
+  spec.add_runtime_dependency 'inifile'
 
   spec.add_development_dependency 'bundler', '~> 1.11'
   spec.add_development_dependency 'rake', '~> 10.0'

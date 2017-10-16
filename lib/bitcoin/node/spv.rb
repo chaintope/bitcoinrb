@@ -4,21 +4,30 @@ module Bitcoin
     # SPV class
     class SPV
 
+      attr_reader :chain
       attr_reader :pool
       attr_reader :logger
       attr_accessor :running
+      attr_reader :configuration
+      attr_accessor :server
 
-      def initialize
-        @pool = Bitcoin::Network::Pool.new(Bitcoin::Store::SPVChain.new)
+      def initialize(configuration)
+        @chain = Bitcoin::Store::SPVChain.new
+        @pool = Bitcoin::Network::Pool.new(@chain)
         @logger = Bitcoin::Logger.create(:debug)
         @running = false
+        @configuration = configuration
       end
 
       # open the node.
       def run
+        # TODO need process running check.
         return if running
         logger.debug 'SPV node start running.'
-        pool.start
+        EM.run do
+          pool.start
+          @server = Bitcoin::RPC::HttpServer.run(self, configuration.port)
+        end
       end
 
       # close the node.

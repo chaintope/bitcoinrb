@@ -54,6 +54,20 @@ module Bitcoin
         end
       end
 
+      # get median time past for specified block +hash+
+      # @param [String] hash the block hash.
+      # @return [Integer] the median time past value.
+      def mtp(hash)
+        time = []
+        Bitcoin::MEDIAN_TIME_SPAN.times do
+          entry = find_entry_by_hash(hash)
+          time << entry.header.time
+          hash = entry.header.prev_hash
+        end
+        time.sort!
+        time[time.size / 2]
+      end
+
       private
 
       # if database is empty, put genesis block.

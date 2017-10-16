@@ -35,6 +35,7 @@ module Bitcoin
   autoload :ValidationState, 'bitcoin/validation'
   autoload :Network, 'bitcoin/network'
   autoload :Store, 'bitcoin/store'
+  autoload :RPC, 'bitcoin/rpc'
 
   require_relative 'bitcoin/constants'
 

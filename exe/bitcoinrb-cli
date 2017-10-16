@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
 
-require 'bitcoin/node/spv/cli'
+require 'bitcoin'
 
-Bitcoin::Nodes::SPV::CLI.start(ARGV)
+Bitcoin::Node::CLI.start(ARGV)
