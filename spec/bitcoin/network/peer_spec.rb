@@ -7,8 +7,10 @@ describe Bitcoin::Network::Peer do
   end
 
   subject {
+    chain_mock = double('chain mock')
     peer = Bitcoin::Network::Peer.new('210.196.254.100', 18333, Bitcoin::Network::Pool.new(create_test_chain))
     peer.conn = ConnectionMock.new
+    allow(peer).to receive(:chain).and_return(chain_mock)
     peer
   }
 
@@ -50,6 +52,15 @@ describe Bitcoin::Network::Peer do
       expect(network_addr.port).to eq(18333)
       expect(network_addr.services).to eq(13)
       expect(network_addr.time).to eq(1507879363)
+    end
+  end
+
+  describe '#handle_headers' do
+    context 'IBD finished' do
+      it 'should not send next getheaders' do
+        expect(subject).not_to receive(:start_block_header_download)
+        subject.handle_headers(Bitcoin::Message::Headers.new)
+      end
     end
   end
 

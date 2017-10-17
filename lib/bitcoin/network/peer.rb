@@ -83,7 +83,7 @@ module Bitcoin
           break unless header.valid?
           chain.append_header(header)
         end
-        start_block_header_download # next header download
+        start_block_header_download if headers.headers.size > 0 # next header download
       end
 
       # handle error
