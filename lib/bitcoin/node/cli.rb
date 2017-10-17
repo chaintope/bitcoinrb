@@ -19,6 +19,12 @@ module Bitcoin
         request('stop')
       end
 
+      desc 'getblockheader "hash" ( verbose )', 'If verbose is false, returns a string that is serialized, hex-encoded data for blockheader "hash". If verbose is true, returns an Object with information about blockheader <hash>.'
+      def getblockheader(hash, verbose = true)
+        verbose = verbose.is_a?(String) ? (verbose == 'true') : verbose
+        request('getblockheader', hash, verbose)
+      end
+
       private
 
       def config

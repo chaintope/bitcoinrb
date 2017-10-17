@@ -29,6 +29,12 @@ describe Bitcoin::RPC::RequestHandler do
     allow(chain_mock).to receive(:find_entry_by_hash).with('000000000000004b1b55522ed640f6c001a78cc2262c5bc44edd83905f2f9c94').and_return(load_entry('0000002046194705aa7b0aca636c5a45a3c8857640cddaaab27e44cbc43f5d7f00000000439414cce8f17b94cf2ef654cc96f85e87b5f0a5c615ae474151e02b8ea9f3cdd125e45980e17319eb2ea570', 1210331))
     allow(chain_mock).to receive(:find_entry_by_hash).with('000000007f5d3fc4cb447eb2aadacd407685c8a3455a6c63ca0a7baa05471946').and_return(load_entry('000000206984d6f872f6499432f66d5bb8eec0f30248e79483382af621000000000000007246d107520e77f6b08c8d74ac0b06f4a8e229070ff95dc07b1fc477a68a0b0b7421e459ffff001d0e7bcc94', 1210330))
     allow(chain_mock).to receive(:find_entry_by_hash).with('0000000000000021f62a388394e74802f3c0eeb85b6df6329449f672f8d68469').and_return(load_entry('00000020f1bd62cf4502b7f88eeae4bb8cf2caa3615caac0dde9bf064994e4350000000067f8d203143e834fd6572aef4bc961b4f9ef4d18b63d6a73ed6342403406e815bf1ce45980e173198907b9ad', 1210329))
+    allow(chain_mock).to receive(:find_entry_by_hash).with('0000000035e4944906bfe9ddc0aa5c61a3caf28cbbe4ea8ef8b70245cf62bdf1').and_return(load_entry('04000000587b7ec2f7b00aecadc816f74c4734f5d3b57744fa98061b2452245300000000acf407f07491f3c7e326702c84c2319b98989b1d287e612385b35f01bb49a29e7518e459ffff001d40cce489', 1210328))
+    allow(chain_mock).to receive(:find_entry_by_hash).with('00000000532452241b0698fa4477b5d3f534474cf716c8adec0ab0f7c27e7b58').and_return(load_entry('00000020b5b07293524eece44221a180a6c67538b5685b474015993ea9422e7600000000ae01949e6bac5a828216d89ea91fc7dfe0bee5488644c7f228e15e0b87b3322fc113e459ffff001d5ef80539', 1210327))
+    allow(chain_mock).to receive(:find_entry_by_hash).with('00000000762e42a93e991540475b68b53875c6a680a12142e4ec4e529372b0b5').and_return(load_entry('00000020fbf65774599e7bf53452a61f0784f30159ffa98e4bfa7091624bb3760000000012e5e283f096b9c14669c38049f4012462f48adb7d7d5e6dc32f3576688ef5480c0fe459ffff001dabe97de2', 1210326))
+
+    # previous block
+    allow(chain_mock).to receive(:next_hash).with('00000000fb0350a72d7316a2006de44e74c16b56843a29bd85e0535d71edbc5b').and_return('000000008f71fb3f76a19075987a5d5653efce9bab90474497c9e1151ac94b69')
     impl
   }
 
@@ -39,6 +45,27 @@ describe Bitcoin::RPC::RequestHandler do
       expect(json[:headers]).to eq(1210339)
       expect(json[:bestblockhash]).to eq('00000000ecae98e551fde86596f9e258d28edefd956f1e6919c268332804b668')
       expect(json[:mediantime]).to eq(1508126989)
+    end
+  end
+
+  describe '#getblockheader' do
+    it 'should return header info' do
+      args = ['00000000fb0350a72d7316a2006de44e74c16b56843a29bd85e0535d71edbc5b', true]
+      tmp = subject.send('getblockheader', *args)
+      json = subject.getblockheader('00000000fb0350a72d7316a2006de44e74c16b56843a29bd85e0535d71edbc5b', true)
+      expect(json[:hash]).to eq('00000000fb0350a72d7316a2006de44e74c16b56843a29bd85e0535d71edbc5b')
+      expect(json[:height]).to eq(1210337)
+      expect(json[:version]).to eq(536870912)
+      expect(json[:versionHex]).to eq('20000000')
+      expect(json[:merkleroot]).to eq('ac92cbb5ccd160f9b474f27a1ed50aa9f503b4d39c5acd7f24ef0a6a0287c7c6')
+      expect(json[:time]).to eq(1508130596)
+      expect(json[:mediantime]).to eq(1508125317)
+      expect(json[:nonce]).to eq(1647419287)
+      expect(json[:bits]).to eq('1d00ffff')
+      expect(json[:previousblockhash]).to eq('00000000cd01007346f9a3d384a507f97afb164c057bcd1694ca20bb3302bb8d')
+      expect(json[:nextblockhash]).to eq('000000008f71fb3f76a19075987a5d5653efce9bab90474497c9e1151ac94b69')
+      header = subject.getblockheader('00000000fb0350a72d7316a2006de44e74c16b56843a29bd85e0535d71edbc5b', false)
+      expect(header).to eq('000000208dbb0233bb20ca9416cd7b054c16fb7af907a584d3a3f946730001cd00000000c6c787026a0aef247fcd5a9cd3b403f5a90ad51e7af274b4f960d1ccb5cb92ac243fe459ffff001d979f3162')
     end
   end
 

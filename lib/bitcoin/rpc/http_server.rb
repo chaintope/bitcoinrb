@@ -26,15 +26,22 @@ module Bitcoin
         EM.start_server('0.0.0.0', port, HttpServer, node)
       end
 
+      # process http request.
       def process_http_request
-        params = JSON.parse(@http_post_content)
-        command = params['method']
+        command, args = parse_json_params
         logger.debug("process http request. command = #{command}")
         response = EM::DelegatedHttpResponse.new(self)
         response.status = 200
         response.content_type 'application/json'
-        response.content = send(command).to_json
+        response.content = send(command, *args).to_json
         response.send_response
+      end
+
+      # parse request parameter.
+      # @return [Array] the array of command and args
+      def parse_json_params
+        params = JSON.parse(@http_post_content)
+        [params['method'], params['params']]
       end
 
     end

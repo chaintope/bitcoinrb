@@ -21,6 +21,28 @@ module Bitcoin
         node.shutdown
       end
 
+      # get block header information.
+      def getblockheader(hash, verbose)
+        entry = node.chain.find_entry_by_hash(hash)
+        if verbose
+          {
+              hash: hash,
+              height: entry.height,
+              version: entry.header.version,
+              versionHex: entry.header.version.to_s(16),
+              merkleroot: entry.header.merkle_root,
+              time: entry.header.time,
+              mediantime: node.chain.mtp(hash),
+              nonce: entry.header.nonce,
+              bits: entry.header.bits.to_s(16),
+              previousblockhash: entry.prev_hash,
+              nextblockhash: node.chain.next_hash(hash)
+          }
+        else
+          entry.header.to_payload.bth
+        end
+      end
+
     end
 
   end
