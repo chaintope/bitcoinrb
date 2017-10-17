@@ -81,7 +81,7 @@ module Bitcoin
               logger.warn("unsupported command received. #{command}")
               close("with command #{command}")
           end
-        rescue Exception => ea
+        rescue Exception => e
           logger.error("error occurred. #{e.message}")
           logger.error(e.backtrace)
           peer.handle_error(e)
