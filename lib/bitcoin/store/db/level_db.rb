@@ -41,8 +41,14 @@ module Bitcoin
           db.delete(key)
         end
 
+        # get block hash specified +height+
         def get_hash_from_height(height)
           db.get(height_key(height))
+        end
+
+        # get next block hash specified +hash+
+        def next_hash(hash)
+          db.get(KEY_PREFIX[:next] + hash)
         end
 
         # get entry payload
@@ -58,7 +64,13 @@ module Bitcoin
             db.put(height_key(entry.height), entry.hash)
             connect_entry(entry)
           end
+        end
 
+        private
+
+        # generate height key
+        def height_key(height)
+          KEY_PREFIX[:height] + height.to_s(16).htb.reverse.bth
         end
 
         def connect_entry(entry)
@@ -72,13 +84,7 @@ module Bitcoin
             end
           end
           db.put(KEY_PREFIX[:best], entry.hash)
-        end
-
-        private
-
-        # generate height key
-        def height_key(height)
-          KEY_PREFIX[:height] + height.to_s(16).htb.reverse.bth
+          db.put(KEY_PREFIX[:next] + entry.prev_hash, entry.hash)
         end
       end
 

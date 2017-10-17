@@ -5,7 +5,8 @@ module Bitcoin
     KEY_PREFIX = {
         entry: 'e',   # key: block hash, value: Bitcoin::Store::ChainEntry payload
         height: 'h',  # key: block height, value: block hash.
-        best: 'B'     # value: best block hash.
+        best: 'B',    # value: best block hash.
+        next: 'n'     # key: block hash, value: A hash of the next block of the specified hash
     }
 
     class SPVChain
@@ -52,6 +53,13 @@ module Bitcoin
           entry = Bitcoin::Store::ChainEntry.new(header, current_height + 1)
           db.save_entry(entry)
         end
+      end
+
+      # get next block hash for specified +hash+
+      # @param [String] hash the block hash
+      # @return [String] the next block hash. If it does not exist yet, return nil.
+      def next_hash(hash)
+        db.next_hash(hash)
       end
 
       # get median time past for specified block +hash+
