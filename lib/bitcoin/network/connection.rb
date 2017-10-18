@@ -55,6 +55,14 @@ module Bitcoin
         peer.handle_error(e)
       end
 
+      private
+
+      # start handshake
+      def begin_handshake
+        logger.info "begin handshake with #{addr}"
+        send_message(peer.local_version)
+      end
+
     end
 
   end

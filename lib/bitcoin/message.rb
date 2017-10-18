@@ -48,5 +48,16 @@ module Bitcoin
 
     DEFAULT_STOP_HASH = "00"*32
 
+    # the protocol version.
+    VERSION = {
+        headers: 31800,
+        pong: 60001,
+        bloom: 70011,
+        send_headers: 70012,
+        fee_filter: 70013,
+        compact: 70014,
+        compact_witness: 70015
+    }
+
   end
 end

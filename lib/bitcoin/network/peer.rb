@@ -5,6 +5,7 @@ module Bitcoin
     class Peer
 
       attr_reader :logger
+      attr_accessor :local_version
       # remote peer info
       attr_reader :host
       attr_reader :port
@@ -25,6 +26,8 @@ module Bitcoin
         @connected = false
         @primary = false
         @logger = Bitcoin::Logger.create(:debug)
+        current_height = @chain.latest_block.height
+        @local_version = Bitcoin::Message::Version.new(remote_addr: addr, start_height: current_height)
       end
 
       def connect
@@ -56,18 +59,26 @@ module Bitcoin
 
       # broadcast tx.
       def broadcast_tx(tx)
-        conn.send_message(Bitcoin::Message::Tx.new(tx, support_segwit?))
+        conn.send_message(Bitcoin::Message::Tx.new(tx, support_witness?))
       end
 
-      # check the remote peer support segwit.
-      def support_segwit?
-        return false unless version_msg
-        version_msg.services & Bitcoin::Message::SERVICE_FLAGS[:witness] > 0
+      # check the remote peer support witness.
+      def support_witness?
+        return false unless remote_version
+        remote_version.services & Bitcoin::Message::SERVICE_FLAGS[:witness] > 0
+      end
+
+      # check the remote peer supports compact block.
+      def support_cmpct?
+        return false if remote_version.version < Bitcoin::Message::VERSION[:compact]
+        return true unless local_version.services & Bitcoin::Message::SERVICE_FLAGS[:witness] > 0
+        return false unless support_witness?
+        remote_version.version >= Bitcoin::Message::VERSION[:compact_witness]
       end
 
       # get remote peer's version message.
       # @return [Bitcoin::Message::Version]
-      def version_msg
+      def remote_version
         conn.version
       end
 
@@ -99,7 +110,7 @@ module Bitcoin
       # generate Bitcoin::Message::NetworkAddr object from this peer info.
       # @return [Bitcoin::Message::NetworkAddr]
       def to_network_addr
-        v = version_msg
+        v = remote_version
         addr = Bitcoin::Message::NetworkAddr.new
         addr.time = v.timestamp
         addr.services = v.services
@@ -112,6 +123,12 @@ module Bitcoin
       def send_addrs
         addrs = pool.peers.select{|p|p != self}.map(&:to_network_addr)
         conn.send_message(Bitcoin::Message::Addr.new(addrs))
+      end
+
+      # handle block inv message.
+      def handle_block_inv(hashes)
+        getdata = Bitcoin::Message::GetData.new(hashes.map{|h|Bitcoin::Message::Inventory.new})
+
       end
 
     end

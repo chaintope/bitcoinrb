@@ -35,6 +35,10 @@ module Bitcoin
         [identifier].pack('V') << hash.htb.reverse
       end
 
+      def block?
+        [MSG_BLOCK, MSG_WITNESS_BLOCK, MSG_FILTERED_WITNESS_BLOCK].include?(identifier)
+      end
+
       private
 
       def valid_identifier?(identifier)

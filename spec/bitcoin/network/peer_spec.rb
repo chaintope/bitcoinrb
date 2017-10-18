@@ -14,10 +14,10 @@ describe Bitcoin::Network::Peer do
     peer
   }
 
-  describe '#support_segwit?' do
+  describe '#support_witness?' do
     context 'before handshake' do
       it 'should be false' do
-        expect(subject.support_segwit?).to be false
+        expect(subject.support_witness?).to be false
       end
     end
 
@@ -26,7 +26,7 @@ describe Bitcoin::Network::Peer do
         subject.conn.version = Bitcoin::Message::Version.new(services: Bitcoin::Message::SERVICE_FLAGS[:none])
       }
       it 'should be false' do
-        expect(subject.support_segwit?).to be false
+        expect(subject.support_witness?).to be false
       end
     end
 
@@ -35,10 +35,38 @@ describe Bitcoin::Network::Peer do
         subject.conn.version = Bitcoin::Message::Version.new
       }
       it 'should be true' do
-        expect(subject.support_segwit?).to be true
+        expect(subject.support_witness?).to be true
+      end
+    end
+  end
+
+  describe '#support_cmpct?' do
+    context 'remote peer dose not support' do
+      it 'should be false' do
+        # not support version
+        subject.conn.version = Bitcoin::Message::Version.new(version: 70013)
+        expect(subject.support_cmpct?).to be false
+        # local support segwit, but remote dose not support segwit
+        subject.conn.version = Bitcoin::Message::Version.new(version: 70015, services: Bitcoin::Message::SERVICE_FLAGS[:network])
+        expect(subject.support_cmpct?).to be false
+        # remote's version dose not support witness block
+        subject.conn.version = Bitcoin::Message::Version.new(version: 70014, services: Bitcoin::Message::SERVICE_FLAGS[:witness])
+        expect(subject.support_cmpct?).to be false
       end
     end
 
+    context 'remote peer support' do
+      it 'should be true' do
+        # local dose not supports segwit, and remote too.
+        subject.local_version = Bitcoin::Message::Version.new(version: 70014, services: Bitcoin::Message::SERVICE_FLAGS[:network])
+        subject.conn.version = Bitcoin::Message::Version.new(version: 70014, services: Bitcoin::Message::SERVICE_FLAGS[:network])
+        expect(subject.support_cmpct?).to be true
+        # local and remote supports compact witness.
+        subject.local_version = Bitcoin::Message::Version.new
+        subject.conn.version = Bitcoin::Message::Version.new(version: 70015, services: Bitcoin::Message::SERVICE_FLAGS[:witness])
+        expect(subject.support_cmpct?).to be true
+      end
+    end
   end
 
   describe '#to_network_addr' do

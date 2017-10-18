@@ -93,13 +93,6 @@ module Bitcoin
         send_data(msg.to_pkt)
       end
 
-      # start handshake
-      def begin_handshake
-        logger.info "begin handshake with #{addr}"
-        ver = Bitcoin::Message::Version.new(remote_addr: addr, start_height: 0) # TODO use start_height in wallet
-        send_message(ver)
-      end
-
       def handshake_done
         logger.info 'handshake finished.'
         @connected = true
@@ -189,7 +182,20 @@ module Bitcoin
 
       def on_inv(inv)
         logger.info('receive inv message.')
-        # TODO
+        blocks = []
+        txs = []
+        inv.inventories.each do |i|
+          case i.identifier
+            when Bitcoin::Message::Inventory::MSG_TX
+              txs << i.hash
+            when Bitcoin::Message::Inventory::MSG_BLOCK
+              blocks << i.hash
+            else
+              logger.warn("[#{addr}] peer sent unknown inv type: #{i.identifier}")
+          end
+        end
+        logger.info("receive block= #{blocks.size}, txs: #{txs.size}")
+        handle_block_inv(blocks) unless blocks.empty?
       end
 
     end
