@@ -45,3 +45,13 @@ end
 module Bitcoin
   autoload :TestScriptParser, 'bitcoin/script/test_script_parser'
 end
+
+RSpec::Matchers.define :custom_object do |clazz, properties|
+  match do |actual|
+    return false unless actual.is_a?(clazz)
+    properties.each do |key, value|
+      return false unless actual.send(key) == value
+    end
+    true
+  end
+end

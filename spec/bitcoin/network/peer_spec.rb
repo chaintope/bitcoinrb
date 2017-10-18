@@ -92,4 +92,14 @@ describe Bitcoin::Network::Peer do
     end
   end
 
+  describe '#handle_block_inv' do
+    it 'should send getdadta message' do
+      hash = '00000000e0f952393cbb1874aa4ee18e81eaa057292a22e822eb9c80eed37dc8'
+      inventory = Bitcoin::Message::Inventory.new( 3, hash)
+      expect(subject.conn).not_to receive(:send_message).with(
+          custom_object(Bitcoin::Message::GetData, inventories: [inventory]))
+      subject.handle_block_inv([hash])
+    end
+  end
+
 end

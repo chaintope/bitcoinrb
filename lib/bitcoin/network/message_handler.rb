@@ -195,7 +195,7 @@ module Bitcoin
           end
         end
         logger.info("receive block= #{blocks.size}, txs: #{txs.size}")
-        handle_block_inv(blocks) unless blocks.empty?
+        peer.handle_block_inv(blocks) unless blocks.empty?
       end
 
     end

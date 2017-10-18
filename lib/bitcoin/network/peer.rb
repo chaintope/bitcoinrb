@@ -76,6 +76,11 @@ module Bitcoin
         remote_version.version >= Bitcoin::Message::VERSION[:compact_witness]
       end
 
+      # get peer's block type.
+      def block_type
+        Bitcoin::Message::Inventory::MSG_FILTERED_BLOCK # TODO need other implementation
+      end
+
       # get remote peer's version message.
       # @return [Bitcoin::Message::Version]
       def remote_version
@@ -127,8 +132,9 @@ module Bitcoin
 
       # handle block inv message.
       def handle_block_inv(hashes)
-        getdata = Bitcoin::Message::GetData.new(hashes.map{|h|Bitcoin::Message::Inventory.new})
-
+        getdata = Bitcoin::Message::GetData.new(
+            hashes.map{|h|Bitcoin::Message::Inventory.new(block_type, h)})
+        conn.send_message(getdata)
       end
 
     end
