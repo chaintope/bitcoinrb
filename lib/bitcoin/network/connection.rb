@@ -28,6 +28,7 @@ module Bitcoin
 
       def post_init
         logger.info "connected. #{addr}"
+        peer.conn_time = Time.now.to_i
         begin_handshake
       end
 

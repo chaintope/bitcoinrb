@@ -6,6 +6,8 @@ module Bitcoin
 
       # handle p2p message.
       def handle(message)
+        peer.last_recv = Time.now.to_i
+        peer.bytes_recv += message.bytesize
         begin
           parse(message)
         rescue Bitcoin::Message::Error => e
@@ -90,7 +92,10 @@ module Bitcoin
 
       def send_message(msg)
         logger.info "send message #{msg.class::COMMAND}"
-        send_data(msg.to_pkt)
+        pkt = msg.to_pkt
+        peer.last_send = Time.now.to_i
+        peer.bytes_sent = pkt.bytesize
+        send_data(pkt)
       end
 
       def handshake_done
@@ -137,7 +142,12 @@ module Bitcoin
 
       def on_pong(pong)
         logger.info("receive pong message. #{pong.build_json}")
-        # TODO calculate response
+        if pong.nonce == peer.last_ping_nonce
+          peer.last_ping_nonce = nil
+          peer.last_pong = Time.now.to_i
+        else
+          logger.debug "The remote peer sent the wrong nonce (#{pong.nonce})."
+        end
       end
 
       def on_get_headers(headers)

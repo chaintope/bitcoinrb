@@ -41,6 +41,7 @@ module Bitcoin
 
       # append block header to chain.
       # @param [Bitcoin::BlockHeader] header a block header.
+      # @return [Bitcoin::Store::ChainEntry] appended block header entry.
       def append_header(header)
         logger.debug("append header #{header.hash}")
         raise "this header is invalid. #{header.hash}" unless header.valid?
@@ -52,6 +53,7 @@ module Bitcoin
         else
           entry = Bitcoin::Store::ChainEntry.new(header, current_height + 1)
           db.save_entry(entry)
+          entry
         end
       end
 

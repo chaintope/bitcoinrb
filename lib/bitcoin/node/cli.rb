@@ -25,6 +25,11 @@ module Bitcoin
         request('getblockheader', hash, verbose)
       end
 
+      desc 'getpeerinfo', 'Returns data about each connected network node as a json array of objects.'
+      def getpeerinfo
+        request('getpeerinfo')
+      end
+
       private
 
       def config

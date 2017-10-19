@@ -50,6 +50,7 @@ module Bitcoin
       # detect new peer connection.
       def handle_new_peer(peer)
         logger.debug "connected new peer #{peer.addr}."
+        peer.id = allocate_peer_id
         unless peers.find(&:primary?)
           peer.primary = true
           peer.start_block_header_download
@@ -80,6 +81,15 @@ module Bitcoin
       # get primary peer
       def primary_peer
         peers.find(&:primary?)
+      end
+
+      # allocate new peer id
+      def allocate_peer_id
+        id = 0
+        until peers.empty? || peers.find{|p|p.id == id}.nil?
+          id += 1
+        end
+        id
       end
 
     end

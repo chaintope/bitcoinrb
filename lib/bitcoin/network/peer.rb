@@ -5,7 +5,20 @@ module Bitcoin
     class Peer
 
       attr_reader :logger
+      attr_accessor :id
       attr_accessor :local_version
+      attr_accessor :last_send
+      attr_accessor :last_recv
+      attr_accessor :bytes_sent
+      attr_accessor :bytes_recv
+      attr_accessor :conn_time
+      attr_accessor :last_ping
+      attr_accessor :last_ping_nonce
+      attr_accessor :last_pong
+      attr_accessor :min_ping
+      attr_accessor :outbound # TODO need implements to accept inbound connection
+      attr_accessor :best_hash
+      attr_accessor :best_height
       # remote peer info
       attr_reader :host
       attr_reader :port
@@ -26,6 +39,12 @@ module Bitcoin
         @connected = false
         @primary = false
         @logger = Bitcoin::Logger.create(:debug)
+        @outbound = true
+        @best_hash = -1
+        @best_height = -1
+        @min_ping = -1
+        @bytes_sent = 0
+        @bytes_recv = 0
         current_height = @chain.latest_block.height
         @local_version = Bitcoin::Message::Version.new(remote_addr: addr, start_height: current_height)
       end
@@ -38,8 +57,23 @@ module Bitcoin
         @connected
       end
 
+      def outbound?
+        @outbound
+      end
+
       def addr
         "#{host}:#{port}"
+      end
+
+      # calculate ping-pong time.
+      def ping_time
+        last_pong ? (last_pong - last_ping) / 1e6 : -1
+      end
+
+      # set last pong
+      def last_pong=(time)
+        @last_pong = time
+        @min_ping = ping_time if min_ping == -1 || ping_time < min_ping
       end
 
       def post_handshake
@@ -97,7 +131,9 @@ module Bitcoin
       def handle_headers(headers)
         headers.headers.each do |header|
           break unless header.valid?
-          chain.append_header(header)
+          entry = chain.append_header(header)
+          @best_hash = entry.hash
+          @best_height = entry.height
         end
         start_block_header_download if headers.headers.size > 0 # next header download
       end
@@ -135,6 +171,15 @@ module Bitcoin
         getdata = Bitcoin::Message::GetData.new(
             hashes.map{|h|Bitcoin::Message::Inventory.new(block_type, h)})
         conn.send_message(getdata)
+      end
+
+      # send ping message.
+      def send_ping
+        ping = Bitcoin::Message::Ping.new
+        peer.last_ping = Time.now.to_i
+        peer.last_pong = -1
+        peer.last_ping_nonce = ping.nonce
+        conn.send_message(ping)
       end
 
     end
