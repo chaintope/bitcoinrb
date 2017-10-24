@@ -35,8 +35,12 @@ module Bitcoin
       if in_count.zero?
         tx.marker = 0
         tx.flag = buf.read(1).unpack('c').first
-        in_count = Bitcoin.unpack_var_int_from_io(buf)
-        witness = true
+        if tx.flag.zero?
+          buf.pos -= 1
+        else
+          in_count = Bitcoin.unpack_var_int_from_io(buf)
+          witness = true
+        end
       end
 
       in_count.times do

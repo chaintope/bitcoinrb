@@ -32,6 +32,19 @@ describe Bitcoin::Tx do
       end
     end
 
+    context 'empty tx' do
+      subject {
+        Bitcoin::Tx.parse_from_payload('01000000000000000000'.htb)
+      }
+      it 'should generate empty payload and parse it.' do
+        expect(subject.version).to eq(1)
+        expect(subject.inputs.size).to eq(0)
+        expect(subject.outputs.size).to eq(0)
+        expect(subject.lock_time).to eq(0)
+        expect(subject.to_payload.bth).to eq('01000000000000000000')
+        expect(Bitcoin::Tx.new.to_payload.bth).to eq('01000000000000000000')
+      end
+    end
   end
 
   describe '#sighash_for_input' do
