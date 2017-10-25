@@ -23,12 +23,11 @@ module Bitcoin
       end
 
       def seeds
-        puts configuration.conf
         [*configuration.conf[:connect]]
       end
 
       def find_from_dns_seeds
-        logger.info 'discover peer address from DNS seeds.'
+        logger.debug 'discover peer address from DNS seeds.'
         dns_seeds.map { |seed|
           begin
             Socket.getaddrinfo(seed, Bitcoin.chain_params.default_port).map{|a|a[2]}.uniq

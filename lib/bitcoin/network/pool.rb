@@ -33,11 +33,10 @@ module Bitcoin
       # connecting other peers and begin network activity.
       def start
         raise 'Cannot start a peer pool twice.' if started
-        logger.info 'Start connecting other pears.'
+        logger.debug 'Start connecting other pears.'
         addr_list = peer_discovery.peers
         port = Bitcoin.chain_params.default_port
         EM::Iterator.new(addr_list, Bitcoin::PARALLEL_THREAD).each do |ip, iter|
-          logger.info "connecting to ... #{ip}"
           if pending_peers.size < MAX_OUTBOUND_CONNECTIONS
             peer = Peer.new(ip, port, self)
             pending_peers << peer
@@ -50,7 +49,7 @@ module Bitcoin
 
       # detect new peer connection.
       def handle_new_peer(peer)
-        logger.info "connected new peer #{peer.addr}."
+        logger.debug "connected new peer #{peer.addr}."
         peer.id = allocate_peer_id
         unless peers.find(&:primary?)
           peer.primary = true

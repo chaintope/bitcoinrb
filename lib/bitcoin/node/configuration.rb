@@ -8,8 +8,8 @@ module Bitcoin
 
       def initialize(opts = {})
         # TODO apply configuration file.
-        opt[:network] = :mainnet unless opt[:network]
-        Bitcoin.chain_params = opt[:network]
+        opts[:network] = :mainnet unless opts[:network]
+        Bitcoin.chain_params = opts[:network]
 
         begin
           ini_file = IniParse.parse(File.read("#{Bitcoin.base_dir}/bitcoinrb.conf"))
