@@ -3,23 +3,33 @@ module Bitcoin
 
     class PeerDiscovery
 
-      attr_reader :logger
+      attr_reader :logger, :configuration
 
-      def initialize
+      def initialize(configuration)
         @logger = Bitcoin::Logger.create(:debug)
+        @configuration = configuration
       end
 
       # get peer addresses, from DNS seeds.
       def peers
         # TODO add find from previous connected peer at first.
-        find_from_dns_seeds
+        (find_from_dns_seeds + seeds).uniq
       end
 
       private
 
+      def dns_seeds
+        Bitcoin.chain_params.dns_seeds || []
+      end
+
+      def seeds
+        puts configuration.conf
+        [*configuration.conf[:connect]]
+      end
+
       def find_from_dns_seeds
-        logger.debug 'discover peer address from DNS seeds.'
-        Bitcoin.chain_params.dns_seeds.map {|seed|
+        logger.info 'discover peer address from DNS seeds.'
+        dns_seeds.map { |seed|
           begin
             Socket.getaddrinfo(seed, Bitcoin.chain_params.default_port).map{|a|a[2]}.uniq
           rescue SocketError => e
@@ -28,8 +38,6 @@ module Bitcoin
           end
         }.flatten.compact
       end
-
     end
-
   end
 end
