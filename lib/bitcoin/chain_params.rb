@@ -23,6 +23,7 @@ module Bitcoin
     attr_reader :bip34_height
     attr_reader :proof_of_work_limit
     attr_reader :dns_seeds
+    attr_reader :connect
     attr_reader :genesis
 
     # mainnet genesis
