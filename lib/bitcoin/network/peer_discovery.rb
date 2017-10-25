@@ -12,14 +12,22 @@ module Bitcoin
       # get peer addresses, from DNS seeds.
       def peers
         # TODO add find from previous connected peer at first.
-        find_from_dns_seeds
+        find_from_dns_seeds + seeds
       end
 
       private
 
+      def dns_seeds
+        Bitcoin.chain_params.dns_seeds || []
+      end
+
+      def seeds
+        Bitcoin.chain_params.connect || []
+      end
+
       def find_from_dns_seeds
         logger.debug 'discover peer address from DNS seeds.'
-        Bitcoin.chain_params.dns_seeds.map {|seed|
+        dns_seeds.map { |seed|
           begin
             Socket.getaddrinfo(seed, Bitcoin.chain_params.default_port).map{|a|a[2]}.uniq
           rescue SocketError => e
@@ -28,8 +36,6 @@ module Bitcoin
           end
         }.flatten.compact
       end
-
     end
-
   end
 end
