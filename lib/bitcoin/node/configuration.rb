@@ -1,4 +1,4 @@
-require 'inifile'
+require 'iniparse'
 
 module Bitcoin
   module Node
@@ -8,7 +8,12 @@ module Bitcoin
 
       def initialize(opts = {})
         # TODO apply configuration file.
-        @conf = IniFile.load("#{Bitcoin.base_dir}/bitcoinrb.conf").to_h
+        begin
+          ini_file = IniParse.parse(File.read("#{Bitcoin.base_dir}/bitcoinrb.conf"))
+          @conf = Hash[ ini_file.to_h['__anonymous__'].map{|k,v| [k.to_sym, v] } ]
+        rescue => e
+          @conf = {}
+        end
         @conf.merge!(opts)
         @conf[:network] = :mainnet unless @conf[:network]
         Bitcoin.chain_params = @conf[:network]

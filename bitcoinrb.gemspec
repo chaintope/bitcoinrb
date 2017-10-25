@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'leveldb-ruby'
   spec.add_runtime_dependency 'eventmachine_httpserver'
   spec.add_runtime_dependency 'rest-client'
-  spec.add_runtime_dependency 'inifile'
+  spec.add_runtime_dependency 'iniparse'
 
   spec.add_development_dependency 'bundler', '~> 1.11'
   spec.add_development_dependency 'rake', '~> 10.0'
