@@ -4,12 +4,14 @@ describe Bitcoin::Network::MessageHandler do
 
   class Handler
     include Bitcoin::Network::MessageHandler
-    attr_reader :logger, :peer, :sendheaders
+    attr_reader :logger, :peer, :sendheaders, :chain
     def initialize
       @message = ''
       @logger = Logger.new(STDOUT)
-      @peer = Bitcoin::Network::Peer.new('127.0.0.1', 18332, Bitcoin::Network::Pool.new(create_test_chain))
-      @sendheaders= false
+      configuration = Bitcoin::Node::Configuration.new(network: :testnet)
+      @chain = create_test_chain
+      @peer = Bitcoin::Network::Peer.new('127.0.0.1', 18332, Bitcoin::Network::Pool.new(@chain, configuration))
+      @sendheaders = false
     end
 
     def addr
@@ -18,9 +20,9 @@ describe Bitcoin::Network::MessageHandler do
   end
 
   subject {Handler.new}
+  after { subject.chain.db.close }
 
   describe 'handle message' do
-
     context 'invalid header magic' do
       it 'raise message error' do # mainnet magic
         expect(subject).to receive(:close).once

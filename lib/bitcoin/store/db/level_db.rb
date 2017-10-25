@@ -66,6 +66,10 @@ module Bitcoin
           end
         end
 
+        def close
+          db.close
+        end
+
         private
 
         # generate height key

@@ -4,9 +4,9 @@ require 'fileutils'
 
 describe Bitcoin::Store::SPVChain do
 
-  subject {
-    create_test_chain
-  }
+  let (:chain) { create_test_chain }
+  subject { chain }
+  after { chain.db.close }
 
   describe '#append_header' do
     context 'correct header' do
