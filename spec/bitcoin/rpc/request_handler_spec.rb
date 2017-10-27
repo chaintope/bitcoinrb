@@ -10,12 +10,14 @@ describe Bitcoin::RPC::RequestHandler do
     end
   end
 
+  let(:chain) { load_chain_mock }
   subject {
     node_mock = double('node mock')
-    allow(node_mock).to receive(:chain).and_return(load_chain_mock)
+    allow(node_mock).to receive(:chain).and_return(chain)
     allow(node_mock).to receive(:pool).and_return(load_pool_mock(node_mock.chain))
     HandlerMock.new(node_mock)
   }
+  after { chain.db.close }
 
   describe '#getblockchaininfo' do
     it 'should return chain info' do
@@ -112,7 +114,8 @@ describe Bitcoin::RPC::RequestHandler do
     ))
     allow(conn2).to receive(:version).and_return(Bitcoin::Message::Version.new)
 
-    pool = Bitcoin::Network::Pool.new(chain)
+    configuration = Bitcoin::Node::Configuration.new(network: :testnet)
+    pool = Bitcoin::Network::Pool.new(chain, configuration)
 
     peer1 =Bitcoin::Network::Peer.new('192.168.0.1', 18333, pool)
     peer1.id = 1

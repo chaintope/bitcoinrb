@@ -6,13 +6,16 @@ describe Bitcoin::Network::Peer do
     attr_accessor :version, :sendheaders, :fee_rate
   end
 
+  let(:chain) { create_test_chain }
   subject {
     chain_mock = double('chain mock')
-    peer = Bitcoin::Network::Peer.new('210.196.254.100', 18333, Bitcoin::Network::Pool.new(create_test_chain))
+    configuration = Bitcoin::Node::Configuration.new(network: :testnet)
+    peer = Bitcoin::Network::Peer.new('210.196.254.100', 18333, Bitcoin::Network::Pool.new(chain, configuration))
     peer.conn = ConnectionMock.new
     allow(peer).to receive(:chain).and_return(chain_mock)
     peer
   }
+  after { chain.db.close }
 
   describe '#support_witness?' do
     context 'before handshake' do

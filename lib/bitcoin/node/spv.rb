@@ -13,10 +13,10 @@ module Bitcoin
 
       def initialize(configuration)
         @chain = Bitcoin::Store::SPVChain.new
-        @pool = Bitcoin::Network::Pool.new(@chain)
+        @configuration = configuration
+        @pool = Bitcoin::Network::Pool.new(@chain, @configuration)
         @logger = Bitcoin::Logger.create(:debug)
         @running = false
-        @configuration = configuration
       end
 
       # open the node.
