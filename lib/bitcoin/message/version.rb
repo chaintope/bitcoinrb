@@ -1,4 +1,5 @@
 # encoding: ascii-8bit
+require 'ipaddr'
 module Bitcoin
   module Message
 
@@ -60,9 +61,13 @@ module Bitcoin
       end
 
       def pack_addr(addr)
-        host, port = addr.split(':')
-        sockaddr = Socket.pack_sockaddr_in(port.to_i, host)
-        [[1].pack('Q'), "\x00" * 10, "\xFF\xFF", sockaddr[4...8], sockaddr[2...4]].join
+        separator = addr.rindex(':')
+        ip = addr[0...separator]
+        port = addr[separator + 1..-1].to_i
+        ip_addr = IPAddr.new(ip)
+        ip_addr = ip_addr.ipv4_mapped if ip_addr.ipv4?
+        [1].pack('Q') << ip_addr.hton << [port].pack('n')
+        # [[1].pack('Q'), "\x00" * 10, "\xFF\xFF", sockaddr[4...8], sockaddr[2...4]].join
       end
 
       def unpack_addr(addr)
