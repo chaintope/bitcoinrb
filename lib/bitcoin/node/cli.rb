@@ -30,6 +30,11 @@ module Bitcoin
         request('getpeerinfo')
       end
 
+      desc 'sendrawtransaction', 'Submits raw transaction (serialized, hex-encoded) to local node and network.'
+      def sendrawtransaction(hex_tx)
+        request('sendrawtransaction', hex_tx)
+      end
+
       private
 
       def config

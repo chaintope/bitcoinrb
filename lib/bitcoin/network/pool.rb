@@ -61,15 +61,15 @@ module Bitcoin
 
       # terminate peers.
       def terminate
-        peers.each {|peer| peer.close('terminate')}
-        pending_peers.each {|peer| peer.close('terminate')}
+        peers.each { |peer| peer.close('terminate') }
+        pending_peers.each { |peer| peer.close('terminate') }
         @peers = []
         @started = false
       end
 
       # broadcast tx to connecting peer.
       def broadcast(tx)
-        peers.each {|peer| peer.broadcast(tx) }
+        peers.each { |peer| peer.broadcast_tx(tx) }
       end
 
       def handle_error(e)

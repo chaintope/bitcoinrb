@@ -70,6 +70,14 @@ module Bitcoin
         end
       end
 
+      # broadcast transaction
+      def sendrawtransaction(hex_tx)
+        tx = Bitcoin::Tx.parse_from_payload(hex_tx.htb)
+        # TODO check wether tx is valid
+        node.broadcast(tx)
+        tx.txid
+      end
+
     end
 
   end
