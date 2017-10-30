@@ -6,8 +6,8 @@ module Bitcoin
 
     attr_accessor :chunks
 
-    def initialize
-      @chunks = []
+    def initialize(input_script=nil)
+      @chunks = parse(input_script)
     end
 
     # generate P2PKH script
@@ -35,6 +35,10 @@ module Bitcoin
       Script.new << OP_HASH160 << to_hash160 << OP_EQUAL
     end
 
+    def get_multisig_pubkeys
+      1.upto(@chunks[-2] - 80).map{|i| @chunks[i] }
+    end
+
     # generate m of n multisig script
     # @param [String] m the number of signatures required for multisig
     # @param [Array] pubkeys array of public keys that compose multisig
@@ -42,6 +46,7 @@ module Bitcoin
     def self.to_multisig_script(m, pubkeys)
       new << m << pubkeys << pubkeys.size << OP_CHECKMULTISIG
     end
+
 
     # generate p2wsh script for +redeem_script+
     # @param [Script] redeem_script target redeem script
@@ -257,11 +262,16 @@ module Bitcoin
 
     def to_s
       chunks.map { |c|
-        if c.pushdata?
-          v = Opcodes.opcode_to_small_int(c.ord)
-          v ? v : c.pushed_data.bth
-        else
-          Opcodes.opcode_to_name(c.ord)
+        case c
+        when Fixnum
+          opcode_to_name(c)
+        when String
+          if c.pushdata?
+            v = Opcodes.opcode_to_small_int(c.ord)
+            v ? v : c.pushed_data.bth
+          else
+            Opcodes.opcode_to_name(c.ord)
+          end
         end
       }.join(' ')
     end
@@ -396,6 +406,52 @@ module Bitcoin
     end
 
     private
+
+    # parse raw script
+    def parse(input_script)
+      return [] unless input_script
+      program = input_script.unpack("C*")
+      chunks = []
+      until program.empty?
+        opcode = program.shift
+
+        if (opcode > 0) && (opcode < OP_PUSHDATA1)
+          len, tmp = opcode, program[0]
+          chunks << program.shift(len).pack("C*")
+
+          # 0x16 = 22 due to OP_2_16 from_string parsing
+          if len != 1 || !tmp || !tmp <= 22
+            raise "invalid OP_PUSHDATA0" if len != chunks.last.bytesize
+          end
+        elsif (opcode == OP_PUSHDATA1)
+          len = program.shift(1)[0]
+          chunks << program.shift(len).pack("C*")
+
+          if len <= OP_PUSHDATA1 || len > 0xff
+            raise "invalid OP_PUSHDATA1" if len != chunks.last.bytesize
+          end
+        elsif (opcode == OP_PUSHDATA2)
+          len = program.shift(2).pack("C*").unpack("v")[0]
+          chunks << program.shift(len).pack("C*")
+
+          if len <= 0xff || len > 0xffff
+            raise "invalid OP_PUSHDATA2" if len != chunks.last.bytesize
+          end
+        elsif (opcode == OP_PUSHDATA4)
+          len = program.shift(4).pack("C*").unpack("V")[0]
+          chunks << program.shift(len).pack("C*")
+
+          if len <= 0xffff
+            raise "invalid OP_PUSHDATA4" if len != chunks.last.bytesize
+          end
+        else
+          chunks << opcode
+        end
+      end
+      chunks
+    rescue => ex
+      []
+    end
 
     # generate p2pkh address. if script dose not p2pkh, return nil.
     def p2pkh_addr
