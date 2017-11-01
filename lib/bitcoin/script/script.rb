@@ -263,7 +263,7 @@ module Bitcoin
     def to_s
       chunks.map { |c|
         case c
-        when Fixnum
+        when Integer
           opcode_to_name(c)
         when String
           if c.pushdata?
