@@ -1,7 +1,7 @@
 module Bitcoin
 
   # utility for multisig
-  class Multisig
+  module Multisig
     include Bitcoin::Opcodes
 
     def self.prefix
