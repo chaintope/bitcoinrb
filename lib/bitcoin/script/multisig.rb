@@ -44,13 +44,13 @@ module Bitcoin
     # @param [String] sig_hash to be signed.
     # @return [String] sorted sig_hash.
     def self.sort_p2sh_multisig_signatures(script_sig, sig_hash)
-      script = Bitcoin::Script.new(script_sig)
-      redeem_script = Bitcoin::Script.new(script.chunks[-1])
+      script = Bitcoin::Script.parse_from_payload(script_sig)
+      redeem_script = Bitcoin::Script.parse_from_payload(script.chunks[-1].pushed_data)
       pubkeys = redeem_script.get_multisig_pubkeys
 
       # find the pubkey for each signature by trying to verify it
-      # puts script.chunks[1...-1]
       sigs = Hash[script.chunks[1...-1].map.with_index do |sig, idx|
+        sig = sig.pushed_data
         pubkey = pubkeys.map do |key|
           Bitcoin::Key.new(pubkey: key.bth).verify(sig, sig_hash) ? key : nil
         end.compact.first
@@ -59,7 +59,7 @@ module Bitcoin
       end]
 
       prefix + pubkeys.map { |k| sigs[k] ? Bitcoin::Script.pack_pushdata(sigs[k]) : nil }.join +
-        Bitcoin::Script.pack_pushdata(script.chunks[-1])
+        Bitcoin::Script.pack_pushdata(script.chunks[-1].pushed_data)
     end
   end
 end

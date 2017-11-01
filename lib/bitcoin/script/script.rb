@@ -6,8 +6,8 @@ module Bitcoin
 
     attr_accessor :chunks
 
-    def initialize(input_script=nil)
-      @chunks = parse(input_script)
+    def initialize
+      @chunks = []
     end
 
     # generate P2PKH script
@@ -36,7 +36,8 @@ module Bitcoin
     end
 
     def get_multisig_pubkeys
-      1.upto(@chunks[-2] - 80).map{|i| @chunks[i] }
+      num = Bitcoin::Opcodes.opcode_to_small_int(chunks[-2].bth.to_i(16))
+      (1..num).map{ |i| chunks[i].pushed_data }
     end
 
     # generate m of n multisig script
@@ -406,52 +407,6 @@ module Bitcoin
     end
 
     private
-
-    # parse raw script
-    def parse(input_script)
-      return [] unless input_script
-      program = input_script.unpack("C*")
-      chunks = []
-      until program.empty?
-        opcode = program.shift
-
-        if (opcode > 0) && (opcode < OP_PUSHDATA1)
-          len, tmp = opcode, program[0]
-          chunks << program.shift(len).pack("C*")
-
-          # 0x16 = 22 due to OP_2_16 from_string parsing
-          if len != 1 || !tmp || !tmp <= 22
-            raise "invalid OP_PUSHDATA0" if len != chunks.last.bytesize
-          end
-        elsif (opcode == OP_PUSHDATA1)
-          len = program.shift(1)[0]
-          chunks << program.shift(len).pack("C*")
-
-          if len <= OP_PUSHDATA1 || len > 0xff
-            raise "invalid OP_PUSHDATA1" if len != chunks.last.bytesize
-          end
-        elsif (opcode == OP_PUSHDATA2)
-          len = program.shift(2).pack("C*").unpack("v")[0]
-          chunks << program.shift(len).pack("C*")
-
-          if len <= 0xff || len > 0xffff
-            raise "invalid OP_PUSHDATA2" if len != chunks.last.bytesize
-          end
-        elsif (opcode == OP_PUSHDATA4)
-          len = program.shift(4).pack("C*").unpack("V")[0]
-          chunks << program.shift(len).pack("C*")
-
-          if len <= 0xffff
-            raise "invalid OP_PUSHDATA4" if len != chunks.last.bytesize
-          end
-        else
-          chunks << opcode
-        end
-      end
-      chunks
-    rescue => ex
-      []
-    end
 
     # generate p2pkh address. if script dose not p2pkh, return nil.
     def p2pkh_addr
