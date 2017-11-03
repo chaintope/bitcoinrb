@@ -5,6 +5,7 @@ require 'securerandom'
 require 'json'
 require 'bech32'
 require 'ffi'
+require 'tmpdir'
 require_relative 'openassets'
 
 module Bitcoin
