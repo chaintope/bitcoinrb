@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module OpenAssets
 
   MARKER = "\x4f\x41"
@@ -34,7 +36,9 @@ module OpenAssets
 
     # generate binary payload
     def to_payload
-      payload = MARKER << VERSION
+      payload = String.new
+      payload << MARKER
+      payload << VERSION
       payload << Bitcoin.pack_var_int(quantities.size) << quantities.map{|q| LEB128.encode_unsigned(q).read }.join
       payload << Bitcoin.pack_var_int(metadata.length) << metadata.bytes.map{|b|b.to_s(16)}.join.htb
       payload
