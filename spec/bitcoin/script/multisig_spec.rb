@@ -64,4 +64,55 @@ describe Bitcoin::Multisig do
       end
     end
   end
+
+  describe '#sort_witness_multisig_signatures' do
+    let(:tx) do
+      Bitcoin::Tx.new.tap do |tx|
+        out_point = Bitcoin::OutPoint.new("txid", 0)
+        tx.inputs << Bitcoin::TxIn.new(out_point: out_point)
+        tx.outputs << Bitcoin::TxOut.new(value: 10_000_000, script_pubkey: Bitcoin::Script.new)
+      end
+    end
+    let(:redeem_script) { Bitcoin::Script.to_multisig_script(m, keys.map(&:pubkey)) }
+    let(:keys) { 3.times.map { Bitcoin::Key.generate } }
+    let(:sig_hash) { tx.sighash_for_input(0, redeem_script, amount: 20_000_000, sig_version: :witness_v0) }
+
+    subject { tx.verify_input_sig(0, Bitcoin::Script.to_p2wsh(redeem_script), amount: 20_000_000) }
+
+    context "3 of 3" do
+      let(:m) { 3 }
+      it do
+        # add sigs in all possible orders, sort them, and see if they are valid
+        [0, 1, 2].permutation do |order|
+          script_witness = tx.inputs[0].script_witness
+          script_witness.stack.clear
+          script_witness.stack << ''
+          order.each do |i|
+            Bitcoin::Multisig.add_sig_to_multisig_script_witness(keys[i].sign(sig_hash), script_witness)
+          end
+          script_witness.stack << redeem_script.to_payload
+          Bitcoin::Multisig.sort_witness_multisig_signatures(script_witness, sig_hash)
+          expect(subject).to be_truthy
+        end
+      end
+    end
+
+    context "2 of 3" do
+      let(:m) { 2 }
+      it do
+        # add sigs in all possible orders, sort them, and see if they are valid
+        [0, 1, 2].permutation(m) do |order|
+          script_witness = tx.inputs[0].script_witness
+          script_witness.stack.clear
+          script_witness.stack << ''
+          order.each do |i|
+            Bitcoin::Multisig.add_sig_to_multisig_script_witness(keys[i].sign(sig_hash), script_witness)
+          end
+          script_witness.stack << redeem_script.to_payload
+          Bitcoin::Multisig.sort_witness_multisig_signatures(script_witness, sig_hash)
+          expect(subject).to be_truthy
+        end
+      end
+    end
+  end
 end

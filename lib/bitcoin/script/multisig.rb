@@ -61,5 +61,32 @@ module Bitcoin
       prefix + pubkeys.map { |k| sigs[k] ? Bitcoin::Script.pack_pushdata(sigs[k]) : nil }.join +
         Bitcoin::Script.pack_pushdata(script.chunks[-1].pushed_data)
     end
+
+    def self.add_sig_to_multisig_script_witness(sig_to_add, script_witness, hash_type = SIGHASH_TYPE[:all])
+      signature = sig_to_add + [hash_type].pack("C*")
+      script_witness.stack << signature
+    end
+
+    # Sort signatures in the given +script_witness+ according to the order of pubkeys in
+    # the redeem script. Also needs the +sig_hash+ to match signatures to pubkeys.
+    # @param [ScriptWitness] script_witness for multisig.
+    # @param [String] sig_hash to be signed.
+    def self.sort_witness_multisig_signatures(script_witness, sig_hash)
+      redeem_script = Bitcoin::Script.parse_from_payload(script_witness.stack[-1])
+      pubkeys = redeem_script.get_multisig_pubkeys
+      sigs = Hash[script_witness.stack[1...-1].map.with_index do |sig, idx|
+        pubkey = pubkeys.map do |key|
+          Bitcoin::Key.new(pubkey: key.bth).verify(sig, sig_hash) ? key : nil
+        end.compact.first
+        raise "Key for signature ##{idx} not found in redeem script!"  unless pubkey
+        [pubkey, sig]
+      end]
+      script_witness.stack.clear
+      script_witness.stack << ''
+      pubkeys.each do |pubkey|
+        script_witness.stack << sigs[pubkey] if sigs[pubkey]
+      end
+      script_witness.stack << redeem_script.to_payload
+    end
   end
 end
