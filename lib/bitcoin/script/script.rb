@@ -35,6 +35,11 @@ module Bitcoin
       Script.new << OP_HASH160 << to_hash160 << OP_EQUAL
     end
 
+    def get_multisig_pubkeys
+      num = Bitcoin::Opcodes.opcode_to_small_int(chunks[-2].bth.to_i(16))
+      (1..num).map{ |i| chunks[i].pushed_data }
+    end
+
     # generate m of n multisig script
     # @param [String] m the number of signatures required for multisig
     # @param [Array] pubkeys array of public keys that compose multisig
@@ -42,6 +47,7 @@ module Bitcoin
     def self.to_multisig_script(m, pubkeys)
       new << m << pubkeys << pubkeys.size << OP_CHECKMULTISIG
     end
+
 
     # generate p2wsh script for +redeem_script+
     # @param [Script] redeem_script target redeem script
@@ -257,11 +263,16 @@ module Bitcoin
 
     def to_s
       chunks.map { |c|
-        if c.pushdata?
-          v = Opcodes.opcode_to_small_int(c.ord)
-          v ? v : c.pushed_data.bth
-        else
-          Opcodes.opcode_to_name(c.ord)
+        case c
+        when Integer
+          opcode_to_name(c)
+        when String
+          if c.pushdata?
+            v = Opcodes.opcode_to_small_int(c.ord)
+            v ? v : c.pushed_data.bth
+          else
+            Opcodes.opcode_to_name(c.ord)
+          end
         end
       }.join(' ')
     end

@@ -5,6 +5,7 @@ require 'securerandom'
 require 'json'
 require 'bech32'
 require 'ffi'
+require 'tmpdir'
 require_relative 'openassets'
 
 module Bitcoin
@@ -17,6 +18,7 @@ module Bitcoin
   autoload :BlockHeader, 'bitcoin/block_header'
   autoload :Tx, 'bitcoin/tx'
   autoload :Script, 'bitcoin/script/script'
+  autoload :Multisig, 'bitcoin/script/multisig'
   autoload :ScriptInterpreter, 'bitcoin/script/script_interpreter'
   autoload :ScriptError, 'bitcoin/script/script_error'
   autoload :TxChecker, 'bitcoin/script/tx_checker'
