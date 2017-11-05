@@ -40,7 +40,7 @@ module OpenAssets
       payload << MARKER
       payload << VERSION
       payload << Bitcoin.pack_var_int(quantities.size) << quantities.map{|q| LEB128.encode_unsigned(q).read }.join
-      payload << Bitcoin.pack_var_int(metadata.length) << metadata.bytes.map{|b|b.to_s(16)}.join.htb
+      payload << Bitcoin.pack_var_int(metadata.length) << metadata.bytes.map{|b| sprintf("%02x", b)}.join.htb
       payload
     end
 
