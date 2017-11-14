@@ -35,6 +35,7 @@ module Bitcoin
         raise 'Cannot start a peer pool twice.' if started
         logger.debug 'Start connecting other pears.'
         addr_list = peer_discovery.peers
+
         port = Bitcoin.chain_params.default_port
         EM::Iterator.new(addr_list, Bitcoin::PARALLEL_THREAD).each do |ip, iter|
           if pending_peers.size < MAX_OUTBOUND_CONNECTIONS

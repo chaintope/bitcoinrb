@@ -25,6 +25,7 @@ module Bitcoin
         return if running
         logger.debug 'SPV node start running.'
         EM.run do
+          # EM.start_server('0.0.0.0', Bitcoin.chain_params.default_port, Bitcoin::Network::InboundConnector, self)
           pool.start
           @server = Bitcoin::RPC::HttpServer.run(self, configuration.port)
         end

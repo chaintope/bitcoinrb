@@ -42,6 +42,7 @@ module Bitcoin
       end
 
       def handle_command(command, payload)
+        operation = proc {
         logger.info("[#{addr}] process command #{command}.")
         begin
           case command
@@ -79,15 +80,21 @@ module Bitcoin
               on_send_cmpct(Bitcoin::Message::SendCmpct.parse_from_payload(payload))
             when Bitcoin::Message::Inv::COMMAND
               on_inv(Bitcoin::Message::Inv.parse_from_payload(payload))
+            when Bitcoin::Message::MerkleBlock::COMMAND
+              on_merkle_block(Bitcoin::Message::MerkleBlock.parse_from_payload(payload))
             else
               logger.warn("unsupported command received. #{command}")
               close("with command #{command}")
           end
-        rescue Exception => e
+        end
+        }
+        callback = proc{|result|}
+        errback = proc{|e|
           logger.error("error occurred. #{e.message}")
           logger.error(e.backtrace)
           peer.handle_error(e)
-        end
+        }
+        EM.defer(operation, callback, errback)
       end
 
       def send_message(msg)
@@ -206,6 +213,10 @@ module Bitcoin
         end
         logger.info("receive block= #{blocks.size}, txs: #{txs.size}")
         peer.handle_block_inv(blocks) unless blocks.empty?
+      end
+
+      def on_merkle_block(merkle_block)
+        logger.info("receive merkle block message. #{merkle_block.build_json}")
       end
 
     end

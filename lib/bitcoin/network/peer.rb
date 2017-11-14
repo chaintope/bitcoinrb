@@ -89,7 +89,7 @@ module Bitcoin
 
       # start block header download
       def start_block_header_download
-        logger.debug "[#{addr}] start block header download."
+        logger.info("[#{addr}] start block header download.")
         get_headers = Bitcoin::Message::GetHeaders.new(
             Bitcoin.chain_params.protocol_version, [chain.latest_block.hash])
         conn.send_message(get_headers)

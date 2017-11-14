@@ -20,7 +20,7 @@ module Bitcoin
 
       def initialize(peer)
         @peer = peer
-        @logger = Bitcoin::Logger.create(:debug)
+        @logger = peer.logger
         @sendheaders = false
         @attr_accessor = 0
         @message = ''

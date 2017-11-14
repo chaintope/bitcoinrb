@@ -47,13 +47,13 @@ module Bitcoin
         raise "this header is invalid. #{header.hash}" unless header.valid?
         best_block = latest_block
         current_height = best_block.height
-        unless best_block.hash == header.prev_hash
-          # TODO implements recovery process
-          raise "header's previous hash(#{header.prev_hash}) does not match current best block's(#{best_block.hash})."
-        else
+        if best_block.hash == header.prev_hash
           entry = Bitcoin::Store::ChainEntry.new(header, current_height + 1)
           db.save_entry(entry)
           entry
+        else
+          # TODO implements recovery process
+          raise "header's previous hash(#{header.prev_hash}) does not match current best block's(#{best_block.hash})."
         end
       end
 

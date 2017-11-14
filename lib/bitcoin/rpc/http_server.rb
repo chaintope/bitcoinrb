@@ -28,13 +28,19 @@ module Bitcoin
 
       # process http request.
       def process_http_request
-        command, args = parse_json_params
-        logger.debug("process http request. command = #{command}")
-        response = EM::DelegatedHttpResponse.new(self)
-        response.status = 200
-        response.content_type 'application/json'
-        response.content = send(command, *args).to_json
-        response.send_response
+        operation = proc {
+          command, args = parse_json_params
+          logger.debug("process http request. command = #{command}")
+          send(command, *args).to_json
+        }
+        callback = proc{ |result|
+          response = EM::DelegatedHttpResponse.new(self)
+          response.status = 200
+          response.content_type 'application/json'
+          response.content = result
+          response.send_response
+        }
+        EM.defer(operation, callback)
       end
 
       # parse request parameter.
