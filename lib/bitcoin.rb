@@ -38,6 +38,7 @@ module Bitcoin
   autoload :Network, 'bitcoin/network'
   autoload :Store, 'bitcoin/store'
   autoload :RPC, 'bitcoin/rpc'
+  autoload :Wallet, 'bitcoin/wallet'
 
   require_relative 'bitcoin/constants'
 

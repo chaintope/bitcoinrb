@@ -42,6 +42,13 @@ def create_test_chain
   Bitcoin::Store::SPVChain.new(Bitcoin::Store::DB::LevelDB.new(TEST_DB_PATH))
 end
 
+TEST_WALLET_PATH = Dir.tmpdir + '/wallet'
+
+def create_test_wallet
+  FileUtils.rm_r(TEST_WALLET_PATH) if Dir.exist?(TEST_WALLET_PATH)
+  Bitcoin::Wallet::Base.new(TEST_WALLET_PATH)
+end
+
 module Bitcoin
   autoload :TestScriptParser, 'bitcoin/script/test_script_parser'
 end
