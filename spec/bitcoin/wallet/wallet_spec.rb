@@ -2,14 +2,14 @@ require 'spec_helper'
 
 describe Bitcoin::Wallet do
 
-  let(:wallet) {create_test_wallet}
+  before{ create_test_wallet }
+  let(:wallet) {Bitcoin::Wallet::Base.load(1, TEST_WALLET_PATH)}
   after{ wallet.close }
 
   describe '#load' do
     context 'existing wallet' do
-      subject {Bitcoin::Wallet::Base.load(1, TEST_WALLET_PATH)}
       it 'should return wallet' do
-        expect(subject.wallet_id).to eq(1)
+        expect(wallet.wallet_id).to eq(1)
       end
     end
 
