@@ -5,6 +5,40 @@ describe Bitcoin::Wallet do
   let(:wallet) {create_test_wallet}
   after{ wallet.close }
 
+  describe '#load' do
+    context 'existing wallet' do
+      subject {Bitcoin::Wallet::Base.load(1, TEST_WALLET_PATH)}
+      it 'should return wallet' do
+        expect(subject.wallet_id).to eq(1)
+      end
+    end
+
+    context 'dose not exist wallet' do
+      it 'should raise error' do
+        expect{Bitcoin::Wallet::Base.load(2, TEST_WALLET_PATH)}.to raise_error(ArgumentError)
+      end
+    end
+  end
+
+  describe '#create' do
+    context 'new one' do
+      subject {Bitcoin::Wallet::Base.create(2, TEST_WALLET_PATH)}
+      it 'should be create' do
+        expect(subject.wallet_id).to eq(2)
+      end
+      after{
+        subject.close
+        FileUtils.rm_r(TEST_WALLET_PATH + '_2')
+      }
+    end
+
+    context 'same wallet_id already exist' do
+      it 'should raise error' do
+        expect{Bitcoin::Wallet::Base.create(1, TEST_WALLET_PATH)}.to raise_error(ArgumentError)
+      end
+    end
+  end
+
   describe '#create_account' do
     before {
       wallet.create_account('hoge')

@@ -44,9 +44,10 @@ end
 
 TEST_WALLET_PATH = Dir.tmpdir + '/wallet'
 
-def create_test_wallet
-  FileUtils.rm_r(TEST_WALLET_PATH) if Dir.exist?(TEST_WALLET_PATH)
-  Bitcoin::Wallet::Base.new(TEST_WALLET_PATH)
+def create_test_wallet(wallet_id = 1)
+  path = "#{TEST_WALLET_PATH}_#{wallet_id}"
+  FileUtils.rm_r(path) if Dir.exist?(path)
+  Bitcoin::Wallet::Base.create(1,TEST_WALLET_PATH)
 end
 
 module Bitcoin

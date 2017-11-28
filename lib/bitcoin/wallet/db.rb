@@ -4,7 +4,8 @@ module Bitcoin
     class DB
 
       KEY_PREFIX = {
-          account: 'a',       # key: wid, index, value: Account raw data.
+          account: 'a',       # key: account index, value: Account raw data.
+          seed: 's',          # value : wallet seed.
       }
 
       attr_reader :level_db
@@ -31,6 +32,16 @@ module Bitcoin
           key = KEY_PREFIX[:account] + account.index.to_s(16).rjust(8, '0')
           level_db.put(key, account.to_payload)
         end
+      end
+
+      # get wallet seed
+      def seed
+        level_db.get(KEY_PREFIX[:seed])
+      end
+
+      # save seed
+      def register_seed(seed)
+        level_db.put(KEY_PREFIX[:seed], seed)
       end
 
     end
