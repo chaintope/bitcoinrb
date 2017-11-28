@@ -8,7 +8,6 @@ module Bitcoin
     module_function
 
     def parse_script(script_string)
-      puts "script_string = #{script_string}"
       script = Bitcoin::Script.new
       words = script_string.split(' ')
       words.each do |w|
@@ -53,8 +52,6 @@ module Bitcoin
           script.chunks[-1] = latest_chunk + append_data
         end
       end
-      puts "payload = #{script.to_payload.bth}"
-      puts "to_s = #{script.to_s}"
       script
     end
 

@@ -6,7 +6,6 @@ describe Bitcoin::ScriptInterpreter do
     script_json = fixture_file('script_tests.json').select{ |j|j.size > 3}
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
-        puts r.inspect
         if r[0].is_a?(Array)
           witness = Bitcoin::ScriptWitness.new(r[0][0..-2].map{ |v| v.htb })
           sig, pubkey, flags, error_code = r[1], r[2], r[3], r[4]
@@ -23,7 +22,6 @@ describe Bitcoin::ScriptInterpreter do
         expected_err_code = find_error_code(error_code)
         i = Bitcoin::ScriptInterpreter.new(flags: flags, checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0, amount: amount))
         result = i.verify_script(script_sig, script_pubkey, witness)
-        puts i.error.to_s
         expect(result).to be expected_err_code == Bitcoin::SCRIPT_ERR_OK
         expect(i.error.code).to eq(expected_err_code) unless result
       end
