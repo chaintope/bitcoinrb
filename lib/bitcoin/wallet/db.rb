@@ -5,10 +5,11 @@ module Bitcoin
 
       KEY_PREFIX = {
           account: 'a',       # key: account index, value: Account raw data.
-          seed: 's',          # value : wallet seed.
+          master: 'm',          # value : wallet seed.
       }
 
       attr_reader :level_db
+      attr_accessor :master_key
 
       def initialize(path = "#{Bitcoin.base_dir}/db/wallet")
         FileUtils.mkdir_p(path)
@@ -34,14 +35,21 @@ module Bitcoin
         end
       end
 
-      # get wallet seed
-      def seed
-        level_db.get(KEY_PREFIX[:seed])
+      # get master_key
+      def master_key
+        @master_key ||= Bitcoin::Wallet::MasterKey.parse_from_payload(level_db.get(KEY_PREFIX[:master]))
       end
 
       # save seed
-      def register_seed(seed)
-        level_db.put(KEY_PREFIX[:seed], seed)
+      # @param [Bitcoin::Wallet::MasterKey] master a master key.
+      def register_master_key(master)
+        level_db.put(KEY_PREFIX[:master], master.to_payload)
+        @master_key = master
+      end
+
+      # whether master key registered.
+      def registered_master?
+        !level_db.get(KEY_PREFIX[:master]).nil?
       end
 
     end

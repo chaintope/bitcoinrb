@@ -9,18 +9,23 @@ module Bitcoin
 
       DEFAULT_PATH_PREFIX = "#{Bitcoin.base_dir}/db/wallet"
 
-      # create new wallet. if
+      # Create new wallet. If wallet already exist, throw error.
+      # The wallet generates a seed using SecureRandom and store to db at initialization.
       # @param [String] wallet_id new wallet id.
       # @param [String] path_prefix wallet file path prefix.
-      # @return [Bitcoin::Wallet::Base] wallet object.
+      # @return [Bitcoin::Wallet::Base] the wallet
       def self.create(wallet_id = 1, path_prefix = DEFAULT_PATH_PREFIX)
         raise ArgumentError, "wallet_id : #{wallet_id} already exist." if self.exist?(wallet_id, path_prefix)
         w = self.new(wallet_id, path_prefix)
-        w.init
+        # generate seed
+        raise RuntimeError, 'the seed already exist.' if w.db.registered_master?
+        master = Bitcoin::Wallet::MasterKey.generate
+        w.db.register_master_key(master)
         w
       end
 
       # load wallet with specified +wallet_id+
+      # @return [Bitcoin::Wallet::Base] the wallet
       def self.load(wallet_id, path_prefix = DEFAULT_PATH_PREFIX)
         raise ArgumentError, "wallet_id : #{wallet_id} dose not exist." unless self.exist?(wallet_id, path_prefix)
         self.new(wallet_id, path_prefix)
@@ -43,11 +48,22 @@ module Bitcoin
         db.close
       end
 
-      # initialize wallet
-      def init
-        raise RuntimeError, 'the seed already exist.' if db.seed
-        seed = SecureRandom.hex(16)
-        db.register_seed(seed)
+      # get master key
+      # @return [Bitcoin::Wallet::MasterKey]
+      def master_key
+        db.master_key
+      end
+
+      # encrypt wallet
+      # @param [String] passphrase the wallet passphrase
+      def encrypt(passphrase)
+
+      end
+
+      # decrypt wallet
+      # @param [String] passphrase the wallet passphrase
+      def decrypt(passphrase)
+
       end
 
       private

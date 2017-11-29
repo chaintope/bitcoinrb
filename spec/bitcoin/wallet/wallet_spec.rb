@@ -8,8 +8,9 @@ describe Bitcoin::Wallet do
 
   describe '#load' do
     context 'existing wallet' do
+      subject {Bitcoin::Wallet::Base.load(1, TEST_WALLET_PATH)}
       it 'should return wallet' do
-        expect(wallet.wallet_id).to eq(1)
+        expect(subject.wallet_id).to eq(1)
       end
     end
 
@@ -21,10 +22,11 @@ describe Bitcoin::Wallet do
   end
 
   describe '#create' do
-    context 'new one' do
+    context 'should create new wallet' do
       subject {Bitcoin::Wallet::Base.create(2, TEST_WALLET_PATH)}
       it 'should be create' do
         expect(subject.wallet_id).to eq(2)
+        expect(subject.master_key.mnemonic.size).to eq(12)
       end
       after{
         subject.close
