@@ -74,7 +74,9 @@ module Bitcoin
 
         # generate height key
         def height_key(height)
-          KEY_PREFIX[:height] + height.to_s(16).htb.reverse.bth
+          height = height.to_s(16)
+          height = '0' + height if height.bytesize.odd?
+          KEY_PREFIX[:height] + height.htb.reverse.bth
         end
 
         def connect_entry(entry)
@@ -87,6 +89,8 @@ module Bitcoin
               raise "block height is small than current best block."
             end
           end
+
+
           db.put(KEY_PREFIX[:best], entry.hash)
           db.put(KEY_PREFIX[:next] + entry.prev_hash, entry.hash)
         end
