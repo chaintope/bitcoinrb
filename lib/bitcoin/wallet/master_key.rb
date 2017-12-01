@@ -7,16 +7,14 @@ module Bitcoin
       include Bitcoin::Util
 
       attr_reader :seed
-      attr_accessor :iv
       attr_accessor :salt
       attr_accessor :encrypted
       attr_accessor :mnemonic # ephemeral data existing only at initialization
 
-      def initialize(seed, iv: '', salt: '', encrypted: false, mnemonic: nil)
+      def initialize(seed, salt: '', encrypted: false, mnemonic: nil)
         @mnemonic = mnemonic
         @seed = seed
         @encrypted = encrypted
-        @iv = iv
         @salt = salt
       end
 
@@ -43,26 +41,59 @@ module Bitcoin
       def self.parse_from_payload(payload)
         flag, payload = unpack_var_int(payload)
         raise 'encrypted flag is invalid.' unless [0, 1].include?(flag)
-        iv, payload = unpack_var_string(payload)
         salt, payload = unpack_var_string(payload)
         seed, payload = unpack_var_string(payload)
-        self.new(seed.bth, iv: iv.bth, salt: salt.bth, encrypted: flag == 1)
+        self.new(seed.bth, salt: salt.bth, encrypted: flag == 1)
       end
 
       # generate payload with following format
-      # [encrypted(false:0, true:1)][iv(var str)][salt(var str)][seed(var str)]
+      # [encrypted(false:0, true:1)][salt(var str)][seed(var str)]
       def to_payload
         flg = encrypted ? 1 : 0
-        pack_var_int(flg) << [iv, salt, seed].map{|v|pack_var_string(v.htb)}.join
+        pack_var_int(flg) << [salt, seed].map{|v|pack_var_string(v.htb)}.join
       end
 
       # get master key
       # @return [Bitcoin::ExtKey] the master key
       def key
+        raise 'seed is encrypted. please decrypt the seed.' if encrypted
         Bitcoin::ExtKey.generate_master(seed)
       end
 
+      # encrypt seed
+      def encrypt(passphrase)
+        raise 'seed already encrypted.' if encrypted
+        @salt = SecureRandom.hex(16)
+        enc = OpenSSL::Cipher.new('AES-256-CBC')
+        enc.encrypt
+        enc.key, enc.iv = key_iv(enc, passphrase)
+        encrypted_data = ''
+        encrypted_data << enc.update(seed)
+        encrypted_data << enc.final
+        @seed = encrypted_data
+        @encrypted = true
+      end
+
+      # decrypt seed
+      def decrypt(passphrase)
+        raise 'seed is not encrypted.' unless encrypted
+        dec = OpenSSL::Cipher.new('AES-256-CBC')
+        dec.decrypt
+        dec.key, dec.iv = key_iv(dec, passphrase)
+        decrypted_data = ''
+        decrypted_data << dec.update(seed)
+        decrypted_data << dec.final
+        @seed = decrypted_data
+        @encrypted = false
+        @salt = ''
+      end
+
       private
+
+      def key_iv(enc, passphrase)
+        key_iv = OpenSSL::PKCS5.pbkdf2_hmac_sha1(passphrase, salt, 2000, enc.key_len + enc.iv_len)
+        [key_iv[0, enc.key_len], key_iv[enc.key_len, enc.iv_len]]
+      end
 
     end
   end
