@@ -24,7 +24,7 @@ module Bitcoin
     def to_entropy(words)
       word_master = load_words
       mnemonic = words.map do |w|
-        index = word_master.index(w)
+        index = word_master.index(w.downcase)
         raise IndexError, 'word not found in words list.' unless index
         index.to_s(2).rjust(11, '0')
       end.join
@@ -52,7 +52,7 @@ module Bitcoin
     # @param [String] passphrase a passphrase which protects mnemonic. the default value is an empty string.
     # @return [String] seed
     def to_seed(mnemonic, passphrase: '')
-      OpenSSL::PKCS5.pbkdf2_hmac(mnemonic.join(' '),
+      OpenSSL::PKCS5.pbkdf2_hmac(mnemonic.join(' ').downcase,
                                  'mnemonic' + passphrase, 2048, 64, OpenSSL::Digest::SHA512.new).bth
     end
 

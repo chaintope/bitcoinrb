@@ -24,8 +24,30 @@ describe Bitcoin::Mnemonic, network: :mainnet do
   end
 
   describe '#to_entropy' do
-    it 'should be generate' do
-      expect(subject.to_entropy(%w(scissors invite lock maple supreme raw rapid void congress muscle digital elegant little brisk hair mango congress clump))).to eq('c10ec20dc3cd9f652c7fac2f1230f7a3c828389a14392f05')
+    context 'lower case' do
+      it 'should be generate' do
+        expect(subject.to_entropy(%w(scissors invite lock maple supreme raw rapid void congress muscle digital elegant little brisk hair mango congress clump))).to eq('c10ec20dc3cd9f652c7fac2f1230f7a3c828389a14392f05')
+      end
+    end
+
+    context 'upper case' do
+      it 'should be generate' do
+        expect(subject.to_entropy(%w(SCISSORS INVITE LOCK MAPLE SUPREME RAW RAPID VOID CONGRESS MUSCLE DIGITAL ELEGANT LITTLE BRISK HAIR MANGO CONGRESS CLUMP))).to eq('c10ec20dc3cd9f652c7fac2f1230f7a3c828389a14392f05')
+      end
+    end
+  end
+
+  describe '#to_seed' do
+    context 'lower case' do
+      it 'should be generate' do
+        expect(subject.to_seed(%w(letter advice cage absurd amount doctor acoustic avoid letter advice cage above), passphrase: 'TREZOR')).to eq('d71de856f81a8acc65e6fc851a38d4d7ec216fd0796d0a6827a3ad6ed5511a30fa280f12eb2e47ed2ac03b5c462a0358d18d69fe4f985ec81778c1b370b652a8')
+      end
+    end
+
+    context 'upper case' do
+      it 'should be generate' do
+        expect(subject.to_seed(%w(LETTER ADVICE CAGE ABSURD AMOUNT DOCTOR ACOUSTIC AVOID LETTER ADVICE CAGE ABOVE), passphrase: 'TREZOR')).to eq('d71de856f81a8acc65e6fc851a38d4d7ec216fd0796d0a6827a3ad6ed5511a30fa280f12eb2e47ed2ac03b5c462a0358d18d69fe4f985ec81778c1b370b652a8')
+      end
     end
   end
 
