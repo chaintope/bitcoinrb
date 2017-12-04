@@ -88,13 +88,24 @@ describe Bitcoin::RPC::RequestHandler do
 
   describe '#createwallet' do
     before {
-      path = "#{TEST_WALLET_PATH}_3"
+      path = test_wallet_path(3)
+      FileUtils.rm_r(path) if Dir.exist?(path)
+    }
+    after {
+      path = test_wallet_path(3)
       FileUtils.rm_r(path) if Dir.exist?(path)
     }
     it 'should be create new wallet' do
       result = subject.createwallet(3, TEST_WALLET_PATH)
       expect(result[:wallet_id]).to eq(3)
       expect(result[:mnemonic].size).to eq(24)
+    end
+  end
+
+  describe '#listwallets' do
+    it 'should return wallet list.' do
+      result = subject.listwallets(TEST_WALLET_PATH)
+      expect(result[0]).to eq(test_wallet_path(1))
     end
   end
 

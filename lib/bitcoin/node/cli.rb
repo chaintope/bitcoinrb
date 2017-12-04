@@ -40,6 +40,11 @@ module Bitcoin
         request('createwallet', wallet_id)
       end
 
+      desc 'listwallets', 'Returns a list of currently loaded wallets. For full information on the wallet, use "getwalletinfo"'
+      def listwallets
+        request('listwallets')
+      end
+
       private
 
       def config

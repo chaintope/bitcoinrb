@@ -81,9 +81,15 @@ module Bitcoin
       # wallet api
 
       # create wallet
-      def createwallet(wallet_id = 1, path_prefix = Bitcoin::Wallet::Base::DEFAULT_PATH_PREFIX)
-        wallet = Bitcoin::Wallet::Base.create(wallet_id, path_prefix)
+      def createwallet(wallet_id = 1, wallet_path_prefix = Bitcoin::Wallet::Base::DEFAULT_PATH_PREFIX)
+        wallet = Bitcoin::Wallet::Base.create(wallet_id, wallet_path_prefix)
+        node.wallet = wallet unless node.wallet
         {wallet_id: wallet.wallet_id, mnemonic: wallet.master_key.mnemonic}
+      end
+
+      # get wallet list.
+      def listwallets(wallet_path_prefix = Bitcoin::Wallet::Base::DEFAULT_PATH_PREFIX)
+        Bitcoin::Wallet::Base.wallet_paths(wallet_path_prefix)
       end
 
     end

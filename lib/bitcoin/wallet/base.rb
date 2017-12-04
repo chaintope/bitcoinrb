@@ -6,8 +6,9 @@ module Bitcoin
 
       attr_accessor :wallet_id
       attr_reader :db
+      attr_reader :path
 
-      DEFAULT_PATH_PREFIX = "#{Bitcoin.base_dir}/db/wallet"
+      DEFAULT_PATH_PREFIX = "#{Bitcoin.base_dir}/db/wallet/"
 
       # Create new wallet. If wallet already exist, throw error.
       # The wallet generates a seed using SecureRandom and store to db at initialization.
@@ -29,6 +30,12 @@ module Bitcoin
       def self.load(wallet_id, path_prefix = DEFAULT_PATH_PREFIX)
         raise ArgumentError, "wallet_id : #{wallet_id} dose not exist." unless self.exist?(wallet_id, path_prefix)
         self.new(wallet_id, path_prefix)
+      end
+
+      # get wallets path
+      # @return [Array] Array of paths for each wallet dir.
+      def self.wallet_paths(path_prefix = DEFAULT_PATH_PREFIX)
+        Dir.glob("#{path_prefix}wallet*/")
       end
 
       # get account list based on BIP-44
@@ -69,12 +76,13 @@ module Bitcoin
       private
 
       def initialize(wallet_id, path_prefix)
-        @db = Bitcoin::Wallet::DB.new("#{path_prefix}_#{wallet_id}")
+        @path = "#{path_prefix}wallet#{wallet_id}"
+        @db = Bitcoin::Wallet::DB.new(@path)
         @wallet_id = wallet_id
       end
 
       def self.exist?(wallet_id, path_prefix)
-        path = "#{path_prefix}_#{wallet_id}"
+        path = "#{path_prefix}wallet#{wallet_id}"
         Dir.exist?(path)
       end
 

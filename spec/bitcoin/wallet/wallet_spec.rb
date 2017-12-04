@@ -11,6 +11,7 @@ describe Bitcoin::Wallet do
       subject {Bitcoin::Wallet::Base.load(1, TEST_WALLET_PATH)}
       it 'should return wallet' do
         expect(subject.wallet_id).to eq(1)
+        expect(subject.path).to eq(test_wallet_path(1))
       end
     end
 
@@ -30,7 +31,7 @@ describe Bitcoin::Wallet do
       end
       after{
         subject.close
-        FileUtils.rm_r(TEST_WALLET_PATH + '_2')
+        FileUtils.rm_r(test_wallet_path(2))
       }
     end
 
@@ -38,6 +39,13 @@ describe Bitcoin::Wallet do
       it 'should raise error' do
         expect{Bitcoin::Wallet::Base.create(1, TEST_WALLET_PATH)}.to raise_error(ArgumentError)
       end
+    end
+  end
+
+  describe '#wallets_path' do
+    subject { Bitcoin::Wallet::Base.wallet_paths(TEST_WALLET_PATH) }
+    it 'should return wallet dir.' do
+      expect(subject[0]).to eq("#{TEST_WALLET_PATH}wallet1/")
     end
   end
 

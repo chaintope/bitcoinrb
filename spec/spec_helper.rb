@@ -42,10 +42,14 @@ def create_test_chain
   Bitcoin::Store::SPVChain.new(Bitcoin::Store::DB::LevelDB.new(TEST_DB_PATH))
 end
 
-TEST_WALLET_PATH = Dir.tmpdir + '/wallet'
+TEST_WALLET_PATH = Dir.tmpdir + '/wallet/'
+
+def test_wallet_path(wallet_id = 1)
+  "#{TEST_WALLET_PATH}wallet#{wallet_id}/"
+end
 
 def create_test_wallet(wallet_id = 1)
-  path = "#{TEST_WALLET_PATH}_#{wallet_id}"
+  path = test_wallet_path(wallet_id)
   FileUtils.rm_r(path) if Dir.exist?(path)
   Bitcoin::Wallet::Base.create(1,TEST_WALLET_PATH)
 end
