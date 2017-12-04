@@ -11,14 +11,19 @@ describe Bitcoin::RPC::RequestHandler do
   end
 
   let(:chain) { load_chain_mock }
+  let(:wallet) { create_test_wallet }
   subject {
     node_mock = double('node mock')
     allow(node_mock).to receive(:chain).and_return(chain)
     allow(node_mock).to receive(:pool).and_return(load_pool_mock(node_mock.chain))
     allow(node_mock).to receive(:broadcast).and_return(nil)
+    allow(node_mock).to receive(:wallet).and_return(wallet)
     HandlerMock.new(node_mock)
   }
-  after { chain.db.close }
+  after {
+    chain.db.close
+    wallet.close
+  }
 
   describe '#getblockchaininfo' do
     it 'should return chain info' do
@@ -78,6 +83,18 @@ describe Bitcoin::RPC::RequestHandler do
     it 'should return txid' do
       raw_tx = '0100000001b827a4b3edeb56a5598e22c1a54205de3b9c6b749fbfdb6a494bd1cb550cc93f000000006b483045022100aedbe7fa2f0dff58222d15665471266ff539bf1285b0ce69b22ae030d13535f602206d1272f2437e2e8c5185d59dc51a8169b0fb61b8a7aaa9576a878e8a4baafbe8012103fd8474629e95865deff1b8d72004055b03a87714d8288e33330f2b0a966f46b8ffffffff01adfcdf07000000001976a914f38f47c0b9de955bb9aca788525a8281ed50973b88ac00000000'
       expect(subject.sendrawtransaction(raw_tx)).to eq('dfbf28c96d21bb7f2c3fb278c7cfa85a4b68874db29327dd930aeb31efbe70cb')
+    end
+  end
+
+  describe '#createwallet' do
+    before {
+      path = "#{TEST_WALLET_PATH}_3"
+      FileUtils.rm_r(path) if Dir.exist?(path)
+    }
+    it 'should be create new wallet' do
+      result = subject.createwallet(3, TEST_WALLET_PATH)
+      expect(result[:wallet_id]).to eq(3)
+      expect(result[:mnemonic].size).to eq(24)
     end
   end
 

@@ -78,6 +78,14 @@ module Bitcoin
         tx.txid
       end
 
+      # wallet api
+
+      # create wallet
+      def createwallet(wallet_id = 1, path_prefix = Bitcoin::Wallet::Base::DEFAULT_PATH_PREFIX)
+        wallet = Bitcoin::Wallet::Base.create(wallet_id, path_prefix)
+        {wallet_id: wallet.wallet_id, mnemonic: wallet.master_key.mnemonic}
+      end
+
     end
 
   end

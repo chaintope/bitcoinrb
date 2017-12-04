@@ -35,6 +35,11 @@ module Bitcoin
         request('sendrawtransaction', hex_tx)
       end
 
+      desc 'createwallet "wallet_id"', 'Create new HD wallet. It returns an error if an existing wallet_id is specified. '
+      def createwallet(wallet_id)
+        request('createwallet', wallet_id)
+      end
+
       private
 
       def config
@@ -53,8 +58,12 @@ module Bitcoin
           RestClient::Request.execute(method: :post, url: config.server_url, payload: data.to_json,
                                       headers: {content_type: :json}) do |response, request, result|
             return false if !result.kind_of?(Net::HTTPSuccess) && response.empty?
-            json = JSON.parse(response.to_str)
-            puts JSON.pretty_generate(json)
+            begin
+              json = JSON.parse(response.to_str)
+              puts JSON.pretty_generate(json)
+            rescue Exception
+              puts response.to_str
+            end
           end
         rescue Exception => e
           puts e.message

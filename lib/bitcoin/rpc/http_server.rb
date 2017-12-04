@@ -31,13 +31,22 @@ module Bitcoin
         operation = proc {
           command, args = parse_json_params
           logger.debug("process http request. command = #{command}")
-          send(command, *args).to_json
+          begin
+            send(command, *args).to_json
+          rescue Exception => e
+            e
+          end
         }
         callback = proc{ |result|
           response = EM::DelegatedHttpResponse.new(self)
-          response.status = 200
+          if result.is_a?(Exception)
+            response.status = 500
+            response.content = result.message
+          else
+            response.status = 200
+            response.content = result
+          end
           response.content_type 'application/json'
-          response.content = result
           response.send_response
         }
         EM.defer(operation, callback)
