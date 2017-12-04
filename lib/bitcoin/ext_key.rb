@@ -64,6 +64,10 @@ module Bitcoin
       key.pubkey
     end
 
+    def hash160
+      Bitcoin.hash160(pub)
+    end
+
     # get address
     def addr
       key.to_p2pkh
@@ -137,6 +141,10 @@ module Bitcoin
 
     def pub
       pubkey
+    end
+
+    def hash160
+      Bitcoin.hash160(pub)
     end
 
     # get address

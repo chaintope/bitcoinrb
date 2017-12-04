@@ -18,9 +18,11 @@ describe Bitcoin::ExtKey, network: :mainnet do
       expect(@master_key.priv).to eq('e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35')
       expect(@master_key.addr).to eq('15mKKb2eos1hWa6tisdPwwDC1a5J1y9nma')
       expect(@master_key.pub).to eq('0339a36013301597daef41fbe593a02cc513d0b55527ec2df1050e2e8ff49c85c2')
+      expect(@master_key.hash160).to eq('3442193e1bb70916e914552172cd4e2dbc9df811')
       expect(@master_key.to_base58).to eq('xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi')
       expect(@master_key.ext_pubkey.to_base58).to eq('xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8')
       expect(@master_key.ext_pubkey.pub).to eq('0339a36013301597daef41fbe593a02cc513d0b55527ec2df1050e2e8ff49c85c2')
+      expect(@master_key.ext_pubkey.hash160).to eq('3442193e1bb70916e914552172cd4e2dbc9df811')
       expect(@master_key.ext_pubkey.addr).to eq('15mKKb2eos1hWa6tisdPwwDC1a5J1y9nma')
     end
 
