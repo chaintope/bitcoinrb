@@ -76,7 +76,7 @@ module Bitcoin
       private
 
       def initialize(wallet_id, path_prefix)
-        @path = "#{path_prefix}wallet#{wallet_id}"
+        @path = "#{path_prefix}wallet#{wallet_id}/"
         @db = Bitcoin::Wallet::DB.new(@path)
         @wallet_id = wallet_id
       end
