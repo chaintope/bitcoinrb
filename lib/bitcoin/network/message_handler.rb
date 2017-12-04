@@ -107,6 +107,7 @@ module Bitcoin
       end
 
       def handshake_done
+        return unless @incomming_handshake && @outgoing_handshake
         logger.info 'handshake finished.'
         @connected = true
         post_handshake
@@ -116,10 +117,13 @@ module Bitcoin
         logger.info("receive version message. #{version.build_json}")
         @version = version
         send_message(Bitcoin::Message::VerAck.new)
+        @incomming_handshake = true
+        handshake_done
       end
 
       def on_ver_ack
         logger.info('receive verack message.')
+        @outgoing_handshake = true
         handshake_done
       end
 
