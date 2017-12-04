@@ -21,7 +21,7 @@ module Bitcoin
       # generate new master key.
       # @return Bitcoin::Wallet::MasterKey
       def self.generate
-        entropy = SecureRandom.hex(16)
+        entropy = SecureRandom.hex(32)
         mnemonic = Bitcoin::Mnemonic.new('english')
         self.recover_from_words(mnemonic.to_mnemonic(entropy))
       end

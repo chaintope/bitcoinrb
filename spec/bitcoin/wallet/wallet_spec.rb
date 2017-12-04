@@ -26,7 +26,7 @@ describe Bitcoin::Wallet do
       subject {Bitcoin::Wallet::Base.create(2, TEST_WALLET_PATH)}
       it 'should be create' do
         expect(subject.wallet_id).to eq(2)
-        expect(subject.master_key.mnemonic.size).to eq(12)
+        expect(subject.master_key.mnemonic.size).to eq(24)
       end
       after{
         subject.close
