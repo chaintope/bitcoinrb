@@ -24,6 +24,7 @@ module Bitcoin
     attr_reader :proof_of_work_limit
     attr_reader :dns_seeds
     attr_reader :genesis
+    attr_reader :bip44_coin_type
 
     # mainnet genesis
     def self.mainnet

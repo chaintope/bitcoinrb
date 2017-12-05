@@ -9,12 +9,12 @@ module Bitcoin
       attr_reader :purpose # either 44 or 49
       attr_reader :index # BIP-44 index
       attr_reader :name # account name
-      attr_accessor :receive_depth # receive address depth
-      attr_accessor :change_depth # change address depth
+      attr_accessor :receive_depth # receive address depth(address index)
+      attr_accessor :change_depth # change address depth(address index)
       attr_accessor :lookahead
       attr_accessor :wallet
 
-      def initialize(purpose = PURPOSE_TYPE[:legacy], index = 0, name = '')
+      def initialize(purpose = PURPOSE_TYPE[:nested_witness], index = 0, name = '')
         @purpose = purpose
         @index = index
         @name = name
@@ -46,22 +46,20 @@ module Bitcoin
       end
 
       def init
-        lookahead.times do |index|
-          derive_receive(index)
-          derive_change(index)
-        end
+        @receive_depth = lookahead
+        @change_depth = lookahead
         @index = wallet.accounts.size
         save
       end
 
       # derive receive key
-      def derive_receive(index)
-        derive(0, index)
+      def derive_receive(address_index)
+        derive_path(0, address_index)
       end
 
       # derive change key
-      def derive_change(index)
-        derive(1, index)
+      def derive_change(address_index)
+        derive_path(1, address_index)
       end
 
       # save this account payload to database.
@@ -69,11 +67,27 @@ module Bitcoin
         wallet.db.save_account(self)
       end
 
+      # get the list of derived keys for receive key.
+      def derived_receive_keys
+        receive_depth.times.map{|i|derive_key(0,i)}
+      end
+
+      # get the list of derived keys for change key.
+      def derived_change_keys
+        receive_depth.times.map{|i|derive_key(1,i)}
+      end
+
       private
 
-      # derive key
-      def derive(branch, index)
+      def derive_key(branch, address_index)
+        account_key.derive(branch).derive(address_index)
+      end
 
+      def account_key
+        return @cached_account_key if @cached_account_key
+        coin_type = Bitcoin.chain_params.bip44_coin_type
+        # m / purpose' / coin_type' / account_index'
+        @cached_account_key = wallet.master_key.key.derive(2**31 + purpose).derive(2**31 + coin_type).derive(2**31 + index)
       end
 
     end

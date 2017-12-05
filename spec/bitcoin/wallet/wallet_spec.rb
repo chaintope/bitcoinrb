@@ -52,18 +52,23 @@ describe Bitcoin::Wallet do
   describe '#create_account' do
     before {
       wallet.create_account('hoge')
-      wallet.create_account('fuge')
     }
     subject {wallet.accounts}
     it 'should be created' do
       expect(subject.size).to eq(2)
-      expect(subject[0].purpose).to eq(44)
+      expect(subject[0].purpose).to eq(49)
       expect(subject[0].index).to eq(0)
-      expect(subject[0].name).to eq('hoge')
-      # expect(subject[0].receive_depth).to eq(10)
-      # expect(subject[0].change_depth).to eq(10)
-      # expect(subject[0].lookahead).to eq(20)
-      expect(subject[1].name).to eq('fuge')
+      expect(subject[0].name).to eq('Default')
+      expect(subject[0].receive_depth).to eq(10)
+      receive_keys = subject[0].derived_receive_keys
+      expect(receive_keys.size).to eq(10)
+      expect(receive_keys[0].hardened?).to be false
+      expect(subject[0].change_depth).to eq(10)
+      change_keys = subject[0].derived_change_keys
+      expect(change_keys.size).to eq(10)
+      expect(change_keys[0].hardened?).to be false
+      expect(subject[0].lookahead).to eq(10)
+      expect(subject[1].name).to eq('hoge')
       expect(subject[1].index).to eq(1)
     end
   end

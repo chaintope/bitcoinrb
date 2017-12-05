@@ -42,6 +42,7 @@ module Bitcoin
         flag, payload = unpack_var_int(payload)
         raise 'encrypted flag is invalid.' unless [0, 1].include?(flag)
         salt, payload = unpack_var_string(payload)
+        salt = '' unless salt
         seed, payload = unpack_var_string(payload)
         self.new(seed.bth, salt: salt.bth, encrypted: flag == 1)
       end

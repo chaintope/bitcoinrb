@@ -22,6 +22,7 @@ module Bitcoin
         raise RuntimeError, 'the seed already exist.' if w.db.registered_master?
         master = Bitcoin::Wallet::MasterKey.generate
         w.db.register_master_key(master)
+        w.create_account('Default')
         w
       end
 
@@ -40,10 +41,14 @@ module Bitcoin
 
       # get account list based on BIP-44
       def accounts
-        db.accounts.map{|raw| Account.parse_from_payload(raw)}
+        db.accounts.map do |raw|
+          a = Account.parse_from_payload(raw)
+          a.wallet = self
+          a
+        end
       end
 
-      def create_account(purpose = Account::PURPOSE_TYPE[:legacy], index = 0, name)
+      def create_account(purpose = Account::PURPOSE_TYPE[:nested_witness], index = 0, name)
         account = Account.new(purpose, index, name)
         account.wallet = self
         account.init
