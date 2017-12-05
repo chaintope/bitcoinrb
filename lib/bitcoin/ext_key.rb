@@ -88,6 +88,11 @@ module Bitcoin
       identifier.slice(0..7)
     end
 
+    # whether hardened key.
+    def hardened?
+      number >= 2**31
+    end
+
     # derive new key
     def derive(number)
       new_key = ExtKey.new
@@ -177,6 +182,11 @@ module Bitcoin
       h = to_payload.bth
       hex = h + Bitcoin.calc_checksum(h)
       Base58.encode(hex)
+    end
+
+    # whether hardened key.
+    def hardened?
+      number >= 2**31
     end
 
     # derive child key
