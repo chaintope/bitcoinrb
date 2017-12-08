@@ -1,30 +1,36 @@
 #!/usr/bin/env ruby
 require 'thor'
 require 'bitcoin'
-require 'bitcoin/node/spv'
+require 'daemon_spawn'
+
+class BitcoinDaemon < DaemonSpawn::Base
+
+  def start(args)
+    puts "Bitcoinrb daemon start : #{Time.now}"
+    conf = Bitcoin::Node::Configuration.new(network: args.first[:network])
+    node = Bitcoin::Node::SPV.new(conf)
+    node.run
+  end
+
+end
 
 class Bitcoinrbd < Thor
 
-  option :mode, default: 'spv'
-  option :network, default: 'mainnet'
-  desc 'start', 'start bitcoinrbd daemon process'
+  class_option :network, aliases: '-n', default: :mainnet
+
+  desc 'start', 'start bitcoinrb daemon.'
   def start
-    raise ArgumentError, 'currently only support spv mode.' unless options[:mode] == 'spv'
-    Bitcoin.chain_params = network.to_sym
+    network = options['network'] ? options['network'].to_sym : :mainnet
+    Bitcoin.chain_params = network
     FileUtils.mkdir_p(Bitcoin.base_dir)
-    execute_daemon(['start'])
+    execute_daemon(['start', network: network])
   end
 
-  option :mode, default: 'spv'
-  option :network, default: 'mainnet'
-  desc 'stop', 'start bitcoinrbd daemon process'
-  def stop
-    execute_daemon(['stop'])
-  end
+  private
 
   def execute_daemon(cmd_args)
-    Bitcoin::Nodes::SPV.spawn!({working_dir: Bitcoin.base_dir,
-                                     log_file: "#{Bitcoin.base_dir}/bitcoinrbd.log",
+    BitcoinDaemon.spawn!({working_dir: Bitcoin.base_dir,
+                                     log_file: "#{Bitcoin.base_dir}/log/bitcoinrbd.log",
                                      pid_file: "#{Bitcoin.base_dir}/bitcoinrbd.pid",
                                      sync_log: true,
                                      singleton: true}, cmd_args)
