@@ -413,8 +413,7 @@ module Bitcoin
       return nil unless p2pkh?
       hash160 = chunks[2].pushed_data.bth
       return nil unless hash160.htb.bytesize == 20
-      hex = Bitcoin.chain_params.address_version + hash160
-      Bitcoin.encode_base58_address(hex)
+      Bitcoin.encode_base58_address(hash160, Bitcoin.chain_params.address_version)
     end
 
     # generate p2wpkh address. if script dose not p2wpkh, return nil.
@@ -427,8 +426,7 @@ module Bitcoin
       return nil unless p2sh?
       hash160 = chunks[1].pushed_data.bth
       return nil unless hash160.htb.bytesize == 20
-      hex = Bitcoin.chain_params.p2sh_version + hash160
-      Bitcoin.encode_base58_address(hex)
+      Bitcoin.encode_base58_address(hash160, Bitcoin.chain_params.p2sh_version)
     end
 
     # generate p2wsh address. if script dose not p2wsh, return nil.

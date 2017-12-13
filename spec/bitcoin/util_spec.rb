@@ -58,7 +58,7 @@ describe Bitcoin::Util do
     subject {
       hash160 = '46c2fbfbecc99a63148fa076de58cf29b0bcf0b0'
       version = '6f'
-      util.encode_base58_address(version + hash160)
+      util.encode_base58_address(hash160, version)
     }
     it 'should be encoded' do
       expect(subject).to eq('mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1')

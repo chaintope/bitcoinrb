@@ -82,12 +82,9 @@ module Bitcoin
       Digest::RMD160.hexdigest(Digest::SHA256.digest(hex.htb))
     end
 
-    def encode_base58_address(hex)
-      Base58.encode(hex + calc_checksum(hex))
-    end
-
-    def decode_base58_address(addr)
-      Base58.decode(addr)
+    def encode_base58_address(hex, addr_version)
+      base = addr_version + hex
+      Base58.encode(base + calc_checksum(base))
     end
 
     def calc_checksum(hex)
