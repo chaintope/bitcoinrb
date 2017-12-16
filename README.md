@@ -50,7 +50,46 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+### Chain selection
+
+The parameters of the blockchain are managed by `Bitcoin::ChainParams`. Switch chain parameters as follows:
+
+* mainnet
+
+```ruby
+Bitcoin.chain_params = :mainnet
+```
+
+This parameter is described in https://github.com/haw-itn/bitcoinrb/blob/master/lib/bitcoin/chainparams/mainnet.yml.
+
+* testnet
+
+```ruby
+Bitcoin.chain_params = :testnet
+```
+
+This parameter is described in https://github.com/haw-itn/bitcoinrb/blob/master/lib/bitcoin/chainparams/testnet.yml.
+
+* regtest
+
+```ruby
+Bitcoin.chain_params = :regtest
+```
+
+This parameter is described in https://github.com/haw-itn/bitcoinrb/blob/master/lib/bitcoin/chainparams/regtest.yml.
+
+#### Fork coin
+
+When using with fork coin, please specify the fork_id of the coin as follows.
+
+```ruby
+Bitcoin.chain_params.fork_id = 0 # 0 is bch fork id
+```
+
+Currently bitcoinrb supports only support and verification of transaction replay protection using `SIGHASH_FORK_ID`.
+For details of `SIGHASH_FORK_ID`, refer to the following.
+
+https://github.com/Bitcoin-UAHF/spec/blob/master/replay-protected-sighash.md
 
 ## Contributing
 

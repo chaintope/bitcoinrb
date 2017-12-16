@@ -26,6 +26,9 @@ module Bitcoin
     attr_reader :genesis
     attr_reader :bip44_coin_type
 
+    # fork coin id.
+    attr_accessor :fork_id
+
     # mainnet genesis
     def self.mainnet
       YAML.load(File.open("#{__dir__}/chainparams/mainnet.yml"))
@@ -58,6 +61,11 @@ module Bitcoin
           genesis['version'], genesis['prev_hash'], genesis['merkle_root'],
           genesis['time'], genesis['bits'], genesis['nonce'])
       Bitcoin::Block.new(header)
+    end
+
+    # whether fork coin.
+    def fork_chain?
+      !fork_id.nil?
     end
 
   end

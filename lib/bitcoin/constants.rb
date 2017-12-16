@@ -84,6 +84,13 @@ module Bitcoin
   # Signature hash types/flags
   SIGHASH_TYPE = { all: 1, none: 2, single: 3, anyonecanpay: 128 }
 
+  # SIGHASH_FORK_ID for replay protection of the fork coin
+  SIGHASH_FORK_ID = 0x40
+
+  # fork coin id.
+  FORK_ID_CASH = 0
+  FORK_ID_GOLD = 79
+
   # Maximum number length in bytes
   DEFAULT_MAX_NUM_SIZE = 4
 

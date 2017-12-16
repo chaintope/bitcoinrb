@@ -83,10 +83,21 @@ describe Bitcoin::Tx do
       end
     end
 
-    context 'witness' do
-      # TODO
+    context 'fork coin' do
+      after { Bitcoin.chain_params.fork_id = nil }
+      it 'handle fork id' do
+        # Bitcoin Cash
+        Bitcoin.chain_params.fork_id = Bitcoin::FORK_ID_CASH
+        tx = Bitcoin::Tx.parse_from_payload('0100000002fc4a653cc6af3c59c37c697bc9e1833b19b78efef7d22711984b05c38b1695d9010000006b483045022100d8a72725d3979fe9ec64b7f182aa527888acdc8294eca11d099bac846407168d022055a48820a2eb4a5c155e044b5e195a15e96baf11d65e2054c76c827ea7d6700c412103486d30777200297c49236c5535d38eb5215de39549ec78441010f818cab2367afffffffffc4a653cc6af3c59c37c697bc9e1833b19b78efef7d22711984b05c38b1695d9000000006a4730440220288e247e06e2e60b01c4c08fab7dd147c09940b2aa7a0951e40cdc7a1c9ae0e1022044bf3324b470b9e790a8ecd07e50d7e5e5674ce09da925af307caaad61268f88412102c5716c4181103f127aa5ad2764dec1a28ee86b35120e3491e53c2913cdc84a0affffffff02890c0400000000001976a914457b040ae71c7a2abe08641ca3d73a7a4ce6c2a988acb3350400000000001976a914eec507f9ec57eeacc1e9cea0c252d5f84d31193488ac00000000'.htb)
+        script_pubkey = Bitcoin::Script.parse_from_payload('76a914b85a3859a2eabb064580977a241f29b4aeb44d5c88ac'.htb)
+        expect(tx.verify_input_sig(0, script_pubkey, amount: 267146)).to be true
+        # Bitcoin Gold
+        Bitcoin.chain_params.fork_id = Bitcoin::FORK_ID_GOLD
+        tx = Bitcoin::Tx.parse_from_payload('010000000122f3315a7936d6d87662c3e7f23886d29c8016077101e93d9c8be9128e7508ff010000006a47304402200c1f8d0718773c8c5bc9ac9b3d4efcfd1de23c0ede9f9b71c8f0b6482c5d2e420220556617606f0520cd309340b437b4e451c49366bbd2ac6a6f0c95ea6b0dc747a4412103b0b9c8bfa009a469862a1884d33d3ed50222ec3afab039c855a5cf1feada49ebffffffff01f68e9800000000001976a914df15baf9e3e65f10a1fa8f6498243d8e9291f39988ac00000000'.htb)
+        script_pubkey = Bitcoin::Script.parse_from_payload('76a9142dc8f142a5d429460ae81f13b2036c12b8bfba7988ac'.htb)
+        expect(tx.verify_input_sig(0, script_pubkey, amount: 10000000)).to be true
+      end
     end
-
   end
 
   describe 'check tx_valid.json' do

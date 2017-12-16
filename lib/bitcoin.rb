@@ -58,12 +58,13 @@ module Bitcoin
     return @current_chain if @current_chain
     case @chain_param
     when :mainnet
-      Bitcoin::ChainParams.mainnet
+      @current_chain = Bitcoin::ChainParams.mainnet
     when :testnet
-      Bitcoin::ChainParams.testnet
+      @current_chain = Bitcoin::ChainParams.testnet
     when :regtest
-      Bitcoin::ChainParams.regtest
+      @current_chain = Bitcoin::ChainParams.regtest
     end
+    @current_chain
   end
 
   # base dir path that store blockchain data and wallet data

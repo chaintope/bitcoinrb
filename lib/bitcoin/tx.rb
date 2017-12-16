@@ -178,7 +178,7 @@ module Bitcoin
       raise ArgumentError, 'script_pubkey must be specified.' unless output_script
       raise ArgumentError, 'unsupported sig version specified.' unless SIG_VERSION.include?(sig_version)
 
-      if sig_version == :witness_v0
+      if sig_version == :witness_v0 || Bitcoin.chain_params.fork_chain?
         raise ArgumentError, 'amount must be specified.' unless amount
         sighash_for_witness(input_index, output_script, hash_type, amount, skip_separator_index)
       else
@@ -201,7 +201,7 @@ module Bitcoin
         script_pubkey = redeem_script if redeem_script.p2wpkh?
       end
 
-      if has_witness
+      if has_witness || Bitcoin.chain_params.fork_chain?
         verify_input_sig_for_witness(input_index, script_pubkey, amount, flags)
       else
         verify_input_sig_for_legacy(input_index, script_pubkey, flags)
@@ -271,6 +271,7 @@ module Bitcoin
       if (hash_type & SIGHASH_TYPE[:anyonecanpay]) != 0
         hash_prevouts = hash_sequence ="\x00".ljust(32, "\x00")
       end
+      hash_type |= (Bitcoin.chain_params.fork_id << 8) if Bitcoin.chain_params.fork_chain?
       buf = [ [version].pack('V'), hash_prevouts, hash_sequence, outpoint,
               script_code ,amount, nsequence, hash_outputs, [@lock_time, hash_type].pack('VV')].join
       Bitcoin.double_sha256(buf)
