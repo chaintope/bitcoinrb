@@ -201,4 +201,12 @@ describe Bitcoin::ExtKey, network: :mainnet do
       expect(key.pubkey).to eq('0357bfe1e341d01c69fe5654309956cbea516822fba8a601743a012a7896ee8dc2')
     end
   end
+
+  describe 'pubkey hardended derive' do
+    it 'should raise error' do
+      key = Bitcoin::ExtPubkey.from_base58('xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5')
+      expect{key.derive(2**31)}.to raise_error('hardened key is not support')
+    end
+  end
+
 end
