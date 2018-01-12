@@ -56,7 +56,7 @@ module Bitcoin
                                   SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY,
                                   SCRIPT_VERIFY_CHECKSEQUENCEVERIFY,
                                   SCRIPT_VERIFY_LOW_S,
-                                  SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM]
+                                  SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM].inject(SCRIPT_VERIFY_NONE){|flags, f| flags |= f}
 
   # for script
 

@@ -288,8 +288,8 @@ module Bitcoin
 
     # verify input signature for witness tx.
     def verify_input_sig_for_witness(input_index, script_pubkey, amount, flags)
-      flags << SCRIPT_VERIFY_WITNESS
-      flags << SCRIPT_VERIFY_WITNESS_PUBKEYTYPE
+      flags |= SCRIPT_VERIFY_WITNESS
+      flags |= SCRIPT_VERIFY_WITNESS_PUBKEYTYPE
       checker = Bitcoin::TxChecker.new(tx: self, input_index: input_index, amount: amount)
       interpreter = Bitcoin::ScriptInterpreter.new(checker: checker, flags: flags)
       i = inputs[input_index]

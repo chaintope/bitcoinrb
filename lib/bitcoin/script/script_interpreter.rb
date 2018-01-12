@@ -14,7 +14,7 @@ module Bitcoin
     DISABLE_OPCODES = [OP_CAT, OP_SUBSTR, OP_LEFT, OP_RIGHT, OP_INVERT, OP_AND, OP_OR, OP_XOR, OP_2MUL, OP_2DIV, OP_DIV, OP_MUL, OP_MOD, OP_LSHIFT, OP_RSHIFT]
 
     # initialize runner
-    def initialize(flags: [], checker: TxChecker.new)
+    def initialize(flags: SCRIPT_VERIFY_NONE, checker: TxChecker.new)
       @stack, @debug = [], []
       @flags = flags
       @checker = checker
@@ -219,10 +219,7 @@ module Bitcoin
                 when OP_NOP1, OP_NOP4..OP_NOP10
                   return set_error(SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS) if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
                 when OP_CHECKLOCKTIMEVERIFY
-                  unless flag?(SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY)
-                    return set_error(SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS) if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
-                    next
-                  end
+                  next unless flag?(SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY)
                   return set_error(SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   # Note that elsewhere numeric opcodes are limited to operands in the range -2**31+1 to 2**31-1,
                   # however it is legal for opcodes to produce results exceeding that range.
@@ -235,12 +232,7 @@ module Bitcoin
                   return set_error(SCRIPT_ERR_NEGATIVE_LOCKTIME) if locktime < 0
                   return set_error(SCRIPT_ERR_UNSATISFIED_LOCKTIME) unless checker.check_locktime(locktime)
                 when OP_CHECKSEQUENCEVERIFY
-                  unless flag?(SCRIPT_VERIFY_CHECKSEQUENCEVERIFY)
-                    if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS)
-                      return set_error(SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS)
-                    end
-                    next
-                  end
+                  next unless flag?(SCRIPT_VERIFY_CHECKSEQUENCEVERIFY)
                   return set_error(SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
 
                   # nSequence, like nLockTime, is a 32-bit unsigned integer field.
@@ -522,13 +514,7 @@ module Bitcoin
     private
 
     def flag?(flag)
-      (all_flags & flag) != 0
-    end
-
-    def all_flags
-      result = SCRIPT_VERIFY_NONE
-      flags.each{ |f| result |= f }
-      result
+      (flags & flag) != 0
     end
 
     # pop the item with the int value for the number specified by +count+ from the stack.

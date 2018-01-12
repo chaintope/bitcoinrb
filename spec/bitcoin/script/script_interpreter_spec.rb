@@ -18,12 +18,24 @@ describe Bitcoin::ScriptInterpreter do
         script_pubkey = Bitcoin::TestScriptParser.parse_script(pubkey)
         credit_tx = build_credit_tx(script_pubkey, amount)
         tx = build_spending_tx(script_sig, credit_tx, witness, amount)
-        flags = flags.split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}
+        script_flags = flags.split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}.inject(Bitcoin::SCRIPT_VERIFY_NONE){|flags, f| flags |= f}
         expected_err_code = find_error_code(error_code)
-        i = Bitcoin::ScriptInterpreter.new(flags: flags, checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0, amount: amount))
+        i = Bitcoin::ScriptInterpreter.new(flags: script_flags, checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0, amount: amount))
         result = i.verify_script(script_sig, script_pubkey, witness)
         expect(result).to be expected_err_code == Bitcoin::SCRIPT_ERR_OK
         expect(i.error.code).to eq(expected_err_code) unless result
+
+        # Verify that removing flags from a passing test or adding flags to a failing test does not change the result.
+        16.times do
+          extra_flags = rand(32768) # 16 bit unsigned integer
+          combined_flags = result ? (script_flags & ~extra_flags)  : (script_flags | extra_flags)
+          next if combined_flags & Bitcoin::SCRIPT_VERIFY_CLEANSTACK && ~combined_flags & (Bitcoin::SCRIPT_VERIFY_P2SH | Bitcoin::SCRIPT_VERIFY_WITNESS)
+          next if combined_flags & Bitcoin::SCRIPT_VERIFY_WITNESS && ~combined_flags & Bitcoin::SCRIPT_VERIFY_P2SH
+          i = Bitcoin::ScriptInterpreter.new(flags: combined_flags, checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0, amount: amount))
+          extra_result = i.verify_script(script_sig, script_pubkey, witness)
+          expect(extra_result).to be expected_err_code == Bitcoin::SCRIPT_ERR_OK
+          expect(i.error.code).to eq(expected_err_code) unless extra_result
+        end
       end
     end
   end

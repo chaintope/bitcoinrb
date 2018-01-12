@@ -125,7 +125,7 @@ describe Bitcoin::Tx do
         tx.inputs.each_with_index do |i, index|
           amount = prevout_script_values[i.out_point.to_payload]
           amount |= 0
-          flags = json[2].split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}
+          flags = json[2].split(',').map{|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}.inject(Bitcoin::SCRIPT_VERIFY_NONE){|flags, f| flags |= f}
           witness = i.script_witness
           checker = Bitcoin::TxChecker.new(tx: tx, input_index: index, amount: amount)
           interpreter = Bitcoin::ScriptInterpreter.new(flags: flags, checker: checker)
@@ -162,7 +162,7 @@ describe Bitcoin::Tx do
           tx.inputs.each_with_index do |i, index|
             amount = prevout_script_values[i.out_point.to_payload]
             amount |= 0
-            flags = json[2].split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}
+            flags = json[2].split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}.inject(Bitcoin::SCRIPT_VERIFY_NONE){|flags, f| flags |= f}
             witness = i.script_witness
             checker = Bitcoin::TxChecker.new(tx: tx, input_index: index, amount: amount)
             interpreter = Bitcoin::ScriptInterpreter.new(flags: flags, checker: checker)
