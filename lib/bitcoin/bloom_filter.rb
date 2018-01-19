@@ -7,15 +7,17 @@ module Bitcoin
     MAX_BLOOM_FILTER_SIZE = 36_000 # bytes
     MAX_HASH_FUNCS = 50
 
+    attr_reader :hash_funcs, :tweak
+
     # @param [Integer] elements_length the number of elements
     # @param [Float] fp_rate the false positive rate chosen by the client
     # @param [Integer] tweak A random value to add to the seed value in the hash function used by the bloom filter
     def initialize(elements_length, fp_rate, tweak=0)
       # The size S of the filter in bytes is given by (-1 / pow(log(2), 2) * N * log(P)) / 8
-      len = [(-elements_length * Math.log(fp_rate) / (LN2_SQUARED * 8)).to_i, MAX_BLOOM_FILTER_SIZE].min
+      len = [[(-elements_length * Math.log(fp_rate) / (LN2_SQUARED * 8)).to_i, MAX_BLOOM_FILTER_SIZE].min, 1].max
       @filter = Array.new(len, 0)
       # The number of hash functions required is given by S * 8 / N * log(2)
-      @hash_funcs = [(@filter.size * 8 * LN2 / elements_length).to_i, MAX_HASH_FUNCS].min
+      @hash_funcs = [[(@filter.size * 8 * LN2 / elements_length).to_i, MAX_HASH_FUNCS].min, 1].max
       @tweak = tweak
     end
 

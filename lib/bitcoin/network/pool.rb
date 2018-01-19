@@ -73,6 +73,21 @@ module Bitcoin
         peers.each { |peer| peer.broadcast_tx(tx) }
       end
 
+      # new bloom filter.
+      def filter_load(bloom)
+        peers.each { |peer| peer.send_filter_load(bloom) }
+      end
+
+      # add element to bloom filter.
+      def filter_add(element)
+        peers.each { |peer| peer.send_filter_add(element) }
+      end
+
+      # clear bloom filter.
+      def filter_clear
+        peers.each { |peer| peer.send_filter_clear }
+      end
+
       def handle_error(e)
         terminate
       end

@@ -186,7 +186,28 @@ module Bitcoin
         conn.send_message(ping)
       end
 
-    end
+      # send filterload message.
+      def send_filter_load(bloom)
+        filter_load = Bitcoin::Message::FilterLoad.new(
+          bloom.to_a,
+          bloom.hash_funcs,
+          bloom.tweak,
+          Bitcoin::Message::FilterLoad::BLOOM_UPDATE_ALL
+        )
+        conn.send_message(filter_load)
+      end
 
+      # send filteradd message.
+      def send_filter_add(element)
+        filter_add = Bitcoin::Message::FilterAdd.new(element)
+        conn.send_message(filter_add)
+      end
+
+      # send filterclear message.
+      def send_filter_clear
+        filter_clear = Bitcoin::Message::FilterClear.new
+        conn.send_message(filter_clear)
+      end
+    end
   end
 end
