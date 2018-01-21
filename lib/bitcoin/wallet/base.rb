@@ -36,7 +36,7 @@ module Bitcoin
       # get wallets path
       # @return [Array] Array of paths for each wallet dir.
       def self.wallet_paths(path_prefix = DEFAULT_PATH_PREFIX)
-        Dir.glob("#{path_prefix}wallet*/")
+        Dir.glob("#{path_prefix}wallet*/").sort
       end
 
       # get account list based on BIP-44
