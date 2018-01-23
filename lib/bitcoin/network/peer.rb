@@ -34,7 +34,7 @@ module Bitcoin
       attr_reader :chain
       attr_accessor :fee_rate
 
-      def initialize(host, port, pool)
+      def initialize(host, port, pool, configuration)
         @host = host
         @port = port
         @pool = pool
@@ -48,8 +48,9 @@ module Bitcoin
         @min_ping = -1
         @bytes_sent = 0
         @bytes_recv = 0
+        @relay = configuration.conf[:relay]
         current_height = @chain.latest_block.height
-        @local_version = Bitcoin::Message::Version.new(remote_addr: addr, start_height: current_height, relay: false)
+        @local_version = Bitcoin::Message::Version.new(remote_addr: addr, start_height: current_height, relay: @relay)
       end
 
       def connect

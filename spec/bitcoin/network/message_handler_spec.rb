@@ -10,7 +10,7 @@ describe Bitcoin::Network::MessageHandler do
       @logger = Logger.new(STDOUT)
       configuration = Bitcoin::Node::Configuration.new(network: :testnet)
       @chain = create_test_chain
-      @peer = Bitcoin::Network::Peer.new('127.0.0.1', 18332, Bitcoin::Network::Pool.new(@chain, configuration))
+      @peer = Bitcoin::Network::Peer.new('127.0.0.1', 18332, Bitcoin::Network::Pool.new(@chain, configuration), configuration)
       @sendheaders = false
     end
 

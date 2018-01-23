@@ -26,6 +26,7 @@ module Bitcoin
         @max_outbound = MAX_OUTBOUND_CONNECTIONS
         @chain = chain
         @logger = Bitcoin::Logger.create(:debug)
+        @configuration = configuration
         @peer_discovery = PeerDiscovery.new(configuration)
         @started = false
       end
@@ -39,7 +40,7 @@ module Bitcoin
         port = Bitcoin.chain_params.default_port
         EM::Iterator.new(addr_list, Bitcoin::PARALLEL_THREAD).each do |ip, iter|
           if pending_peers.size < MAX_OUTBOUND_CONNECTIONS
-            peer = Peer.new(ip, port, self)
+            peer = Peer.new(ip, port, self, @configuration)
             pending_peers << peer
             peer.connect
             iter.next

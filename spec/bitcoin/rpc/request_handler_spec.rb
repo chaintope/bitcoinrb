@@ -62,7 +62,7 @@ describe Bitcoin::RPC::RequestHandler do
       expect(result[0][:addr]). to eq('192.168.0.1:18333')
       expect(result[0][:addrlocal]). to eq('192.168.0.3:18333')
       expect(result[0][:services]). to eq('000000000000000c')
-      expect(result[0][:relaytxes]). to be true
+      expect(result[0][:relaytxes]). to be false
       expect(result[0][:lastsend]). to eq(1508305982)
       expect(result[0][:lastrecv]). to eq(1508305843)
       expect(result[0][:bytessent]). to eq(31298)
@@ -153,7 +153,7 @@ describe Bitcoin::RPC::RequestHandler do
     configuration = Bitcoin::Node::Configuration.new(network: :testnet)
     pool = Bitcoin::Network::Pool.new(chain, configuration)
 
-    peer1 =Bitcoin::Network::Peer.new('192.168.0.1', 18333, pool)
+    peer1 =Bitcoin::Network::Peer.new('192.168.0.1', 18333, pool, configuration)
     peer1.id = 1
     peer1.last_send = 1508305982
     peer1.last_recv = 1508305843
@@ -166,7 +166,7 @@ describe Bitcoin::RPC::RequestHandler do
     allow(peer1).to receive(:conn).and_return(conn1)
     pool.peers << peer1
 
-    peer2 =Bitcoin::Network::Peer.new('192.168.0.2', 18333, pool)
+    peer2 =Bitcoin::Network::Peer.new('192.168.0.2', 18333, pool, configuration)
     peer2.id = 2
     allow(peer2).to receive(:conn).and_return(conn2)
     pool.peers << peer2
