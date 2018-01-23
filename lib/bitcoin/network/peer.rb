@@ -49,7 +49,7 @@ module Bitcoin
         @bytes_sent = 0
         @bytes_recv = 0
         current_height = @chain.latest_block.height
-        @local_version = Bitcoin::Message::Version.new(remote_addr: addr, start_height: current_height)
+        @local_version = Bitcoin::Message::Version.new(remote_addr: addr, start_height: current_height, relay: false)
       end
 
       def connect

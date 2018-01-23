@@ -21,6 +21,7 @@ describe Bitcoin::Network::Peer do
     context 'before handshake' do
       it 'should be false' do
         expect(subject.support_witness?).to be false
+        expect(subject.local_version.relay).to be false # spv set relay flag to false.
       end
     end
 
