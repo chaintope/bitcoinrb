@@ -54,12 +54,12 @@ module Bitcoin
 
       # derive receive key
       def derive_receive(address_index)
-        derive_path(0, address_index)
+        derive_key(0, address_index)
       end
 
       # derive change key
       def derive_change(address_index)
-        derive_path(1, address_index)
+        derive_key(1, address_index)
       end
 
       # save this account payload to database.
