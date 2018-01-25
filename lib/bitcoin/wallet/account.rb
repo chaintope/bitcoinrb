@@ -74,7 +74,7 @@ module Bitcoin
 
       # get the list of derived keys for change key.
       def derived_change_keys
-        receive_depth.times.map{|i|derive_key(1,i)}
+        change_depth.times.map{|i|derive_key(1,i)}
       end
 
       private
