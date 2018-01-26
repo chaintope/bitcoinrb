@@ -1,3 +1,6 @@
+# Porting part of the code from bitcoin-ruby. see the license.
+# https://github.com/lian/bitcoin-ruby/blob/master/COPYING
+
 module Bitcoin
 
   # bitcoin utility.
