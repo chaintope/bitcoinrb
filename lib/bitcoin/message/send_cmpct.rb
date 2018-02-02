@@ -14,7 +14,7 @@ module Bitcoin
       attr_accessor :version
       # TODO support version 2
 
-      def initialize(mode, version)
+      def initialize(mode = MODE_HIGH, version = 1)
         @mode = mode
         @version = version
       end

@@ -30,6 +30,9 @@ module Bitcoin
     autoload :Error, 'bitcoin/message/error'
     autoload :Reject, 'bitcoin/message/reject'
     autoload :SendCmpct, 'bitcoin/message/send_cmpct'
+    autoload :CmpctBlock, 'bitcoin/message/cmpct_block'
+    autoload :HeaderAndShortIDs, 'bitcoin/message/header_and_short_ids'
+    autoload :PrefilledTx, 'bitcoin/message/prefilled_tx'
 
     USER_AGENT = "/bitcoinrb:#{Bitcoin::VERSION}/"
 
