@@ -34,7 +34,7 @@ module Bitcoin
       attr_reader :chain
       attr_accessor :fee_rate
 
-      def initialize(host, port, pool)
+      def initialize(host, port, pool, configuration)
         @host = host
         @port = port
         @pool = pool
@@ -48,8 +48,9 @@ module Bitcoin
         @min_ping = -1
         @bytes_sent = 0
         @bytes_recv = 0
+        @relay = configuration.conf[:relay]
         current_height = @chain.latest_block.height
-        @local_version = Bitcoin::Message::Version.new(remote_addr: addr, start_height: current_height, relay: false)
+        @local_version = Bitcoin::Message::Version.new(remote_addr: addr, start_height: current_height, relay: @relay)
       end
 
       def connect
@@ -186,7 +187,28 @@ module Bitcoin
         conn.send_message(ping)
       end
 
-    end
+      # send filterload message.
+      def send_filter_load(bloom)
+        filter_load = Bitcoin::Message::FilterLoad.new(
+          bloom.to_a,
+          bloom.hash_funcs,
+          bloom.tweak,
+          Bitcoin::Message::FilterLoad::BLOOM_UPDATE_ALL
+        )
+        conn.send_message(filter_load)
+      end
 
+      # send filteradd message.
+      def send_filter_add(element)
+        filter_add = Bitcoin::Message::FilterAdd.new(element)
+        conn.send_message(filter_add)
+      end
+
+      # send filterclear message.
+      def send_filter_clear
+        filter_clear = Bitcoin::Message::FilterClear.new
+        conn.send_message(filter_clear)
+      end
+    end
   end
 end

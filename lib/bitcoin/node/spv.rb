@@ -17,6 +17,10 @@ module Bitcoin
         @pool = Bitcoin::Network::Pool.new(@chain, @configuration)
         @logger = Bitcoin::Logger.create(:debug)
         @running = false
+
+        # TODO : optimize bloom filter parameters
+        # TODO : load public keys in wallet.
+        @bloom = Bitcoin::BloomFilter.new(512, 0.01)
       end
 
       # open the node.
@@ -43,7 +47,22 @@ module Bitcoin
         logger.debug "broadcast tx: #{tx.to_payload.bth}"
       end
 
-    end
+      # new bloom filter.
+      def filter_load
+        pool.filter_load(@bloom)
+      end
 
+      # add filter element to bloom filter.
+      # [String] element. the hex string of txid, public key, public key hash or outpoint.
+      def filter_add(element)
+        @bloom.add(element)
+        pool.filter_add(element)
+      end
+
+      # clear bloom filter.
+      def filter_clear
+        pool.filter_clear
+      end
+    end
   end
 end

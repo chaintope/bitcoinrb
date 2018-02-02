@@ -42,6 +42,7 @@ module Bitcoin
   autoload :Store, 'bitcoin/store'
   autoload :RPC, 'bitcoin/rpc'
   autoload :Wallet, 'bitcoin/wallet'
+  autoload :BloomFilter, 'bitcoin/bloom_filter'
 
   require_relative 'bitcoin/constants'
 
@@ -144,6 +145,7 @@ module Bitcoin
     end
 
     def to_h
+      return self if self.is_a?(String)
       instance_variables.inject({}) do |result, var|
         key = var.to_s
         key.slice!(0) if key.start_with?('@')

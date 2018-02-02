@@ -10,7 +10,7 @@ describe Bitcoin::Network::Peer do
   subject {
     chain_mock = double('chain mock')
     configuration = Bitcoin::Node::Configuration.new(network: :testnet)
-    peer = Bitcoin::Network::Peer.new('210.196.254.100', 18333, Bitcoin::Network::Pool.new(chain, configuration))
+    peer = Bitcoin::Network::Peer.new('210.196.254.100', 18333, Bitcoin::Network::Pool.new(chain, configuration), configuration)
     peer.conn = ConnectionMock.new
     allow(peer).to receive(:chain).and_return(chain_mock)
     peer

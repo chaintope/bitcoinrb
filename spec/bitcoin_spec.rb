@@ -46,4 +46,15 @@ describe Bitcoin do
     end
   end
 
+  class Test
+    def initialize
+      @foo = ["bar"]
+    end
+  end
+  describe '#build_json' do
+    it 'should handle string in array' do
+      expect(["a", "b", "c"].build_json).to eq "[\"a\",\"b\",\"c\"]"
+      expect(Test.new.build_json).to eq "{\"foo\":[\"bar\"]}"
+    end
+  end
 end

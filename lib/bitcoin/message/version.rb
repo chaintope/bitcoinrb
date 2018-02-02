@@ -27,8 +27,8 @@ module Bitcoin
         @nonce = SecureRandom.random_number(0xffffffffffffffff)
         @user_agent = Bitcoin::Message::USER_AGENT
         @start_height = 0
-        @relay = true
         opts.each { |k, v| send "#{k}=", v }
+        @relay = opts[:relay] || false
       end
 
       def self.parse_from_payload(payload)

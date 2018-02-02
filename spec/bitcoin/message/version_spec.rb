@@ -39,7 +39,8 @@ describe Bitcoin::Message::Version do
                                     timestamp: 1497706959, services: 0,
                                     version: 70015,
                                     user_agent: '/bitcoinrb:0.1.0/',
-                                    nonce: 13469974270669794112).to_pkt
+                                    nonce: 13469974270669794112,
+                                    relay: true).to_pkt
     }
     it 'should generate pkt' do
       expect(subject.bth).to eq('0b11090776657273696f6e0000000000670000000f798e7e7f1101000000000000000000cf31455900000000010000000000000000000000000000000000ffff7f000001479d010000000000000000000000000000000000ffff7f000001479d40abec703bf6eeba112f626974636f696e72623a302e312e302f00000000ff')

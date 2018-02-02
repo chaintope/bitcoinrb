@@ -9,6 +9,7 @@ module Bitcoin
       def initialize(opts = {})
         # TODO apply configuration file.
         opts[:network] = :mainnet unless opts[:network]
+        opts[:relay] = false unless opts[:relay]
         Bitcoin.chain_params = opts[:network]
 
         begin
