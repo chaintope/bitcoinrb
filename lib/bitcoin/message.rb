@@ -33,6 +33,8 @@ module Bitcoin
     autoload :CmpctBlock, 'bitcoin/message/cmpct_block'
     autoload :HeaderAndShortIDs, 'bitcoin/message/header_and_short_ids'
     autoload :PrefilledTx, 'bitcoin/message/prefilled_tx'
+    autoload :GetBlockTxn, 'bitcoin/message/get_block_txn'
+    autoload :BlockTransactionRequest, 'bitcoin/message/block_transaction_request'
 
     USER_AGENT = "/bitcoinrb:#{Bitcoin::VERSION}/"
 
