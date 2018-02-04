@@ -35,6 +35,8 @@ module Bitcoin
     autoload :PrefilledTx, 'bitcoin/message/prefilled_tx'
     autoload :GetBlockTxn, 'bitcoin/message/get_block_txn'
     autoload :BlockTransactionRequest, 'bitcoin/message/block_transaction_request'
+    autoload :BlockTxn, 'bitcoin/message/block_txn'
+    autoload :BlockTransactions, 'bitcoin/message/block_transactions'
 
     USER_AGENT = "/bitcoinrb:#{Bitcoin::VERSION}/"
 
