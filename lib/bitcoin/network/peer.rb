@@ -85,7 +85,6 @@ module Bitcoin
         pool.handle_new_peer(self)
         # require remote peer to use headers message instead fo inv message.
         conn.send_message(Bitcoin::Message::SendHeaders.new)
-        conn.send_message(Bitcoin::Message::SendCmpct.new)
         EM.add_periodic_timer(PING_INTERVAL) {send_ping}
       end
 
