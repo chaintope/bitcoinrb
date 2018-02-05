@@ -12,7 +12,7 @@ module Bitcoin
       attr_accessor :prefilled_txn
       attr_accessor :siphash_key
 
-      def initialize(header, nonce, short_ids, prefilled_txn)
+      def initialize(header, nonce, short_ids = [], prefilled_txn = [])
         @header = header
         @nonce = nonce
         @short_ids = short_ids
@@ -49,8 +49,9 @@ module Bitcoin
       # @param [String] txid a transaction id
       # @return [Integer] 6 bytes short transaction id.
       def short_id(txid)
-        hash = SipHash.digest(siphash_key, txid.htb.reverse)
-        [hash.to_s(16)].pack('H*')[2...8].bth.to_i(16)
+        hash = SipHash.digest(siphash_key, txid.htb.reverse).to_s(16)
+        hash = '0' + hash if hash.size.odd?
+        [hash].pack('H*')[2...8].bth.to_i(16)
       end
 
     end

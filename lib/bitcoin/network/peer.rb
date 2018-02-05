@@ -5,7 +5,7 @@ module Bitcoin
     class Peer
 
       # Interval for pinging peers.
-      PING_INTERVAL = 30
+      PING_INTERVAL = 2 * 60
 
       attr_reader :logger
       attr_accessor :id
@@ -85,6 +85,7 @@ module Bitcoin
         pool.handle_new_peer(self)
         # require remote peer to use headers message instead fo inv message.
         conn.send_message(Bitcoin::Message::SendHeaders.new)
+        conn.send_message(Bitcoin::Message::SendCmpct.new)
         EM.add_periodic_timer(PING_INTERVAL) {send_ping}
       end
 
