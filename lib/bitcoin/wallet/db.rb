@@ -5,7 +5,8 @@ module Bitcoin
 
       KEY_PREFIX = {
           account: 'a',       # key: account index, value: Account raw data.
-          master: 'm',          # value : wallet seed.
+          master: 'm',        # value: wallet seed.
+          version: 'v',       # value: wallet version
       }
 
       attr_reader :level_db
@@ -44,12 +45,18 @@ module Bitcoin
       # @param [Bitcoin::Wallet::MasterKey] master a master key.
       def register_master_key(master)
         level_db.put(KEY_PREFIX[:master], master.to_payload)
+        level_db.put(KEY_PREFIX[:version], Bitcoin::Wallet::Base::VERSION.to_s)
         @master_key = master
       end
 
       # whether master key registered.
       def registered_master?
         !level_db.get(KEY_PREFIX[:master]).nil?
+      end
+
+      # wallet version
+      def version
+        level_db.get(KEY_PREFIX[:version]).to_i
       end
 
     end

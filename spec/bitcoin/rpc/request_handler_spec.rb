@@ -109,6 +109,27 @@ describe Bitcoin::RPC::RequestHandler do
     end
   end
 
+  describe '#getwalletinfo' do
+    context 'node has no wallet.' do
+      subject {
+        node_mock = double('node mock')
+        allow(node_mock).to receive(:wallet).and_return(nil)
+        HandlerMock.new(node_mock)
+      }
+      it 'should return empty hash' do
+        expect(subject.getwalletinfo).to eq({})
+      end
+    end
+
+    context 'node has wallet.' do
+      it 'should return current wallet data' do
+        result = subject.getwalletinfo
+        expect(result[:wallet_id]).to eq(1)
+        expect(result[:version]).to eq(Bitcoin::Wallet::Base::VERSION)
+      end
+    end
+  end
+
   private
 
   def load_entry(payload, height)

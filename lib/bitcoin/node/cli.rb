@@ -45,6 +45,11 @@ module Bitcoin
         request('listwallets')
       end
 
+      desc 'getwalletinfo', 'Returns an object containing various wallet state info.'
+      def getwalletinfo
+        request('getwalletinfo')
+      end
+
       private
 
       def config

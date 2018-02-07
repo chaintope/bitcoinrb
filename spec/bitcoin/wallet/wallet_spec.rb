@@ -12,6 +12,7 @@ describe Bitcoin::Wallet do
       it 'should return wallet' do
         expect(subject.wallet_id).to eq(1)
         expect(subject.path).to eq(test_wallet_path(1))
+        expect(subject.version).to eq(Bitcoin::Wallet::Base::VERSION)
       end
     end
 
@@ -28,6 +29,7 @@ describe Bitcoin::Wallet do
       it 'should be create' do
         expect(subject.wallet_id).to eq(2)
         expect(subject.master_key.mnemonic.size).to eq(24)
+        expect(subject.version).to eq(Bitcoin::Wallet::Base::VERSION)
       end
       after{
         subject.close

@@ -10,6 +10,7 @@ module Bitcoin
       attr_accessor :running
       attr_reader :configuration
       attr_accessor :server
+      attr_accessor :wallet
 
       def initialize(configuration)
         @chain = Bitcoin::Store::SPVChain.new
@@ -17,7 +18,7 @@ module Bitcoin
         @pool = Bitcoin::Network::Pool.new(@chain, @configuration)
         @logger = Bitcoin::Logger.create(:debug)
         @running = false
-
+        @wallet = Bitcoin::Wallet::Base.current_wallet
         # TODO : optimize bloom filter parameters
         # TODO : load public keys in wallet.
         @bloom = Bitcoin::BloomFilter.new(512, 0.01)

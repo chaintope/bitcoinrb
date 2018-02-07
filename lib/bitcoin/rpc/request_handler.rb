@@ -92,6 +92,12 @@ module Bitcoin
         Bitcoin::Wallet::Base.wallet_paths(wallet_path_prefix)
       end
 
+      # get current wallet information.
+      def getwalletinfo
+        return {} unless node.wallet
+        {wallet_id: node.wallet.wallet_id, version: node.wallet.version}
+      end
+
     end
 
   end

@@ -9,6 +9,7 @@ module Bitcoin
       attr_reader :path
 
       DEFAULT_PATH_PREFIX = "#{Bitcoin.base_dir}/db/wallet/"
+      VERSION = 1
 
       # Create new wallet. If wallet already exist, throw error.
       # The wallet generates a seed using SecureRandom and store to db at initialization.
@@ -39,6 +40,14 @@ module Bitcoin
         Dir.glob("#{path_prefix}wallet*/").sort
       end
 
+      # get current wallet
+      def self.current_wallet(path_prefix = DEFAULT_PATH_PREFIX)
+        path = wallet_paths.first # TODO default wallet selection
+        return nil unless path
+        wallet_id = path.delete(path_prefix + '/wallet').delete('/').to_i
+        self.load(wallet_id, path_prefix)
+      end
+
       # get account list based on BIP-44
       def accounts
         db.accounts.map do |raw|
@@ -53,6 +62,11 @@ module Bitcoin
         account.wallet = self
         account.init
         account
+      end
+
+      # get wallet version.
+      def version
+        db.version
       end
 
       # close database wallet
