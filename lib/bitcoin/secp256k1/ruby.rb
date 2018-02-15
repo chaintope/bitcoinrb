@@ -1,8 +1,6 @@
 module Bitcoin
   module Secp256k1
 
-    GROUP = ECDSA::Group::Secp256k1
-
     # secp256 module using ecdsa gem
     # https://github.com/DavidEGrayson/ruby_ecdsa
     module Ruby
