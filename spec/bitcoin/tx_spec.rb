@@ -128,8 +128,16 @@ describe Bitcoin::Tx do
           flags = json[2].split(',').map{|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}.inject(Bitcoin::SCRIPT_VERIFY_NONE){|flags, f| flags |= f}
           witness = i.script_witness
           checker = Bitcoin::TxChecker.new(tx: tx, input_index: index, amount: amount)
-          interpreter = Bitcoin::ScriptInterpreter.new(flags: flags, checker: checker)
           script_pubkey = prevout_script_pubkeys[i.out_point.to_payload]
+
+          use_ecdsa_gem
+          interpreter = Bitcoin::ScriptInterpreter.new(flags: flags, checker: checker)
+          result = interpreter.verify_script(i.script_sig, script_pubkey, witness)
+          expect(result).to be true
+          expect(interpreter.error.code).to eq(Bitcoin::SCRIPT_ERR_OK)
+
+          use_secp256k1
+          interpreter = Bitcoin::ScriptInterpreter.new(flags: flags, checker: checker)
           result = interpreter.verify_script(i.script_sig, script_pubkey, witness)
           expect(result).to be true
           expect(interpreter.error.code).to eq(Bitcoin::SCRIPT_ERR_OK)

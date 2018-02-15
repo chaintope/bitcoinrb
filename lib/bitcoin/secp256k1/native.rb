@@ -140,7 +140,6 @@ module Bitcoin
           signature = FFI::MemoryPointer.new(:uchar, sig.bytesize).put_bytes(0, sig)
           internal_signature = FFI::MemoryPointer.new(:uchar, 64)
           result = secp256k1_ecdsa_signature_parse_der(context, internal_signature, signature, signature.size)
-          #result = ecdsa_signature_parse_der_lax(context, internal_signature, signature, signature.size)
           return false unless result
 
           # libsecp256k1's ECDSA verification requires lower-S signatures, which have not historically been enforced in Bitcoin, so normalize them first.

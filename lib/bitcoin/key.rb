@@ -81,7 +81,13 @@ module Bitcoin
     # @param [String] origin original message
     # @return [Boolean] verify result
     def verify(sig, origin)
-      secp256k1_module.verify_sig(origin, sig, pubkey)
+      return false unless valid_pubkey?
+      begin
+        sig = ecdsa_signature_parse_der_lax(sig)
+        secp256k1_module.verify_sig(origin, sig, pubkey)
+      rescue Exception
+        false
+      end
     end
 
     # get pay to pubkey hash address
@@ -210,6 +216,24 @@ module Bitcoin
     def validate_private_key_range(private_key)
       value = private_key.to_i(16)
       MIN_PRIV_KEy_MOD_ORDER <= value && value <= MAX_PRIV_KEY_MOD_ORDER
+    end
+
+    # Supported violations include negative integers, excessive padding, garbage
+    # at the end, and overly long length descriptors. This is safe to use in
+    # Bitcoin because since the activation of BIP66, signatures are verified to be
+    # strict DER before being passed to this module, and we know it supports all
+    # violations present in the blockchain before that point.
+    def ecdsa_signature_parse_der_lax(sig)
+      sig_array = sig.unpack('C*')
+      len_r = sig_array[3]
+      r = sig_array[4...(len_r+4)].pack('C*').bth
+      len_s = sig_array[len_r + 5]
+      s = sig_array[(len_r + 6)...(len_r + 6 + len_s)].pack('C*').bth
+      ECDSA::Format::SignatureDerString.encode(ECDSA::Signature.new(r.to_i(16), s.to_i(16)))
+    end
+
+    def valid_pubkey?
+      !pubkey.nil? && pubkey.size > 0
     end
 
   end
