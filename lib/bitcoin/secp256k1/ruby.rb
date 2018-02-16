@@ -23,18 +23,35 @@ module Bitcoin
       end
 
       # sign data.
-      # @param [String] data a data to be signed
+      # @param [String] data a data to be signed with binary format
       # @param [String] privkey a private key using sign
       # @return [String] signature data with binary format
       def sign_data(data, privkey)
-        private_key = ECDSA::Format::IntegerOctetString.decode(privkey.htb)
-        signature = nil
-        while signature.nil?
-          # TODO support rfc 6979 https://tools.ietf.org/html/rfc6979
-          temp_key = 1 + SecureRandom.random_number(GROUP.order - 1)
-          signature = ECDSA.sign(GROUP, private_key, data, temp_key)
+        privkey = privkey.htb
+        private_key = ECDSA::Format::IntegerOctetString.decode(privkey)
+        nonce = generate_rfc6979_nonce(data, privkey)
+
+        # port form ecdsa gem.
+        r_point = GROUP.new_point(nonce)
+
+        point_field = ECDSA::PrimeField.new(GROUP.order)
+        r = point_field.mod(r_point.x)
+        return nil if r.zero?
+
+        e = ECDSA.normalize_digest(data, GROUP.bit_length)
+        s = point_field.mod(point_field.inverse(nonce) * (e + r * private_key))
+
+        if s > (GROUP.order / 2) # convert low-s
+          s = GROUP.order - s
         end
-        ECDSA::Format::SignatureDerString.encode(signature) # signature with DER format
+
+        return nil if s.zero?
+
+        signature = ECDSA::Signature.new(r, s)
+        public_key = Bitcoin::Key.new(priv_key: privkey.bth).pubkey
+        signature = ECDSA::Format::SignatureDerString.encode(signature) # signature with DER format
+        raise 'Creation of signature failed.' unless Bitcoin::Secp256k1::Ruby.verify_sig(data, signature, public_key)
+        signature
       end
 
       # verify signature using public key
@@ -65,6 +82,31 @@ module Bitcoin
         end
       end
 
+      # generate temporary key k to be used when ECDSA sign.
+      # https://tools.ietf.org/html/rfc6979#section-3.2
+      def generate_rfc6979_nonce(data, privkey)
+        v = ('01' * 32).htb
+        k = ('00' * 32).htb
+        # 3.2.d
+        k = Bitcoin.hmac_sha256(k, v + '00'.htb + privkey + data)
+        # 3.2.e
+        v = Bitcoin.hmac_sha256(k, v)
+        # 3.2.f
+        k = Bitcoin.hmac_sha256(k, v + '01'.htb + privkey + data)
+        # 3.2.g
+        v = Bitcoin.hmac_sha256(k, v)
+        # 3.2.h
+        t = ''
+        10000.times do
+          v = Bitcoin.hmac_sha256(k, v)
+          t = (t + v)
+          t_num = t.bth.to_i(16)
+          return t_num if 1 <= t_num && t_num < GROUP.order
+          k = Bitcoin.hmac_sha256(k, v + '00'.htb)
+          v = Bitcoin.hmac_sha256(v)
+        end
+        raise 'A valid nonce was not found.'
+      end
     end
 
   end

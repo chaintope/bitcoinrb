@@ -82,6 +82,14 @@ module Bitcoin
     (path && File.exist?(path)) ? Bitcoin::Secp256k1::Native : Bitcoin::Secp256k1::Ruby
   end
 
+  def self.hmac_sha512(key, data)
+    OpenSSL::HMAC.digest(OpenSSL::Digest.new('SHA512'), key, data)
+  end
+
+  def self.hmac_sha256(key, data)
+    OpenSSL::HMAC.digest(OpenSSL::Digest.new('SHA256'), key, data)
+  end
+
   class ::String
     # binary convert to hex string
     def bth

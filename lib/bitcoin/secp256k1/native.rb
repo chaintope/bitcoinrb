@@ -104,9 +104,13 @@ module Bitcoin
         Bitcoin::Key.new(priv_key: privkey, pubkey: pubkey, compressed: compressed)
       end
 
-      def sign_data(data, priv_key)
+      # sign data.
+      # @param [String] data a data to be signed with binary format
+      # @param [String] privkey a private key using sign
+      # @return [String] signature data with binary format
+      def sign_data(data, privkey)
         with_context do |context|
-          secret = FFI::MemoryPointer.new(:uchar, priv_key.htb.bytesize).put_bytes(0, priv_key.htb)
+          secret = FFI::MemoryPointer.new(:uchar, privkey.htb.bytesize).put_bytes(0, privkey.htb)
           raise 'priv_key invalid' unless secp256k1_ec_seckey_verify(context, secret)
 
           internal_signature = FFI::MemoryPointer.new(:uchar, 64)

@@ -67,13 +67,10 @@ module Bitcoin
     end
 
     # sign +data+ with private key
+    # @param [String] data a data to be signed with binary format
+    # @return [String] signature data with binary format
     def sign(data)
-      sig = nil
-      until sig
-        signature = secp256k1_module.sign_data(data, priv_key)
-        sig = signature if Key.low_signature?(signature)
-      end
-      sig
+      secp256k1_module.sign_data(data, priv_key)
     end
 
     # verify signature using public key

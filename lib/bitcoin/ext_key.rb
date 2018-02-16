@@ -1,9 +1,5 @@
 module Bitcoin
 
-  def self.hmac_sha512(key, data)
-    OpenSSL::HMAC.digest(OpenSSL::Digest.new('SHA512'), key, data)
-  end
-
   # Integers modulo the order of the curve(secp256k1)
   CURVE_ORDER = 115792089237316195423570985008687907852837564279074904382605163141518161494337
 
