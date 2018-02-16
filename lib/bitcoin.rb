@@ -10,6 +10,7 @@ require 'bech32'
 require 'ffi'
 require 'tmpdir'
 require_relative 'openassets'
+require_relative 'refinements'
 
 module Bitcoin
 

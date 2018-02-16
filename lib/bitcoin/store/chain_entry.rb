@@ -3,6 +3,7 @@ module Bitcoin
 
     # wrap a block header object with extra data.
     class ChainEntry
+      using Refinements::EvenLengthHex
 
       attr_reader :header
       attr_reader :height
@@ -51,8 +52,7 @@ module Bitcoin
 
       # generate payload
       def to_payload
-        height_value = height.to_s(16)
-        height_value = '0' + height_value if height_value.length.odd?
+        height_value = height.to_even_length_hex
         height_value = height_value.htb.reverse
         Bitcoin.pack_var_int(height_value.bytesize) + height_value + header.to_payload
       end
