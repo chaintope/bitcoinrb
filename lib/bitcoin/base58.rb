@@ -3,7 +3,6 @@ module Bitcoin
   # Base58Check encoding
   # https://en.bitcoin.it/wiki/Base58Check_encoding
   module Base58
-
     module_function
 
     ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
@@ -28,8 +27,7 @@ module Bitcoin
         raise ArgumentError, 'Value passed not a valid Base58 String.' if (char_index = ALPHABET.index(char)).nil?
         int_val += char_index * (SIZE**index)
       end
-      s = int_val.to_s(16)
-      s = (s.bytesize.odd? ? '0' + s : s)
+      s = int_val.to_even_length_hex
       s = '' if s == '00'
       leading_zero_bytes = (base58_val.match(/^([1]+)/) ? $1 : '').size
       s = ('00' * leading_zero_bytes) + s if leading_zero_bytes > 0

@@ -74,8 +74,7 @@ module Bitcoin
 
         # generate height key
         def height_key(height)
-          height = height.to_s(16)
-          height = '0' + height if height.bytesize.odd?
+          height = height.to_even_length_hex
           KEY_PREFIX[:height] + height.htb.reverse.bth
         end
 

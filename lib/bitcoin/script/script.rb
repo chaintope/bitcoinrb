@@ -307,7 +307,7 @@ module Bitcoin
       return '' if i == 0
       negative = i < 0
 
-      hex = i.abs.to_s(16)
+      hex = i.abs.to_even_length_hex
       hex = '0' + hex unless (hex.length % 2).zero?
       v = hex.htb.reverse # change endian
 
