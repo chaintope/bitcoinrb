@@ -6,7 +6,6 @@ module Bitcoin
   # bitcoin script
   class Script
     include Bitcoin::Opcodes
-    using Refinements::EvenLengthHex
 
     attr_accessor :chunks
 

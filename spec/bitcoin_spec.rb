@@ -18,7 +18,7 @@ describe Bitcoin do
       expect { Bitcoin.chain_params = :hoge }.to raise_error(RuntimeError)
     end
   end
-  
+
   describe '#pushdata?' do
     it 'should be judged' do
       expect(OP_DUP.chr.pushdata?).to be false
@@ -56,5 +56,13 @@ describe Bitcoin do
       expect(["a", "b", "c"].build_json).to eq "[\"a\",\"b\",\"c\"]"
       expect(Test.new.build_json).to eq "{\"foo\":[\"bar\"]}"
     end
+  end
+
+  describe 'Integer#to_even_length_hex' do
+    it { expect(0.to_even_length_hex).to eq('00') }
+    it { expect(15.to_even_length_hex).to eq('0f') }
+    it { expect(16.to_even_length_hex).to eq('10') }
+    it { expect(255.to_even_length_hex).to eq('ff') }
+    it { expect(256.to_even_length_hex).to eq('0100') }
   end
 end

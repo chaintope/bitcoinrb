@@ -5,8 +5,6 @@ module Bitcoin
     # BIP-152 Compact Block's data format.
     # https://github.com/bitcoin/bips/blob/master/bip-0152.mediawiki#HeaderAndShortIDs
     class HeaderAndShortIDs
-      using Refinements::EvenLengthHex
-
       attr_accessor :header
       attr_accessor :nonce
       attr_accessor :short_ids

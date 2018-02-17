@@ -5,7 +5,6 @@ module Bitcoin
     module DB
 
       class LevelDB
-        using Refinements::EvenLengthHex
 
         attr_reader :db
         attr_reader :logger

@@ -10,7 +10,6 @@ require 'bech32'
 require 'ffi'
 require 'tmpdir'
 require_relative 'openassets'
-require_relative 'refinements'
 
 module Bitcoin
 
@@ -169,4 +168,10 @@ module Bitcoin
 
   end
 
+  class ::Integer
+    def to_even_length_hex
+      hex = to_s(16)
+      hex.rjust((hex.length / 2.0).ceil * 2, '0')
+    end
+  end
 end

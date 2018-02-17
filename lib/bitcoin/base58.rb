@@ -3,8 +3,6 @@ module Bitcoin
   # Base58Check encoding
   # https://en.bitcoin.it/wiki/Base58Check_encoding
   module Base58
-    using Refinements::EvenLengthHex
-
     module_function
 
     ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
