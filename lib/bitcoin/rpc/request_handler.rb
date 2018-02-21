@@ -94,8 +94,17 @@ module Bitcoin
 
       # get current wallet information.
       def getwalletinfo
+        node.wallet ? node.wallet.to_h : {}
+      end
+
+      # get the list of current Wallet accounts.
+      def listaccounts
         return {} unless node.wallet
-        {wallet_id: node.wallet.wallet_id, version: node.wallet.version}
+        accounts = {}
+        node.wallet.accounts.each do |a|
+          accounts[a.name] = node.wallet.get_balance(a)
+        end
+        accounts
       end
 
     end

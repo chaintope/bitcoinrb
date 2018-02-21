@@ -64,6 +64,13 @@ module Bitcoin
         account
       end
 
+      # get wallet balance.
+      # @param [Bitcoin::Wallet::Account] account a account in the wallet.
+      def get_balance(account)
+        # TODO get from utxo db.
+        0.00000000
+      end
+
       # get wallet version.
       def version
         db.version
@@ -90,6 +97,11 @@ module Bitcoin
       # @param [String] passphrase the wallet passphrase
       def decrypt(passphrase)
 
+      end
+
+      # wallet information
+      def to_h
+        {wallet_id: wallet_id, version: version}
       end
 
       private

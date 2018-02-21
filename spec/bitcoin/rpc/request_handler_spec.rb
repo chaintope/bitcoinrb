@@ -130,6 +130,26 @@ describe Bitcoin::RPC::RequestHandler do
     end
   end
 
+  describe '#listaccounts' do
+    context 'node has no wallet.' do
+      subject {
+        node_mock = double('node mock')
+        allow(node_mock).to receive(:wallet).and_return(nil)
+        HandlerMock.new(node_mock)
+      }
+      it 'should return empty array' do
+        expect(subject.listaccounts).to eq({})
+      end
+    end
+
+    context 'node has wallet.' do
+      it 'should return the list of account.' do
+        result = subject.listaccounts
+        expect(result['Default']).to eq(0.0)
+      end
+    end
+  end
+
   private
 
   def load_entry(payload, height)
