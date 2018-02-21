@@ -39,6 +39,19 @@ describe Bitcoin::Store::SPVChain do
       end
     end
 
+    context 'duplicate header' do
+      it 'should not raise error' do
+        # add block 1, 2
+        header1 = Bitcoin::BlockHeader.parse_from_payload('0100000043497fd7f826957108f4a30fd9cec3aeba79972084e90ead01ea330900000000bac8b0fa927c0ac8234287e33c5f74d38d354820e24756ad709d7038fc5f31f020e7494dffff001d03e4b672'.htb)
+        header2 = Bitcoin::BlockHeader.parse_from_payload('0100000006128e87be8b1b4dea47a7247d5528d2702c96826c7a648497e773b800000000e241352e3bec0a95a6217e10c3abb54adfa05abb12c126695595580fb92e222032e7494dffff001d00d23534'.htb)
+        subject.append_header(header1)
+        subject.append_header(header2)
+
+        # add duplicate header 1
+        expect{subject.append_header(header1)}.not_to raise_error
+        expect(subject.latest_block.header).to eq(header2)
+      end
+    end
   end
 
 end

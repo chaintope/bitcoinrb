@@ -52,8 +52,10 @@ module Bitcoin
           db.save_entry(entry)
           entry
         else
-          # TODO implements recovery process
-          raise "header's previous hash(#{header.prev_hash}) does not match current best block's(#{best_block.hash})."
+          unless find_entry_by_hash(header.hash)
+            # TODO implements recovery process
+            raise "header's previous hash(#{header.prev_hash}) does not match current best block's(#{best_block.hash})."
+          end
         end
       end
 
