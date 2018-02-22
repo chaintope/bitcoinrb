@@ -87,14 +87,24 @@ module Bitcoin
       end
     end
 
+    # get hash160 public key.
+    def hash160
+      Bitcoin.hash160(pubkey)
+    end
+
     # get pay to pubkey hash address
     def to_p2pkh
-      Bitcoin::Script.to_p2pkh(Bitcoin.hash160(pubkey)).to_addr
+      Bitcoin::Script.to_p2pkh(hash160).to_addr
     end
 
     # get pay to witness pubkey hash address
     def to_p2wpkh
-      Bitcoin::Script.to_p2wpkh(Bitcoin.hash160(pubkey)).to_addr
+      Bitcoin::Script.to_p2wpkh(hash160).to_addr
+    end
+
+    # get p2wpkh address nested in p2sh.
+    def to_nested_p2wpkh
+      Bitcoin::Script.to_p2wpkh(hash160).to_p2sh.to_addr
     end
 
     def compressed?

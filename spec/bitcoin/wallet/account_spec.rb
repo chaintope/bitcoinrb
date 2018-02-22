@@ -34,7 +34,7 @@ describe Bitcoin::Wallet::Account do
       account
     }
     it 'should derive key' do
-      expect(subject.send(:account_key).to_base58).to eq('tprv8gRrNu65W2Msef2BdBSUgFdRTGzC8EwVXnV7UGS3faeXtuMVtGfEdidVeGbThs4ELEoayCAzZQ4uUji9DUiAs7erdVskqju7hrBcDvDsdbY')
+      expect(subject.send(:account_key).to_base58).to eq('uprv91G7gZkzehuMVxDJTYE6tLivdF8e4rvzSu1LFfKw3b2Qx1Aj8vpoFnHdfUZ3hmi9jsvPifmZ24RTN2KhwB8BfMLTVqaBReibyaFFcTP1s9n')
       expect(subject.derived_receive_keys.first.priv).to eq('c9bdb49cfbaedca21c4b1f3a7803c34636b1d7dc55a717132443fc3f4c5867e8')
     end
   end

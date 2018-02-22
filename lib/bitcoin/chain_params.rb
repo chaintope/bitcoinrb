@@ -14,6 +14,14 @@ module Bitcoin
     attr_reader :privkey_version
     attr_reader :extended_privkey_version
     attr_reader :extended_pubkey_version
+    attr_reader :bip49_pubkey_p2wpkh_p2sh_version
+    attr_reader :bip49_privkey_p2wpkh_p2sh_version
+    attr_reader :bip49_pubkey_p2wsh_p2sh_version
+    attr_reader :bip49_privkey_p2wsh_p2sh_version
+    attr_reader :bip84_pubkey_p2wpkh_version
+    attr_reader :bip84_privkey_p2wpkh_version
+    attr_reader :bip84_pubkey_p2wsh_version
+    attr_reader :bip84_privkey_p2wsh_version
     attr_reader :default_port
     attr_reader :protocol_version
     attr_reader :retarget_interval

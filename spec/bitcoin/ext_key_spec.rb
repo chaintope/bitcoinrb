@@ -35,10 +35,8 @@ describe Bitcoin::ExtKey, network: :mainnet do
       expect(key.priv).to eq('edb2e14f9ee77d26dd93b4ecede8d16ed408ce149b6cd80b0715a2d911a0afea')
       expect(key.pub).to eq('035a784662a4a20a65bf6aab9ae98a6c068a81c52e4b032c0fb5400c706cfccc56')
       expect(key.addr).to eq('19Q2WoS5hSS6T8GjhK8KZLMgmWaq4neXrh')
-      expect(key.segwit_addr).to eq('bc1qtsdavj8dyw49l4gt554jg47pr60gpf48ww2ens')
       expect(key.to_base58).to eq('xprv9uHRZZhk6KAJC1avXpDAp4MDc3sQKNxDiPvvkX8Br5ngLNv1TxvUxt4cV1rGL5hj6KCesnDYUhd7oWgT11eZG7XnxHrnYeSvkzY7d2bhkJ7')
       expect(key.ext_pubkey.to_base58).to eq('xpub68Gmy5EdvgibQVfPdqkBBCHxA5htiqg55crXYuXoQRKfDBFA1WEjWgP6LHhwBZeNK1VTsfTFUHCdrfp1bgwQ9xv5ski8PX9rL2dZXvgGDnw')
-      expect(key.ext_pubkey.segwit_addr).to eq('bc1qtsdavj8dyw49l4gt554jg47pr60gpf48ww2ens')
       expect(key.ext_pubkey.hardened?).to be true
     end
 
@@ -206,6 +204,65 @@ describe Bitcoin::ExtKey, network: :mainnet do
     it 'should raise error' do
       key = Bitcoin::ExtPubkey.from_base58('xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5')
       expect{key.derive(2**31)}.to raise_error('hardened key is not support')
+    end
+  end
+
+  # https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki#Test_vectors
+  describe 'bip 49' do
+    before do
+      # m/49'/1'/0'
+      @account = test_master_key.key.derive(2**31 + 49).derive(2**31 + 1).derive(2**31)
+    end
+
+    context 'testnet', network: :testnet do
+      it 'should be used bip44 encoding' do
+        # m/49'/1'/0'/0/0
+        receive_key = @account.derive(0).derive(0)
+        expect(receive_key.version).to eq('044a4e28')
+        expect(receive_key.priv).to eq('c9bdb49cfbaedca21c4b1f3a7803c34636b1d7dc55a717132443fc3f4c5867e8')
+        expect(receive_key.pub).to eq('03a1af804ac108a8a51782198c2d034b28bf90c8803f5a53f76276fa69a4eae77f')
+        expect(receive_key.ext_pubkey.pub).to eq('03a1af804ac108a8a51782198c2d034b28bf90c8803f5a53f76276fa69a4eae77f')
+        expect(receive_key.ext_pubkey.version).to eq('044a5262')
+        # address derivation for P2WPKH-in-P2SH
+        expect(receive_key.addr).to eq('2Mww8dCYPUpKHofjgcXcBCEGmniw9CoaiD2')
+      end
+    end
+  end
+
+  # https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki#Test_vectors
+  describe 'bip 84' do
+    before do
+      # m/84'/0'/0'
+      @account = test_master_key.key.derive(2**31 + 84).derive(2**31).derive(2**31)
+    end
+    it 'should be changed version bytes' do
+      expect(@account.to_base58).to eq('zprvAdG4iTXWBoARxkkzNpNh8r6Qag3irQB8PzEMkAFeTRXxHpbF9z4QgEvBRmfvqWvGp42t42nvgGpNgYSJA9iefm1yYNZKEm7z6qUWCroSQnE')
+      expect(@account.ext_pubkey.to_base58).to eq('zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhXNfE3EfH1r1ADqtfSdVCToUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs')
+
+      # m/84'/0'/0'/0/0
+      receive_key = @account.derive(0).derive(0)
+      expect(receive_key.pub).to eq('0330d54fd0dd420a6e5f8d3624f5f3482cae350f79d5f0753bf5beef9c2d91af3c')
+      expect(receive_key.addr).to eq('bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu')
+
+      # m/84'/0'/0'/0/1
+      receive_key2 = @account.derive(0).derive(1)
+      expect(receive_key2.pub).to eq('03e775fd51f0dfb8cd865d9ff1cca2a158cf651fe997fdc9fee9c1d3b5e995ea77')
+      expect(receive_key2.addr).to eq('bc1qnjg0jd8228aq7egyzacy8cys3knf9xvrerkf9g')
+
+      # m/84'/0'/0'/1/0
+      change_key = @account.derive(1).derive(0)
+      expect(change_key.pub).to eq('03025324888e429ab8e3dbaf1f7802648b9cd01e9b418485c5fa4c1b9b5700e1a6')
+      expect(change_key.addr).to eq('bc1q8c6fshw2dlwun7ekn9qwf37cu2rn755upcp6el')
+
+      # recover from xprv
+      ext_prv = Bitcoin::ExtKey.from_base58('zprvAdG4iTXWBoARxkkzNpNh8r6Qag3irQB8PzEMkAFeTRXxHpbF9z4QgEvBRmfvqWvGp42t42nvgGpNgYSJA9iefm1yYNZKEm7z6qUWCroSQnE')
+      expect(ext_prv.version).to eq('04b2430c')
+      expect(ext_prv.derive(0).derive(0).addr).to eq('bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu')
+
+      # recover from xpub
+      ext_pub = Bitcoin::ExtPubkey.from_base58('zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhXNfE3EfH1r1ADqtfSdVCToUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs')
+      expect(ext_pub.version).to eq('04b24746')
+      expect(ext_pub.derive(0).derive(0).addr).to eq('bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu')
     end
   end
 

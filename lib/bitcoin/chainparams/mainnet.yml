@@ -8,6 +8,14 @@ bech32_hrp: 'bc'
 privkey_version: "80"
 extended_privkey_version: "0488ade4"
 extended_pubkey_version: "0488b21e"
+bip49_pubkey_p2wpkh_p2sh_version: "049d7cb2"
+bip49_pubkey_p2wsh_p2sh_version: "0295b43f"
+bip49_privkey_p2wpkh_p2sh_version: "049d7878"
+bip49_privkey_p2wsh_p2sh_version: "0295b005"
+bip84_pubkey_p2wpkh_version: "04b24746"
+bip84_pubkey_p2wsh_version: "02aa7ed3"
+bip84_privkey_p2wpkh_version: "04b2430c"
+bip84_privkey_p2wsh_version: "02aa7a99"
 default_port: 8333
 protocol_version: 70013
 retarget_interval: 2016

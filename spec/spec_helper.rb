@@ -62,6 +62,11 @@ def create_test_wallet(wallet_id = 1)
   Bitcoin::Wallet::Base.create(wallet_id, TEST_WALLET_PATH)
 end
 
+def test_master_key
+  words = %w(abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about)
+  Bitcoin::Wallet::MasterKey.recover_from_words(words)
+end
+
 module Bitcoin
   autoload :TestScriptParser, 'bitcoin/script/test_script_parser'
 end

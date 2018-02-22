@@ -6,10 +6,11 @@ module Bitcoin
   # BIP32 Extended private key
   class ExtKey
 
+    attr_accessor :ver
     attr_accessor :depth
     attr_accessor :number
     attr_accessor :chain_code
-    attr_accessor :key
+    attr_accessor :key # Bitcoin::Key
     attr_accessor :parent_fingerprint
 
     # generate master key from seed.
@@ -34,13 +35,14 @@ module Bitcoin
       k.parent_fingerprint = parent_fingerprint
       k.chain_code = chain_code
       k.pubkey = key.pubkey
+      k.ver = priv_ver_to_pub_ver
       k
     end
 
     # serialize extended private key
     def to_payload
-      Bitcoin.chain_params.extended_privkey_version.htb << [depth].pack('C') <<
-          parent_fingerprint.htb << [number].pack('N') << chain_code << [0x00].pack('C') << key.priv_key.htb
+      version.htb << [depth].pack('C') << parent_fingerprint.htb <<
+          [number].pack('N') << chain_code << [0x00].pack('C') << key.priv_key.htb
     end
 
     # Base58 encoded extended private key
@@ -66,12 +68,7 @@ module Bitcoin
 
     # get address
     def addr
-      key.to_p2pkh
-    end
-
-    # get segwit p2wpkh address
-    def segwit_addr
-      ext_pubkey.segwit_addr
+      ext_pubkey.addr
     end
 
     # get key identifier
@@ -107,14 +104,21 @@ module Bitcoin
       raise 'invalid key ' if child_priv >= CURVE_ORDER
       new_key.key = Bitcoin::Key.new(priv_key: child_priv.to_s(16).rjust(64, '0'))
       new_key.chain_code = l[32..-1]
+      new_key.ver = version
       new_key
+    end
+
+    # get version bytes using serialization format
+    def version
+      return ExtKey.version_from_purpose(number) if depth == 1
+      ver ? ver : Bitcoin.chain_params.extended_privkey_version
     end
 
     # import private key from Base58 private key address
     def self.from_base58(address)
       data = StringIO.new(Base58.decode(address).htb)
       ext_key = ExtKey.new
-      data.read(4).bth # version
+      ext_key.ver = data.read(4).bth # version
       ext_key.depth = data.read(1).unpack('C').first
       ext_key.parent_fingerprint = data.read(4).bth
       ext_key.number = data.read(4).unpack('N').first
@@ -124,10 +128,37 @@ module Bitcoin
       ext_key
     end
 
+    # get version bytes from purpose' value.
+    def self.version_from_purpose(purpose)
+      v = purpose - 2**31
+      case v
+        when 49
+          Bitcoin.chain_params.bip49_privkey_p2wpkh_p2sh_version
+        when 84
+          Bitcoin.chain_params.bip84_privkey_p2wpkh_version
+        else
+          Bitcoin.chain_params.extended_privkey_version
+      end
+    end
+
+    # convert privkey version to pubkey version
+    def priv_ver_to_pub_ver
+      case version
+        when Bitcoin.chain_params.bip49_privkey_p2wpkh_p2sh_version
+          Bitcoin.chain_params.bip49_pubkey_p2wpkh_p2sh_version
+        when Bitcoin.chain_params.bip84_privkey_p2wpkh_version
+          Bitcoin.chain_params.bip84_pubkey_p2wpkh_version
+        else
+          Bitcoin.chain_params.extended_pubkey_version
+      end
+    end
+
   end
 
   # BIP-32 Extended public key
   class ExtPubkey
+
+    attr_accessor :ver
     attr_accessor :depth
     attr_accessor :number
     attr_accessor :chain_code
@@ -136,7 +167,7 @@ module Bitcoin
 
     # serialize extended pubkey
     def to_payload
-      Bitcoin.chain_params.extended_pubkey_version.htb << [depth].pack('C') <<
+      version.htb << [depth].pack('C') <<
           parent_fingerprint.htb << [number].pack('N') << chain_code << pub.htb
     end
 
@@ -150,17 +181,20 @@ module Bitcoin
 
     # get address
     def addr
-      Bitcoin::Key.new(pubkey: pubkey).to_p2pkh
+      case version
+        when Bitcoin.chain_params.bip49_pubkey_p2wpkh_p2sh_version
+          key.to_nested_p2wpkh
+        when Bitcoin.chain_params.bip84_pubkey_p2wpkh_version
+          key.to_p2wpkh
+        else
+          key.to_p2pkh
+      end
     end
 
-    # get segwit p2wpkh address
-    def segwit_addr
-      hash160 = Bitcoin.hash160(pub)
-      p2wpkh = [ ["00", "14", hash160].join ].pack("H*").bth
-      segwit_addr = Bech32::SegwitAddr.new
-      segwit_addr.hrp = Bitcoin.chain_params.address_version == '00' ? 'bc' : 'tb'
-      segwit_addr.script_pubkey = p2wpkh
-      segwit_addr.addr
+    # get key object
+    # @return [Bitcoin::Key]
+    def key
+      Bitcoin::Key.new(pubkey: pubkey)
     end
 
     # get key identifier
@@ -200,20 +234,40 @@ module Bitcoin
       p2 = Bitcoin::Key.new(pubkey: pubkey).to_point
       new_key.pubkey = ECDSA::Format::PointOctetString.encode(p1 + p2, compression: true).bth
       new_key.chain_code = l[32..-1]
+      new_key.ver = version
       new_key
+    end
+
+    # get version bytes using serialization format
+    def version
+      return ExtPubkey.version_from_purpose(number) if depth == 1
+      ver ? ver : Bitcoin.chain_params.extended_pubkey_version
     end
 
     # import pub key from Base58 private key address
     def self.from_base58(address)
       data = StringIO.new(Base58.decode(address).htb)
       ext_pubkey = ExtPubkey.new
-      data.read(4).bth # version
+      ext_pubkey.ver = data.read(4).bth # version
       ext_pubkey.depth = data.read(1).unpack('C').first
       ext_pubkey.parent_fingerprint = data.read(4).bth
       ext_pubkey.number = data.read(4).unpack('N').first
       ext_pubkey.chain_code = data.read(32)
       ext_pubkey.pubkey = data.read(33).bth
       ext_pubkey
+    end
+
+    # get version bytes from purpose' value.
+    def self.version_from_purpose(purpose)
+      v = purpose - 2**31
+      case v
+        when 49
+          Bitcoin.chain_params.bip49_pubkey_p2wpkh_p2sh_version
+        when 84
+          Bitcoin.chain_params.bip84_pubkey_p2wpkh_version
+        else
+          Bitcoin.chain_params.extended_pubkey_version
+      end
     end
   end
 
