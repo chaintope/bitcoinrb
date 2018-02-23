@@ -114,18 +114,22 @@ module Bitcoin
       ver ? ver : Bitcoin.chain_params.extended_privkey_version
     end
 
+    def self.parse_from_payload(payload)
+      buf = StringIO.new(payload)
+      ext_key = ExtKey.new
+      ext_key.ver = buf.read(4).bth # version
+      ext_key.depth = buf.read(1).unpack('C').first
+      ext_key.parent_fingerprint = buf.read(4).bth
+      ext_key.number = buf.read(4).unpack('N').first
+      ext_key.chain_code = buf.read(32)
+      buf.read(1) # 0x00
+      ext_key.key = Bitcoin::Key.new(priv_key: buf.read(32).bth)
+      ext_key
+    end
+
     # import private key from Base58 private key address
     def self.from_base58(address)
-      data = StringIO.new(Base58.decode(address).htb)
-      ext_key = ExtKey.new
-      ext_key.ver = data.read(4).bth # version
-      ext_key.depth = data.read(1).unpack('C').first
-      ext_key.parent_fingerprint = data.read(4).bth
-      ext_key.number = data.read(4).unpack('N').first
-      ext_key.chain_code = data.read(32)
-      data.read(1) # 0x00
-      ext_key.key = Bitcoin::Key.new(priv_key: data.read(32).bth)
-      ext_key
+      ExtKey.parse_from_payload(Base58.decode(address).htb)
     end
 
     # get version bytes from purpose' value.
@@ -244,17 +248,21 @@ module Bitcoin
       ver ? ver : Bitcoin.chain_params.extended_pubkey_version
     end
 
+    def self.parse_from_payload(payload)
+      buf = StringIO.new(payload)
+      ext_pubkey = ExtPubkey.new
+      ext_pubkey.ver = buf.read(4).bth # version
+      ext_pubkey.depth = buf.read(1).unpack('C').first
+      ext_pubkey.parent_fingerprint = buf.read(4).bth
+      ext_pubkey.number = buf.read(4).unpack('N').first
+      ext_pubkey.chain_code = buf.read(32)
+      ext_pubkey.pubkey = buf.read(33).bth
+      ext_pubkey
+    end
+
     # import pub key from Base58 private key address
     def self.from_base58(address)
-      data = StringIO.new(Base58.decode(address).htb)
-      ext_pubkey = ExtPubkey.new
-      ext_pubkey.ver = data.read(4).bth # version
-      ext_pubkey.depth = data.read(1).unpack('C').first
-      ext_pubkey.parent_fingerprint = data.read(4).bth
-      ext_pubkey.number = data.read(4).unpack('N').first
-      ext_pubkey.chain_code = data.read(32)
-      ext_pubkey.pubkey = data.read(33).bth
-      ext_pubkey
+      ExtPubkey.parse_from_payload(Base58.decode(address).htb)
     end
 
     # get version bytes from purpose' value.

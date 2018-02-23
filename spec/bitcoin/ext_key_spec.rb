@@ -207,6 +207,16 @@ describe Bitcoin::ExtKey, network: :mainnet do
     end
   end
 
+  describe '#parse_from_payload' do
+    it 'should deserialize key object.' do
+      ext_pubkey = Bitcoin::ExtPubkey.parse_from_payload('0488b21e03bef5a2f98000000204466b9cc8e161e966409ca52986c584f07e9dc81f735db683c3ff6ec7b1503f0357bfe1e341d01c69fe5654309956cbea516822fba8a601743a012a7896ee8dc2'.htb)
+      expect(ext_pubkey.to_base58).to eq('xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5')
+
+      key = Bitcoin::ExtKey.parse_from_payload('0488ade4025c1bd648000000012a7857631386ba23dacac34180dd1983734e444fdbf774041578e9b6adb37c19003c6cb8d0f6a264c91ea8b5030fadaa8e538b020f0a387421a12de9319dc93368'.htb)
+      expect(key.to_base58).to eq('xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs')
+    end
+  end
+
   # https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki#Test_vectors
   describe 'bip 49' do
     before do

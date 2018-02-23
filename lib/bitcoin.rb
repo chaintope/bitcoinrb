@@ -32,6 +32,7 @@ module Bitcoin
   autoload :MerkleTree, 'bitcoin/merkle_tree'
   autoload :Key, 'bitcoin/key'
   autoload :ExtKey, 'bitcoin/ext_key'
+  autoload :ExtPubkey, 'bitcoin/ext_key'
   autoload :Opcodes, 'bitcoin/opcodes'
   autoload :Node, 'bitcoin/node'
   autoload :Base58, 'bitcoin/base58'
