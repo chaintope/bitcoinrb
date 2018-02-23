@@ -118,6 +118,7 @@ module Bitcoin
       buf = StringIO.new(payload)
       ext_key = ExtKey.new
       ext_key.ver = buf.read(4).bth # version
+      raise 'An unsupported version byte was specified.' unless ExtKey.support_version?(ext_key.ver)
       ext_key.depth = buf.read(1).unpack('C').first
       ext_key.parent_fingerprint = buf.read(4).bth
       ext_key.number = buf.read(4).unpack('N').first
@@ -143,6 +144,12 @@ module Bitcoin
         else
           Bitcoin.chain_params.extended_privkey_version
       end
+    end
+
+    # check whether +version+ is supported version bytes.
+    def self.support_version?(version)
+      p = Bitcoin.chain_params
+      [p.bip49_privkey_p2wpkh_p2sh_version, p.bip84_privkey_p2wpkh_version, p.extended_privkey_version].include?(version)
     end
 
     # convert privkey version to pubkey version
@@ -252,6 +259,7 @@ module Bitcoin
       buf = StringIO.new(payload)
       ext_pubkey = ExtPubkey.new
       ext_pubkey.ver = buf.read(4).bth # version
+      raise 'An unsupported version byte was specified.' unless ExtPubkey.support_version?(ext_pubkey.ver)
       ext_pubkey.depth = buf.read(1).unpack('C').first
       ext_pubkey.parent_fingerprint = buf.read(4).bth
       ext_pubkey.number = buf.read(4).unpack('N').first
@@ -277,6 +285,13 @@ module Bitcoin
           Bitcoin.chain_params.extended_pubkey_version
       end
     end
+
+    # check whether +version+ is supported version bytes.
+    def self.support_version?(version)
+      p = Bitcoin.chain_params
+      [p.bip49_pubkey_p2wpkh_p2sh_version, p.bip84_pubkey_p2wpkh_version, p.extended_pubkey_version].include?(version)
+    end
+
   end
 
 end

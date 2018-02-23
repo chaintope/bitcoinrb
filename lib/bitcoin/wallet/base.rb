@@ -49,18 +49,24 @@ module Bitcoin
       end
 
       # get account list based on BIP-44
-      def accounts
-        db.accounts.map do |raw|
+      def accounts(purpose = nil)
+        list = []
+        db.accounts.each do |raw|
           a = Account.parse_from_payload(raw)
+          next if purpose && purpose != a.purpose
           a.wallet = self
-          a
+          list << a
         end
+        list
       end
 
-      def create_account(purpose = Account::PURPOSE_TYPE[:nested_witness], index = 0, name)
-        account = Account.new(purpose, index, name)
+      def create_account(purpose = Account::PURPOSE_TYPE[:native_segwit], name)
+        accounts = accounts(purpose)
+        index = accounts.size
+        account_key = master_key.key.derive(purpose + 2**31).derive(Bitcoin.chain_params.bip44_coin_type + 2**31).derive(index + 2**31).ext_pubkey
+        account = Account.new(account_key, purpose, index, name)
         account.wallet = self
-        account.init
+        account.save
         account
       end
 
@@ -101,7 +107,8 @@ module Bitcoin
 
       # wallet information
       def to_h
-        {wallet_id: wallet_id, version: version}
+        a = accounts.map(&:to_h)
+        { wallet_id: wallet_id, version: version, account_depth: a.size, accounts: a, master: {encrypted: master_key.encrypted} }
       end
 
       private

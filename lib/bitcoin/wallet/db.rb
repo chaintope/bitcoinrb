@@ -31,7 +31,8 @@ module Bitcoin
 
       def save_account(account)
         level_db.batch do
-          key = KEY_PREFIX[:account] + account.index.to_s(16).rjust(8, '0')
+          id = [account.purpose, account.index].pack('I*').bth
+          key = KEY_PREFIX[:account] + id
           level_db.put(key, account.to_payload)
         end
       end

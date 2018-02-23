@@ -13,6 +13,7 @@ describe Bitcoin::RPC::RequestHandler do
   let(:chain) { load_chain_mock }
   let(:wallet) { create_test_wallet }
   subject {
+    allow(Bitcoin::Wallet::MasterKey).to receive(:generate).and_return(test_master_key)
     node_mock = double('node mock')
     allow(node_mock).to receive(:chain).and_return(chain)
     allow(node_mock).to receive(:pool).and_return(load_pool_mock(node_mock.chain))
@@ -98,7 +99,7 @@ describe Bitcoin::RPC::RequestHandler do
     it 'should be create new wallet' do
       result = subject.createwallet(3, TEST_WALLET_PATH)
       expect(result[:wallet_id]).to eq(3)
-      expect(result[:mnemonic].size).to eq(24)
+      expect(result[:mnemonic].size).to eq(12)
     end
   end
 
@@ -110,6 +111,7 @@ describe Bitcoin::RPC::RequestHandler do
   end
 
   describe '#getwalletinfo' do
+
     context 'node has no wallet.' do
       subject {
         node_mock = double('node mock')
@@ -124,8 +126,27 @@ describe Bitcoin::RPC::RequestHandler do
     context 'node has wallet.' do
       it 'should return current wallet data' do
         result = subject.getwalletinfo
+
         expect(result[:wallet_id]).to eq(1)
         expect(result[:version]).to eq(Bitcoin::Wallet::Base::VERSION)
+        expect(result[:account_depth]).to eq(1)
+
+        accounts = result[:accounts]
+        expect(accounts.size).to eq(1)
+        expect(accounts[0][:name]).to eq('Default')
+        expect(accounts[0][:path]).to eq("m/84'/1'/0'")
+        expect(accounts[0][:type]).to eq('p2wpkh')
+        expect(accounts[0][:index]).to eq(0)
+        expect(accounts[0][:receive_depth]).to eq(1)
+        expect(accounts[0][:change_depth]).to eq(1)
+        expect(accounts[0][:look_ahead]).to eq(10)
+        expect(accounts[0][:account_key]).to eq('vpub5Y6cjg78GGuNLsaPhmYsiw4gYX3HoQiRBiSwDaBXKUafCt9bNwWQiitDk5VZ5BVxYnQdwoTyXSs2JHRPAgjAvtbBrf8ZhDYe2jWAqvZVnsc')
+        expect(accounts[0][:watch_only]).to be false
+        expect(accounts[0][:receive_address]).to eq('tb1q6rz28mcfaxtmd6v789l9rrlrusdprr9pqcpvkl')
+        expect(accounts[0][:change_address]).to eq('tb1q9u62588spffmq4dzjxsr5l297znf3z6j5p2688')
+
+        master = result[:master]
+        expect(master[:encrypted]).to be false
       end
     end
   end

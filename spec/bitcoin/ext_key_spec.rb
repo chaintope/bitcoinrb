@@ -179,6 +179,9 @@ describe Bitcoin::ExtKey, network: :mainnet do
       expect(key.priv).to eq('cbce0d719ecf7431d88e6a89fa1483e02e35092af60c042b1df2ff59fa424dca')
       expect(key.to_base58).to eq('xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM')
       expect(key.ext_pubkey.to_base58).to eq('xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5')
+
+      # pubkey format
+      expect{Bitcoin::ExtKey.from_base58('xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ')}.to raise_error('An unsupported version byte was specified.')
     end
 
     it 'import public key' do
@@ -197,6 +200,9 @@ describe Bitcoin::ExtKey, network: :mainnet do
       expect(key.fingerprint).to eq('ee7ab90c')
       expect(key.chain_code.bth).to eq('04466b9cc8e161e966409ca52986c584f07e9dc81f735db683c3ff6ec7b1503f')
       expect(key.pubkey).to eq('0357bfe1e341d01c69fe5654309956cbea516822fba8a601743a012a7896ee8dc2')
+
+      # priv key format
+      expect{Bitcoin::ExtPubkey.from_base58('xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM')}.to raise_error('An unsupported version byte was specified.')
     end
   end
 
