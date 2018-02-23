@@ -61,6 +61,22 @@ module Bitcoin
         Bitcoin::ExtKey.generate_master(seed)
       end
 
+      # derive child key using derivation path.
+      # @return [Bitcoin::ExtKey]
+      def derive(path)
+        derived_key = key
+        path.split('/').each_with_index do|p, index|
+          if index == 0
+            raise ArgumentError.new("#{path} is invalid format.") unless p == 'm'
+            next
+          end
+          raise ArgumentError.new("#{path} is invalid format.") unless p.delete("'") =~ /^[0-9]+$/
+          num = (p[-1] == "'" ? p.delete("'").to_i + 2**31 : p.to_i)
+          derived_key = derived_key.derive(num)
+        end
+        derived_key
+      end
+
       # encrypt seed
       def encrypt(passphrase)
         raise 'seed already encrypted.' if encrypted

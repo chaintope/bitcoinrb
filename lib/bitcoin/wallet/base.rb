@@ -63,7 +63,8 @@ module Bitcoin
       def create_account(purpose = Account::PURPOSE_TYPE[:native_segwit], name)
         accounts = accounts(purpose)
         index = accounts.size
-        account_key = master_key.key.derive(purpose + 2**31).derive(Bitcoin.chain_params.bip44_coin_type + 2**31).derive(index + 2**31).ext_pubkey
+        path = "m/#{purpose}'/#{Bitcoin.chain_params.bip44_coin_type}'/#{index}'"
+        account_key = master_key.derive(path).ext_pubkey
         account = Account.new(account_key, purpose, index, name)
         account.wallet = self
         account.save

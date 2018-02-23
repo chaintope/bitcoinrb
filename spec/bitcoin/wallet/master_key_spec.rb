@@ -32,4 +32,21 @@ describe Bitcoin::Wallet::MasterKey do
     end
   end
 
+  describe '#derive' do
+    subject { test_master_key }
+    it 'should derive child key using path.' do
+      expect(subject.derive("m/84'/0'/0'/0/0").to_base58).to eq('vprv9PCKRBonACARg64Rx5BeQTTf2ed93rAEFDGHTq9RjYVuFSWvrWj79AV5ChNVYix78vxRqBwCZJZfwCMdkmteMvEgiHwyyzcRmLXkPo5XYwk')
+      expect(subject.derive("m/84'/0'/0'/0/1").to_base58).to eq('vprv9PCKRBonACARiWy39ictxyUemkpjA3cSbBZk8DXmnXA6x4kL3MbYEa5B3RtZPWmaFWSq4gm5dUrPUFzQQZbvpHBkyTxpvvAW5SNj6hz6pis')
+      expect(subject.derive("m/84'/0'/0'/1/0").to_base58).to eq('vprv9Pya2CbyhNznX7qBV62k8U9Wn3gKLGy1KaUPzeC9Poxb626Xou2nD7HfseF4EraidCSvQxQffEcNBmwWJmi8Gi4J3aCqg4EKZkX8fayvUR3')
+      expect(subject.derive("m/44'/0'/0/0'/1").to_base58).to eq('tprv8jHdTXw5rTbS9qPSSP9vjK2aoqSrowGxnG4bK6iMiKt1tiYxyi6QXwiqcn6t4xBSgZHsgKjremtm3FxGDpR6cUVNDhdT9QJ6dJdGUXarVU6')
+      expect(subject.derive("m/44'/1/0'/0/1'").to_base58).to eq('tprv8juQXKssHqHuEemMuTBgxh2PSwuK3GoCBTAdnSwkG9bYkTJTS1G1Vqne7NVE9maP7hV177CT7Nqn1dC95331pKswEkvXdErBgDKBs518HcN')
+
+      expect{subject.derive("n/44'/1/0'/0/1'")}.to raise_error(ArgumentError)
+      expect{subject.derive("m/m'/1/0'/0/1'")}.to raise_error(ArgumentError)
+      expect{subject.derive("m/44'/m/0'/0/1'")}.to raise_error(ArgumentError)
+      expect{subject.derive("m/44'/1/0'/0/1m'")}.to raise_error(ArgumentError)
+
+    end
+  end
+
 end
