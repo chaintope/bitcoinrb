@@ -97,7 +97,8 @@ module Bitcoin
       # encrypt wallet
       # @param [String] passphrase the wallet passphrase
       def encrypt(passphrase)
-
+        master_key.encrypt(passphrase)
+        db.register_master_key(master_key)
       end
 
       # decrypt wallet

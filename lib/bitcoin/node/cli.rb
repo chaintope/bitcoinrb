@@ -55,6 +55,11 @@ module Bitcoin
         request('listaccounts')
       end
 
+      desc 'encryptwallet "passphrase"', 'Encrypts the wallet with "passphrase". This is for first time encryption.After this, any calls that interact with private keys such as sending or signing will require the passphrase to be set prior the making these calls.'
+      def encryptwallet(passhphrase)
+        request('encryptwallet', passhphrase)
+      end
+
       private
 
       def config

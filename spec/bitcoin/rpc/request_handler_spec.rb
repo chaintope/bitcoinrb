@@ -171,6 +171,13 @@ describe Bitcoin::RPC::RequestHandler do
     end
   end
 
+  describe '#encryptwallet' do
+    it 'should encrypt wallet.' do
+      expect(subject.encryptwallet('passphrase')).to eq('The wallet \'wallet_id: 1\' has been encrypted.')
+      expect{subject.encryptwallet('passphrase2')}.to raise_error('The wallet is already encrypted.')
+    end
+  end
+
   private
 
   def load_entry(payload, height)

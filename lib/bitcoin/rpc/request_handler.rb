@@ -107,6 +107,13 @@ module Bitcoin
         accounts
       end
 
+      # encrypt wallet.
+      def encryptwallet(passphrase)
+        return nil unless node.wallet
+        node.wallet.encrypt(passphrase)
+        "The wallet 'wallet_id: #{node.wallet.wallet_id}' has been encrypted."
+      end
+
     end
 
   end

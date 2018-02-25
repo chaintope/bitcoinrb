@@ -79,7 +79,7 @@ module Bitcoin
 
       # encrypt seed
       def encrypt(passphrase)
-        raise 'seed already encrypted.' if encrypted
+        raise 'The wallet is already encrypted.' if encrypted
         @salt = SecureRandom.hex(16)
         enc = OpenSSL::Cipher.new('AES-256-CBC')
         enc.encrypt
@@ -93,7 +93,7 @@ module Bitcoin
 
       # decrypt seed
       def decrypt(passphrase)
-        raise 'seed is not encrypted.' unless encrypted
+        raise 'The wallet is not encrypted.' unless encrypted
         dec = OpenSSL::Cipher.new('AES-256-CBC')
         dec.decrypt
         dec.key, dec.iv = key_iv(dec, passphrase)
