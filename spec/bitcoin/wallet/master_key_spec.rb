@@ -22,13 +22,13 @@ describe Bitcoin::Wallet::MasterKey do
       expect(key.seed).not_to eq('a262d6fb6122ecf45be09c50492b31f92e9beb7d9a845987a02cefda57a15f9c467a17872029a9e92299b5cbdf306e3a0ee620245cbd508959b6cb7ca637bd55')
       expect{key.key}.to raise_error('seed is encrypted. please decrypt the seed.')
       expect(key.encrypted).to be true
-      expect{key.encrypt(passphrase)}.to raise_error('seed already encrypted.') # already encrypted.
+      expect{key.encrypt(passphrase)}.to raise_error('The wallet is already encrypted.') # already encrypted.
       key.decrypt(passphrase)
       expect{key.key}.not_to raise_error
       expect(key.seed).to eq('a262d6fb6122ecf45be09c50492b31f92e9beb7d9a845987a02cefda57a15f9c467a17872029a9e92299b5cbdf306e3a0ee620245cbd508959b6cb7ca637bd55')
       expect(key.encrypted).to be false
       expect(key.salt).to eq('')
-      expect{key.decrypt(passphrase)}.to raise_error('seed is not encrypted.') # not encrypted.
+      expect{key.decrypt(passphrase)}.to raise_error('The wallet is not encrypted.') # not encrypted.
     end
   end
 
