@@ -56,26 +56,30 @@ describe Bitcoin::Wallet do
       allow(Bitcoin::Wallet::MasterKey).to receive(:generate).and_return(test_master_key)
       wallet = create_test_wallet(3)
       wallet.create_account('hoge')
-      wallet.accounts
+      wallet
     }
     it 'should be created' do
-      expect(subject.size).to eq(2)
-      expect(subject[0].purpose).to eq(84)
-      expect(subject[0].index).to eq(0)
-      expect(subject[0].name).to eq('Default')
-      expect(subject[0].receive_depth).to eq(1)
-      receive_keys = subject[0].derived_receive_keys
+      accounts = subject.accounts
+      expect(accounts.size).to eq(2)
+      expect(accounts[0].purpose).to eq(84)
+      expect(accounts[0].index).to eq(0)
+      expect(accounts[0].name).to eq('Default')
+      expect(accounts[0].receive_depth).to eq(1)
+      receive_keys = accounts[0].derived_receive_keys
       expect(receive_keys[0].addr).to eq('bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu')
       expect(receive_keys.size).to eq(1)
       expect(receive_keys[0].hardened?).to be false
-      expect(subject[0].change_depth).to eq(1)
-      change_keys = subject[0].derived_change_keys
+      expect(accounts[0].change_depth).to eq(1)
+      change_keys = accounts[0].derived_change_keys
       expect(change_keys[0].addr).to eq('bc1q8c6fshw2dlwun7ekn9qwf37cu2rn755upcp6el')
       expect(change_keys.size).to eq(1)
       expect(change_keys[0].hardened?).to be false
-      expect(subject[0].lookahead).to eq(10)
-      expect(subject[1].name).to eq('hoge')
-      expect(subject[1].index).to eq(1)
+      expect(accounts[0].lookahead).to eq(10)
+      expect(accounts[1].name).to eq('hoge')
+      expect(accounts[1].index).to eq(1)
+
+      # Account with same name can not be registered
+      expect{subject.create_account('hoge')}.to raise_error(ArgumentError)
     end
   end
 

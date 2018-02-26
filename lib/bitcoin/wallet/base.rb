@@ -60,8 +60,13 @@ module Bitcoin
         list
       end
 
+      # create new account
+      # @param [Integer] purpose BIP44's purpose.
+      # @param [String] name a account name.
+      # @return [Bitcoin::Wallet::Account]
       def create_account(purpose = Account::PURPOSE_TYPE[:native_segwit], name)
         accounts = accounts(purpose)
+        raise ArgumentError.new('Account already exists.') if accounts.find{|a|a.name == name}
         index = accounts.size
         path = "m/#{purpose}'/#{Bitcoin.chain_params.bip44_coin_type}'/#{index}'"
         account_key = master_key.derive(path).ext_pubkey
