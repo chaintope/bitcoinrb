@@ -10,7 +10,8 @@ describe Bitcoin::Network::MessageHandler do
       @logger = Logger.new(STDOUT)
       configuration = Bitcoin::Node::Configuration.new(network: :testnet)
       @chain = create_test_chain
-      @peer = Bitcoin::Network::Peer.new('127.0.0.1', 18332, Bitcoin::Network::Pool.new(@chain, configuration), configuration)
+      @peer = Bitcoin::Network::Peer.new('127.0.0.1', 18332,
+                                         Bitcoin::Network::Pool.new(nil, @chain, configuration), configuration)
       @sendheaders = false
     end
 
@@ -19,7 +20,12 @@ describe Bitcoin::Network::MessageHandler do
     end
   end
 
-  subject {Handler.new}
+  subject {
+    node_mock = double('node mock')
+    handler = Handler.new
+    allow(handler).to receive(:node).and_return(node_mock)
+    handler
+  }
   after { subject.chain.db.close }
 
   describe 'handle message' do

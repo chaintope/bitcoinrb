@@ -111,4 +111,24 @@ describe Bitcoin::Wallet do
     end
   end
 
+  describe '#watch_data' do
+    subject {
+      # TODO add utxo outpoints data
+      allow(Bitcoin::Wallet::MasterKey).to receive(:generate).and_return(test_master_key)
+      wallet = create_test_wallet(6)
+      account1 = wallet.create_account('native segwit1')
+      account1.create_receive
+      account1.create_receive
+      account1.create_change
+      wallet.watch_targets
+    }
+    it 'should return pubkey hash in the wallet.' do
+      expect(subject.size).to eq(7)
+      expect(subject[0]).to eq('d0c4a3ef09e997b6e99e397e518fe3e41a118ca1') # m/84'/1'/0'/0/0 default
+      expect(subject[1]).to eq('2f34aa1cf00a53b055a291a03a7d45f0a6988b52') # m/84'/1'/0'/1/0 default
+      expect(subject[2]).to eq('0fa17461c68ec2241a4c4a5edf799cbe2f8fb449') # m/84'/1'/1'/0/0 account1
+      expect(subject[3]).to eq('24d6a2ce123c8be57fb5ff2394f2aadd3905419b') # m/84'/1'/1'/0/1 account1
+    end
+  end
+
 end

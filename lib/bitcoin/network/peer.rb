@@ -190,11 +190,7 @@ module Bitcoin
       # send filterload message.
       def send_filter_load(bloom)
         filter_load = Bitcoin::Message::FilterLoad.new(
-          bloom.to_a,
-          bloom.hash_funcs,
-          bloom.tweak,
-          Bitcoin::Message::FilterLoad::BLOOM_UPDATE_ALL
-        )
+            bloom, Bitcoin::Message::FilterLoad::BLOOM_UPDATE_ALL)
         conn.send_message(filter_load)
       end
 

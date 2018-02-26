@@ -14,13 +14,15 @@ module Bitcoin
 
       attr_reader :peers # active peers
       attr_reader :pending_peers # currently connecting peer
+      attr_reader :node
       attr_reader :chain
       attr_reader :max_outbound
       attr_reader :logger
       attr_reader :peer_discovery
       attr_accessor :started
 
-      def initialize(chain, configuration)
+      def initialize(node, chain, configuration)
+        @node = node
         @peers = []
         @pending_peers = []
         @max_outbound = MAX_OUTBOUND_CONNECTIONS
@@ -59,6 +61,7 @@ module Bitcoin
         end
         peers << peer
         pending_peers.delete(peer)
+        filter_load(peer) if node.wallet
       end
 
       # terminate peers.
@@ -75,8 +78,8 @@ module Bitcoin
       end
 
       # new bloom filter.
-      def filter_load(bloom)
-        peers.each { |peer| peer.send_filter_load(bloom) }
+      def filter_load(peer)
+        peer.send_filter_load(node.bloom)
       end
 
       # add element to bloom filter.

@@ -74,11 +74,13 @@ module Bitcoin
       end
 
       # get the list of derived keys for receive key.
+      # @return [Array[Bitcoin::ExtPubkey]]
       def derived_receive_keys
         (receive_depth + 1).times.map{|i|derive_key(0,i)}
       end
 
       # get the list of derived keys for change key.
+      # @return [Array[Bitcoin::ExtPubkey]]
       def derived_change_keys
         (change_depth + 1).times.map{|i|derive_key(1,i)}
       end
@@ -104,6 +106,12 @@ module Bitcoin
 
       def watch_only
         false # TODO implements import watch only address.
+      end
+
+      # get data elements tobe monitored with Bloom Filter.
+      # @return [Array[String]]
+      def watch_targets
+        derived_receive_keys.map(&:hash160) + derived_change_keys.map(&:hash160)
       end
 
       def to_h

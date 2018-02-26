@@ -5,8 +5,10 @@ describe Bitcoin::Network::Pool do
   describe '#allocate_peer_id' do
     let (:chain) { create_test_chain }
     subject {
+      node_mock = double('node mock')
+      allow(node_mock).to receive(:wallet).and_return(nil)
       configuration = Bitcoin::Node::Configuration.new
-      pool = Bitcoin::Network::Pool.new(chain, configuration)
+      pool = Bitcoin::Network::Pool.new(node_mock, chain, configuration)
       peer1 = Bitcoin::Network::Peer.new('192.168.0.1', 18333, pool, configuration)
       peer2 = Bitcoin::Network::Peer.new('192.168.0.2', 18333, pool, configuration)
       peer3 = Bitcoin::Network::Peer.new('192.168.0.3', 18333, pool, configuration)

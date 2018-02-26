@@ -11,17 +11,17 @@ module Bitcoin
       attr_reader :configuration
       attr_accessor :server
       attr_accessor :wallet
+      attr_accessor :bloom
 
       def initialize(configuration)
         @chain = Bitcoin::Store::SPVChain.new
         @configuration = configuration
-        @pool = Bitcoin::Network::Pool.new(@chain, @configuration)
+        @pool = Bitcoin::Network::Pool.new(self, @chain, @configuration)
         @logger = Bitcoin::Logger.create(:debug)
         @running = false
         @wallet = Bitcoin::Wallet::Base.current_wallet
         # TODO : optimize bloom filter parameters
-        # TODO : load public keys in wallet.
-        @bloom = Bitcoin::BloomFilter.new(512, 0.01)
+        setup_filter
       end
 
       # open the node.
@@ -48,15 +48,10 @@ module Bitcoin
         logger.debug "broadcast tx: #{tx.to_payload.bth}"
       end
 
-      # new bloom filter.
-      def filter_load
-        pool.filter_load(@bloom)
-      end
-
       # add filter element to bloom filter.
       # [String] element. the hex string of txid, public key, public key hash or outpoint.
       def filter_add(element)
-        @bloom.add(element)
+        bloom.add(element)
         pool.filter_add(element)
       end
 
@@ -64,6 +59,14 @@ module Bitcoin
       def filter_clear
         pool.filter_clear
       end
+
+      private
+
+      def setup_filter
+        @bloom = Bitcoin::BloomFilter.create_filter(512, 0.01)
+        wallet.watch_targets.each{|t|bloom.add(t.htb.reverse)} if wallet
+      end
+
     end
   end
 end

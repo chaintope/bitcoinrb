@@ -211,6 +211,7 @@ describe Bitcoin::RPC::RequestHandler do
   end
 
   def load_pool_mock(chain)
+    node_mock = double('node mock')
     conn1 = double('connection_mock1')
     conn2 = double('connection_mock1')
     allow(conn1).to receive(:version).and_return(Bitcoin::Message::Version.new(
@@ -220,7 +221,7 @@ describe Bitcoin::RPC::RequestHandler do
     allow(conn2).to receive(:version).and_return(Bitcoin::Message::Version.new)
 
     configuration = Bitcoin::Node::Configuration.new(network: :testnet)
-    pool = Bitcoin::Network::Pool.new(chain, configuration)
+    pool = Bitcoin::Network::Pool.new(node_mock, chain, configuration)
 
     peer1 =Bitcoin::Network::Peer.new('192.168.0.1', 18333, pool, configuration)
     peer1.id = 1

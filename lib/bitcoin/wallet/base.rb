@@ -126,6 +126,12 @@ module Bitcoin
         { wallet_id: wallet_id, version: version, account_depth: a.size, accounts: a, master: {encrypted: master_key.encrypted} }
       end
 
+      # get data elements tobe monitored with Bloom Filter.
+      # @return [Array[String]]
+      def watch_targets
+        accounts.map(&:watch_targets).flatten
+      end
+
       private
 
       def initialize(wallet_id, path_prefix)
