@@ -60,6 +60,11 @@ module Bitcoin
         request('encryptwallet', passhphrase)
       end
 
+      desc 'getnewaddress "account"', 'Returns a new Bitcoin address for receiving payments.'
+      def getnewaddress(account)
+        request('getnewaddress', account)
+      end
+
       private
 
       def config

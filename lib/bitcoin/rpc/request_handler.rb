@@ -114,6 +114,11 @@ module Bitcoin
         "The wallet 'wallet_id: #{node.wallet.wallet_id}' has been encrypted."
       end
 
+      # create new bitcoin address for receiving payments.
+      def getnewaddress(account_name)
+        node.wallet.generate_new_address(account_name)
+      end
+
     end
 
   end

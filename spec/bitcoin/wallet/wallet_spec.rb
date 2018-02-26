@@ -64,12 +64,12 @@ describe Bitcoin::Wallet do
       expect(accounts[0].purpose).to eq(84)
       expect(accounts[0].index).to eq(0)
       expect(accounts[0].name).to eq('Default')
-      expect(accounts[0].receive_depth).to eq(1)
+      expect(accounts[0].receive_depth).to eq(0)
       receive_keys = accounts[0].derived_receive_keys
       expect(receive_keys[0].addr).to eq('bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu')
       expect(receive_keys.size).to eq(1)
       expect(receive_keys[0].hardened?).to be false
-      expect(accounts[0].change_depth).to eq(1)
+      expect(accounts[0].change_depth).to eq(0)
       change_keys = accounts[0].derived_change_keys
       expect(change_keys[0].addr).to eq('bc1q8c6fshw2dlwun7ekn9qwf37cu2rn755upcp6el')
       expect(change_keys.size).to eq(1)
@@ -95,6 +95,19 @@ describe Bitcoin::Wallet do
       expect(subject.accounts.size).to eq(4)
       expect(subject.accounts(Bitcoin::Wallet::Account::PURPOSE_TYPE[:legacy]).size).to eq(1)
       expect(subject.accounts(Bitcoin::Wallet::Account::PURPOSE_TYPE[:native_segwit]).size).to eq(3)
+    end
+  end
+
+  describe '#generate_new_address' do
+    subject {
+      allow(Bitcoin::Wallet::MasterKey).to receive(:generate).and_return(test_master_key)
+      create_test_wallet(5)
+    }
+    it 'should return new address' do
+      expect(subject.generate_new_address('Default')).to eq('tb1qd7spv5q28348xl4myc8zmh983w5jx32cjhkn97')
+      expect(subject.generate_new_address('Default')).to eq('tb1qxdyjf6h5d6qxap4n2dap97q4j5ps6ua8sll0ct')
+      # account name does not exist.
+      expect{subject.generate_new_address('hoge')}.to raise_error(ArgumentError)
     end
   end
 

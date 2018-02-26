@@ -20,8 +20,8 @@ module Bitcoin
         @purpose = purpose
         @index = index
         @name = name
-        @receive_depth = 1
-        @change_depth = 1
+        @receive_depth = 0
+        @change_depth = 0
         @lookahead = 10
         @account_key = account_key
       end
@@ -56,6 +56,7 @@ module Bitcoin
       # @return [Bitcoin::ExtKey]
       def create_receive
         @receive_depth += 1
+        save
         derive_key(0, @receive_depth)
       end
 
@@ -63,6 +64,7 @@ module Bitcoin
       # # @return [Bitcoin::ExtKey]
       def create_change
         @change_depth += 1
+        save
         derive_key(1, @change_depth)
       end
 
@@ -73,12 +75,12 @@ module Bitcoin
 
       # get the list of derived keys for receive key.
       def derived_receive_keys
-        receive_depth.times.map{|i|derive_key(0,i)}
+        (receive_depth + 1).times.map{|i|derive_key(0,i)}
       end
 
       # get the list of derived keys for change key.
       def derived_change_keys
-        change_depth.times.map{|i|derive_key(1,i)}
+        (change_depth + 1).times.map{|i|derive_key(1,i)}
       end
 
       # get account type label.
@@ -107,8 +109,8 @@ module Bitcoin
       def to_h
         {
             name: name, type: type, index: index, receive_depth: receive_depth, change_depth: change_depth,
-            look_ahead: lookahead, receive_address: derive_key(0, receive_depth - 1).addr,
-            change_address: derive_key(1, change_depth - 1).addr,
+            look_ahead: lookahead, receive_address: derive_key(0, receive_depth).addr,
+            change_address: derive_key(1, change_depth).addr,
             account_key: account_key.to_base58, path: path, watch_only: watch_only
         }
       end

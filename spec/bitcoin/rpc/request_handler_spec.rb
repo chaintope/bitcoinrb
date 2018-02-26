@@ -137,8 +137,8 @@ describe Bitcoin::RPC::RequestHandler do
         expect(accounts[0][:path]).to eq("m/84'/1'/0'")
         expect(accounts[0][:type]).to eq('p2wpkh')
         expect(accounts[0][:index]).to eq(0)
-        expect(accounts[0][:receive_depth]).to eq(1)
-        expect(accounts[0][:change_depth]).to eq(1)
+        expect(accounts[0][:receive_depth]).to eq(0)
+        expect(accounts[0][:change_depth]).to eq(0)
         expect(accounts[0][:look_ahead]).to eq(10)
         expect(accounts[0][:account_key]).to eq('vpub5Y6cjg78GGuNLsaPhmYsiw4gYX3HoQiRBiSwDaBXKUafCt9bNwWQiitDk5VZ5BVxYnQdwoTyXSs2JHRPAgjAvtbBrf8ZhDYe2jWAqvZVnsc')
         expect(accounts[0][:watch_only]).to be false

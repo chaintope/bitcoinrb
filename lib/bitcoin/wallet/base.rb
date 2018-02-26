@@ -65,8 +65,7 @@ module Bitcoin
       # @param [String] name a account name.
       # @return [Bitcoin::Wallet::Account]
       def create_account(purpose = Account::PURPOSE_TYPE[:native_segwit], name)
-        accounts = accounts(purpose)
-        raise ArgumentError.new('Account already exists.') if accounts.find{|a|a.name == name}
+        raise ArgumentError.new('Account already exists.') if find_account(name, purpose)
         index = accounts.size
         path = "m/#{purpose}'/#{Bitcoin.chain_params.bip44_coin_type}'/#{index}'"
         account_key = master_key.derive(path).ext_pubkey
@@ -81,6 +80,15 @@ module Bitcoin
       def get_balance(account)
         # TODO get from utxo db.
         0.00000000
+      end
+
+      # create new bitcoin address for receiving payments.
+      # @param [String] account_name an account name.
+      # @return [String] generated address.
+      def generate_new_address(account_name)
+        account = find_account(account_name)
+        raise ArgumentError.new('Account does not exist.') unless account
+        account.create_receive.addr
       end
 
       # get wallet version.
@@ -129,6 +137,11 @@ module Bitcoin
       def self.exist?(wallet_id, path_prefix)
         path = "#{path_prefix}wallet#{wallet_id}"
         Dir.exist?(path)
+      end
+
+      # find account using +account_name+
+      def find_account(account_name, purpose = nil)
+        accounts(purpose).find{|a| a.name == account_name}
       end
 
     end
