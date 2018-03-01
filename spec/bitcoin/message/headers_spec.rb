@@ -8,8 +8,8 @@ describe Bitcoin::Message::Headers do
     }
     it 'should be parsed' do
       expect(subject.headers.length).to eq(2)
-      expect(subject.headers[0].hash).to eq('000000000d0a15365158f9295a9f1e9ab29de3aebd67308a254d37e4a8e8e0f5')
-      expect(subject.headers[1].hash).to eq('0000000053ee9c500fd3510c7b05bc276a52b3ed400805fef86931c260d91aa1')
+      expect(subject.headers[0].hash).to eq('f5e0e8a8e4374d258a3067bdaee39db29a1e9f5a29f9585136150a0d00000000')
+      expect(subject.headers[1].hash).to eq('a11ad960c23169f8fe050840edb3526a27bc057b0c51d30f509cee5300000000')
     end
   end
 

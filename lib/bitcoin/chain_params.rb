@@ -66,7 +66,7 @@ module Bitcoin
 
     def genesis_block
       header = Bitcoin::BlockHeader.new(
-          genesis['version'], genesis['prev_hash'], genesis['merkle_root'],
+          genesis['version'], genesis['prev_hash'].rhex, genesis['merkle_root'].rhex,
           genesis['time'], genesis['bits'], genesis['nonce'])
       Bitcoin::Block.new(header)
     end

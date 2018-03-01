@@ -60,7 +60,7 @@ module Bitcoin
       end
 
       # get next block hash for specified +hash+
-      # @param [String] hash the block hash
+      # @param [String] hash the block hash(little endian)
       # @return [String] the next block hash. If it does not exist yet, return nil.
       def next_hash(hash)
         db.next_hash(hash)

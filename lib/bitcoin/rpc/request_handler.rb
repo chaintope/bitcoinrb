@@ -10,7 +10,7 @@ module Bitcoin
         h[:chain] = Bitcoin.chain_params.network
         best_block = node.chain.latest_block
         h[:headers] = best_block.height
-        h[:bestblockhash] = best_block.hash
+        h[:bestblockhash] = best_block.header.block_id
         h[:chainwork] = best_block.header.work
         h[:mediantime] = node.chain.mtp(best_block.hash)
         h
@@ -22,21 +22,23 @@ module Bitcoin
       end
 
       # get block header information.
-      def getblockheader(hash, verbose)
-        entry = node.chain.find_entry_by_hash(hash)
+      # @param [String] block_id block hash(big endian)
+      def getblockheader(block_id, verbose)
+        block_hash = block_id.rhex
+        entry = node.chain.find_entry_by_hash(block_hash)
         if verbose
           {
-              hash: hash,
+              hash: block_id,
               height: entry.height,
               version: entry.header.version,
               versionHex: entry.header.version.to_s(16),
-              merkleroot: entry.header.merkle_root,
+              merkleroot: entry.header.merkle_root.rhex,
               time: entry.header.time,
-              mediantime: node.chain.mtp(hash),
+              mediantime: node.chain.mtp(block_hash),
               nonce: entry.header.nonce,
               bits: entry.header.bits.to_s(16),
-              previousblockhash: entry.prev_hash,
-              nextblockhash: node.chain.next_hash(hash)
+              previousblockhash: entry.prev_hash.rhex,
+              nextblockhash: node.chain.next_hash(block_hash).rhex
           }
         else
           entry.header.to_payload.bth

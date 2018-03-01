@@ -14,7 +14,7 @@ describe Bitcoin::Store::SPVChain do
         genesis = subject.latest_block
         expect(genesis.height).to eq(0)
         expect(genesis.header).to eq(Bitcoin.chain_params.genesis_block.header)
-        expect(subject.next_hash('000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943')).to be nil
+        expect(subject.next_hash('43497fd7f826957108f4a30fd9cec3aeba79972084e90ead01ea330900000000')).to be nil
 
         next_header = Bitcoin::BlockHeader.parse_from_payload('0100000043497fd7f826957108f4a30fd9cec3aeba79972084e90ead01ea330900000000bac8b0fa927c0ac8234287e33c5f74d38d354820e24756ad709d7038fc5f31f020e7494dffff001d03e4b672'.htb)
         subject.append_header(next_header)
@@ -22,7 +22,7 @@ describe Bitcoin::Store::SPVChain do
         block = subject.latest_block
         expect(block.height).to eq(1)
         expect(block.header).to eq(next_header)
-        expect(subject.next_hash('000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943')).to eq('00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206')
+        expect(subject.next_hash('43497fd7f826957108f4a30fd9cec3aeba79972084e90ead01ea330900000000')).to eq('06128e87be8b1b4dea47a7247d5528d2702c96826c7a648497e773b800000000')
       end
     end
 

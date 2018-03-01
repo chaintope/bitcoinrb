@@ -7,8 +7,8 @@ describe Bitcoin::Message::MerkleBlock do
       Bitcoin::Message::MerkleBlock.parse_from_payload('00000020ac70b03084a595f8b06c4de338ff14b6953a96cb5ce44a5ffe66f760000000008c380e4ec4582616f5fa29dfb8a7e47b4b3cf82fc8b504a17fca24407aafe9ef04a95159ffff001def07843825000000099f6f4fe5ec096aa42ed525be702377dc585217a4d28b2896d126c6d6fd39e25b1ffe110ce6ab3ba01ca15058f602db64beb31ddb8cf3bf2b0230058ccce3de25649f439bbda9a4208307646d284045e2e2fb49a114be4d23ae1804ddf6efb39f7916ca0ff3c6802471e0e9640abe80c61ac72d9c849218c45a62920779b43cbec5470b3427ef2894b5741c7665483711a783f1e69e2570755b633f982882b613d56370ced6e4e36155d788c271ecdefa17e0116344e7dcbd6804cae6b9c1dd40d57271b314d4e59708915e891e69a834de67227d1f9bdaf399a1455aa62f98c3f3e4a81f2a8f91d0ef61782770954a99821242a60ae869575442e19b25bf75e23ab90d17ab47b2b6bca723b5a97acc77c41c9158d4b9aec289c5acc78db3b143035f1f00'.htb)
     }
     it 'should be parsed' do
-      expect(subject.header.hash).to eq('000000004a47b1d94f28908bb94ad14f93aed51d6c1bdcc3ff5494638ea0fb20')
-      expect(subject.header.merkle_root).to eq('efe9af7a4024ca7fa104b5c82ff83c4b7be4a7b8df29faf5162658c44e0e388c')
+      expect(subject.header.hash).to eq('20fba08e639454ffc3dc1b6c1dd5ae934fd14ab98b90284fd9b1474a00000000')
+      expect(subject.header.merkle_root).to eq('8c380e4ec4582616f5fa29dfb8a7e47b4b3cf82fc8b504a17fca24407aafe9ef')
       expect(subject.tx_count).to eq(37)
       expect(subject.flags).to eq('5f1f00')
     end

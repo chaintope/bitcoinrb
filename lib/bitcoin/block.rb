@@ -28,7 +28,7 @@ module Bitcoin
 
     # check the merkle root in the block header matches merkle root calculated from tx list.
     def valid_merkle_root?
-      calculate_merkle_root == header.merkle_root
+      calculate_merkle_root == header.merkle_root.rhex
     end
 
     # calculate merkle root from tx list.

@@ -75,7 +75,7 @@ module Bitcoin
     end
 
     def txid
-      hash.htb.reverse.bth
+      hash.rhex
     end
 
     def witness_hash
@@ -83,7 +83,7 @@ module Bitcoin
     end
 
     def wtxid
-      witness_hash.htb.reverse.bth
+      witness_hash.rhex
     end
 
     # get the witness commitment of coinbase tx.

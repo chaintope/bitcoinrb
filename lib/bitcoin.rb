@@ -102,6 +102,11 @@ module Bitcoin
       [self].pack('H*')
     end
 
+    # reverse hex string endian
+    def rhex
+      htb.reverse.bth
+    end
+
     # get opcode
     def opcode
       case encoding

@@ -21,11 +21,11 @@ module Bitcoin
 
     def self.parse_from_payload(payload)
       version, prev_hash, merkle_root, time, bits, nonce = payload.unpack('Va32a32VVV')
-      new(version, prev_hash.reverse.bth, merkle_root.reverse.bth, time, bits, nonce)
+      new(version, prev_hash.bth, merkle_root.bth, time, bits, nonce)
     end
 
     def to_payload
-      [version, prev_hash.htb.reverse, merkle_root.htb.reverse, time, bits, nonce].pack('Va32a32VVV')
+      [version, prev_hash.htb, merkle_root.htb, time, bits, nonce].pack('Va32a32VVV')
     end
 
     # compute difficulty target from bits.
@@ -36,9 +36,14 @@ module Bitcoin
       (mantissa * 2 ** (8 * (exponent - 3)))
     end
 
-    # block hash
+    # block hash(little endian)
     def hash
       calc_hash
+    end
+
+    # block hash(big endian)
+    def block_id
+      hash.rhex
     end
 
     # evaluate block header
@@ -48,7 +53,7 @@ module Bitcoin
 
     # evaluate valid proof of work.
     def valid_pow?
-      hash.hex < difficulty_target
+      block_id.hex < difficulty_target
     end
 
     # evaluate valid timestamp.
@@ -72,7 +77,7 @@ module Bitcoin
     private
 
     def calc_hash
-      Bitcoin.double_sha256(to_payload).reverse.bth
+      Bitcoin.double_sha256(to_payload).bth
     end
 
   end

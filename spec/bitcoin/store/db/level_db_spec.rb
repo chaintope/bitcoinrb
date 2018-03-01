@@ -37,8 +37,8 @@ describe Bitcoin::Store::DB::LevelDB do
 
     it do
       # see: https://github.com/haw-itn/bitcoinrb/issues/8
-      expect(subject.get_hash_from_height(1)).to eq '00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206'
-      expect(subject.get_hash_from_height(16)).to eq '00000000c4cbd75af741f3a2b2ff72d9ed4d83a048462c1efe331be31ccf006b'
+      expect(subject.get_hash_from_height(1)).to eq '06128e87be8b1b4dea47a7247d5528d2702c96826c7a648497e773b800000000'
+      expect(subject.get_hash_from_height(16)).to eq '6b00cf1ce31b33fe1e2c4648a0834dedd972ffb2a2f341f75ad7cbc400000000'
     end
   end
 end
