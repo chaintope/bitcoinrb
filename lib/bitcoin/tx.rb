@@ -70,12 +70,20 @@ module Bitcoin
       tx
     end
 
+    def hash
+      Bitcoin.double_sha256(serialize_old_format).bth
+    end
+
     def txid
-      Bitcoin.double_sha256(serialize_old_format).reverse.bth
+      hash.htb.reverse.bth
+    end
+
+    def witness_hash
+      Bitcoin.double_sha256(to_payload).bth
     end
 
     def wtxid
-      Bitcoin.double_sha256(to_payload).reverse.bth
+      witness_hash.htb.reverse.bth
     end
 
     # get the witness commitment of coinbase tx.
