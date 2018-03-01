@@ -58,13 +58,11 @@ describe Bitcoin::Secp256k1::Ruby do
       signature = '30450221008b9d1dc26ba6a9cb62127b02742fa9d754cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c0489bc22ede944ccf4ecbab4cc618ef3ed'
       expect(Bitcoin::Secp256k1::Ruby.sign_data(message, priv_key).bth).to eq(signature)
 
-      100.times do
-        priv_key = Bitcoin::Key.generate.priv_key
-        puts priv_key
-        secp256k1_sig = Bitcoin::Secp256k1::Native.sign_data(message, priv_key)
-        ruby_sig = Bitcoin::Secp256k1::Ruby.sign_data(message, priv_key)
-        expect(ruby_sig.bth).to eq(secp256k1_sig.bth)
-      end
+      priv_key = Bitcoin::Key.generate.priv_key
+      puts priv_key
+      secp256k1_sig = Bitcoin::Secp256k1::Native.sign_data(message, priv_key)
+      ruby_sig = Bitcoin::Secp256k1::Ruby.sign_data(message, priv_key)
+      expect(ruby_sig.bth).to eq(secp256k1_sig.bth)
     end
   end
 
