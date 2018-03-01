@@ -28,12 +28,12 @@ module Bitcoin
 
     # check the merkle root in the block header matches merkle root calculated from tx list.
     def valid_merkle_root?
-      calculate_merkle_root == header.merkle_root.rhex
+      calculate_merkle_root == header.merkle_root
     end
 
     # calculate merkle root from tx list.
     def calculate_merkle_root
-      Bitcoin::MerkleTree.build_from_leaf(transactions.map(&:txid)).merkle_root
+      Bitcoin::MerkleTree.build_from_leaf(transactions.map(&:hash)).merkle_root
     end
 
     # check the witness commitment in coinbase tx matches witness commitment calculated from tx list.
@@ -43,12 +43,11 @@ module Bitcoin
 
     # calculate witness commitment from tx list.
     def calculate_witness_commitment
-      wtxid_list = [COINBASE_WTXID]
-      wtxid_list.concat(transactions[1..-1].map{|tx| tx.wtxid})
+      witness_hashes = [COINBASE_WTXID]
+      witness_hashes += (transactions[1..-1].map(&:witness_hash))
       reserved_value = transactions[0].inputs[0].script_witness.stack.map(&:bth).join
-      root_hash = Bitcoin::MerkleTree.build_from_leaf(wtxid_list).merkle_root
-      Digest::SHA256.digest(Digest::SHA256.digest(
-          [reserved_value + root_hash].pack('H*').reverse )).bth
+      root_hash = Bitcoin::MerkleTree.build_from_leaf(witness_hashes).merkle_root
+      Bitcoin.double_sha256([root_hash + reserved_value].pack('H*')).bth
     end
 
     # return this block height. block height is included in coinbase.

@@ -78,8 +78,7 @@ module Bitcoin
       def hash
         return @hash if @hash
         self.right = left.dup unless right
-        Digest::SHA256.digest(Digest::SHA256.digest(
-            [right.hash + left.hash].pack('H*').reverse )).reverse.bth
+        Bitcoin.double_sha256([left.hash + right.hash].pack('H*')).bth
       end
 
       def root?

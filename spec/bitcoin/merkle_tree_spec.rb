@@ -4,47 +4,47 @@ describe Bitcoin::MerkleTree do
 
   describe 'build merkle tree' do
     subject {
-      txids = ['270678dca40a26f6d3e2002c2d0cf6734c1cbfad5eebf40685c9586c36e498df',
-               '22795697cc3dc124a54a5a3dcd44288f60aa41d5902cda3259f33c68c786272f',
-               '25dee3cc8c0530022bbff38cdb1db3be64db02f65850a11ca03babe60c11fe1f',
-               '9fb3eff6dd0418ae234dbe14a149fbe2e24540286d64078320a4a9bd9b439f64',
-               'be3cb4790792625ac41892849c2dc71ac680be0a64e9e0712480c6f30fca1679',
-               '13b68228983f635b7570259ee6f183a711374865761c74b59428ef27340b47c5',
-               'b877c386668a0c2ef2e05f09ea881600e4fff91734c41dc47874010587594801',
-               '59453382561569d7d818f8c2fec21d0a879434906697ad36f872a1cdfa93bd03',
-               'a093e168031c7fdd06766ff525770067a881f4b889c4b6ef38fc7bcf80da4365',
-               'ce8833f5aa9aea1c7359622d6431f0f0103ad5d45861f499d5bc233326c957b6',
-               '0c157156b77c675bc9cfbfcef4bd2e5a515c6487b95b37ace070ce0ad51cb4bc',
-               '0985bea40b0517de8073cead67febce38f15e248f1c626e29a803163f0acd975',
-               'be0159e633914e8efe850c8fd73e8282cf7d4528fb55ecd252aa9bbf1d060319',
-               'f40880b1bcc8a526b19f339ce53758a4534fe78d79f6842e92226d280b40391d',
-               'efcde54107974cc635e76b9c66a32f2e7b2169f488b9e508a07b1231cea1ef6b',
-               '7f08f9505f0343de2cdbbc759fa13b7c366b161027846c784470ed35e766bfac',
-               'b1ab26badb91dc156d26b43f546a609fe382b810e1481b33daca608939a4beb4',
-               'b462ccfef628accb300580cf5b6b29c144c53d73b9e0b2bf0dec2c0b94ee9cdc',
-               '500e0ce5d092003915a8934480b65e087c9ecda2704ee0c5b16b0cbbcd4d609f',
-               '00ecb5da85e1fdb525af6e74868fe700551093e0df1ef0124421f99761d1fc69',
-               '0032ac5822e7b6801a39bc13ead901b8f5de302f70989d7d4a360bebab75b49d',
-               '0183c521309cb773a222529150167698cd95ba9081b17f78651ccec01e62159e',
-               '0158b7d72511eeff580f6eca430183dfbf348ffd889731299a13106b34beebad',
-               '001bc3e43a899abc5d93e58df2b5b4731ae52aa0ee40f4f9e701c738fb0e4c11',
-               '014987e1a794afb47b86667666f40e67dbefc20e47e525f1ca467d832edf3a1f',
-               '00f8e6532865a75a8b4af9b35de91f677ad484d0722c08c9befe080df2ff7a4e',
-               '25c01bddd3d770c35dfe80f6b075666ccf8272e0dfde33f20490e72d83df3c07',
-               'c84d0fc39f992d3de54e2d4fc62559af91544355f280f651442afbd2e1603df8',
-               'eda18fd515804ecde80dc980be0292b7e90a9afe19c4bfc7cff3db053125ad8f',
-               '7023cc3f19394c78d59d2b18e553446db10e62ed68ed1b4b011a60d535ee3433',
-               '82b098e66831757da57ffdda5b4e5ff1e6469b48eeb74cb41127a92086d75f63',
-               '0e7f38fa77bdf46d9d1cd0a1ebcc2bf4268742202d1da1cd97ebbf483352c9bb',
-               '4ae55ff3f5b94f389f60e847102c3bf7e61834bd5c9ac8873506d2d9a4c38460',
-               'a63ceae8ce65ece6a1d216aea06a71013f6da0e23e154e6262797c96a868ef41',
-               '5985c69d2de07bb54d53c32c2009377a7c1a08d39728b1582564c3ca73676827',
-               'e8845daf2e73cb38fa392a5c85aa8aebf63e05cb3fe1443a259317447b58a620',
-               'b4f93946ec0f34122a8e2f0028fb3b6aebd1f419f3edcc4e4629bdaba4b2f9d2']
-      Bitcoin::MerkleTree.build_from_leaf(txids)
+      tx_hashes = ['df98e4366c58c98506f4eb5eadbf1c4c73f60c2d2c00e2d3f6260aa4dc780627',
+               '2f2786c7683cf35932da2c90d541aa608f2844cd3d5a4aa524c13dcc97567922',
+               '1ffe110ce6ab3ba01ca15058f602db64beb31ddb8cf3bf2b0230058ccce3de25',
+               '649f439bbda9a4208307646d284045e2e2fb49a114be4d23ae1804ddf6efb39f',
+               '7916ca0ff3c6802471e0e9640abe80c61ac72d9c849218c45a62920779b43cbe',
+               'c5470b3427ef2894b5741c7665483711a783f1e69e2570755b633f982882b613',
+               '0148598705017478c41dc43417f9ffe4001688ea095fe0f22e0c8a6686c377b8',
+               '03bd93facda172f836ad9766903494870a1dc2fec2f818d8d769155682334559',
+               '6543da80cf7bfc38efb6c489b8f481a867007725f56f7606dd7f1c0368e193a0',
+               'b657c9263323bcd599f46158d4d53a10f0f031642d6259731cea9aaaf53388ce',
+               'bcb41cd50ace70e0ac375bb987645c515a2ebdf4cebfcfc95b677cb75671150c',
+               '75d9acf06331809ae226c6f148e2158fe3bcfe67adce7380de17050ba4be8509',
+               '1903061dbf9baa52d2ec55fb28457dcf82823ed78f0c85fe8e4e9133e65901be',
+               '1d39400b286d22922e84f6798de74f53a45837e59c339fb126a5c8bcb18008f4',
+               '6befa1ce31127ba008e5b988f469217b2e2fa3669c6be735c64c970741e5cdef',
+               'acbf66e735ed7044786c842710166b367c3ba19f75bcdb2cde43035f50f9087f',
+               'b4bea4398960cada331b48e110b882e39f606a543fb4266d15dc91dbba26abb1',
+               'dc9cee940b2cec0dbfb2e0b9733dc544c1296b5bcf800530cbac28f6fecc62b4',
+               '9f604dcdbb0c6bb1c5e04e70a2cd9e7c085eb6804493a815390092d0e50c0e50',
+               '69fcd16197f9214412f01edfe093105500e78f86746eaf25b5fde185dab5ec00',
+               '9db475abeb0b364a7d9d98702f30def5b801d9ea13bc391a80b6e72258ac3200',
+               '9e15621ec0ce1c65787fb18190ba95cd98761650915222a273b79c3021c58301',
+               'adebbe346b10139a29319788fd8f34bfdf830143ca6e0f58ffee1125d7b75801',
+               '114c0efb38c701e7f9f440eea02ae51a73b4b5f28de5935dbc9a893ae4c31b00',
+               '1f3adf2e837d46caf125e5470ec2efdb670ef4667666867bb4af94a7e1874901',
+               '4e7afff20d08febec9082c72d084d47a671fe95db3f94a8b5aa7652853e6f800',
+               '073cdf832de79004f233dedfe07282cf6c6675b0f680fe5dc370d7d3dd1bc025',
+               'f83d60e1d2fb2a4451f680f255435491af5925c64f2d4ee53d2d999fc30f4dc8',
+               '8fad253105dbf3cfc7bfc419fe9a0ae9b79202be80c90de8cd4e8015d58fa1ed',
+               '3334ee35d5601a014b1bed68ed620eb16d4453e5182b9dd5784c39193fcc2370',
+               '635fd78620a92711b44cb7ee489b46e6f15f4e5bdafd7fa57d753168e698b082',
+               'bbc9523348bfeb97cda11d2d20428726f42bcceba1d01c9d6df4bd77fa387f0e',
+               '6084c3a4d9d2063587c89a5cbd3418e6f73b2c1047e8609f384fb9f5f35fe54a',
+               '41ef68a8967c7962624e153ee2a06d3f01716aa0ae16d2a1e6ec65cee8ea3ca6',
+               '27686773cac3642558b12897d3081a7c7a3709202cc3534db57be02d9dc68559',
+               '20a6587b441793253a44e13fcb053ef6eb8aaa855c2a39fa38cb732eaf5d84e8',
+               'd2f9b2a4abbd29464eccedf319f4d1eb6a3bfb28002f8e2a12340fec4639f9b4']
+      Bitcoin::MerkleTree.build_from_leaf(tx_hashes)
     }
     it 'should be build' do
-      expect(subject.merkle_root).to eq('efe9af7a4024ca7fa104b5c82ff83c4b7be4a7b8df29faf5162658c44e0e388c')
+      expect(subject.merkle_root).to eq('8c380e4ec4582616f5fa29dfb8a7e47b4b3cf82fc8b504a17fca24407aafe9ef')
     end
   end
 
@@ -62,19 +62,15 @@ describe Bitcoin::MerkleTree do
 
     context 'include tx' do
       subject {
-        hashes = ['5be239fdd6c626d196288bd2a4175258dc772370be25d52ea46a09ece54f6f9f',
-                  '25dee3cc8c0530022bbff38cdb1db3be64db02f65850a11ca03babe60c11fe1f',
-                  '9fb3eff6dd0418ae234dbe14a149fbe2e24540286d64078320a4a9bd9b439f64',
-                  'be3cb4790792625ac41892849c2dc71ac680be0a64e9e0712480c6f30fca1679',
-                  '13b68228983f635b7570259ee6f183a711374865761c74b59428ef27340b47c5',
-                  '40ddc1b9e6ca0468bddce7446311e017fadeec71c288d75561e3e4d6ce7063d5',
-                  'c3982fa65a45a199f3da9b1f7d2267de34a8691e895e910897e5d414b37172d5',
-                  'e275bf259be142545769e80aa6421282994a9570277861efd0918f2a1fa8e4f3',
-                  '43b1b38dc7acc589c2aeb9d458911cc477cc7aa9b523a7bcb6b247ab170db93a']
-        Bitcoin::MerkleTree.build_partial(37, hashes, Bitcoin.byte_to_bit('5f1f00'.htb))
+        # 000000000000b731f2eef9e8c63173adfb07e41bd53eb0ef0a6b720d6cb6dea4 mainnet block
+        hashes = ['3612262624047ee87660be1a707519a443b1c1ce3d248cbfc6c15870f6c5daa2',
+                  '019f5b01d4195ecbc9398fbf3c3b1fa9bb3183301d7a1fb3bd174fcfa40a2b65',
+                  '41ed70551dd7e841883ab8f0b16bf04176b7d1480e4f0af9f3d4c3595768d068',
+                  '20d2a7bc994987302e5b1ac80fc425fe25f8b63169ea78e68fbaaefa59379bbf']
+        Bitcoin::MerkleTree.build_partial(7, hashes, Bitcoin.byte_to_bit('1d'.htb))
       }
       it 'should be build' do
-        expect(subject.merkle_root).to eq('efe9af7a4024ca7fa104b5c82ff83c4b7be4a7b8df29faf5162658c44e0e388c')
+        expect(subject.merkle_root).to eq('7f16c5962e8bd963659c793ce370d95f093bc7e367117b3c30c1f8fdd0d97287')
       end
     end
 
