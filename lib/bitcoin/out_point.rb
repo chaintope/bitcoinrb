@@ -19,7 +19,7 @@ module Bitcoin
     end
 
     def to_payload
-      [hash.htb.reverse, index].pack('a32V')
+      [hash.htb, index].pack('a32V')
     end
 
     def self.create_coinbase_outpoint
@@ -28,6 +28,11 @@ module Bitcoin
 
     def valid?
       index >= 0 && (!coinbase? && hash != COINBASE_HASH)
+    end
+
+    # convert hash to txid
+    def txid
+      hash.rhex
     end
 
   end

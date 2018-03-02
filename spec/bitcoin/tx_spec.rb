@@ -111,7 +111,7 @@ describe Bitcoin::Tx do
         prevout_script_values = {}
 
         json[0].each do |i|
-          outpoint = Bitcoin::OutPoint.new(i[0], i[1])
+          outpoint = Bitcoin::OutPoint.new(i[0].rhex, i[1])
           prevout_script_pubkeys[outpoint.to_payload] = Bitcoin::TestScriptParser.parse_script(i[2])
           prevout_script_values[outpoint.to_payload] = i[3] if i.size >= 4
         end
@@ -157,7 +157,7 @@ describe Bitcoin::Tx do
         prevout_script_values = {}
 
         json[0].each do |i|
-          outpoint = Bitcoin::OutPoint.new(i[0], i[1])
+          outpoint = Bitcoin::OutPoint.new(i[0].rhex, i[1])
           prevout_script_pubkeys[outpoint.to_payload] = Bitcoin::TestScriptParser.parse_script(i[2])
           prevout_script_values[outpoint.to_payload] = i[3] if i.size >= 4
         end

@@ -40,13 +40,6 @@ describe Bitcoin::ScriptInterpreter do
     end
   end
 
-  def build_dummy_tx(script_sig, txid)
-    tx = Bitcoin::Tx.new
-    tx.inputs << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new(txid, 0), script_sig: script_sig)
-    tx.outputs << Bitcoin::TxOut.new(script_pubkey: Bitcoin::Script.new)
-    tx
-  end
-
   def build_credit_tx(script_pubkey, amount)
     tx = Bitcoin::Tx.new
     tx.version = 1
@@ -62,7 +55,7 @@ describe Bitcoin::ScriptInterpreter do
     tx.version = 1
     tx.lock_time = 0
     tx.inputs << Bitcoin::TxIn.new(
-      out_point: Bitcoin::OutPoint.new(locked_tx.txid, 0),
+      out_point: Bitcoin::OutPoint.new(locked_tx.hash, 0),
       script_sig: script_sig,
       script_witness: witness
     )

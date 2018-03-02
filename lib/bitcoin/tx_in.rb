@@ -35,7 +35,7 @@ module Bitcoin
       buf = payload.is_a?(String) ? StringIO.new(payload) : payload
       i = new
       hash, index = buf.read(36).unpack('a32V')
-      i.out_point = OutPoint.new(hash.reverse.bth, index)
+      i.out_point = OutPoint.new(hash.bth, index)
       sig_length = Bitcoin.unpack_var_int_from_io(buf)
       sig = buf.read(sig_length)
       if i.coinbase?
