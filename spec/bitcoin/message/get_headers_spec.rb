@@ -5,9 +5,9 @@ describe Bitcoin::Message::GetHeaders do
   describe 'to_pkt' do
     subject {
       blocks = [
-          '000000000005113cca98f538758427316cb755430a84d10be5cc376e98f78ad1',
-          '00000000000106bae568195360d78f6335aebe99f9a5393f293fb77e15b7fc16',
-          '00000000000034e604d81dcbb0762c31f15a1d6bb27d0aef23f34d0c1b1643b2'
+          'd18af7986e37cce50bd1840a4355b76c3127847538f598ca3c11050000000000',
+          '16fcb7157eb73f293f39a5f999beae35638fd760531968e5ba06010000000000',
+          'b243161b0c4df323ef0a7db26b1d5af1312c76b0cb1dd804e634000000000000'
       ]
       Bitcoin::Message::GetHeaders.new(70015, blocks).to_pkt
     }
@@ -23,9 +23,9 @@ describe Bitcoin::Message::GetHeaders do
     it do
       expect(subject.version).to eq(70015)
       expect(subject.hashes.length).to eq(3)
-      expect(subject.hashes[0]).to eq('000000000005113cca98f538758427316cb755430a84d10be5cc376e98f78ad1')
-      expect(subject.hashes[1]).to eq('00000000000106bae568195360d78f6335aebe99f9a5393f293fb77e15b7fc16')
-      expect(subject.hashes[2]).to eq('00000000000034e604d81dcbb0762c31f15a1d6bb27d0aef23f34d0c1b1643b2')
+      expect(subject.hashes[0]).to eq('d18af7986e37cce50bd1840a4355b76c3127847538f598ca3c11050000000000')
+      expect(subject.hashes[1]).to eq('16fcb7157eb73f293f39a5f999beae35638fd760531968e5ba06010000000000')
+      expect(subject.hashes[2]).to eq('b243161b0c4df323ef0a7db26b1d5af1312c76b0cb1dd804e634000000000000')
       expect(subject.stop_hash).to eq('0000000000000000000000000000000000000000000000000000000000000000')
     end
   end

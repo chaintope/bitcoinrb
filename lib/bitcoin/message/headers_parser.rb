@@ -10,13 +10,13 @@ module Bitcoin
         hashes = []
         buf = StringIO.new(payload)
         size.times do
-          hashes << buf.read(32).reverse.bth
+          hashes << buf.read(32).bth
         end
-        new(ver, hashes, buf.read(32).reverse.bth)
+        new(ver, hashes, buf.read(32).bth)
       end
 
       def to_payload
-        [version].pack('V') << Bitcoin.pack_var_int(hashes.length) << hashes.map{|h|h.htb.reverse}.join << stop_hash.htb.reverse
+        [version].pack('V') << Bitcoin.pack_var_int(hashes.length) << hashes.map{|h|h.htb}.join << stop_hash.htb
       end
 
     end
