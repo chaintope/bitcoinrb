@@ -221,7 +221,7 @@ module Bitcoin
 
     def to_h
       {
-          txid: txid, hash: hash.rhex, version: version, size: size, vsize: vsize, locktime: lock_time,
+          txid: txid, hash: witness_hash.rhex, version: version, size: size, vsize: vsize, locktime: lock_time,
           vin: inputs.map(&:to_h), vout: outputs.map.with_index{|tx_out, index| tx_out.to_h.merge({n: index})}
       }
     end

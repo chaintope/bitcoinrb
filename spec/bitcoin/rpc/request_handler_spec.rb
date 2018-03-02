@@ -115,6 +115,8 @@ describe Bitcoin::RPC::RequestHandler do
       # for segwit tx
       tx = subject.decoderawtransaction('01000000000101cdf9ce825aba7f777899cc76243946a62d9ecb6c9805d30faa5a690d862344d70000000000ffffffff0253a2800200000000160014e3324f11cd2d4715c9d09186d0677d3f18fc0cc8e8c61100000000001976a91498cba7ee7618b76d19b4952a4240b954609b75cb88ac0247304402204ed43722821e458b98295824079ad4a04f5a55df8aa3339e89ebc7138d45e1ca022076b925a51996eb2797a0f870855d73220950e7a91d5d8f0cc11bc9e2c68551ba012103e67c2c0435bd1b6478ae327e4746d788a01e2f6e669506cb1a0515b9a708c74b00000000')
       expect(tx).to include(
+                        txid: 'e603a71f500a6db03e5ce89160332c1fabb9adb6f76bae2b983d5257cd3d4421',
+                        hash: '56c968fcee7145c47b63f5407acc8e4a337d4b95df79767054e66502078d6d0c',
                         vin:[{
                             txid: 'd74423860d695aaa0fd305986ccb9e2da646392476cc9978777fba5a82cef9cd',
                             vout: 0, script_sig: {asm: '', hex: ''}, sequence: 4294967295,
