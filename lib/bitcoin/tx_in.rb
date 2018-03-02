@@ -62,6 +62,13 @@ module Bitcoin
       !script_witness.empty?
     end
 
+    def to_h
+      h = {txid: out_point.txid, vout: out_point.index,  script_sig: script_sig.to_h }
+      h[:txinwitness] = script_witness.stack.map(&:bth) if has_witness?
+      h[:sequence] = sequence
+      h
+    end
+
   end
 
 end

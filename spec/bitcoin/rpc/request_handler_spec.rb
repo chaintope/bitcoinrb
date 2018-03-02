@@ -87,6 +87,47 @@ describe Bitcoin::RPC::RequestHandler do
     end
   end
 
+  describe '#decoderawtransaction' do
+    it 'should return tx hash.' do
+      # for legacy tx
+      tx = subject.decoderawtransaction('01000000017179acc39e281989c62f1ed77940977a8562d2a03c902c20e1888ecca10e75eb00000000715347304402206945124b3126753fa83e7d4b03c419b6ceb90109cb68386ce81052fafe421fbf022023b0a4fabfea8286cb2102fb44623093abb170c127eeb51049f60a2e45d7abea012721022d4549c2f5aca5697dc232390770a99d6ee6ee139fda0fa0412e77a7bcd4b3eead55935887ffffffff010865f2040000000017a91454080827c0212bce22f827d1728d8480975de9338700000000')
+      expect(tx).to include(
+                        txid: '6af5fb5448b27f396ad00848e284dc7fe029efa519742fe113ffe63ec429fc32',
+                        hash: '6af5fb5448b27f396ad00848e284dc7fe029efa519742fe113ffe63ec429fc32',
+                        version: 1, size: 196, vsize: 196, locktime: 0,
+                        vin:[{
+                            txid: 'eb750ea1cc8e88e1202c903ca0d262857a974079d71e2fc68919289ec3ac7971', vout: 0,
+                            script_sig: {
+                                asm: '3 304402206945124b3126753fa83e7d4b03c419b6ceb90109cb68386ce81052fafe421fbf022023b0a4fabfea8286cb2102fb44623093abb170c127eeb51049f60a2e45d7abea01 21022d4549c2f5aca5697dc232390770a99d6ee6ee139fda0fa0412e77a7bcd4b3eead55935887',
+                                hex: '5347304402206945124b3126753fa83e7d4b03c419b6ceb90109cb68386ce81052fafe421fbf022023b0a4fabfea8286cb2102fb44623093abb170c127eeb51049f60a2e45d7abea012721022d4549c2f5aca5697dc232390770a99d6ee6ee139fda0fa0412e77a7bcd4b3eead55935887'
+                            },
+                            sequence: 4294967295}],
+                        vout: [{
+                            value: 0.8299444,
+                            n: 0,
+                            script_pubkey: {
+                                asm: 'OP_HASH160 54080827c0212bce22f827d1728d8480975de933 OP_EQUAL',
+                                hex: 'a91454080827c0212bce22f827d1728d8480975de93387',
+                                req_sigs: 1,
+                                addresses: ['2MzuYNTgfcezpymFsHLGjsNPchnKXwNP7SK']
+                            }}]
+                    )
+      # for segwit tx
+      tx = subject.decoderawtransaction('01000000000101cdf9ce825aba7f777899cc76243946a62d9ecb6c9805d30faa5a690d862344d70000000000ffffffff0253a2800200000000160014e3324f11cd2d4715c9d09186d0677d3f18fc0cc8e8c61100000000001976a91498cba7ee7618b76d19b4952a4240b954609b75cb88ac0247304402204ed43722821e458b98295824079ad4a04f5a55df8aa3339e89ebc7138d45e1ca022076b925a51996eb2797a0f870855d73220950e7a91d5d8f0cc11bc9e2c68551ba012103e67c2c0435bd1b6478ae327e4746d788a01e2f6e669506cb1a0515b9a708c74b00000000')
+      expect(tx).to include(
+                        vin:[{
+                            txid: 'd74423860d695aaa0fd305986ccb9e2da646392476cc9978777fba5a82cef9cd',
+                            vout: 0, script_sig: {asm: '', hex: ''}, sequence: 4294967295,
+                            txinwitness: [
+                                '304402204ed43722821e458b98295824079ad4a04f5a55df8aa3339e89ebc7138d45e1ca022076b925a51996eb2797a0f870855d73220950e7a91d5d8f0cc11bc9e2c68551ba01',
+                                '03e67c2c0435bd1b6478ae327e4746d788a01e2f6e669506cb1a0515b9a708c74b'
+                            ]}]
+                    )
+      # for invalid tx
+      expect{subject.decoderawtransaction('hoge')}.to raise_error(ArgumentError)
+    end
+  end
+
   describe '#createwallet' do
     before {
       path = test_wallet_path(3)

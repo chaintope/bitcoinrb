@@ -80,6 +80,16 @@ module Bitcoin
         tx.txid
       end
 
+      # decode tx data.
+      def decoderawtransaction(hex_tx)
+        begin
+          tx = Bitcoin::Tx.parse_from_payload(hex_tx.htb)
+          tx.to_h
+        rescue Exception
+          raise ArgumentError.new('TX decode failed')
+        end
+      end
+
       # wallet api
 
       # create wallet

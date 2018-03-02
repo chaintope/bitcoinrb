@@ -409,6 +409,16 @@ module Bitcoin
       chunks == other.chunks
     end
 
+    def to_h
+      h = {asm: to_s, hex: to_payload.bth}
+      addrs = to_addr
+      if addrs
+        h[:req_sigs] = addrs.is_a?(Array) ? addrs.size : 1
+        h[:addresses] = addrs.is_a?(Array) ? addrs : [addrs]
+      end
+      h
+    end
+
     private
 
     # generate p2pkh address. if script dose not p2pkh, return nil.

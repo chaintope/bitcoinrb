@@ -32,6 +32,15 @@ module Bitcoin
       'ffffffffffffffff00'.htb
     end
 
+    # convert satoshi to btc
+    def value_to_btc
+      value / 100000000.0
+    end
+
+    def to_h
+      {value: value_to_btc, script_pubkey: script_pubkey.to_h}
+    end
+
   end
 
 end
