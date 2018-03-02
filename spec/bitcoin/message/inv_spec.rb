@@ -8,9 +8,9 @@ describe Bitcoin::Message::Inv do
     }
     it do
       expect(subject.inventories.length).to eq(2)
-      expect(subject.inventories[0].hash).to eq('96106f1e8e102ece15b577d4da722c063634d4ffd6473f8a961cd7c62d339c09')
+      expect(subject.inventories[0].hash).to eq('099c332dc6d71c968a3f47d6ffd43436062c72dad477b515ce2e108e1e6f1096')
       expect(subject.inventories[0].identifier).to eq(1)
-      expect(subject.inventories[1].hash).to eq('050eb5b2cd199c9d1f5079d4662e739cf06187385e88437567e876046587cfe6')
+      expect(subject.inventories[1].hash).to eq('e6cf87650476e8677543885e388761f09c732e66d479501f9d9c19cdb2b50e05')
       expect(subject.inventories[1].identifier).to eq(1)
     end
   end
@@ -18,8 +18,8 @@ describe Bitcoin::Message::Inv do
   describe 'to_pkt' do
     subject {
       inv = Bitcoin::Message::Inv.new
-      inv.inventories << Bitcoin::Message::Inventory.new(1, '96106f1e8e102ece15b577d4da722c063634d4ffd6473f8a961cd7c62d339c09')
-      inv.inventories << Bitcoin::Message::Inventory.new(1, '050eb5b2cd199c9d1f5079d4662e739cf06187385e88437567e876046587cfe6')
+      inv.inventories << Bitcoin::Message::Inventory.new(1, '099c332dc6d71c968a3f47d6ffd43436062c72dad477b515ce2e108e1e6f1096')
+      inv.inventories << Bitcoin::Message::Inventory.new(1, 'e6cf87650476e8677543885e388761f09c732e66d479501f9d9c19cdb2b50e05')
       inv.to_pkt
     }
     it do

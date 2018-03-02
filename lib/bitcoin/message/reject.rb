@@ -32,12 +32,12 @@ module Bitcoin
         message, payload = Bitcoin.unpack_var_string(payload)
         code, payload = payload.unpack('Ca*')
         reason, payload = Bitcoin.unpack_var_string(payload)
-        extra = ['tx', 'block'].include?(message) ? payload.reverse.bth : payload
+        extra = ['tx', 'block'].include?(message) ? payload.bth : payload
         new(message, code, reason, extra)
       end
 
       def to_payload
-        e = ['tx', 'block'].include?(message) ? extra.htb.reverse : extra
+        e = ['tx', 'block'].include?(message) ? extra.htb : extra
         Bitcoin.pack_var_string(message) << [code].pack('C') << Bitcoin.pack_var_string(reason) << e
       end
 

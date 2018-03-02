@@ -18,15 +18,15 @@ describe Bitcoin::Message::MerkleBlock do
     subject {
       m = Bitcoin::Message::MerkleBlock.new
       m.header = Bitcoin::BlockHeader.parse_from_payload('00000020ac70b03084a595f8b06c4de338ff14b6953a96cb5ce44a5ffe66f760000000008c380e4ec4582616f5fa29dfb8a7e47b4b3cf82fc8b504a17fca24407aafe9ef04a95159ffff001def078438'.htb)
-      m.hashes = ['5be239fdd6c626d196288bd2a4175258dc772370be25d52ea46a09ece54f6f9f',
-                  '25dee3cc8c0530022bbff38cdb1db3be64db02f65850a11ca03babe60c11fe1f',
-                  '9fb3eff6dd0418ae234dbe14a149fbe2e24540286d64078320a4a9bd9b439f64',
-                  'be3cb4790792625ac41892849c2dc71ac680be0a64e9e0712480c6f30fca1679',
-                  '13b68228983f635b7570259ee6f183a711374865761c74b59428ef27340b47c5',
-                  '40ddc1b9e6ca0468bddce7446311e017fadeec71c288d75561e3e4d6ce7063d5',
-                  'c3982fa65a45a199f3da9b1f7d2267de34a8691e895e910897e5d414b37172d5',
-                  'e275bf259be142545769e80aa6421282994a9570277861efd0918f2a1fa8e4f3',
-                  '43b1b38dc7acc589c2aeb9d458911cc477cc7aa9b523a7bcb6b247ab170db93a']
+      m.hashes = ['9f6f4fe5ec096aa42ed525be702377dc585217a4d28b2896d126c6d6fd39e25b',
+                  '1ffe110ce6ab3ba01ca15058f602db64beb31ddb8cf3bf2b0230058ccce3de25',
+                  '649f439bbda9a4208307646d284045e2e2fb49a114be4d23ae1804ddf6efb39f',
+                  '7916ca0ff3c6802471e0e9640abe80c61ac72d9c849218c45a62920779b43cbe',
+                  'c5470b3427ef2894b5741c7665483711a783f1e69e2570755b633f982882b613',
+                  'd56370ced6e4e36155d788c271ecdefa17e0116344e7dcbd6804cae6b9c1dd40',
+                  'd57271b314d4e59708915e891e69a834de67227d1f9bdaf399a1455aa62f98c3',
+                  'f3e4a81f2a8f91d0ef61782770954a99821242a60ae869575442e19b25bf75e2',
+                  '3ab90d17ab47b2b6bca723b5a97acc77c41c9158d4b9aec289c5acc78db3b143',]
       m.tx_count = 37
       m.flags = '5f1f00'
       m.to_pkt

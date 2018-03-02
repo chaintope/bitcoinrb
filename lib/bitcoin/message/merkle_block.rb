@@ -23,7 +23,7 @@ module Bitcoin
         m.tx_count = buf.read(4).unpack('V').first
         hash_count = Bitcoin.unpack_var_int_from_io(buf)
         hash_count.times do
-          m.hashes << buf.read(32).reverse.bth
+          m.hashes << buf.read(32).bth
         end
         flag_count = Bitcoin.unpack_var_int_from_io(buf)
         # A sequence of bits packed eight in a byte with the least significant bit first.
@@ -33,7 +33,7 @@ module Bitcoin
 
       def to_payload
         header.to_payload << [tx_count].pack('V') << Bitcoin.pack_var_int(hashes.size) <<
-            hashes.map{|h|h.htb.reverse}.join << Bitcoin.pack_var_int(flags.htb.bytesize) << flags.htb
+            hashes.map(&:htb).join << Bitcoin.pack_var_int(flags.htb.bytesize) << flags.htb
       end
 
     end
