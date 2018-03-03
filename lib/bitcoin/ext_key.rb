@@ -102,7 +102,7 @@ module Bitcoin
       raise 'invalid key' if left >= CURVE_ORDER
       child_priv = (left + key.priv_key.to_i(16)) % CURVE_ORDER
       raise 'invalid key ' if child_priv >= CURVE_ORDER
-      new_key.key = Bitcoin::Key.new(priv_key: child_priv.to_s(16).rjust(64, '0'))
+      new_key.key = Bitcoin::Key.new(priv_key: child_priv.to_even_length_hex.rjust(64, '0'))
       new_key.chain_code = l[32..-1]
       new_key.ver = version
       new_key
