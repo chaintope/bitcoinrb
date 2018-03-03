@@ -136,7 +136,8 @@ module Bitcoin
     OP_NOP9 = 0xb8
     OP_NOP10 = 0xb9
 
-    OPCODES_MAP = Hash[*constants.grep(/^OP_/).map { |c| [const_get(c), c.to_s] }.flatten]
+    DUPLICATE_KEY = [:OP_NOP2, :OP_NOP3]
+    OPCODES_MAP = Hash[*(constants.grep(/^OP_/) - [:OP_NOP2, :OP_NOP3]).map { |c| [const_get(c), c.to_s] }.flatten]
     NAME_MAP = Hash[*constants.grep(/^OP_/).map { |c| [c.to_s, const_get(c)] }.flatten]
 
     def opcode_to_name(opcode)
