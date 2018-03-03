@@ -31,12 +31,12 @@ module Bitcoin
               hash: block_id,
               height: entry.height,
               version: entry.header.version,
-              versionHex: entry.header.version.to_s(16),
+              versionHex: entry.header.version.to_even_length_hex,
               merkleroot: entry.header.merkle_root.rhex,
               time: entry.header.time,
               mediantime: node.chain.mtp(block_hash),
               nonce: entry.header.nonce,
-              bits: entry.header.bits.to_s(16),
+              bits: entry.header.bits.to_even_length_hex,
               previousblockhash: entry.prev_hash.rhex,
               nextblockhash: node.chain.next_hash(block_hash).rhex
           }
@@ -53,7 +53,7 @@ module Bitcoin
             id: peer.id,
             addr: "#{peer.host}:#{peer.port}",
             addrlocal: local_addr,
-            services: peer.remote_version.services.to_s(16).rjust(16, '0'),
+            services: peer.remote_version.services.to_even_length_hex.rjust(16, '0'),
             relaytxes: peer.remote_version.relay,
             lastsend: peer.last_send,
             lastrecv: peer.last_recv,
@@ -83,10 +83,22 @@ module Bitcoin
       # decode tx data.
       def decoderawtransaction(hex_tx)
         begin
-          tx = Bitcoin::Tx.parse_from_payload(hex_tx.htb)
-          tx.to_h
+          Bitcoin::Tx.parse_from_payload(hex_tx.htb).to_h
         rescue Exception
           raise ArgumentError.new('TX decode failed')
+        end
+      end
+
+      # decode script data.
+      def decodescript(hex_script)
+        begin
+          script = Bitcoin::Script.parse_from_payload(hex_script.htb)
+          h = script.to_h
+          h.delete(:hex)
+          h[:p2sh] = script.to_p2sh.addresses.first unless script.p2sh?
+          h
+        rescue Exception
+          raise ArgumentError.new('Script decode failed')
         end
       end
 

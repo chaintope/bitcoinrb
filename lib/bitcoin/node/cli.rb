@@ -35,6 +35,11 @@ module Bitcoin
         request('decoderawtransaction', hexstring)
       end
 
+      desc 'decodescript "hexstring"', 'Decode a hex-encoded script.'
+      def decodescript(hexstring)
+        request('decodescript', hexstring)
+      end
+
       # wallet cli
 
       desc 'sendrawtransaction', 'Submits raw transaction (serialized, hex-encoded) to local node and network.'
