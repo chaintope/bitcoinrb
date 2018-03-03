@@ -31,7 +31,7 @@ describe Bitcoin::Base58 do
           expect(key.compressed?).to eq(compressed)
         else
           script = Bitcoin::Script.parse_from_payload(payload.htb)
-          expect(script.to_addr).to eq(base58_str)
+          expect(script.addresses.first).to eq(base58_str)
         end
       end
     end

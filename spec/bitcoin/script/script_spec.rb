@@ -46,13 +46,13 @@ describe Bitcoin::Script do
         expect(subject.multisig?).to be false
         expect(subject.op_return?).to be false
         expect(subject.standard?).to be true
-        expect(subject.to_addr).to eq('17T9tBC2dSpusL1rhT4T4AV4if963Tpfym')
+        expect(subject.addresses.first).to eq('17T9tBC2dSpusL1rhT4T4AV4if963Tpfym')
       end
     end
 
     context 'testnet' do
       it 'should be generate P2PKH script' do
-        expect(subject.to_addr).to eq('mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1')
+        expect(subject.addresses.first).to eq('mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1')
       end
     end
   end
@@ -72,13 +72,13 @@ describe Bitcoin::Script do
         expect(subject.multisig?).to be false
         expect(subject.op_return?).to be false
         expect(subject.standard?).to be true
-        expect(subject.to_addr).to eq('bc1qgmp0h7lvexdxx9y05pmdukx09xcteu9svvvxlw')
+        expect(subject.addresses.first).to eq('bc1qgmp0h7lvexdxx9y05pmdukx09xcteu9svvvxlw')
       end
     end
 
     context 'testnet' do
       it 'should be generate P2WPKH script' do
-        expect(subject.to_addr).to eq('tb1qgmp0h7lvexdxx9y05pmdukx09xcteu9sx2h4ya')
+        expect(subject.addresses.first).to eq('tb1qgmp0h7lvexdxx9y05pmdukx09xcteu9sx2h4ya')
       end
     end
 
@@ -102,17 +102,17 @@ describe Bitcoin::Script do
         expect(subject[0].multisig?).to be false
         expect(subject[0].op_return?).to be false
         expect(subject[0].standard?).to be true
-        expect(subject[0].to_addr).to eq('3CTcn59uJ89wCsQbeiy8AGLydXE9mh6Yrr')
+        expect(subject[0].addresses.first).to eq('3CTcn59uJ89wCsQbeiy8AGLydXE9mh6Yrr')
         expect(subject[1].to_payload.bth).to eq('5121021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e921032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e3552ae')
         expect(subject[1].to_s).to eq('1 021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9 032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35 2 OP_CHECKMULTISIG')
-        expect(subject[1].to_addr).to be nil
+        expect(subject[1].addresses).to eq([])
       end
     end
 
     context 'testnet' do
       it 'should be generate P2SH script' do
-        expect(subject[0].to_addr).to eq('2N41pqp5vuafHQf39KraznDLEqsSKaKmrij')
-        expect(subject[1].to_addr).to be nil
+        expect(subject[0].addresses.first).to eq('2N41pqp5vuafHQf39KraznDLEqsSKaKmrij')
+        expect(subject[1].addresses).to eq([])
       end
     end
   end
@@ -136,13 +136,13 @@ describe Bitcoin::Script do
         expect(subject.multisig?).to be false
         expect(subject.op_return?).to be false
         expect(subject.standard?).to be true
-        expect(subject.to_addr).to eq('bc1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607s264w7g')
+        expect(subject.addresses.first).to eq('bc1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607s264w7g')
       end
     end
 
     context 'testnet' do
       it 'should be generate P2WSH script' do
-        expect(subject.to_addr).to eq('tb1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607sajrpy8')
+        expect(subject.addresses.first).to eq('tb1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607sajrpy8')
       end
     end
   end

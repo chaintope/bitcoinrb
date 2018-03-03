@@ -116,10 +116,11 @@ module Bitcoin
       to_payload.bth
     end
 
-    def to_addr
-      return p2pkh_addr if p2pkh?
-      return p2sh_addr if p2sh?
-      return bech32_addr if witness_program?
+    def addresses
+      return [p2pkh_addr] if p2pkh?
+      return [p2sh_addr] if p2sh?
+      return [bech32_addr] if witness_program?
+      []
     end
 
     # check whether standard script.
@@ -411,10 +412,10 @@ module Bitcoin
 
     def to_h
       h = {asm: to_s, hex: to_payload.bth}
-      addrs = to_addr
-      if addrs
-        h[:req_sigs] = addrs.is_a?(Array) ? addrs.size : 1
-        h[:addresses] = addrs.is_a?(Array) ? addrs : [addrs]
+      addrs = addresses
+      unless addrs.empty?
+        h[:req_sigs] = addrs.size
+        h[:addresses] = addrs
       end
       h
     end
