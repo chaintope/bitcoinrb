@@ -20,13 +20,13 @@ describe Bitcoin::Script do
       it 'should be append' do
         s = Bitcoin::Script.new << OP_1NEGATE << Bitcoin::Script.encode_number(1000) << OP_ADD
         expect(s.to_payload.bth).to eq('4f02e80393')
-        expect(s.to_s).to eq('OP_1NEGATE e803 OP_ADD')
+        expect(s.to_s).to eq('OP_1NEGATE 1000 OP_ADD')
         s = Bitcoin::Script.new << OP_1NEGATE << Bitcoin::Script.encode_number(100) << OP_ADD
         expect(s.to_payload.bth).to eq('4f016493')
         # negative value
         s = Bitcoin::Script.new << OP_1NEGATE << Bitcoin::Script.encode_number(-1000) << OP_ADD
         expect(s.to_payload.bth).to eq('4f02e88393')
-        expect(s.to_s).to eq('OP_1NEGATE e883 OP_ADD')
+        expect(s.to_s).to eq('OP_1NEGATE -1000 OP_ADD')
       end
     end
   end
@@ -219,6 +219,10 @@ describe Bitcoin::Script do
       pushdata = Bitcoin::Script.from_string('46c2fbfbecc99a63148fa076de58cf29b0bcf0b0')
       expect(pushdata.to_s).to eq('46c2fbfbecc99a63148fa076de58cf29b0bcf0b0')
       expect(pushdata.to_payload).to eq('1446c2fbfbecc99a63148fa076de58cf29b0bcf0b0'.htb)
+
+      contract = Bitcoin::Script.from_string('OP_HASH160 b6ca66aa538d28518852b2104d01b8b499fc9b23 OP_EQUAL OP_IF 021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9 OP_ELSE 1000 OP_CHECKSEQUENCEVERIFY OP_DROP 032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35 OP_ENDIF OP_CHECKSIG')
+      expect(contract.to_payload.bth).to eq('a914b6ca66aa538d28518852b2104d01b8b499fc9b23876321021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e96702e803b27521032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e3568ac')
+      expect(contract.to_s).to eq('OP_HASH160 b6ca66aa538d28518852b2104d01b8b499fc9b23 OP_EQUAL OP_IF 021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9 OP_ELSE 1000 OP_CHECKSEQUENCEVERIFY OP_DROP 032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35 OP_ENDIF OP_CHECKSIG')
     end
   end
 
@@ -280,7 +284,7 @@ describe Bitcoin::Script do
       expect(Bitcoin::Script.from_string('0 6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d0000000000000000').witness_program?).to be true
       expect(Bitcoin::Script.from_string('0 6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d000000000000000000').witness_program?).to be false
       expect(Bitcoin::Script.from_string('1 6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d').witness_program?).to be true
-      expect(Bitcoin::Script.from_string('0000 6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d').witness_program?).to be false
+      expect(Bitcoin::Script.from_string('0000 6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d').witness_program?).to be true
     end
   end
 

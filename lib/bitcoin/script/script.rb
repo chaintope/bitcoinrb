@@ -67,7 +67,7 @@ module Bitcoin
         if opcode
           script << (v =~ /^\d/ && Opcodes.small_int_to_opcode(v.ord) ? v.ord : opcode)
         else
-          script << v
+          script << (v =~ /^[0-9]+$/ ? v.to_i : v)
         end
       end
       script
@@ -274,7 +274,16 @@ module Bitcoin
         when String
           if c.pushdata?
             v = Opcodes.opcode_to_small_int(c.ord)
-            v ? v : c.pushed_data.bth
+            if v
+              v
+            else
+              data = c.pushed_data
+              if data.bytesize <= 4
+                Script.decode_number(data.bth) # for scriptnum
+              else
+                data.bth
+              end
+            end
           else
             Opcodes.opcode_to_name(c.ord)
           end
@@ -411,11 +420,20 @@ module Bitcoin
       chunks == other.chunks
     end
 
+    def type
+      return 'pubkeyhash' if p2pkh?
+      return 'scripthash' if p2sh?
+      return 'multisig' if multisig?
+      return 'witness_v0_keyhash' if p2wpkh?
+      return 'witness_v0_scripthash' if p2wsh?
+      'nonstandard'
+    end
+
     def to_h
-      h = {asm: to_s, hex: to_payload.bth}
+      h = {asm: to_s, hex: to_payload.bth, type: type}
       addrs = addresses
       unless addrs.empty?
-        h[:req_sigs] = addrs.size
+        h[:req_sigs] = multisig? ? Bitcoin::Opcodes.opcode_to_small_int(chunks[0].bth.to_i(16)) :addrs.size
         h[:addresses] = addrs
       end
       h
