@@ -13,7 +13,7 @@ describe Bitcoin::Base58 do
   end
 
   describe 'valid base58 keys' do
-    valid_json = fixture_file('base58_keys_valid.json')
+    valid_json = fixture_file('key_io_valid.json')
     valid_json.each do |base58_str, payload, metadata|
       it "should be valid #{base58_str}, #{payload}, #{metadata}" do
         if metadata['chain'] == 'main'
@@ -38,7 +38,7 @@ describe Bitcoin::Base58 do
   end
 
   describe 'invalid base58 keys' do
-    invalid_json = fixture_file('base58_keys_invalid.json')
+    invalid_json = fixture_file('key_io_invalid.json')
     invalid_json.each do |json|
       it "should be invalid. #{json}" do
         puts json
