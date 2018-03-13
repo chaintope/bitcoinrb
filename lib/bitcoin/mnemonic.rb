@@ -52,6 +52,7 @@ module Bitcoin
     # @param [String] passphrase a passphrase which protects mnemonic. the default value is an empty string.
     # @return [String] seed
     def to_seed(mnemonic, passphrase: '')
+      to_entropy(mnemonic)
       OpenSSL::PKCS5.pbkdf2_hmac(mnemonic.join(' ').downcase,
                                  'mnemonic' + passphrase, 2048, 64, OpenSSL::Digest::SHA512.new).bth
     end
