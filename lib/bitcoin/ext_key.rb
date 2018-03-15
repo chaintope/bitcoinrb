@@ -87,7 +87,11 @@ module Bitcoin
     end
 
     # derive new key
-    def derive(number)
+    # @param [Integer] number a child index
+    # @param [Boolean] harden whether hardened key or not. If true, 2^31 is added to +number+.
+    # @return [Bitcoin::ExtKey] derived new key.
+    def derive(number, harden = false)
+      number += 2**31 if harden
       new_key = ExtKey.new
       new_key.depth = depth + 1
       new_key.number = number

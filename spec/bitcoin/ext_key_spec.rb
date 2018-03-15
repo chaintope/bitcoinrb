@@ -27,7 +27,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
     end
 
     it 'Chain m/0H' do
-      key = @master_key.derive(2**31)
+      key = @master_key.derive(0, true)
       expect(key.depth).to eq(1)
       expect(key.hardened?).to be true
       expect(key.fingerprint).to eq('5c1bd648')
@@ -41,7 +41,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
     end
 
     it 'Chain m/0H/1' do
-      key = @master_key.derive(2**31).derive(1)
+      key = @master_key.derive(0, true).derive(1)
       expect(key.depth).to eq(2)
       expect(key.hardened?).to be false
       expect(key.fingerprint).to eq('bef5a2f9')
@@ -51,13 +51,13 @@ describe Bitcoin::ExtKey, network: :mainnet do
       expect(key.ext_pubkey.to_base58).to eq('xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ')
 
       # pubkey derivation
-      ext_pubkey = @master_key.derive(2**31).ext_pubkey.derive(1)
+      ext_pubkey = @master_key.derive(0, true).ext_pubkey.derive(1)
       expect(ext_pubkey.to_base58).to eq('xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ')
       expect(key.ext_pubkey.hardened?).to be false
     end
 
     it 'Chain m/0H/1/2H' do
-      key = @master_key.derive(2**31).derive(1).derive(2**31 + 2)
+      key = @master_key.derive(0, true).derive(1).derive(2, true)
       expect(key.depth).to eq(3)
       expect(key.hardened?).to be true
       expect(key.fingerprint).to eq('ee7ab90c')
@@ -69,7 +69,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
     end
 
     it 'Chain m/0H/1/2H/2' do
-      key = @master_key.derive(2**31).derive(1).derive(2**31 + 2).derive(2)
+      key = @master_key.derive(0, true).derive(1).derive(2, true).derive(2)
       expect(key.depth).to eq(4)
       expect(key.hardened?).to be false
       expect(key.fingerprint).to eq('d880d7d8')
@@ -81,7 +81,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
     end
 
     it 'Chain m/0H/1/2H/2/1000000000' do
-      key = @master_key.derive(2**31).derive(1).derive(2**31 + 2).derive(2).derive(1000000000)
+      key = @master_key.derive(0, true).derive(1).derive(2, true).derive(2).derive(1000000000)
       expect(key.depth).to eq(5)
       expect(key.hardened?).to be false
       expect(key.fingerprint).to eq('d69aa102')
@@ -116,7 +116,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
     end
 
     it 'Chain m/0/2147483647H' do
-      key = @master_key.derive(0).derive(2**31 + 2147483647)
+      key = @master_key.derive(0).derive(2147483647, true)
       expect(key.depth).to eq(2)
       expect(key.hardened?).to be true
       expect(key.number).to eq(2**31 + 2147483647)
@@ -126,7 +126,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
     end
 
     it 'Chain m/0/2147483647H/1' do
-      key = @master_key.derive(0).derive(2**31 + 2147483647).derive(1)
+      key = @master_key.derive(0).derive(2147483647, true).derive(1)
       expect(key.depth).to eq(3)
       expect(key.hardened?).to be false
       expect(key.number).to eq(1)
@@ -136,7 +136,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
     end
 
     it 'Chain m/0/2147483647H/1/2147483646H' do
-      key = @master_key.derive(0).derive(2**31 + 2147483647).derive(1).derive(2**31 + 2147483646)
+      key = @master_key.derive(0).derive(2147483647, true).derive(1).derive(2147483646, true)
       expect(key.depth).to eq(4)
       expect(key.hardened?).to be true
       expect(key.number).to eq(2**31 + 2147483646)
@@ -146,13 +146,13 @@ describe Bitcoin::ExtKey, network: :mainnet do
     end
 
     it 'Chain m/0/2147483647H/1/2147483646H/2' do
-      key = @master_key.derive(0).derive(2**31 + 2147483647).derive(1).derive(2**31 + 2147483646).derive(2)
+      key = @master_key.derive(0).derive(2147483647, true).derive(1).derive(2147483646, true).derive(2)
       expect(key.depth).to eq(5)
       expect(key.hardened?).to be false
       expect(key.number).to eq(2)
       expect(key.to_base58).to eq('xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j')
       expect(key.ext_pubkey.to_base58).to eq('xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt')
-      ext_pubkey = @master_key.derive(0).derive(2**31 + 2147483647).derive(1).derive(2**31 + 2147483646).ext_pubkey.derive(2)
+      ext_pubkey = @master_key.derive(0).derive(2147483647, true).derive(1).derive(2147483646, true).ext_pubkey.derive(2)
       expect(ext_pubkey.to_base58).to eq('xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt')
       expect(key.ext_pubkey.hardened?).to be false
     end
@@ -227,7 +227,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
   describe 'bip 49' do
     before do
       # m/49'/1'/0'
-      @account = test_master_key.key.derive(2**31 + 49).derive(2**31 + 1).derive(2**31)
+      @account = test_master_key.key.derive(49, true).derive(1, true).derive(0, true)
     end
 
     context 'testnet', network: :testnet do
@@ -249,7 +249,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
   describe 'bip 84' do
     before do
       # m/84'/0'/0'
-      @account = test_master_key.key.derive(2**31 + 84).derive(2**31).derive(2**31)
+      @account = test_master_key.key.derive(84, true).derive(0, true).derive(0, true)
     end
     it 'should be changed version bytes' do
       expect(@account.to_base58).to eq('zprvAdG4iTXWBoARxkkzNpNh8r6Qag3irQB8PzEMkAFeTRXxHpbF9z4QgEvBRmfvqWvGp42t42nvgGpNgYSJA9iefm1yYNZKEm7z6qUWCroSQnE')
