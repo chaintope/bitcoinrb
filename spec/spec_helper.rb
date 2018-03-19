@@ -43,6 +43,10 @@ def load_block(hash)
   File.read(File.join(File.dirname(__FILE__), 'fixtures', "block/#{hash}"))
 end
 
+def load_payment(file_name)
+  File.read(File.join(File.dirname(__FILE__), 'fixtures', "payments/#{file_name}"))
+end
+
 TEST_DB_PATH = Dir.tmpdir + '/spv'
 
 def create_test_chain
