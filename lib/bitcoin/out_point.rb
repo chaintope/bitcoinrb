@@ -14,6 +14,10 @@ module Bitcoin
       @index = index
     end
 
+    def self.from_txid(txid, index)
+      self.new(txid.rhex, index)
+    end
+
     def coinbase?
       hash == COINBASE_HASH && index == COINBASE_INDEX
     end
