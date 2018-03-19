@@ -109,6 +109,10 @@ module Bitcoin
       !inputs.find { |i| !i.script_witness.empty? }.nil?
     end
 
+    def ==(other)
+      hash == other.hash
+    end
+
     # serialize tx with old tx format
     def serialize_old_format
       buf = [version].pack('V')
