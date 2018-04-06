@@ -57,6 +57,13 @@ module Bitcoin
         certs.first.public_key.verify(digest, signature, sig_message)
       end
 
+      # verify expire time for payment request.
+      def valid_time?
+        expires = details.expires
+        return true if expires == 0
+        Time.now.to_i <= expires
+      end
+
       private
 
       # Generate data to be signed

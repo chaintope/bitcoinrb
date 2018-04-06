@@ -13,6 +13,9 @@ describe Bitcoin::Payments do
   }
 
   describe 'PaymentRequest#parse_from_payload' do
+    after {
+      Timecop.return
+    }
     subject {
       Bitcoin::Payments::PaymentRequest.parse_from_payload(load_payment('r1521439154.bitcoinpaymentrequest'))
     }
@@ -34,6 +37,9 @@ describe Bitcoin::Payments do
       certs = subject.certs
       expect(certs.size).to eq(1)
       expect(subject.valid_sig?).to be true
+      expect(subject.valid_time?).to be false
+      Timecop.freeze(Time.utc(2017, 3, 18, 15, 13, 25))
+      expect(subject.valid_time?).to be true
     end
   end
 
