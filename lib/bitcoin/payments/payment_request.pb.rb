@@ -8,7 +8,7 @@ module Bitcoin
 
       optional :string, :pki_type, 2, {default: 'none'}
 
-      optional :bytes, :pki_date, 3
+      optional :bytes, :pki_data, 3
 
       required :bytes, :serialized_payment_details, 4
 
