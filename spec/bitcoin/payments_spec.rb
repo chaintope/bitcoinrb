@@ -31,6 +31,9 @@ describe Bitcoin::Payments do
       expect(details.memo).to eq('びっとこいん')
       expect(details.payment_url).to eq('http://localhost:8000/payACK.php')
       expect(details.merchant_data.bth).to eq('11d46fe2d93fba568e4443abeb6a20b235616166353162323734643739')
+      certs = subject.certs
+      expect(certs.size).to eq(1)
+      expect(subject.valid_sig?).to be true
     end
   end
 

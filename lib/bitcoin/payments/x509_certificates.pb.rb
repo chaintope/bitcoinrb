@@ -6,6 +6,12 @@ module Bitcoin
 
       repeated :bytes, :certificate, 1
 
+      # get certificates
+      # @return [Array[OpenSSL::X509::Certificate]]
+      def certs
+        certificate.map{|v|OpenSSL::X509::Certificate.new(v)}
+      end
+
     end
 
   end

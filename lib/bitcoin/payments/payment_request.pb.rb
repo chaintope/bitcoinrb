@@ -31,6 +31,41 @@ module Bitcoin
         PaymentDetails.decode(serialized_payment_details)
       end
 
+      # get certificates
+      # @return [Array[OpenSSL::X509::Certificate]]
+      def certs
+        return [] unless has_pki?
+        X509Certificates.decode(pki_data).certs
+      end
+
+      # whether exist +pki_data+.
+      def has_pki?
+        pki_type != 'none'
+      end
+
+      # verify signature.
+      def valid_sig?
+        return false unless has_pki?
+        digest = case pki_type
+                   when 'x509+sha256'
+                     OpenSSL::Digest::SHA256.new
+                   when 'x509+sha1'
+                     OpenSSL::Digest::SHA1.new
+                   else
+                     raise "pki_type: #{pki_type} is invalid type."
+                 end
+        certs.first.public_key.verify(digest, signature, sig_message)
+      end
+
+      private
+
+      # Generate data to be signed
+      def sig_message
+        PaymentRequest.new(payment_details_version: payment_details_version,
+                           pki_type: pki_type, pki_data: pki_data, signature: '',
+                           serialized_payment_details: serialized_payment_details).encode
+      end
+
     end
 
   end
