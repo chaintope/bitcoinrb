@@ -9,6 +9,14 @@ module Bitcoin
       @transactions = transactions
     end
 
+    def self.parse_from_payload(payload)
+      Bitcoin::Message::Block.parse_from_payload(payload).to_block
+    end
+
+    def hash
+      header.hash
+    end
+
     # calculate block weight
     def weight
       stripped_size * (WITNESS_SCALE_FACTOR - 1) + size
