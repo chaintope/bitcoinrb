@@ -136,6 +136,11 @@ module Bitcoin
     OP_NOP9 = 0xb8
     OP_NOP10 = 0xb9
 
+    # https://en.bitcoin.it/wiki/Script#Pseudo-words
+    OP_PUBKEYHASH = 0xfd
+    OP_PUBKEY = 0xfe
+    OP_INVALIDOPCODE = 0xff
+
     DUPLICATE_KEY = [:OP_NOP2, :OP_NOP3]
     OPCODES_MAP = Hash[*(constants.grep(/^OP_/) - [:OP_NOP2, :OP_NOP3]).map { |c| [const_get(c), c.to_s] }.flatten]
     NAME_MAP = Hash[*constants.grep(/^OP_/).map { |c| [c.to_s, const_get(c)] }.flatten]
