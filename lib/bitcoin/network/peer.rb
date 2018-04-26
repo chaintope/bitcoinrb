@@ -140,6 +140,8 @@ module Bitcoin
           @best_hash = entry.hash
           @best_height = entry.height
         end
+        pool.changed
+        pool.notify_observers(:header, {hash: @best_hash, height: @best_height})
         start_block_header_download if headers.headers.size > 0 # next header download
       end
 
@@ -176,6 +178,11 @@ module Bitcoin
         getdata = Bitcoin::Message::GetData.new(
             hashes.map{|h|Bitcoin::Message::Inventory.new(block_type, h)})
         conn.send_message(getdata)
+      end
+
+      def handle_tx(tx)
+        pool.changed
+        pool.notify_observers(:tx, tx)
       end
 
       # send ping message.

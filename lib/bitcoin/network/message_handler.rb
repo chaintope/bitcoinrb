@@ -180,8 +180,8 @@ module Bitcoin
       end
 
       def on_tx(tx)
-        logger.info('receive tx message.')
-        # TODO
+        logger.info("receive tx message. #{tx.build_json}")
+        peer.handle_tx(tx)
       end
 
       def on_not_found(not_found)

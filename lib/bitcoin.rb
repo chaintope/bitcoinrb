@@ -8,6 +8,7 @@ require 'securerandom'
 require 'json'
 require 'bech32'
 require 'ffi'
+require 'observer'
 require 'tmpdir'
 require_relative 'openassets'
 

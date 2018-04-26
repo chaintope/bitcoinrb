@@ -11,6 +11,7 @@ module Bitcoin
 
     # peer pool class.
     class Pool
+      include Observable
 
       attr_reader :peers # active peers
       attr_reader :pending_peers # currently connecting peer
