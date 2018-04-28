@@ -64,6 +64,10 @@ module Bitcoin
         pool.add_observer(observer)
       end
 
+      def delete_observer(observer)
+        pool.delete_observer(observer)
+      end
+
       private
 
       def setup_filter

@@ -101,6 +101,10 @@ describe Bitcoin::Network::Peer do
       expect(listener).to receive(:update).with(:header, {hash:-1, height: -1})
       subject.pool.add_observer(listener)
       subject.handle_headers(Bitcoin::Message::Headers.new)
+
+      subject.pool.delete_observer(listener)
+      expect(listener).not_to receive(:update)
+      subject.handle_headers(Bitcoin::Message::Headers.new)
     end
   end
 
@@ -121,6 +125,10 @@ describe Bitcoin::Network::Peer do
       tx = Bitcoin::Message::Tx.new(Bitcoin::Tx.parse_from_payload(payload))
       expect(listener).to receive(:update).with(:tx, tx)
       subject.pool.add_observer(listener)
+      subject.handle_tx(tx)
+
+      subject.pool.delete_observer(listener)
+      expect(listener).not_to receive(:update)
       subject.handle_tx(tx)
     end
   end
