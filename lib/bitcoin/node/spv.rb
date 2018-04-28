@@ -64,7 +64,7 @@ module Bitcoin
 
       def setup_filter
         @bloom = Bitcoin::BloomFilter.create_filter(512, 0.01)
-        wallet.watch_targets.each{|t|bloom.add(t.htb.reverse)} if wallet
+        wallet.watch_targets.each{|t|bloom.add(t.htb)} if wallet
       end
 
     end
