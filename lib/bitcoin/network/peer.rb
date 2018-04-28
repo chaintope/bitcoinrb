@@ -137,6 +137,7 @@ module Bitcoin
         headers.headers.each do |header|
           break unless header.valid?
           entry = chain.append_header(header)
+          next unless entry
           @best_hash = entry.hash
           @best_height = entry.height
         end
