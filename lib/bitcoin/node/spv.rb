@@ -60,13 +60,20 @@ module Bitcoin
         pool.filter_clear
       end
 
+      def add_observer(observer)
+        pool.add_observer(observer)
+      end
+
+      def delete_observer(observer)
+        pool.delete_observer(observer)
+      end
+
       private
 
       def setup_filter
         @bloom = Bitcoin::BloomFilter.create_filter(512, 0.01)
         wallet.watch_targets.each{|t|bloom.add(t.htb)} if wallet
       end
-
     end
   end
 end

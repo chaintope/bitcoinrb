@@ -96,6 +96,16 @@ describe Bitcoin::Network::Peer do
         subject.handle_headers(Bitcoin::Message::Headers.new)
       end
     end
+    it 'should call update with :header' do
+      listener = double('listener')
+      expect(listener).to receive(:update).with(:header, {hash:-1, height: -1})
+      subject.pool.add_observer(listener)
+      subject.handle_headers(Bitcoin::Message::Headers.new)
+
+      subject.pool.delete_observer(listener)
+      expect(listener).not_to receive(:update)
+      subject.handle_headers(Bitcoin::Message::Headers.new)
+    end
   end
 
   describe '#handle_block_inv' do
@@ -108,4 +118,18 @@ describe Bitcoin::Network::Peer do
     end
   end
 
+  describe '#handler_tx' do
+    it 'should call update with :tx' do
+      listener = double('listener')
+      payload = "0100000001d58708dc89a5649c41985d2a2c9b83b641f7955b37454e177813c2262189b342010000006a47304402200958e5ef78bf22fd6335a4335cfe4bf2e5199cab79e2174a272a9f768a0eb36c02204a602e72d3a158e9e9217f690d7837e3f1cdc8e5f2ad0fcfbd230a351889eb5f0121033d5c2875c9bd116875a71a5db64cffcb13396b163d039b1d9327824891804334ffffffff02d2020000000000001976a914e7c1345fc8f87c68170b3aa798a956c2fe6a9eff88ac2672ea04000000001976a914990ef60d63b5b5964a1c2282061af45123e93fcb88ac00000000".htb
+      tx = Bitcoin::Message::Tx.new(Bitcoin::Tx.parse_from_payload(payload))
+      expect(listener).to receive(:update).with(:tx, tx)
+      subject.pool.add_observer(listener)
+      subject.handle_tx(tx)
+
+      subject.pool.delete_observer(listener)
+      expect(listener).not_to receive(:update)
+      subject.handle_tx(tx)
+    end
+  end
 end
