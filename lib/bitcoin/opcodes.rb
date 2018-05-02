@@ -116,8 +116,8 @@ module Bitcoin
     OP_CHECKMULTISIGVERIFY = 0xaf
 
     # https://en.bitcoin.it/wiki/Script#Locktime
-    OP_NOP2 = OP_CHECKLOCKTIMEVERIFY = 0xb1
-    OP_NOP3 = OP_CHECKSEQUENCEVERIFY = 0xb2
+    OP_NOP2 = OP_CHECKLOCKTIMEVERIFY = OP_CLTV = 0xb1
+    OP_NOP3 = OP_CHECKSEQUENCEVERIFY = OP_CSV = 0xb2
 
     # https://en.bitcoin.it/wiki/Script#Reserved_words
     OP_RESERVED = 0x50
@@ -142,7 +142,7 @@ module Bitcoin
     OP_INVALIDOPCODE = 0xff
 
     DUPLICATE_KEY = [:OP_NOP2, :OP_NOP3]
-    OPCODES_MAP = Hash[*(constants.grep(/^OP_/) - [:OP_NOP2, :OP_NOP3]).map { |c| [const_get(c), c.to_s] }.flatten]
+    OPCODES_MAP = Hash[*(constants.grep(/^OP_/) - [:OP_NOP2, :OP_NOP3, :OP_CHECKLOCKTIMEVERIFY, :OP_CHECKSEQUENCEVERIFY]).map { |c| [const_get(c), c.to_s] }.flatten]
     NAME_MAP = Hash[*constants.grep(/^OP_/).map { |c| [c.to_s, const_get(c)] }.flatten]
 
     def opcode_to_name(opcode)
