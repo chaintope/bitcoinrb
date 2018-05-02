@@ -47,9 +47,8 @@ module Bitcoin
 
         return nil if s.zero?
 
-        signature = ECDSA::Signature.new(r, s)
+        signature = ECDSA::Signature.new(r, s).to_der
         public_key = Bitcoin::Key.new(priv_key: privkey.bth).pubkey
-        signature = ECDSA::Format::SignatureDerString.encode(signature) # signature with DER format
         raise 'Creation of signature failed.' unless Bitcoin::Secp256k1::Ruby.verify_sig(data, signature, public_key)
         signature
       end

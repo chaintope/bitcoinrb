@@ -236,7 +236,7 @@ module Bitcoin
       r = sig_array[4...(len_r+4)].pack('C*').bth
       len_s = sig_array[len_r + 5]
       s = sig_array[(len_r + 6)...(len_r + 6 + len_s)].pack('C*').bth
-      ECDSA::Format::SignatureDerString.encode(ECDSA::Signature.new(r.to_i(16), s.to_i(16)))
+      ECDSA::Signature.new(r.to_i(16), s.to_i(16)).to_der
     end
 
     def valid_pubkey?
