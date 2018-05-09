@@ -53,7 +53,7 @@ module Bitcoin
       end
 
       # create new receive key
-      # @return [Bitcoin::ExtKey]
+      # @return [Bitcoin::ExtPubkey]
       def create_receive
         @receive_depth += 1
         save
@@ -61,7 +61,7 @@ module Bitcoin
       end
 
       # create new change key
-      # # @return [Bitcoin::ExtKey]
+      # @return [Bitcoin::ExtPubkey]
       def create_change
         @change_depth += 1
         save
