@@ -56,6 +56,11 @@ module Bitcoin
         peer.handle_error(e)
       end
 
+      def unbind
+        logger.info "unbind. #{addr}"
+        peer.unbind
+      end
+
       private
 
       # start handshake
@@ -63,9 +68,6 @@ module Bitcoin
         logger.info "begin handshake with #{addr}"
         send_message(peer.local_version)
       end
-
     end
-
   end
-
 end

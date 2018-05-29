@@ -151,6 +151,10 @@ module Bitcoin
         pool.handle_error(e)
       end
 
+      def unbind
+        pool.handle_close_peer(self)
+      end
+
       # close peer connection.
       def close(msg = '')
         conn.close(msg)
