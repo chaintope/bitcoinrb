@@ -59,8 +59,10 @@ module Bitcoin
       end
 
       def handle_close_peer(peer)
+        return unless started
         peers.delete(peer)
-        addr_list = peer_discovery.peers - peers.map(&:host)
+        pending_peers.delete(peer)
+        addr_list = peer_discovery.peers - peers.map(&:host) - pending_peers.map(&:host) - [peer.host]
         connect(addr_list)
       end
 
