@@ -24,6 +24,7 @@ module Bitcoin
         @sendheaders = false
         @attr_accessor = 0
         @message = ''
+        self.pending_connect_timeout = 5.0
       end
 
       def post_init
