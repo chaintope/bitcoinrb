@@ -156,6 +156,7 @@ module Bitcoin
               return set_error(SCRIPT_ERR_OP_COUNT)
             end
             return set_error(SCRIPT_ERR_DISABLED_OPCODE) if DISABLE_OPCODES.include?(opcode)
+            return set_error(SCRIPT_ERR_OP_CODESEPARATOR) if opcode == OP_CODESEPARATOR && sig_version == :base && flag?(SCRIPT_VERIFY_CONST_SCRIPTCODE)
             next unless (need_exec || (OP_IF <= opcode && opcode <= OP_ENDIF))
             small_int = Opcodes.opcode_to_small_int(opcode)
             if small_int && opcode != OP_0
@@ -396,7 +397,9 @@ module Bitcoin
 
                   subscript = script.subscript(last_code_separator_index..-1)
                   if sig_version == :base
-                    subscript = subscript.find_and_delete(Script.new << sig)
+                    tmp = subscript.find_and_delete(Script.new << sig)
+                    return set_error(SCRIPT_ERR_SIG_FINDANDDELETE) if flag?(SCRIPT_VERIFY_CONST_SCRIPTCODE) && tmp != subscript
+                    subscript = tmp
                   end
 
                   return false if !check_pubkey_encoding(pubkey, sig_version) || !check_signature_encoding(sig) # error already set.
@@ -445,7 +448,9 @@ module Bitcoin
 
                   if sig_version == :base
                     sigs.each do |sig|
-                      subscript = subscript.find_and_delete(Script.new << sig)
+                      tmp = subscript.find_and_delete(Script.new << sig)
+                      return set_error(SCRIPT_ERR_SIG_FINDANDDELETE) if flag?(SCRIPT_VERIFY_CONST_SCRIPTCODE) && tmp != subscript
+                      subscript = tmp
                     end
                   end
 

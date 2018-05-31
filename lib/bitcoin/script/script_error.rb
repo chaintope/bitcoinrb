@@ -92,6 +92,10 @@ module Bitcoin
         'Witness provided for non-witness script'
       when SCRIPT_ERR_WITNESS_PUBKEYTYPE
         'Using non-compressed keys in segwit'
+      when SCRIPT_ERR_OP_CODESEPARATOR
+        'Using OP_CODESEPARATOR in non-witness scrip'
+      when SCRIPT_ERR_SIG_FINDANDDELETE
+        'Signature is found in scriptCode'
       when SCRIPT_ERR_UNKNOWN_ERROR, SCRIPT_ERR_ERROR_COUNT
         'unknown error'
       else

@@ -40,6 +40,7 @@ module Bitcoin
   SCRIPT_VERIFY_MINIMALIF = (1 << 13) # Segwit script only: Require the argument of OP_IF/NOTIF to be exactly 0x01 or empty vector
   SCRIPT_VERIFY_NULLFAIL = (1 << 14) # Signature(s) must be empty vector if an CHECK(MULTI)SIG operation failed
   SCRIPT_VERIFY_WITNESS_PUBKEYTYPE = (1 << 15) # Public keys in segregated witness scripts must be compressed
+  SCRIPT_VERIFY_CONST_SCRIPTCODE = (1 << 16) # Making OP_CODESEPARATOR and FindAndDelete fail any non-segwit scripts
 
   MANDATORY_SCRIPT_VERIFY_FLAGS = SCRIPT_VERIFY_P2SH
 
@@ -56,7 +57,10 @@ module Bitcoin
                                   SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY,
                                   SCRIPT_VERIFY_CHECKSEQUENCEVERIFY,
                                   SCRIPT_VERIFY_LOW_S,
-                                  SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM].inject(SCRIPT_VERIFY_NONE){|flags, f| flags |= f}
+                                  SCRIPT_VERIFY_WITNESS,
+                                  SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM,
+                                  SCRIPT_VERIFY_WITNESS_PUBKEYTYPE,
+                                  SCRIPT_VERIFY_CONST_SCRIPTCODE].inject(SCRIPT_VERIFY_NONE){|flags, f| flags |= f}
 
   # for script
 
@@ -155,6 +159,10 @@ module Bitcoin
   SCRIPT_ERR_WITNESS_MALLEATED_P2SH = 74
   SCRIPT_ERR_WITNESS_UNEXPECTED = 75
   SCRIPT_ERR_WITNESS_PUBKEYTYPE = 76
+
+  # Constant scriptCode
+  SCRIPT_ERR_OP_CODESEPARATOR = 77
+  SCRIPT_ERR_SIG_FINDANDDELETE = 78
 
   SCRIPT_ERR_ERROR_COUNT = 80
 
