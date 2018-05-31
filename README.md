@@ -19,9 +19,11 @@ Bitcoinrb supports following feature:
 
 ## Requirements
 
-bitcoinrb requires a `leveldb` library.
+### use Node implementation
 
-### install LevelDB
+If you use node features, please install level DB as follows.
+
+#### install LevelDB
 
 * for Ubuntu
 
@@ -30,6 +32,12 @@ bitcoinrb requires a `leveldb` library.
 + for Mac
 
     $ brew install leveldb
+
+and put `leveldb-ruby` in your Gemfile and run bundle install.
+
+```
+gem leveldb-ruby
+```
 
 ## Installation
 
