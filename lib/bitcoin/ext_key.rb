@@ -1,7 +1,7 @@
 module Bitcoin
 
   # Integers modulo the order of the curve(secp256k1)
-  CURVE_ORDER = 115792089237316195423570985008687907852837564279074904382605163141518161494337
+  CURVE_ORDER = ECDSA::Group::Secp256k1.order
 
   # BIP32 Extended private key
   class ExtKey
