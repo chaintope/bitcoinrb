@@ -40,15 +40,8 @@ module Bitcoin
         logger.debug 'Start connecting other pears.'
         addr_list = peer_discovery.peers
 
-        port = Bitcoin.chain_params.default_port
-        EM::Iterator.new(addr_list, Bitcoin::PARALLEL_THREAD).each do |ip, iter|
-          if pending_peers.size < MAX_OUTBOUND_CONNECTIONS
-            peer = Peer.new(ip, port, self, @configuration)
-            pending_peers << peer
-            peer.connect
-            iter.next
-          end
-        end
+        connect(addr_list)
+
         @started = true
       end
 
@@ -63,6 +56,14 @@ module Bitcoin
         peers << peer
         pending_peers.delete(peer)
         filter_load(peer) if node.wallet
+      end
+
+      def handle_close_peer(peer)
+        return unless started
+        peers.delete(peer)
+        pending_peers.delete(peer)
+        addr_list = peer_discovery.peers - peers.map(&:host) - pending_peers.map(&:host) - [peer.host]
+        connect(addr_list)
       end
 
       # terminate peers.
@@ -113,7 +114,18 @@ module Bitcoin
         id
       end
 
-    end
+      def connect(addr_list)
+        port = Bitcoin.chain_params.default_port
 
+        EM::Iterator.new(addr_list, Bitcoin::PARALLEL_THREAD).each do |ip, iter|
+          if pending_peers.size + peers.size < MAX_OUTBOUND_CONNECTIONS
+            peer = Peer.new(ip, port, self, @configuration)
+            pending_peers << peer
+            peer.connect
+            iter.next
+          end
+        end
+      end
+    end
   end
 end
