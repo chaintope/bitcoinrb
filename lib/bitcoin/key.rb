@@ -13,7 +13,7 @@ module Bitcoin
 
     MIN_PRIV_KEy_MOD_ORDER = 0x01
     # Order of secp256k1's generator minus 1.
-    MAX_PRIV_KEY_MOD_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140
+    MAX_PRIV_KEY_MOD_ORDER = ECDSA::Group::Secp256k1.order - 1
 
     def initialize(priv_key: nil, pubkey: nil, compressed: true)
       @secp256k1_module =  Bitcoin.secp_impl
