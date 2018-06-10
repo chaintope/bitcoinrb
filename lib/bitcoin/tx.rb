@@ -28,6 +28,9 @@ module Bitcoin
       @lock_time = 0
     end
 
+    alias_method :in, :inputs
+    alias_method :out, :outputs
+
     def self.parse_from_payload(payload)
       buf = payload.is_a?(String) ? StringIO.new(payload) : payload
       tx = new
