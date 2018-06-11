@@ -8,14 +8,29 @@ module Bitcoin
 
     attr_accessor :priv_key
     attr_accessor :pubkey
-    attr_accessor :compressed
+    attr_accessor :key_type
     attr_reader :secp256k1_module
+
+    TYPES = {uncompressed: 0x00, compressed: 0x01, p2pkh: 0x10, p2wpkh: 0x11, pw2pkh_p2sh: 0x12}
 
     MIN_PRIV_KEy_MOD_ORDER = 0x01
     # Order of secp256k1's generator minus 1.
     MAX_PRIV_KEY_MOD_ORDER = ECDSA::Group::Secp256k1.order - 1
 
-    def initialize(priv_key: nil, pubkey: nil, compressed: true)
+    # initialize private key
+    # @param [String] priv_key a private key with hex format.
+    # @param [String] pubkey a public key with hex format.
+    # @param [Integer] key_type a key type which determine address type.
+    # @param [Boolean] compressed [Deprecated] whether public key is compressed.
+    # @return [Bitcoin::Key] a key object.
+    def initialize(priv_key: nil, pubkey: nil, key_type: nil, compressed: true)
+      puts "[Warning] Use key_type parameter instead of compressed. compressed parameter removed in the future." if key_type.nil? && !compressed.nil?
+      if key_type
+        @key_type = key_type
+        compressed = @key_type != TYPES[:uncompressed]
+      else
+        @key_type = compressed ? TYPES[:compressed] : TYPES[:uncompressed]
+      end
       @secp256k1_module =  Bitcoin.secp_impl
       @priv_key = priv_key
       if @priv_key
@@ -26,13 +41,12 @@ module Bitcoin
       else
         @pubkey = generate_pubkey(priv_key, compressed: compressed) if priv_key
       end
-      @compressed = compressed
     end
 
     # generate key pair
-    def self.generate
+    def self.generate(key_type = TYPES[:compressed])
       priv_key, pubkey = Bitcoin.secp_impl.generate_key_pair
-      new(priv_key: priv_key, pubkey: pubkey)
+      new(priv_key: priv_key, pubkey: pubkey, key_type: key_type)
     end
 
     # import private key from wif format
@@ -47,14 +61,14 @@ module Bitcoin
       raise ArgumentError, 'invalid checksum' unless Bitcoin.calc_checksum(version + data.bth) == checksum
       key_len = data.bytesize
       if key_len == 33 && data[-1].unpack('C').first == 1
-        compressed = true
+        key_type = TYPES[:compressed]
         data = data[0..-2]
       elsif key_len == 32
-        compressed = false
+        key_type = TYPES[:uncompressed]
       else
         raise ArgumentError, 'Wrong number of bytes for a private key, not 32 or 33'
       end
-      new(priv_key: data.bth, compressed: compressed)
+      new(priv_key: data.bth, key_type: key_type)
     end
 
     # export private key with wif format
@@ -93,22 +107,25 @@ module Bitcoin
     end
 
     # get pay to pubkey hash address
+    # @deprecated
     def to_p2pkh
       Bitcoin::Script.to_p2pkh(hash160).addresses.first
     end
 
     # get pay to witness pubkey hash address
+    # @deprecated
     def to_p2wpkh
       Bitcoin::Script.to_p2wpkh(hash160).addresses.first
     end
 
     # get p2wpkh address nested in p2sh.
+    # @deprecated
     def to_nested_p2wpkh
       Bitcoin::Script.to_p2wpkh(hash160).to_p2sh.addresses.first
     end
 
     def compressed?
-      @compressed
+      key_type != TYPES[:uncompressed]
     end
 
     # generate pubkey ec point
