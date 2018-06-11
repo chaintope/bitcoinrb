@@ -50,7 +50,6 @@ module Bitcoin
       def close(msg = '')
         logger.info "close connection with #{addr}. #{msg}"
         close_connection_after_writing
-        EM.stop
       end
 
       def handle_error(e)
