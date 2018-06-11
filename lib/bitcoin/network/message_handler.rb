@@ -94,6 +94,8 @@ module Bitcoin
             on_merkle_block(Bitcoin::Message::MerkleBlock.parse_from_payload(payload))
           when Bitcoin::Message::CmpctBlock::COMMAND
             on_cmpct_block(Bitcoin::Message::CmpctBlock.parse_from_payload(payload))
+          when Bitcoin::Message::GetData::COMMAND
+            on_get_data(Bitcoin::Message::GetData.parse_from_payload(payload))
           else
             logger.warn("unsupported command received. command: #{command}, payload: #{payload.bth}")
             close("with command #{command}")
@@ -230,6 +232,9 @@ module Bitcoin
         logger.info("receive cmpct_block message. #{cmpct_block.build_json}")
       end
 
+      def on_get_data(get_data)
+        logger.info("receive get data message. #{get_data.build_json}")
+      end
     end
   end
 end
