@@ -116,6 +116,10 @@ module Bitcoin
       to_payload.bth
     end
 
+    def empty?
+      chunks.size == 0
+    end
+
     def addresses
       return [p2pkh_addr] if p2pkh?
       return [p2sh_addr] if p2sh?
