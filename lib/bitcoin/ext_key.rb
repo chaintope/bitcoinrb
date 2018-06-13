@@ -22,7 +22,7 @@ module Bitcoin
       l = Bitcoin.hmac_sha512('Bitcoin seed', seed.htb)
       left = l[0..31].bth.to_i(16)
       raise 'invalid key' if left >= CURVE_ORDER || left == 0
-      ext_key.key = Bitcoin::Key.new(priv_key: l[0..31].bth)
+      ext_key.key = Bitcoin::Key.new(priv_key: l[0..31].bth, key_type: Bitcoin::Key::TYPES[:compressed])
       ext_key.chain_code = l[32..-1]
       ext_key
     end
@@ -106,7 +106,8 @@ module Bitcoin
       raise 'invalid key' if left >= CURVE_ORDER
       child_priv = (left + key.priv_key.to_i(16)) % CURVE_ORDER
       raise 'invalid key ' if child_priv >= CURVE_ORDER
-      new_key.key = Bitcoin::Key.new(priv_key: child_priv.to_even_length_hex.rjust(64, '0'))
+      new_key.key = Bitcoin::Key.new(
+          priv_key: child_priv.to_even_length_hex.rjust(64, '0'), key_type: key_type)
       new_key.chain_code = l[32..-1]
       new_key.ver = version
       new_key
@@ -116,6 +117,19 @@ module Bitcoin
     def version
       return ExtKey.version_from_purpose(number) if depth == 1
       ver ? ver : Bitcoin.chain_params.extended_privkey_version
+    end
+
+    # get key type defined by BIP-178 using version.
+    def key_type
+      v = version
+      case v
+      when Bitcoin.chain_params.bip49_privkey_p2wpkh_p2sh_version
+        Bitcoin::Key::TYPES[:pw2pkh_p2sh]
+      when Bitcoin.chain_params.bip84_privkey_p2wpkh_version
+        Bitcoin::Key::TYPES[:p2wpkh]
+      when Bitcoin.chain_params.extended_privkey_version
+        Bitcoin::Key::TYPES[:compressed]
+      end
     end
 
     def self.parse_from_payload(payload)
@@ -128,7 +142,7 @@ module Bitcoin
       ext_key.number = buf.read(4).unpack('N').first
       ext_key.chain_code = buf.read(32)
       buf.read(1) # 0x00
-      ext_key.key = Bitcoin::Key.new(priv_key: buf.read(32).bth)
+      ext_key.key = Bitcoin::Key.new(priv_key: buf.read(32).bth, key_type: Bitcoin::Key::TYPES[:compressed])
       ext_key
     end
 
@@ -209,7 +223,7 @@ module Bitcoin
     # get key object
     # @return [Bitcoin::Key]
     def key
-      Bitcoin::Key.new(pubkey: pubkey)
+      Bitcoin::Key.new(pubkey: pubkey, key_type: key_type)
     end
 
     # get key identifier
@@ -246,7 +260,7 @@ module Bitcoin
       left = l[0..31].bth.to_i(16)
       raise 'invalid key' if left >= CURVE_ORDER
       p1 = Bitcoin::Secp256k1::GROUP.generator.multiply_by_scalar(left)
-      p2 = Bitcoin::Key.new(pubkey: pubkey).to_point
+      p2 = Bitcoin::Key.new(pubkey: pubkey, key_type: key_type).to_point
       new_key.pubkey = ECDSA::Format::PointOctetString.encode(p1 + p2, compression: true).bth
       new_key.chain_code = l[32..-1]
       new_key.ver = version
@@ -257,6 +271,19 @@ module Bitcoin
     def version
       return ExtPubkey.version_from_purpose(number) if depth == 1
       ver ? ver : Bitcoin.chain_params.extended_pubkey_version
+    end
+
+    # get key type defined by BIP-178 using version.
+    def key_type
+      v = version
+      case v
+      when Bitcoin.chain_params.bip49_pubkey_p2wpkh_p2sh_version
+        Bitcoin::Key::TYPES[:pw2pkh_p2sh]
+      when Bitcoin.chain_params.bip84_pubkey_p2wpkh_version
+        Bitcoin::Key::TYPES[:p2wpkh]
+      when Bitcoin.chain_params.extended_pubkey_version
+        Bitcoin::Key::TYPES[:compressed]
+      end
     end
 
     def self.parse_from_payload(payload)

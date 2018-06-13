@@ -23,7 +23,8 @@ module Bitcoin
       sig = script_sig[0..-2]
       sighash = tx.sighash_for_input(input_index, script_code, hash_type: hash_type,
                                      amount: amount, sig_version: sig_version)
-      key = Key.new(pubkey: pubkey)
+      key_type = pubkey.start_with?('02') || pubkey.start_with?('03') ? Key::TYPES[:compressed] : Key::TYPES[:uncompressed]
+      key = Key.new(pubkey: pubkey, key_type: key_type)
       key.verify(sig, sighash)
     end
 

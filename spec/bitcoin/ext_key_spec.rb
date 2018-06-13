@@ -24,6 +24,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
       expect(@master_key.ext_pubkey.pub).to eq('0339a36013301597daef41fbe593a02cc513d0b55527ec2df1050e2e8ff49c85c2')
       expect(@master_key.ext_pubkey.hash160).to eq('3442193e1bb70916e914552172cd4e2dbc9df811')
       expect(@master_key.ext_pubkey.addr).to eq('15mKKb2eos1hWa6tisdPwwDC1a5J1y9nma')
+      expect(@master_key.key_type).to eq(Bitcoin::Key::TYPES[:compressed])
     end
 
     it 'Chain m/0H' do
@@ -49,11 +50,12 @@ describe Bitcoin::ExtKey, network: :mainnet do
       expect(key.priv).to eq('3c6cb8d0f6a264c91ea8b5030fadaa8e538b020f0a387421a12de9319dc93368')
       expect(key.to_base58).to eq('xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs')
       expect(key.ext_pubkey.to_base58).to eq('xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ')
-
+      expect(key.key_type).to eq(Bitcoin::Key::TYPES[:compressed])
       # pubkey derivation
       ext_pubkey = @master_key.derive(0, true).ext_pubkey.derive(1)
       expect(ext_pubkey.to_base58).to eq('xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ')
       expect(key.ext_pubkey.hardened?).to be false
+      expect(ext_pubkey.key_type).to eq(Bitcoin::Key::TYPES[:compressed])
     end
 
     it 'Chain m/0H/1/2H' do
@@ -66,6 +68,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
       expect(key.to_base58).to eq('xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM')
       expect(key.ext_pubkey.to_base58).to eq('xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5')
       expect(key.ext_pubkey.hardened?).to be true
+      expect(key.key_type).to eq(Bitcoin::Key::TYPES[:compressed])
     end
 
     it 'Chain m/0H/1/2H/2' do
@@ -169,6 +172,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
       expect(key.chain_code.bth).to eq('2a7857631386ba23dacac34180dd1983734e444fdbf774041578e9b6adb37c19')
       expect(key.priv).to eq('3c6cb8d0f6a264c91ea8b5030fadaa8e538b020f0a387421a12de9319dc93368')
       expect(key.ext_pubkey.to_base58).to eq('xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ')
+      expect(key.key_type).to eq(Bitcoin::Key::TYPES[:compressed])
 
       # hardended key
       key = Bitcoin::ExtKey.from_base58('xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM')
@@ -179,6 +183,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
       expect(key.priv).to eq('cbce0d719ecf7431d88e6a89fa1483e02e35092af60c042b1df2ff59fa424dca')
       expect(key.to_base58).to eq('xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM')
       expect(key.ext_pubkey.to_base58).to eq('xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5')
+      expect(key.key_type).to eq(Bitcoin::Key::TYPES[:compressed])
 
       # pubkey format
       expect{Bitcoin::ExtKey.from_base58('xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ')}.to raise_error('An unsupported version byte was specified.')
@@ -192,6 +197,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
       expect(key.chain_code.bth).to eq('2a7857631386ba23dacac34180dd1983734e444fdbf774041578e9b6adb37c19')
       expect(key.to_base58).to eq('xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ')
       expect(key.pubkey).to eq('03501e454bf00751f24b1b489aa925215d66af2234e3891c3b21a52bedb3cd711c')
+      expect(key.key_type).to eq(Bitcoin::Key::TYPES[:compressed])
 
       # hardended key
       key = Bitcoin::ExtPubkey.from_base58('xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5')
@@ -200,6 +206,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
       expect(key.fingerprint).to eq('ee7ab90c')
       expect(key.chain_code.bth).to eq('04466b9cc8e161e966409ca52986c584f07e9dc81f735db683c3ff6ec7b1503f')
       expect(key.pubkey).to eq('0357bfe1e341d01c69fe5654309956cbea516822fba8a601743a012a7896ee8dc2')
+      expect(key.key_type).to eq(Bitcoin::Key::TYPES[:compressed])
 
       # priv key format
       expect{Bitcoin::ExtPubkey.from_base58('xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM')}.to raise_error('An unsupported version byte was specified.')
@@ -241,6 +248,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
         expect(receive_key.ext_pubkey.version).to eq('044a5262')
         # address derivation for P2WPKH-in-P2SH
         expect(receive_key.addr).to eq('2Mww8dCYPUpKHofjgcXcBCEGmniw9CoaiD2')
+        expect(receive_key.key_type).to eq(Bitcoin::Key::TYPES[:pw2pkh_p2sh])
       end
     end
   end
@@ -259,26 +267,31 @@ describe Bitcoin::ExtKey, network: :mainnet do
       receive_key = @account.derive(0).derive(0)
       expect(receive_key.pub).to eq('0330d54fd0dd420a6e5f8d3624f5f3482cae350f79d5f0753bf5beef9c2d91af3c')
       expect(receive_key.addr).to eq('bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu')
+      expect(receive_key.key_type).to eq(Bitcoin::Key::TYPES[:p2wpkh])
 
       # m/84'/0'/0'/0/1
       receive_key2 = @account.derive(0).derive(1)
       expect(receive_key2.pub).to eq('03e775fd51f0dfb8cd865d9ff1cca2a158cf651fe997fdc9fee9c1d3b5e995ea77')
       expect(receive_key2.addr).to eq('bc1qnjg0jd8228aq7egyzacy8cys3knf9xvrerkf9g')
+      expect(receive_key2.key_type).to eq(Bitcoin::Key::TYPES[:p2wpkh])
 
       # m/84'/0'/0'/1/0
       change_key = @account.derive(1).derive(0)
       expect(change_key.pub).to eq('03025324888e429ab8e3dbaf1f7802648b9cd01e9b418485c5fa4c1b9b5700e1a6')
       expect(change_key.addr).to eq('bc1q8c6fshw2dlwun7ekn9qwf37cu2rn755upcp6el')
+      expect(change_key.key_type).to eq(Bitcoin::Key::TYPES[:p2wpkh])
 
       # recover from xprv
       ext_prv = Bitcoin::ExtKey.from_base58('zprvAdG4iTXWBoARxkkzNpNh8r6Qag3irQB8PzEMkAFeTRXxHpbF9z4QgEvBRmfvqWvGp42t42nvgGpNgYSJA9iefm1yYNZKEm7z6qUWCroSQnE')
       expect(ext_prv.version).to eq('04b2430c')
       expect(ext_prv.derive(0).derive(0).addr).to eq('bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu')
+      expect(ext_prv.key_type).to eq(Bitcoin::Key::TYPES[:p2wpkh])
 
       # recover from xpub
       ext_pub = Bitcoin::ExtPubkey.from_base58('zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhXNfE3EfH1r1ADqtfSdVCToUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs')
       expect(ext_pub.version).to eq('04b24746')
       expect(ext_pub.derive(0).derive(0).addr).to eq('bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu')
+      expect(ext_pub.key_type).to eq(Bitcoin::Key::TYPES[:p2wpkh])
     end
   end
 
