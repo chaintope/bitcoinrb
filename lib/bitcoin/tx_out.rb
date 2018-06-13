@@ -41,6 +41,10 @@ module Bitcoin
       {value: value_to_btc, script_pubkey: script_pubkey.to_h}
     end
 
+    def ==(other)
+      to_payload == other.to_payload
+    end
+
   end
 
 end

@@ -71,6 +71,10 @@ module Bitcoin
       h
     end
 
+    def ==(other)
+      to_payload == other.to_payload
+    end
+
   end
 
 end
