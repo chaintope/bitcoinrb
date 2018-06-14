@@ -46,6 +46,8 @@ module Bitcoin
   autoload :Wallet, 'bitcoin/wallet'
   autoload :BloomFilter, 'bitcoin/bloom_filter'
   autoload :Payments, 'bitcoin/payments'
+  autoload :PartiallySignedTx, 'bitcoin/psbt'
+  autoload :PartiallySignedInput, 'bitcoin/psbt'
 
   require_relative 'bitcoin/constants'
 

@@ -24,7 +24,7 @@ module Bitcoin
     # @param [Boolean] compressed [Deprecated] whether public key is compressed.
     # @return [Bitcoin::Key] a key object.
     def initialize(priv_key: nil, pubkey: nil, key_type: nil, compressed: true)
-      puts "[Warning] Use key_type parameter instead of compressed. compressed parameter removed in the future." if key_type.nil? && !compressed.nil?
+      puts "[Warning] Use key_type parameter instead of compressed. compressed parameter removed in the future." if key_type.nil? && !compressed.nil? && pubkey.nil?
       if key_type
         @key_type = key_type
         compressed = @key_type != TYPES[:uncompressed]
