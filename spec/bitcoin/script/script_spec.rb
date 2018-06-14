@@ -151,7 +151,7 @@ describe Bitcoin::Script do
     subject {
       k1 = '021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9'
       k2 = '032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35'
-      Bitcoin::Script.to_multisig_script(1, [k1, k2])
+      Bitcoin::Script.to_multisig_script(2, [k1, k2])
     }
     it 'should treat as multisig' do
       expect(subject.p2pkh?).to be false

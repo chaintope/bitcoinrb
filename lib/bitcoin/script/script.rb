@@ -161,7 +161,7 @@ module Bitcoin
       pubkey_count = Opcodes.opcode_to_small_int(chunks[-2].opcode)
       sig_count = Opcodes.opcode_to_small_int(chunks[0].opcode)
       return false unless pubkey_count || sig_count
-      sig_count < pubkey_count
+      sig_count <= pubkey_count
     end
 
     def op_return?
