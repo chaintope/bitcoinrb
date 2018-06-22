@@ -178,6 +178,7 @@ describe Bitcoin::Script do
         expect(subject.multisig?).to be false
         expect(subject.op_return?).to be true
         expect(subject.standard?).to be true
+        expect(subject.op_return_data.bth).to eq('04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38')
       end
     end
 
@@ -188,6 +189,16 @@ describe Bitcoin::Script do
       it 'should correct op_return, but not standard' do
         expect(subject.op_return?).to be true
         expect(subject.standard?).to be false
+      end
+    end
+
+    context 'no op_return data' do
+      subject {
+        Bitcoin::Script.new << OP_RETURN
+      }
+      it 'should correct op_return and no data' do
+        expect(subject.op_return?).to be true
+        expect(subject.op_return_data).to be nil
       end
     end
   end

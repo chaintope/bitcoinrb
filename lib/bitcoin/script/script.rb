@@ -175,6 +175,7 @@ module Bitcoin
 
     def op_return_data
       return nil unless op_return?
+      return nil if chunks.size == 1
       chunks[1].pushed_data
     end
 
