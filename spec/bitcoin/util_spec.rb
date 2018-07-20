@@ -65,5 +65,15 @@ describe Bitcoin::Util do
     end
   end
 
+  describe '#decode_base58_address' do
+    subject {
+      util.decode_base58_address('mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1')
+    }
+    it 'should be encoded' do
+      expect(subject[0]).to eq('46c2fbfbecc99a63148fa076de58cf29b0bcf0b0')
+      expect(subject[1]).to eq('6f')
+    end
+  end
+
 
 end

@@ -85,9 +85,26 @@ module Bitcoin
       Digest::RMD160.hexdigest(Digest::SHA256.digest(hex.htb))
     end
 
+    # encode Base58 check address.
+    # @param [String] hex the address payload.
+    # @param [String] addr_version the address version for P2PKH and P2SH.
+    # @return [String] Base58 check encoding address.
     def encode_base58_address(hex, addr_version)
       base = addr_version + hex
       Base58.encode(base + calc_checksum(base))
+    end
+
+    # decode Base58 check encoding address.
+    # @param [String] addr address.
+    # @return [Array] hex and address version
+    def decode_base58_address(addr)
+      hex = Base58.decode(addr)
+      if hex.size == 50 && calc_checksum(hex[0...-8]) == hex[-8..-1]
+        raise 'Invalid version bytes.' unless [Bitcoin.chain_params.address_version, Bitcoin.chain_params.p2sh_version].include?(hex[0..1])
+        [hex[2...-8], hex[0..1]]
+      else
+        raise 'Invalid address.'
+      end
     end
 
     def calc_checksum(hex)

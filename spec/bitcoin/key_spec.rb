@@ -21,6 +21,7 @@ describe Bitcoin::Key do
         expect(subject.priv_key).to eq('3b7845c14659d875b2e50093f07f950c96271f6cc71a3531750c5a567084d438')
         expect(subject.pubkey).to eq('0292ee82d9add0512294723f2c363aee24efdeb3f258cdaf5118a4fcf5263e92c9')
         expect(subject.to_p2pkh).to eq('mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1')
+        expect(subject.to_p2wpkh).to eq('tb1qgmp0h7lvexdxx9y05pmdukx09xcteu9sx2h4ya')
         expect(subject.to_nested_p2wpkh).to eq('2N3wh1eYqMeqoLxuKFv8PBsYR4f8gYn8dHm')
       end
     end

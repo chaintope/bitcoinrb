@@ -32,10 +32,17 @@ module Bitcoin
       [redeem_script.to_p2sh, redeem_script]
     end
 
+    # generate p2sh script.
+    # @param [String] script_hash script hash for P2SH
+    # @return [Script] P2SH script
+    def self.to_p2sh(script_hash)
+      Script.new << OP_HASH160 << script_hash << OP_EQUAL
+    end
+
     # generate p2sh script with this as a redeem script
     # @return [Script] P2SH script
     def to_p2sh
-      Script.new << OP_HASH160 << to_hash160 << OP_EQUAL
+      Script.to_p2sh(to_hash160)
     end
 
     def get_multisig_pubkeys
@@ -71,6 +78,27 @@ module Bitcoin
         end
       end
       script
+    end
+
+    # generate script from addr.
+    # @param [String] addr address.
+    # @return [Bitcoin::Script] parsed script.
+    def self.parse_from_addr(addr)
+      begin
+        segwit_addr = Bech32::SegwitAddr.new(addr)
+        raise 'Invalid hrp.' unless Bitcoin.chain_params.bech32_hrp == segwit_addr.hrp
+        Bitcoin::Script.parse_from_payload(segwit_addr.to_script_pubkey.htb)
+      rescue Exception => e
+        hex, addr_version = Bitcoin.decode_base58_address(addr)
+        case addr_version
+        when Bitcoin.chain_params.address_version
+          Bitcoin::Script.to_p2pkh(hex)
+        when Bitcoin.chain_params.p2sh_version
+          Bitcoin::Script.to_p2sh(hex)
+        else
+          throw e
+        end
+      end
     end
 
     def self.parse_from_payload(payload)

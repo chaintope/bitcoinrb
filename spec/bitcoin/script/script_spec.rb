@@ -409,4 +409,41 @@ describe Bitcoin::Script do
     end
   end
 
+  describe '#parse_from_addr' do
+    context 'mainnet', network: :mainnet do
+      it 'should generate script' do
+        # P2PKH
+        expect(Bitcoin::Script.parse_from_addr('191arn68nSLRiNJXD8srnmw4bRykBkVv6o')).to eq(Bitcoin::Script.parse_from_payload('76a91457dd450aed53d4e35d3555a24ae7dbf3e08a78ec88ac'.htb))
+        # P2SH
+        expect(Bitcoin::Script.parse_from_addr('3HG15Tn6hEd1WVR1ySQtWRstTbvyy6B5V8')).to eq(Bitcoin::Script.parse_from_payload('a914aac6e837af9eba6951552e83862740b069cf59f587'.htb))
+        # P2WPKH
+        expect(Bitcoin::Script.parse_from_addr('bc1q2lw52zhd202wxhf42k3y4e7m70sg578ver73dn')).to eq(Bitcoin::Script.from_string('0 57dd450aed53d4e35d3555a24ae7dbf3e08a78ec'))
+        # P2WSH
+        expect(Bitcoin::Script.parse_from_addr('bc1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607s264w7g')).to eq(Bitcoin::Script.from_string('0 3ce1c71303e564430e0c5721727739290046302a9674f1d67a249cfd2ce7d3fd'))
+      end
+    end
+
+    context 'testnet' do
+      it 'should generate script' do
+        # P2PKH
+        expect(Bitcoin::Script.parse_from_addr('mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1')).to eq(Bitcoin::Script.parse_from_payload('76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac'.htb))
+        # P2SH
+        expect(Bitcoin::Script.parse_from_addr('2N3wh1eYqMeqoLxuKFv8PBsYR4f8gYn8dHm')).to eq(Bitcoin::Script.parse_from_payload('a914755874542a017c665184c356f67c20cf4a0621ca87'.htb))
+        # P2WPKH
+        expect(Bitcoin::Script.parse_from_addr('tb1qgmp0h7lvexdxx9y05pmdukx09xcteu9sx2h4ya')).to eq(Bitcoin::Script.from_string('0 46c2fbfbecc99a63148fa076de58cf29b0bcf0b0'))
+        # P2WSH
+        expect(Bitcoin::Script.parse_from_addr('tb1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607sajrpy8')).to eq(Bitcoin::Script.from_string('0 3ce1c71303e564430e0c5721727739290046302a9674f1d67a249cfd2ce7d3fd'))
+      end
+    end
+
+    context 'invalid address' do
+      it 'should raise error' do
+        expect{Bitcoin::Script.parse_from_addr('191arn68nSLRiNJXD8srnmw4bRykBkVv6o')}.to raise_error
+        expect{Bitcoin::Script.parse_from_addr('mmy7BEH1SUGAeSVUR22pt5hPaejo2645F2')}.to raise_error
+        expect{Bitcoin::Script.parse_from_addr('bc1q2lw52zhd202wxhf42k3y4e7m70sg578ver73dn')}.to raise_error
+        expect{Bitcoin::Script.parse_from_addr('tb1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607sajrpy0')}.to raise_error
+      end
+    end
+  end
+
 end
