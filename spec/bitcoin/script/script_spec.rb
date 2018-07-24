@@ -446,4 +446,22 @@ describe Bitcoin::Script do
     end
   end
 
+  describe '#include?' do
+    it 'should be judge' do
+      # P2PKH
+      p2pkh = Bitcoin::Script.parse_from_payload('76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac'.htb)
+      pubkey_hash = '46c2fbfbecc99a63148fa076de58cf29b0bcf0b0'
+      expect(p2pkh.include?(pubkey_hash)).to be true
+      expect(p2pkh.include?(pubkey_hash.htb)).to be true
+      expect(p2pkh.include?('46c2fbfbecc99a63148fa076de58cf29b0bcf0b1')).to be false
+      expect(p2pkh.include?(OP_EQUALVERIFY)).to be true
+      expect(p2pkh.include?(OP_EQUAL)).to be false
+      # multisig
+      multisig = Bitcoin::Script.parse_from_payload('5121021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e921032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e3552ae'.htb)
+      expect(multisig.include?(OP_1)).to be true
+      expect(multisig.include?(OP_3)).to be false
+      expect(multisig.include?('032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35')).to be true
+    end
+  end
+
 end

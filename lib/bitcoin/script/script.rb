@@ -299,6 +299,18 @@ module Bitcoin
       self
     end
 
+    # Check the item is in the chunk of the script.
+    def include?(item)
+      chunk_item = if item.is_a?(Integer)
+                     item.chr
+                   elsif item.is_a?(String)
+                     data = Encoding::ASCII_8BIT == item.encoding ? item : item.htb
+                     Bitcoin::Script.pack_pushdata(data)
+                   end
+      return false unless chunk_item
+      chunks.include?(chunk_item)
+    end
+
     def to_s
       chunks.map { |c|
         case c
