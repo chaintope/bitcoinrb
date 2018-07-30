@@ -75,6 +75,12 @@ module Bitcoin
       to_payload == other.to_payload
     end
 
+    # return previous output hash (not txid)
+    def prev_hash
+      return nil unless out_point
+      out_point.hash
+    end
+
   end
 
 end
