@@ -6,6 +6,11 @@ module Bitcoin
   # bitcoin key class
   class Key
 
+    PUBLIC_KEY_SIZE = 65
+    COMPRESSED_PUBLIC_KEY_SIZE = 33
+    SIGNATURE_SIZE = 72
+    COMPACT_SIGNATURE_SIZE = 65
+
     attr_accessor :priv_key
     attr_accessor :pubkey
     attr_accessor :key_type
@@ -60,7 +65,7 @@ module Bitcoin
       raise ArgumentError, 'invalid version' unless version == Bitcoin.chain_params.privkey_version
       raise ArgumentError, 'invalid checksum' unless Bitcoin.calc_checksum(version + data.bth) == checksum
       key_len = data.bytesize
-      if key_len == 33 && data[-1].unpack('C').first == 1
+      if key_len == COMPRESSED_PUBLIC_KEY_SIZE && data[-1].unpack('C').first == 1
         key_type = TYPES[:compressed]
         data = data[0..-2]
       elsif key_len == 32
@@ -139,12 +144,12 @@ module Bitcoin
     # check +pubkey+ (hex) is compress or uncompress pubkey.
     def self.compress_or_uncompress_pubkey?(pubkey)
       p = pubkey.htb
-      return false if p.bytesize < 33
+      return false if p.bytesize < COMPRESSED_PUBLIC_KEY_SIZE
       case p[0]
         when "\x04"
-          return false unless p.bytesize == 65
+          return false unless p.bytesize == PUBLIC_KEY_SIZE
         when "\x02", "\x03"
-          return false unless p.bytesize == 33
+          return false unless p.bytesize == COMPRESSED_PUBLIC_KEY_SIZE
         else
           return false
       end
@@ -154,7 +159,7 @@ module Bitcoin
     # check +pubkey+ (hex) is compress pubkey.
     def self.compress_pubkey?(pubkey)
       p = pubkey.htb
-      p.bytesize == 33 && ["\x02", "\x03"].include?(p[0])
+      p.bytesize == COMPRESSED_PUBLIC_KEY_SIZE && ["\x02", "\x03"].include?(p[0])
     end
 
     # check +sig+ is low.
