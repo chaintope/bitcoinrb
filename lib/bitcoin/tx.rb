@@ -60,11 +60,7 @@ module Bitcoin
 
       if witness
         in_count.times do |i|
-          witness_count = Bitcoin.unpack_var_int_from_io(buf)
-          witness_count.times do
-            size = Bitcoin.unpack_var_int_from_io(buf)
-            tx.inputs[i].script_witness.stack << buf.read(size)
-          end
+          tx.inputs[i].script_witness = Bitcoin::ScriptWitness.parse_from_payload(buf)
         end
       end
 
