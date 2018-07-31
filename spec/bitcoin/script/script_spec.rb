@@ -29,6 +29,12 @@ describe Bitcoin::Script do
         expect(s.to_s).to eq('OP_1NEGATE -1000 OP_ADD')
       end
     end
+    context 'binary and hex mixed' do
+      it 'should be append as same data' do
+        hex = 'f9fc751cb7dc372406a9f8d738d5e6f8f63bab71986a39cf36ee70ee17036d07'
+        expect(Bitcoin::Script.new << hex).to eq(Bitcoin::Script.new << hex.htb)
+      end
+    end
   end
 
   describe 'p2pkh script' do

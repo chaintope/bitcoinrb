@@ -141,7 +141,7 @@ module Bitcoin
       def finalize!
         if non_witness_utxo
           self.final_script_sig = Bitcoin::Script.new << Bitcoin::Opcodes::OP_0 if redeem_script.multisig?
-          partial_sigs.values.each {|sig|final_script_sig << sig.bth}
+          partial_sigs.values.each {|sig|final_script_sig << sig}
           final_script_sig << redeem_script.to_payload.bth
           self.partial_sigs = {}
           self.hd_key_paths = {}

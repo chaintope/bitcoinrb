@@ -264,7 +264,7 @@ module Bitcoin
       if obj.is_a?(Integer)
         push_int(obj)
       elsif obj.is_a?(String)
-        append_data(obj.b)
+        append_data(obj)
       elsif obj.is_a?(Array)
         obj.each { |o| self.<< o}
         self
@@ -295,7 +295,8 @@ module Bitcoin
     # @param [String] data append data. this data is not binary
     # @return [Script] return self
     def append_data(data)
-      chunks << Bitcoin::Script.pack_pushdata(data.htb)
+      data = Encoding::ASCII_8BIT == data.encoding ? data : data.htb
+      chunks << Bitcoin::Script.pack_pushdata(data)
       self
     end
 
