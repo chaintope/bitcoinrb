@@ -40,6 +40,14 @@ describe Bitcoin::ScriptInterpreter do
     end
   end
 
+  describe '#eval' do
+    it 'should be verified.' do
+      script_pubkey = Bitcoin::Script.from_string('1 ADD 7 EQUAL')
+      script_sig = Bitcoin::Script.from_string('6')
+      expect(Bitcoin::ScriptInterpreter.eval(script_sig, script_pubkey)).to be true
+    end
+  end
+
   def build_credit_tx(script_pubkey, amount)
     tx = Bitcoin::Tx.new
     tx.version = 1

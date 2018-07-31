@@ -13,6 +13,14 @@ module Bitcoin
 
     DISABLE_OPCODES = [OP_CAT, OP_SUBSTR, OP_LEFT, OP_RIGHT, OP_INVERT, OP_AND, OP_OR, OP_XOR, OP_2MUL, OP_2DIV, OP_DIV, OP_MUL, OP_MOD, OP_LSHIFT, OP_RSHIFT]
 
+
+    # syntax sugar for simple evaluation for script.
+    # @param [Bitcoin::Script] script_sig a scriptSig.
+    # @param [Bitcoin::Script] script_pubkey a scriptPubkey.
+    def self.eval(script_sig, script_pubkey)
+      self.new.verify_script(script_sig, script_pubkey)
+    end
+
     # initialize runner
     def initialize(flags: SCRIPT_VERIFY_NONE, checker: TxChecker.new)
       @stack, @debug = [], []
