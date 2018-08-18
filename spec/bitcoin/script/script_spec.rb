@@ -470,4 +470,20 @@ describe Bitcoin::Script do
     end
   end
 
+  describe '#run' do
+    context 'valid script' do
+      subject {Bitcoin::Script.from_string('6 1 OP_ADD 7 OP_EQUAL')}
+      it 'should return true.' do
+        expect(subject.run).to be true
+      end
+    end
+
+    context 'invalid script' do
+      subject {Bitcoin::Script.from_string('3 1 OP_ADD 7 OP_EQUAL')}
+      it 'should return false.' do
+        expect(subject.run).to be false
+      end
+    end
+  end
+
 end

@@ -352,6 +352,11 @@ module Bitcoin
       to_payload.bytesize
     end
 
+    # execute script interpreter using this script for development.
+    def run
+      Bitcoin::ScriptInterpreter.eval(Bitcoin::Script.new, self.dup)
+    end
+
     # encode int value to script number hex.
     # The stacks hold byte vectors.
     # When used as numbers, byte vectors are interpreted as little-endian variable-length integers
