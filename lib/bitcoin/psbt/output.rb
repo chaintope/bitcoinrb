@@ -27,9 +27,11 @@ module Bitcoin
           value = buf.read(Bitcoin.unpack_var_int_from_io(buf))
           case key_type
           when PSBT_OUT_TYPES[:redeem_script]
+            raise ArgumentError, 'Invalid output redeemScript typed key.' unless key_len == 1
             raise ArgumentError, 'Duplicate Key, output redeemScript already provided' if output.redeem_script
             output.redeem_script = value
           when PSBT_OUT_TYPES[:witness_script]
+            raise ArgumentError, 'Invalid output witnessScript typed key.' unless key_len == 1
             raise ArgumentError, 'Duplicate Key, output witnessScript already provided' if output.witness_script
             output.witness_script = value
           when PSBT_OUT_TYPES[:bip32_derivation]

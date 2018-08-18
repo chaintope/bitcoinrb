@@ -20,9 +20,9 @@ module Bitcoin
       # @param [String] payload hd key path value with binary format.
       # @return [Bitcoin::PSBT::HDKeyPath]
       def self.parse_from_payload(pubkey, payload)
-        raise 'Size of key was not the expected size for the type BIP32 keypath' unless [Bitcoin::Key::PUBLIC_KEY_SIZE, Bitcoin::Key::COMPRESSED_PUBLIC_KEY_SIZE].include?(pubkey.bytesize)
+        raise ArgumentError, 'Size of key was not the expected size for the type BIP32 keypath.' unless [Bitcoin::Key::PUBLIC_KEY_SIZE, Bitcoin::Key::COMPRESSED_PUBLIC_KEY_SIZE].include?(pubkey.bytesize)
         pubkey = Bitcoin::Key.new(pubkey: pubkey.bth)
-        raise 'Invalid pubkey' unless pubkey.fully_valid_pubkey?
+        raise ArgumentError, 'Invalid pubkey' unless pubkey.fully_valid_pubkey?
         self.new(pubkey.pubkey, fingerprint: payload[0...4].bth, path: payload[4..-1].unpack('I*'))
       end
 

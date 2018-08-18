@@ -40,18 +40,19 @@ module Bitcoin
 
           case key_type
           when PSBT_GLOBAL_TYPES[:unsigned_tx]
-            raise ArgumentError, 'Duplicate Key, unsigned tx already provided' if partial_tx.tx
+            raise ArgumentError, 'Invalid global transaction typed key.' unless key_len == 1
+            raise ArgumentError, 'Duplicate Key, unsigned tx already provided.' if partial_tx.tx
             partial_tx.tx = Bitcoin::Tx.parse_from_payload(value)
             partial_tx.tx.in.each do |tx_in|
               raise ArgumentError, 'Unsigned tx does not have empty scriptSigs and scriptWitnesses.' if !tx_in.script_sig.empty? || !tx_in.script_witness.empty?
             end
           else
-            raise ArgumentError, 'Duplicate Key, key for unknown value already provided' if partial_tx.unknowns[key]
+            raise ArgumentError, 'Duplicate Key, key for unknown value already provided.' if partial_tx.unknowns[key]
             partial_tx.unknowns[([key_type].pack('C') + key).bth] = value
           end
         end
 
-        raise ArgumentError, 'No unsigned transcation was provided.' unless partial_tx.tx
+        raise ArgumentError, 'No unsigned transaction was provided.' unless partial_tx.tx
 
         # read input data.
         partial_tx.tx.in.each do |tx_in|
@@ -59,7 +60,7 @@ module Bitcoin
           input = Input.parse_from_buf(buf)
           partial_tx.inputs << input
           if input.non_witness_utxo && input.non_witness_utxo.hash != tx_in.prev_hash
-            raise ArgumentError, 'Non-witness UTXO does not match outpoint hash'
+            raise ArgumentError, 'Non-witness UTXO does not match outpoint hash.'
           end
         end
 

@@ -38,9 +38,11 @@ module Bitcoin
 
           case key_type
           when PSBT_IN_TYPES[:non_witness_utxo]
+            raise ArgumentError, 'Invalid non-witness utxo typed key.' unless key_len == 1
             raise ArgumentError, 'Duplicate Key, input non-witness utxo already provided.' if input.non_witness_utxo
             input.non_witness_utxo = Bitcoin::Tx.parse_from_payload(value)
           when PSBT_IN_TYPES[:witness_utxo]
+            raise ArgumentError, 'Invalid input witness utxo typed key.' unless key_len == 1
             raise ArgumentError, 'Duplicate Key, input witness utxo already provided.' if input.witness_utxo
             input.witness_utxo = Bitcoin::TxOut.parse_from_payload(value)
           when PSBT_IN_TYPES[:partial_sig]
@@ -52,21 +54,27 @@ module Bitcoin
             raise ArgumentError, 'Duplicate Key, input partial signature for pubkey already provided.' if input.partial_sigs[pubkey.pubkey]
             input.partial_sigs[pubkey.pubkey] = value
           when PSBT_IN_TYPES[:sighash]
+            raise ArgumentError, 'Invalid input sighash type typed key.' unless key_len == 1
             raise ArgumentError 'Duplicate Key, input sighash type already provided.' if input.sighash_type
             input.sighash_type = value.unpack('I').first
           when PSBT_IN_TYPES[:redeem_script]
+            raise ArgumentError, 'Invalid redeemscript typed key.' unless key_len == 1
             raise ArgumentError, 'Duplicate Key, input redeemScript already provided.' if input.redeem_script
             input.redeem_script = Bitcoin::Script.parse_from_payload(value)
           when PSBT_IN_TYPES[:witness_script]
+            raise ArgumentError, 'Invalid witnessscript typed key.' unless key_len == 1
             raise ArgumentError, 'Duplicate Key, input witnessScript already provided.' if input.witness_script
             input.witness_script = Bitcoin::Script.parse_from_payload(value)
           when PSBT_IN_TYPES[:bip32_derivation]
+            raise ArgumentError, 'Invalid bip32 typed key.' unless key_len
             raise ArgumentError, 'Duplicate Key, pubkey derivation path already provided.' if input.hd_key_paths[key.bth]
             input.hd_key_paths[key.bth] = Bitcoin::PSBT::HDKeyPath.parse_from_payload(key, value)
           when PSBT_IN_TYPES[:script_sig]
+            raise ArgumentError, 'Invalid final scriptsig typed key.' unless key_len == 1
             raise ArgumentError, 'Duplicate Key, input final scriptSig already provided.' if input.final_script_sig
             input.final_script_sig = Bitcoin::Script.parse_from_payload(value)
           when PSBT_IN_TYPES[:script_witness]
+            raise ArgumentError, 'Invalid final script witness typed key.' unless key_len == 1
             raise ArgumentError, 'Duplicate Key, input final scriptWitness already provided.' if input.final_script_witness
             input.final_script_witness = Bitcoin::ScriptWitness.parse_from_payload(value)
           else
