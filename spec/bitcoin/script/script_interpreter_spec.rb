@@ -42,7 +42,7 @@ describe Bitcoin::ScriptInterpreter do
 
   describe '#eval' do
     it 'should be verified.' do
-      script_pubkey = Bitcoin::Script.from_string('1 ADD 7 EQUAL')
+      script_pubkey = Bitcoin::Script.from_string('1 OP_ADD 7 OP_EQUAL')
       script_sig = Bitcoin::Script.from_string('6')
       expect(Bitcoin::ScriptInterpreter.eval(script_sig, script_pubkey)).to be true
     end
