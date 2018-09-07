@@ -226,6 +226,7 @@ module Bitcoin
 
       def on_merkle_block(merkle_block)
         logger.info("receive merkle block message. #{merkle_block.build_json}")
+        peer.handle_merkle_block(merkle_block)
       end
 
       def on_cmpct_block(cmpct_block)
