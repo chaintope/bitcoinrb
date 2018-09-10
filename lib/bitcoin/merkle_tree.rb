@@ -52,6 +52,10 @@ module Bitcoin
       nodes.first
     end
 
+    def find_node(hash)
+      root.find_node(hash)
+    end
+
     # node of merkle tree
     class Node
 
@@ -112,7 +116,25 @@ module Bitcoin
         d
       end
 
+      # @param target hash to be found
+      # @return node which has same hash as target. nil if this node and any children don't have same hash.
+      def find_node(target)
+        return self if hash == target
+        return nil if flag.zero?
+        return left&.find_node(target) || right&.find_node(target)
+      end
+
+      def index
+        i = 0
+        d = 1
+        current_node = self
+        until current_node.root? do
+          i += d if current_node.parent.right == current_node
+          current_node = current_node.parent
+          d *= 2
+        end
+        i
+      end
     end
   end
-
 end

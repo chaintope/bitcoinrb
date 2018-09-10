@@ -73,7 +73,30 @@ describe Bitcoin::MerkleTree do
         expect(subject.merkle_root).to eq('7f16c5962e8bd963659c793ce370d95f093bc7e367117b3c30c1f8fdd0d97287')
       end
     end
-
   end
 
+  describe 'find_node' do
+    let(:tree) do
+      hashes = ['3612262624047ee87660be1a707519a443b1c1ce3d248cbfc6c15870f6c5daa2',
+                '019f5b01d4195ecbc9398fbf3c3b1fa9bb3183301d7a1fb3bd174fcfa40a2b65',
+                '41ed70551dd7e841883ab8f0b16bf04176b7d1480e4f0af9f3d4c3595768d068',
+                '20d2a7bc994987302e5b1ac80fc425fe25f8b63169ea78e68fbaaefa59379bbf']
+      Bitcoin::MerkleTree.build_partial(7, hashes, Bitcoin.byte_to_bit('1d'.htb))
+    end
+
+    context 'hash is in tree' do
+      subject { tree.find_node('019f5b01d4195ecbc9398fbf3c3b1fa9bb3183301d7a1fb3bd174fcfa40a2b65') }
+      it 'should return node' do
+        expect(subject.leaf?).to be_truthy
+        expect(subject.index).to eq 4
+      end
+    end
+
+    context 'hash is not in tree' do
+      subject { tree.find_node('0000000000000000000000000000000000000000000000000000000000000000') }
+      it 'should return nil' do
+        expect(subject).to be_nil
+      end
+    end
+  end
 end
