@@ -77,6 +77,10 @@ describe Bitcoin::MerkleTree do
 
   describe 'find_node' do
     let(:tree) do
+      # H1 = 3612262624047ee87660be1a707519a443b1c1ce3d248cbfc6c15870f6c5daa2
+      # H2 = 019f5b01d4195ecbc9398fbf3c3b1fa9bb3183301d7a1fb3bd174fcfa40a2b65
+      # H3 = 41ed70551dd7e841883ab8f0b16bf04176b7d1480e4f0af9f3d4c3595768d068
+      # H4 = 20d2a7bc994987302e5b1ac80fc425fe25f8b63169ea78e68fbaaefa59379bbf
       hashes = ['3612262624047ee87660be1a707519a443b1c1ce3d248cbfc6c15870f6c5daa2',
                 '019f5b01d4195ecbc9398fbf3c3b1fa9bb3183301d7a1fb3bd174fcfa40a2b65',
                 '41ed70551dd7e841883ab8f0b16bf04176b7d1480e4f0af9f3d4c3595768d068',
@@ -84,11 +88,68 @@ describe Bitcoin::MerkleTree do
       Bitcoin::MerkleTree.build_partial(7, hashes, Bitcoin.byte_to_bit('1d'.htb))
     end
 
-    context 'hash is in tree' do
+    context 'hash is merkle root' do
+      subject { tree.find_node('7f16c5962e8bd963659c793ce370d95f093bc7e367117b3c30c1f8fdd0d97287') }
+      it 'should return root node' do
+        expect(subject.leaf?).to be_falsy
+        expect(subject.index).to eq 0
+        expect(subject.depth).to eq 0
+      end
+    end
+
+    context 'inner node has hash H1' do
+      subject { tree.find_node('3612262624047ee87660be1a707519a443b1c1ce3d248cbfc6c15870f6c5daa2') }
+      it 'should return inner node' do
+        expect(subject.leaf?).to be_falsy
+        expect(subject.index).to eq 0
+        expect(subject.depth).to eq 1
+      end
+    end
+
+    context 'leaf node has hash H2' do
       subject { tree.find_node('019f5b01d4195ecbc9398fbf3c3b1fa9bb3183301d7a1fb3bd174fcfa40a2b65') }
-      it 'should return node' do
+      it 'should return leaf node' do
         expect(subject.leaf?).to be_truthy
         expect(subject.index).to eq 4
+        expect(subject.depth).to eq 3
+      end
+    end
+
+    context 'leaf node has hash H3' do
+      subject { tree.find_node('41ed70551dd7e841883ab8f0b16bf04176b7d1480e4f0af9f3d4c3595768d068') }
+      it 'should return inner node' do
+        expect(subject.leaf?).to be_truthy
+        expect(subject.index).to eq 5
+        expect(subject.depth).to eq 3
+      end
+    end
+
+    context 'inner node has hash d(H2 + H3)' do
+      # double hash of (019f5b01d4195ecbc9398fbf3c3b1fa9bb3183301d7a1fb3bd174fcfa40a2b65 || 41ed70551dd7e841883ab8f0b16bf04176b7d1480e4f0af9f3d4c3595768d068)
+      subject { tree.find_node('323a54ad9aa4ba42d1edfb9519af995cf93b736364f81a090885b61b6d7ee1ca') }
+      it 'should return inner node' do
+        expect(subject.leaf?).to be_falsy
+        expect(subject.index).to eq 2
+        expect(subject.depth).to eq 2
+      end
+    end
+
+    context 'inner node has hash H4' do
+      subject { tree.find_node('20d2a7bc994987302e5b1ac80fc425fe25f8b63169ea78e68fbaaefa59379bbf') }
+      it 'should return inner node' do
+        expect(subject.leaf?).to be_falsy
+        expect(subject.index).to eq 3
+        expect(subject.depth).to eq 2
+      end
+    end
+
+    context 'inner node has hash d(d(H2 + H3) + H4)' do
+      # double hash of (323a54ad9aa4ba42d1edfb9519af995cf93b736364f81a090885b61b6d7ee1ca || 20d2a7bc994987302e5b1ac80fc425fe25f8b63169ea78e68fbaaefa59379bbf)
+      subject { tree.find_node('cfbc39264b50034b71abba2d4eb0220ad66bf8ffde47d42b32b199accbdca739') }
+      it 'should return inner node' do
+        expect(subject.leaf?).to be_falsy
+        expect(subject.index).to eq 1
+        expect(subject.depth).to eq 1
       end
     end
 
