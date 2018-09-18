@@ -120,7 +120,7 @@ module Bitcoin
       # @return node which has same hash as target. nil if this node and any children don't have same hash.
       def find_node(target)
         return self if hash == target
-        return nil if flag.zero?
+        return nil if flag && flag.zero?
         return left&.find_node(target) || right&.find_node(target)
       end
 
