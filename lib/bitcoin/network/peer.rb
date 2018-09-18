@@ -190,6 +190,11 @@ module Bitcoin
         pool.notify_observers(:tx, tx)
       end
 
+      def handle_merkle_block(merkle_block)
+        pool.changed
+        pool.notify_observers(:merkleblock, merkle_block)
+      end
+
       # send ping message.
       def send_ping
         ping = Bitcoin::Message::Ping.new
