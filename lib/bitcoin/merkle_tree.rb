@@ -10,7 +10,7 @@ module Bitcoin
     end
 
     def merkle_root
-      root.hash
+      root.value
     end
 
     def self.build_from_leaf(txids)
@@ -31,7 +31,7 @@ module Bitcoin
       flags.each do |f|
         current_node.flag = f
         if f.zero? || current_node.leaf?
-          current_node.hash = hashes[hash_index]
+          current_node.value = hashes[hash_index]
           hash_index += 1
         end
         current_node = current_node.next_partial
@@ -52,21 +52,21 @@ module Bitcoin
       nodes.first
     end
 
-    def find_node(hash)
-      root.find_node(hash)
+    def find_node(value)
+      root.find_node(value)
     end
 
     # node of merkle tree
     class Node
 
       attr_accessor :flag
-      attr_accessor :hash
+      attr_accessor :value
       attr_accessor :parent
       attr_accessor :left
       attr_accessor :right
 
-      def initialize(hash = nil)
-        @hash = hash
+      def initialize(value = nil)
+        @value = value
       end
 
       def left=(node)
@@ -79,10 +79,10 @@ module Bitcoin
         @right = node
       end
 
-      def hash
-        return @hash if @hash
+      def value
+        return @value if @value
         self.right = left.dup unless right
-        Bitcoin.double_sha256([left.hash + right.hash].pack('H*')).bth
+        Bitcoin.double_sha256([left.value + right.value].pack('H*')).bth
       end
 
       def root?
@@ -116,10 +116,10 @@ module Bitcoin
         d
       end
 
-      # @param target hash to be found
-      # @return node which has same hash as target. nil if this node and any children don't have same hash.
+      # @param target value to be found
+      # @return node which has same value as target. nil if this node and any children don't have same value.
       def find_node(target)
-        return self if hash == target
+        return self if value == target
         return nil if flag && flag.zero?
         return left&.find_node(target) || right&.find_node(target)
       end

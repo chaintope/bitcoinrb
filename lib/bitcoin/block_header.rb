@@ -36,14 +36,17 @@ module Bitcoin
       (mantissa * 2 ** (8 * (exponent - 3)))
     end
 
-    # block hash(little endian)
     def hash
+      calc_hash.to_i(16)
+    end
+
+    def block_hash
       calc_hash
     end
 
     # block hash(big endian)
     def block_id
-      hash.rhex
+      block_hash.rhex
     end
 
     # evaluate block header

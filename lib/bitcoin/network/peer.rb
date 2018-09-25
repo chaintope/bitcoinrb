@@ -92,7 +92,7 @@ module Bitcoin
       def start_block_header_download
         logger.info("[#{addr}] start block header download.")
         get_headers = Bitcoin::Message::GetHeaders.new(
-            Bitcoin.chain_params.protocol_version, [chain.latest_block.hash])
+            Bitcoin.chain_params.protocol_version, [chain.latest_block.block_hash])
         conn.send_message(get_headers)
       end
 
@@ -138,7 +138,7 @@ module Bitcoin
           break unless header.valid?
           entry = chain.append_header(header)
           next unless entry
-          @best_hash = entry.hash
+          @best_hash = entry.block_hash
           @best_height = entry.height
         end
         pool.changed

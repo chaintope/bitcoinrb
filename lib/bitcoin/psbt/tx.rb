@@ -59,7 +59,7 @@ module Bitcoin
           break if buf.eof?
           input = Input.parse_from_buf(buf)
           partial_tx.inputs << input
-          if input.non_witness_utxo && input.non_witness_utxo.hash != tx_in.prev_hash
+          if input.non_witness_utxo && input.non_witness_utxo.tx_hash != tx_in.prev_hash
             raise ArgumentError, 'Non-witness UTXO does not match outpoint hash.'
           end
         end
@@ -111,7 +111,7 @@ module Bitcoin
       # @param [Bitcoin::Script] witness_script witness script to set input.
       # @param [Hash] hd_key_paths bip 32 hd key paths to set input.
       def update!(prev_tx, redeem_script: nil, witness_script: nil, hd_key_paths: [])
-        prev_hash = prev_tx.hash
+        prev_hash = prev_tx.tx_hash
         tx.in.each_with_index do|tx_in, i|
           if tx_in.prev_hash == prev_hash
             utxo = prev_tx.out[tx_in.out_point.index]

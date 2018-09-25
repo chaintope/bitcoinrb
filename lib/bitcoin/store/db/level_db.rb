@@ -61,7 +61,7 @@ module Bitcoin
         def save_entry(entry)
           db.batch do
             db.put(entry.key ,entry.to_payload)
-            db.put(height_key(entry.height), entry.hash)
+            db.put(height_key(entry.height), entry.block_hash)
             connect_entry(entry)
           end
         end
@@ -81,17 +81,15 @@ module Bitcoin
         def connect_entry(entry)
           unless entry.genesis?
             tip_block = Bitcoin::Store::ChainEntry.parse_from_payload(get_entry_payload_from_hash(best_hash))
-            unless tip_block.hash == entry.prev_hash
-              raise "entry(#{entry.hash}) does not reference current best block hash(#{tip_block.hash})"
+            unless tip_block.block_hash == entry.prev_hash
+              raise "entry(#{entry.block_hash}) does not reference current best block hash(#{tip_block.block_hash})"
             end
             unless tip_block.height + 1 == entry.height
               raise "block height is small than current best block."
             end
           end
-
-
-          db.put(KEY_PREFIX[:best], entry.hash)
-          db.put(KEY_PREFIX[:next] + entry.prev_hash, entry.hash)
+          db.put(KEY_PREFIX[:best], entry.block_hash)
+          db.put(KEY_PREFIX[:next] + entry.prev_hash, entry.block_hash)
         end
       end
 

@@ -12,7 +12,7 @@ module Bitcoin
         h[:headers] = best_block.height
         h[:bestblockhash] = best_block.header.block_id
         h[:chainwork] = best_block.header.work
-        h[:mediantime] = node.chain.mtp(best_block.hash)
+        h[:mediantime] = node.chain.mtp(best_block.block_hash)
         h
       end
 

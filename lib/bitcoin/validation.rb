@@ -49,7 +49,7 @@ module Bitcoin
 
     # check proof of work
     def check_block_header(header, state)
-      header.hash
+      header.block_hash
       header.bits
 
     end

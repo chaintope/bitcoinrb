@@ -16,12 +16,16 @@ module Bitcoin
 
       # get database key
       def key
-        Bitcoin::Store::KEY_PREFIX[:entry] + header.hash
+        Bitcoin::Store::KEY_PREFIX[:entry] + header.block_hash
+      end
+
+      def hash
+        header.hash
       end
 
       # block hash
-      def hash
-        header.hash
+      def block_hash
+        header.block_hash
       end
 
       # previous block hash

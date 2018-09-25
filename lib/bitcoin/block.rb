@@ -17,6 +17,10 @@ module Bitcoin
       header.hash
     end
 
+    def block_hash
+      header.block_hash
+    end
+
     # calculate block weight
     def weight
       stripped_size * (WITNESS_SCALE_FACTOR - 1) + size
@@ -41,7 +45,7 @@ module Bitcoin
 
     # calculate merkle root from tx list.
     def calculate_merkle_root
-      Bitcoin::MerkleTree.build_from_leaf(transactions.map(&:hash)).merkle_root
+      Bitcoin::MerkleTree.build_from_leaf(transactions.map(&:tx_hash)).merkle_root
     end
 
     # check the witness commitment in coinbase tx matches witness commitment calculated from tx list.

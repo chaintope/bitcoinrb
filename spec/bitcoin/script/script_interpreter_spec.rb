@@ -63,7 +63,7 @@ describe Bitcoin::ScriptInterpreter do
     tx.version = 1
     tx.lock_time = 0
     tx.inputs << Bitcoin::TxIn.new(
-      out_point: Bitcoin::OutPoint.new(locked_tx.hash, 0),
+      out_point: Bitcoin::OutPoint.new(locked_tx.tx_hash, 0),
       script_sig: script_sig,
       script_witness: witness
     )

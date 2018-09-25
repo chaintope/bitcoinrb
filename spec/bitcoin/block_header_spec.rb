@@ -5,7 +5,7 @@ describe Bitcoin::BlockHeader do
   describe 'parse from payload' do
     subject {Bitcoin::BlockHeader.parse_from_payload('00000020f29ae31fe472fea5a9812cd8bd9d73c7e4491ee62fbaf9b1be20000000000000e4e24580186a17432dee5ada29678f3f5e6b51a451f3b8d09917a2de11dba12d11bd48590bd6001bcd3c87cb'.htb)}
     it 'should be parsed' do
-      expect(subject.hash).to eq('1df1ced8582ca556592c2133d6ccd6e409c50078d932205ac2a7000000000000')
+      expect(subject.block_hash).to eq('1df1ced8582ca556592c2133d6ccd6e409c50078d932205ac2a7000000000000')
       expect(subject.time).to eq(1497939217)
       expect(subject.nonce).to eq(3414637773)
       expect(subject.prev_hash).to eq('f29ae31fe472fea5a9812cd8bd9d73c7e4491ee62fbaf9b1be20000000000000')
@@ -26,7 +26,6 @@ describe Bitcoin::BlockHeader do
   describe '#bits_to_target' do
     it 'return difficulty target' do
       header = Bitcoin::BlockHeader.parse_from_payload('00000020f29ae31fe472fea5a9812cd8bd9d73c7e4491ee62fbaf9b1be20000000000000e4e24580186a17432dee5ada29678f3f5e6b51a451f3b8d09917a2de11dba12d11bd48590bd6001bcd3c87cb'.htb)
-      puts header.bits
       expect(header.difficulty_target).to eq(0x000000000000d60b000000000000000000000000000000000000000000000000)
 
       header.bits = 0x1d00ffff

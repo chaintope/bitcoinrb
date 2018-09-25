@@ -44,17 +44,17 @@ module Bitcoin
       # @return [Bitcoin::Store::ChainEntry] appended block header entry.
       def append_header(header)
         logger.info("append header #{header.block_id}")
-        raise "this header is invalid. #{header.hash}" unless header.valid?
+        raise "this header is invalid. #{header.block_hash}" unless header.valid?
         best_block = latest_block
         current_height = best_block.height
-        if best_block.hash == header.prev_hash
+        if best_block.block_hash == header.prev_hash
           entry = Bitcoin::Store::ChainEntry.new(header, current_height + 1)
           db.save_entry(entry)
           entry
         else
-          unless find_entry_by_hash(header.hash)
+          unless find_entry_by_hash(header.block_hash)
             # TODO implements recovery process
-            raise "header's previous hash(#{header.prev_hash}) does not match current best block's(#{best_block.hash})."
+            raise "header's previous hash(#{header.prev_hash}) does not match current best block's(#{best_block.block_hash})."
           end
         end
       end

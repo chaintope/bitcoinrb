@@ -70,11 +70,15 @@ module Bitcoin
     end
 
     def hash
+      to_payload.bth.to_i(16)
+    end
+
+    def tx_hash
       Bitcoin.double_sha256(serialize_old_format).bth
     end
 
     def txid
-      hash.rhex
+      tx_hash.rhex
     end
 
     def witness_hash
