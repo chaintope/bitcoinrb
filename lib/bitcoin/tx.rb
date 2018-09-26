@@ -113,7 +113,7 @@ module Bitcoin
     end
 
     def ==(other)
-      hash == other.hash
+      to_payload == other.to_payload
     end
 
     # serialize tx with old tx format
