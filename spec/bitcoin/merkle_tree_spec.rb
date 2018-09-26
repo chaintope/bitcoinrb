@@ -160,6 +160,20 @@ describe Bitcoin::MerkleTree do
       end
     end
 
+    context 'find final txid in tree which has odd number of txids' do
+      let(:tree) do
+        hashes = ["eabc5a0f2db047073fd8bcc8317b72578f705a0845b33d3c0fa939421219a452", "15157a0138efe2d76ca0ef26f4b42341bd14ff2871603e7364a1d404da51493f"]
+        Bitcoin::MerkleTree.build_partial(3, hashes, Bitcoin.byte_to_bit('1d'.htb))
+      end
+
+      subject { tree.find_node('15157a0138efe2d76ca0ef26f4b42341bd14ff2871603e7364a1d404da51493f') }
+      it 'should return nil' do
+        expect(subject.leaf?).to be_truthy
+        expect(subject.index).to eq 2
+        expect(subject.depth).to eq 2
+      end
+    end
+
     context 'tree is built by using #build_from_leaf' do
       let(:tree) do
         tx_hashes = ['df98e4366c58c98506f4eb5eadbf1c4c73f60c2d2c00e2d3f6260aa4dc780627',
