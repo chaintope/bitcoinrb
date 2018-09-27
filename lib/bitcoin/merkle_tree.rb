@@ -35,7 +35,12 @@ module Bitcoin
           hash_index += 1
         end
         current_node = current_node.next_partial
-        break if hash_index == hashes.size
+        if hash_index == hashes.size
+          if current_node&.leaf?
+            current_node.value = hashes.last
+          end
+          break
+        end
       end
       new(root)
     end
