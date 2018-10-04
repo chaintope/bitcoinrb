@@ -57,7 +57,7 @@ module Bitcoin
       def create_receive
         @receive_depth += 1
         save
-        derive_key(0, @receive_depth)
+        save_key(0, @receive_depth, derive_key(0, @receive_depth))
       end
 
       # create new change key
@@ -65,12 +65,18 @@ module Bitcoin
       def create_change
         @change_depth += 1
         save
-        derive_key(1, @change_depth)
+        save_key(1, @change_depth, derive_key(1, @change_depth))
       end
 
       # save this account payload to database.
       def save
         wallet.db.save_account(self)
+        save_key(0, receive_depth, derive_key(0, receive_depth)) if receive_depth.zero?
+        save_key(1, change_depth, derive_key(1, change_depth)) if change_depth.zero?
+      end
+
+      def save_key(purpose, index, key)
+        wallet.db.save_key(self, purpose, index, key)
       end
 
       # get the list of derived keys for receive key.
@@ -111,7 +117,7 @@ module Bitcoin
       # get data elements tobe monitored with Bloom Filter.
       # @return [Array[String]]
       def watch_targets
-        derived_receive_keys.map(&:hash160) + derived_change_keys.map(&:hash160)
+        wallet.db.get_keys(self).map { |key| Bitcoin.hash160(key) }
       end
 
       def to_h

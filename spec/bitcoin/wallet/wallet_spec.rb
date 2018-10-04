@@ -111,7 +111,7 @@ describe Bitcoin::Wallet do
     end
   end
 
-  describe '#watch_data' do
+  describe '#watch_targets' do
     subject {
       # TODO add utxo outpoints data
       allow(Bitcoin::Wallet::MasterKey).to receive(:generate).and_return(test_master_key)
