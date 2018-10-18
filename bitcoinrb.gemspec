@@ -8,11 +8,11 @@ Gem::Specification.new do |spec|
   spec.name          = "bitcoinrb"
   spec.version       = Bitcoin::VERSION
   spec.authors       = ["azuchi"]
-  spec.email         = ["azuchi@haw.co.jp"]
+  spec.email         = ["azuchi@chaintope.com"]
 
   spec.summary       = %q{[WIP]The implementation of Bitcoin Protocol for Ruby.}
   spec.description   = %q{[WIP]The implementation of Bitcoin Protocol for Ruby.}
-  spec.homepage      = 'https://github.com/haw-itn/bitcoinrb'
+  spec.homepage      = 'https://github.com/chaintope/bitcoinrb'
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
@@ -33,6 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'iniparse'
   spec.add_runtime_dependency 'siphash'
   spec.add_runtime_dependency 'protobuf'
+  spec.add_runtime_dependency 'scrypt'
 
   # for options
   spec.add_development_dependency 'leveldb-ruby'
