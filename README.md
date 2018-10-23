@@ -1,4 +1,4 @@
-# Bitcoinrb [![Build Status](https://travis-ci.org/haw-itn/bitcoinrb.svg?branch=master)](https://travis-ci.org/haw-itn/bitcoinrb) [![Gem Version](https://badge.fury.io/rb/bitcoinrb.svg)](https://badge.fury.io/rb/bitcoinrb) [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE) <img src="http://segwit.co/static/public/images/logo.png" width="100">
+# Bitcoinrb [![Build Status](https://travis-ci.org/chaintope/bitcoinrb.svg?branch=master)](https://travis-ci.org/chaintope/bitcoinrb) [![Gem Version](https://badge.fury.io/rb/bitcoinrb.svg)](https://badge.fury.io/rb/bitcoinrb) [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE) <img src="http://segwit.co/static/public/images/logo.png" width="100">
 
 
 Bitcoinrb is a Ruby implementation of Bitcoin Protocol.
@@ -68,7 +68,7 @@ The parameters of the blockchain are managed by `Bitcoin::ChainParams`. Switch c
 Bitcoin.chain_params = :mainnet
 ```
 
-This parameter is described in https://github.com/haw-itn/bitcoinrb/blob/master/lib/bitcoin/chainparams/mainnet.yml.
+This parameter is described in https://github.com/chaintope/bitcoinrb/blob/master/lib/bitcoin/chainparams/mainnet.yml.
 
 * testnet
 
@@ -76,7 +76,7 @@ This parameter is described in https://github.com/haw-itn/bitcoinrb/blob/master/
 Bitcoin.chain_params = :testnet
 ```
 
-This parameter is described in https://github.com/haw-itn/bitcoinrb/blob/master/lib/bitcoin/chainparams/testnet.yml.
+This parameter is described in https://github.com/chaintope/bitcoinrb/blob/master/lib/bitcoin/chainparams/testnet.yml.
 
 * regtest
 
@@ -84,7 +84,7 @@ This parameter is described in https://github.com/haw-itn/bitcoinrb/blob/master/
 Bitcoin.chain_params = :regtest
 ```
 
-This parameter is described in https://github.com/haw-itn/bitcoinrb/blob/master/lib/bitcoin/chainparams/regtest.yml.
+This parameter is described in https://github.com/chaintope/bitcoinrb/blob/master/lib/bitcoin/chainparams/regtest.yml.
 
 #### Fork coin
 
