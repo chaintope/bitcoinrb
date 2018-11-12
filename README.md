@@ -86,19 +86,6 @@ Bitcoin.chain_params = :regtest
 
 This parameter is described in https://github.com/chaintope/bitcoinrb/blob/master/lib/bitcoin/chainparams/regtest.yml.
 
-#### Fork coin
-
-When using with fork coin, please specify the fork_id of the coin as follows.
-
-```ruby
-Bitcoin.chain_params.fork_id = 0 # 0 is bch fork id
-```
-
-Currently bitcoinrb supports only support and verification of transaction replay protection using `SIGHASH_FORK_ID`.
-For details of `SIGHASH_FORK_ID`, refer to the following.
-
-https://github.com/Bitcoin-UAHF/spec/blob/master/replay-protected-sighash.md
-
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/bitcoinrb. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
