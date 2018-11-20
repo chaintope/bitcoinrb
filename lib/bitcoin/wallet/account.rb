@@ -75,6 +75,9 @@ module Bitcoin
         save_key(1, change_depth, derive_key(1, change_depth)) if change_depth.zero?
       end
 
+      # @param purpose 0:recieve, 1:change
+      # @param index receive_depth or change_depth
+      # @param key the key to be saved
       def save_key(purpose, index, key)
         wallet.db.save_key(self, purpose, index, key)
       end
