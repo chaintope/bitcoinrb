@@ -7,6 +7,7 @@ module Bitcoin
           account: 'a',       # key: account index, value: Account raw data.
           master: 'm',        # value: wallet seed.
           version: 'v',       # value: wallet version
+          key: 'k',           # key: path to the key, value: public key
       }
 
       attr_reader :level_db
@@ -35,6 +36,21 @@ module Bitcoin
           key = KEY_PREFIX[:account] + id
           level_db.put(key, account.to_payload)
         end
+      end
+
+      def save_key(account, purpose, index, key)
+        pubkey = key.pub
+        id = [account.purpose, account.index, purpose, index].pack('I*').bth
+        k = KEY_PREFIX[:key] + id
+        level_db.put(k, pubkey)
+        key
+      end
+
+      def get_keys(account)
+        id = [account.purpose, account.index].pack('I*').bth
+        from = KEY_PREFIX[:key] + id + '00000000'
+        to = KEY_PREFIX[:key] + id + 'ffffffff'
+        level_db.each(from: from, to: to).map { |k, v| v}
       end
 
       # get master_key
