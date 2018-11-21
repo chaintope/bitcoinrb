@@ -102,7 +102,7 @@ module Bitcoin
           t_num = t.bth.to_i(16)
           return t_num if 1 <= t_num && t_num < GROUP.order
           k = Bitcoin.hmac_sha256(k, v + '00'.htb)
-          v = Bitcoin.hmac_sha256(v)
+          v = Bitcoin.hmac_sha256(k, v)
         end
         raise 'A valid nonce was not found.'
       end
