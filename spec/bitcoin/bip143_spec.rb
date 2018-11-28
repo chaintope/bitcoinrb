@@ -12,7 +12,7 @@ describe 'BIP 143 spec', use_secp256k1: true do
       sig_hash0 = tx.sighash_for_input(0, script_pubkey0)
 
       key0 = Bitcoin::Key.new(priv_key: 'bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866', key_type: Bitcoin::Key::TYPES[:p2pkh])
-      sig0 = key0.sign(sig_hash0) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
+      sig0 = key0.sign(sig_hash0, false) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
 
       tx.inputs[0].script_sig = Bitcoin::Script.parse_from_payload(Bitcoin::Script.pack_pushdata(sig0))
 
@@ -20,7 +20,7 @@ describe 'BIP 143 spec', use_secp256k1: true do
       sig_hash1 = tx.sighash_for_input(1, script_pubkey1, amount: 600000000,
                                        sig_version: :witness_v0)
       key1 = Bitcoin::Key.new(priv_key: '619c335025c7f4012e556c2a58b2506e30b8511b53ade95ea316fd8c3286feb9', key_type: Bitcoin::Key::TYPES[:p2wpkh])
-      sig1 = key1.sign(sig_hash1) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
+      sig1 = key1.sign(sig_hash1, false) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
 
       tx.inputs[1].script_witness.stack << sig1
       tx.inputs[1].script_witness.stack << '025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357'.htb
@@ -43,7 +43,7 @@ describe 'BIP 143 spec', use_secp256k1: true do
 
       key = Bitcoin::Key.new(priv_key: 'eb696a065ef48a2192da5b28b694f87544b30fae8327c4510137a922f32c6dcf', key_type: Bitcoin::Key::TYPES[:pw2pkh_p2sh])
       sig_hash = tx.sighash_for_input(0, redeem_script, amount: 1000000000, sig_version: :witness_v0)
-      sig = key.sign(sig_hash) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
+      sig = key.sign(sig_hash, false) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
 
       tx.inputs[0].script_witness.stack << sig
       tx.inputs[0].script_witness.stack << '03ad1d8e89212f0b92c74d23bb710c00662ad1470198ac48c43f7d6f93a2a26873'.htb
@@ -63,19 +63,19 @@ describe 'BIP 143 spec', use_secp256k1: true do
       script_pubkey0 = Bitcoin::Script.parse_from_payload('21036d5c20fa14fb2f635474c1dc4ef5909d4568e5569b79fc94d3448486e14685f8ac'.htb)
       sig_hash0 = tx.sighash_for_input(0, script_pubkey0)
       key0 = Bitcoin::Key.new(priv_key: 'b8f28a772fccbf9b4f58a4f027e07dc2e35e7cd80529975e292ea34f84c4580c', key_type: Bitcoin::Key::TYPES[:compressed])
-      sig0 = key0.sign(sig_hash0) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
+      sig0 = key0.sign(sig_hash0, false) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
       tx.inputs[0].script_sig = Bitcoin::Script.parse_from_payload(Bitcoin::Script.pack_pushdata(sig0))
 
       script_pubkey1 = Bitcoin::Script.parse_from_payload('00205d1b56b63d714eebe542309525f484b7e9d6f686b3781b6f61ef925d66d6f6a0'.htb)
       sig_hash1 = tx.sighash_for_input(1, witness_script, amount: 4900000000,
                                        hash_type: Bitcoin::SIGHASH_TYPE[:single], sig_version: :witness_v0)
       key1 = Bitcoin::Key.new(priv_key: '8e02b539b1500aa7c81cf3fed177448a546f19d2be416c0c61ff28e577d8d0cd', key_type: Bitcoin::Key::TYPES[:compressed])
-      sig1 = key1.sign(sig_hash1) + [Bitcoin::SIGHASH_TYPE[:single]].pack('C')
+      sig1 = key1.sign(sig_hash1, false) + [Bitcoin::SIGHASH_TYPE[:single]].pack('C')
 
       sig_hash2 = tx.sighash_for_input(1, witness_script, amount: 4900000000, skip_separator_index: 1,
                                        hash_type: Bitcoin::SIGHASH_TYPE[:single], sig_version: :witness_v0)
       key2 = Bitcoin::Key.new(priv_key: '86bf2ed75935a0cbef03b89d72034bb4c189d381037a5ac121a70016db8896ec', key_type: Bitcoin::Key::TYPES[:compressed])
-      sig2 = key2.sign(sig_hash2) + [Bitcoin::SIGHASH_TYPE[:single]].pack('C')
+      sig2 = key2.sign(sig_hash2, false) + [Bitcoin::SIGHASH_TYPE[:single]].pack('C')
 
       tx.inputs[1].script_witness.stack << sig2
       tx.inputs[1].script_witness.stack << sig1
@@ -102,42 +102,42 @@ describe 'BIP 143 spec', use_secp256k1: true do
 
       sig_hash0 = tx.sighash_for_input(0, witness_script, amount: 987654321, sig_version: :witness_v0)
       key0 = Bitcoin::Key.new(priv_key: '730fff80e1413068a05b57d6a58261f07551163369787f349438ea38ca80fac6', key_type: Bitcoin::Key::TYPES[:compressed])
-      sig0 = key0.sign(sig_hash0) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
+      sig0 = key0.sign(sig_hash0, false) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
       expect(sig0.bth).to eq('304402206ac44d672dac41f9b00e28f4df20c52eeb087207e8d758d76d92c6fab3b73e2b0220367750dbbe19290069cba53d096f44530e4f98acaa594810388cf7409a1870ce01')
       tx.inputs[0].script_witness.stack << sig0
 
       sig_hash1 = tx.sighash_for_input(0, witness_script, amount: 987654321,
                                        sig_version: :witness_v0, hash_type: Bitcoin::SIGHASH_TYPE[:none])
       key1 = Bitcoin::Key.new(priv_key: '11fa3d25a17cbc22b29c44a484ba552b5a53149d106d3d853e22fdd05a2d8bb3', key_type: Bitcoin::Key::TYPES[:compressed])
-      sig1 = key1.sign(sig_hash1) + [Bitcoin::SIGHASH_TYPE[:none]].pack('C')
+      sig1 = key1.sign(sig_hash1, false) + [Bitcoin::SIGHASH_TYPE[:none]].pack('C')
       expect(sig1.bth).to eq('3044022068c7946a43232757cbdf9176f009a928e1cd9a1a8c212f15c1e11ac9f2925d9002205b75f937ff2f9f3c1246e547e54f62e027f64eefa2695578cc6432cdabce271502')
       tx.inputs[0].script_witness.stack << sig1
 
       sig_hash2 = tx.sighash_for_input(0, witness_script, amount: 987654321,
                                        sig_version: :witness_v0, hash_type: Bitcoin::SIGHASH_TYPE[:single])
       key2 = Bitcoin::Key.new(priv_key: '77bf4141a87d55bdd7f3cd0bdccf6e9e642935fec45f2f30047be7b799120661', key_type: Bitcoin::Key::TYPES[:compressed])
-      sig2 = key2.sign(sig_hash2) + [Bitcoin::SIGHASH_TYPE[:single]].pack('C')
+      sig2 = key2.sign(sig_hash2, false) + [Bitcoin::SIGHASH_TYPE[:single]].pack('C')
       expect(sig2.bth).to eq('3044022059ebf56d98010a932cf8ecfec54c48e6139ed6adb0728c09cbe1e4fa0915302e022007cd986c8fa870ff5d2b3a89139c9fe7e499259875357e20fcbb15571c76795403')
       tx.inputs[0].script_witness.stack << sig2
 
       sig_hash3 = tx.sighash_for_input(0, witness_script, amount: 987654321,
                                        sig_version: :witness_v0, hash_type: (Bitcoin::SIGHASH_TYPE[:all] | Bitcoin::SIGHASH_TYPE[:anyonecanpay]))
       key3 = Bitcoin::Key.new(priv_key: '14af36970f5025ea3e8b5542c0f8ebe7763e674838d08808896b63c3351ffe49', key_type: Bitcoin::Key::TYPES[:compressed])
-      sig3 = key3.sign(sig_hash3) + [Bitcoin::SIGHASH_TYPE[:all] | Bitcoin::SIGHASH_TYPE[:anyonecanpay]].pack('C')
+      sig3 = key3.sign(sig_hash3, false) + [Bitcoin::SIGHASH_TYPE[:all] | Bitcoin::SIGHASH_TYPE[:anyonecanpay]].pack('C')
       expect(sig3.bth).to eq('3045022100fbefd94bd0a488d50b79102b5dad4ab6ced30c4069f1eaa69a4b5a763414067e02203156c6a5c9cf88f91265f5a942e96213afae16d83321c8b31bb342142a14d16381')
       tx.inputs[0].script_witness.stack << sig3
 
       sig_hash4 = tx.sighash_for_input(0, witness_script, amount: 987654321,
                                        sig_version: :witness_v0, hash_type: (Bitcoin::SIGHASH_TYPE[:none] | Bitcoin::SIGHASH_TYPE[:anyonecanpay]))
       key4 = Bitcoin::Key.new(priv_key: 'fe9a95c19eef81dde2b95c1284ef39be497d128e2aa46916fb02d552485e0323', key_type: Bitcoin::Key::TYPES[:compressed])
-      sig4 = key4.sign(sig_hash4) + [Bitcoin::SIGHASH_TYPE[:none] | Bitcoin::SIGHASH_TYPE[:anyonecanpay]].pack('C')
+      sig4 = key4.sign(sig_hash4, false) + [Bitcoin::SIGHASH_TYPE[:none] | Bitcoin::SIGHASH_TYPE[:anyonecanpay]].pack('C')
       expect(sig4.bth).to eq('3045022100a5263ea0553ba89221984bd7f0b13613db16e7a70c549a86de0cc0444141a407022005c360ef0ae5a5d4f9f2f87a56c1546cc8268cab08c73501d6b3be2e1e1a8a0882')
       tx.inputs[0].script_witness.stack << sig4
 
       sig_hash5 = tx.sighash_for_input(0, witness_script, amount: 987654321,
                                        sig_version: :witness_v0, hash_type: (Bitcoin::SIGHASH_TYPE[:single] | Bitcoin::SIGHASH_TYPE[:anyonecanpay]))
       key5 = Bitcoin::Key.new(priv_key: '428a7aee9f0c2af0cd19af3cf1c78149951ea528726989b2e83e4778d2c3f890', key_type: Bitcoin::Key::TYPES[:compressed])
-      sig5 = key5.sign(sig_hash5) + [Bitcoin::SIGHASH_TYPE[:single] | Bitcoin::SIGHASH_TYPE[:anyonecanpay]].pack('C')
+      sig5 = key5.sign(sig_hash5, false) + [Bitcoin::SIGHASH_TYPE[:single] | Bitcoin::SIGHASH_TYPE[:anyonecanpay]].pack('C')
       expect(sig5.bth).to eq('30440220525406a1482936d5a21888260dc165497a90a15669636d8edca6b9fe490d309c022032af0c646a34a44d1f4576bf6a4a74b67940f8faa84c7df9abe12a01a11e2b4783')
       tx.inputs[0].script_witness.stack << sig5
 

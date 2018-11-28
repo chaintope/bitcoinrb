@@ -26,10 +26,11 @@ module Bitcoin
       # @param [String] data a data to be signed with binary format
       # @param [String] privkey a private key using sign
       # @return [String] signature data with binary format
-      def sign_data(data, privkey)
+      def sign_data(data, privkey, extra_entropy)
         privkey = privkey.htb
         private_key = ECDSA::Format::IntegerOctetString.decode(privkey)
-        nonce = generate_rfc6979_nonce(data, privkey)
+        extra_entropy ||= ''
+        nonce = generate_rfc6979_nonce(data, privkey, extra_entropy)
 
         # port form ecdsa gem.
         r_point = GROUP.new_point(nonce)
@@ -83,15 +84,15 @@ module Bitcoin
 
       # generate temporary key k to be used when ECDSA sign.
       # https://tools.ietf.org/html/rfc6979#section-3.2
-      def generate_rfc6979_nonce(data, privkey)
-        v = ('01' * 32).htb
-        k = ('00' * 32).htb
+      def generate_rfc6979_nonce(data, privkey, extra_entropy)
+        v = ('01' * 32).htb # 3.2.b
+        k = ('00' * 32).htb # 3.2.c
         # 3.2.d
-        k = Bitcoin.hmac_sha256(k, v + '00'.htb + privkey + data)
+        k = Bitcoin.hmac_sha256(k, v + '00'.htb + privkey + data + extra_entropy)
         # 3.2.e
         v = Bitcoin.hmac_sha256(k, v)
         # 3.2.f
-        k = Bitcoin.hmac_sha256(k, v + '01'.htb + privkey + data)
+        k = Bitcoin.hmac_sha256(k, v + '01'.htb + privkey + data + extra_entropy)
         # 3.2.g
         v = Bitcoin.hmac_sha256(k, v)
         # 3.2.h

@@ -87,9 +87,20 @@ module Bitcoin
 
     # sign +data+ with private key
     # @param [String] data a data to be signed with binary format
+    # @param [Boolean] low_r flag to apply low-R.
+    # @param [String] extra_entropy the extra entropy for rfc6979.
     # @return [String] signature data with binary format
-    def sign(data)
-      secp256k1_module.sign_data(data, priv_key)
+    def sign(data, low_r = true, extra_entropy = nil)
+      sig = secp256k1_module.sign_data(data, priv_key, extra_entropy)
+      if low_r && !sig_has_low_r?(sig)
+        counter = 1
+        until sig_has_low_r?(sig)
+          extra_entropy = [counter].pack('I*').bth.ljust(64, '0').htb
+          sig = secp256k1_module.sign_data(data, priv_key, extra_entropy)
+          counter += 1
+        end
+      end
+      sig
     end
 
     # verify signature using public key
@@ -269,6 +280,13 @@ module Bitcoin
 
     def valid_pubkey?
       !pubkey.nil? && pubkey.size > 0
+    end
+
+    # check whether the signature is low-R
+    # @param [String] sig the signature data
+    # @return [Boolean] result
+    def sig_has_low_r?(sig)
+      sig[3].bth.to_i(16) == 0x20 && sig[4].bth.to_i(16) < 0x80
     end
 
   end

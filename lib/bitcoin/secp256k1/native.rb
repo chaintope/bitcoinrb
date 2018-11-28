@@ -107,20 +107,23 @@ module Bitcoin
       # sign data.
       # @param [String] data a data to be signed with binary format
       # @param [String] privkey a private key using sign
+      # @param [String] extra_entropy a extra entropy for rfc6979
       # @return [String] signature data with binary format
-      def sign_data(data, privkey)
+      def sign_data(data, privkey, extra_entropy)
         with_context do |context|
           secret = FFI::MemoryPointer.new(:uchar, privkey.htb.bytesize).put_bytes(0, privkey.htb)
           raise 'priv_key invalid' unless secp256k1_ec_seckey_verify(context, secret)
 
           internal_signature = FFI::MemoryPointer.new(:uchar, 64)
           msg32 = FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, data)
+          entropy = extra_entropy ? FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, extra_entropy) : nil
 
           ret, tries, max = 0, 0, 20
+
           while ret != 1
             raise 'secp256k1_ecdsa_sign failed.' if tries >= max
             tries += 1
-            ret = secp256k1_ecdsa_sign(context, internal_signature, msg32, secret, nil, nil)
+            ret = secp256k1_ecdsa_sign(context, internal_signature, msg32, secret, nil, entropy)
           end
 
           signature = FFI::MemoryPointer.new(:uchar, 72)

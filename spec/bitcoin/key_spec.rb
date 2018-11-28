@@ -116,4 +116,76 @@ describe Bitcoin::Key do
     end
   end
 
+  describe 'low/high R signature', network: :mainnet do
+
+    context 'same sig output as Bitcoin Core' do
+      it 'should be generate' do
+        key = Bitcoin::Key.from_wif('5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAnchuDf')
+        tx = Bitcoin::Tx.parse_from_payload('01000000018594c5bdcaec8f06b78b596f31cd292a294fd031e24eec716f43dac91ea7494d0000000000ffffffff01a0860100000000001976a9145834479edbbe0539b31ffd3a8f8ebadc2165ed0188ac00000000'.htb)
+        tmp = tx.out.pop
+        script = Bitcoin::Script.parse_from_payload('76a91491b24bf9f5288532960ac687abb035127b1d28a588ac'.htb)
+        sighash = tx.sighash_for_input(0, script)
+        sig = key.sign(sighash) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
+        expect(sig.bth).to eq('30440220131432090a6af42da3e8335ff110831b41a44f4e9d18d88f5d50278380696c7202200fc2e48938f323ad13625890c0ea926c8a189c08b8efc38376b20c8a2188e96e01')
+        tx.in[0].script_sig = Bitcoin::Script.new << sig << key.pubkey.htb
+        tx.out[0] = tmp
+        expect(tx.to_payload.bth).to eq('01000000018594c5bdcaec8f06b78b596f31cd292a294fd031e24eec716f43dac91ea7494d000000008a4730440220131432090a6af42da3e8335ff110831b41a44f4e9d18d88f5d50278380696c7202200fc2e48938f323ad13625890c0ea926c8a189c08b8efc38376b20c8a2188e96e01410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8ffffffff01a0860100000000001976a9145834479edbbe0539b31ffd3a8f8ebadc2165ed0188ac00000000')
+      end
+    end
+
+    let(:key){Bitcoin::Key.from_wif('5HxWvvfubhXpYYpS3tJkw6fq9jE9j18THftkZjHHfmFiWtmAbrj')}
+
+    context 'entropy is specified' do
+      it 'should see at least one high R signature within 20 signatures' do
+        test_with_entropy
+      end
+    end
+
+    context 'entropy is not specified' do
+      it 'should always see low R signatures that are less than 70 bytes in 256 tries' do
+        test_with_no_entropy
+      end
+    end
+
+    context 'entropy is specified with libsecp256k1', use_secp256k1: true do
+      it 'should see at least one high R signature within 20 signatures' do
+        test_with_entropy
+      end
+    end
+
+    context 'entropy is not specified with libsecp256k1', use_secp256k1: true do
+      it 'should always see low R signatures that are less than 70 bytes in 256 tries' do
+        test_with_no_entropy
+      end
+    end
+
+    def test_with_entropy
+      hash = Bitcoin.double_sha256('A message to be signed')
+      found = false
+      (1..20).each do |i|
+        tmp = [i].pack('I*').bth
+        entropy = tmp.ljust(64, '0').htb
+        sig = key.sign(hash, false, entropy)
+        found = (sig[3].bth.to_i(16) == 0x21 && sig[4].bth.to_i(16) == 0x00)
+        expect(sig.bth).to eq('304502210089e94fcb5a449e0f230a0dfc3b97f3947d36f0030fc6f11e2bedc37e8ccb7fbc022073b7a71756273955ed3bbab4b818a537658160b7f08b5a82169ea9cb8ff96fdd')
+        break if found
+      end
+      expect(found).to be true
+    end
+
+    def test_with_no_entropy
+      found = true
+      found_small = false
+      256.times do |i|
+        hash = Bitcoin.double_sha256("A message to be signed#{i}")
+        sig = key.sign(hash)
+        found = (sig[3].bth.to_i(16) == 0x20)
+        expect(sig.size <= 70).to be true
+        found_small |= sig.bytesize <= 70
+      end
+      expect(found).to be true
+      expect(found_small).to be true
+    end
+  end
+
 end
