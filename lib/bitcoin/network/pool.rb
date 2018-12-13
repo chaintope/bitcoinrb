@@ -21,6 +21,7 @@ module Bitcoin
       attr_reader :logger
       attr_reader :peer_discovery
       attr_accessor :started
+      attr_reader :mutex
 
       def initialize(node, chain, configuration)
         @node = node
@@ -32,6 +33,7 @@ module Bitcoin
         @configuration = configuration
         @peer_discovery = PeerDiscovery.new(configuration)
         @started = false
+        @mutex = Mutex.new
       end
 
       # connecting other peers and begin network activity.
@@ -48,12 +50,14 @@ module Bitcoin
       # detect new peer connection.
       def handle_new_peer(peer)
         logger.debug "connected new peer #{peer.addr}."
-        peer.id = allocate_peer_id
-        unless peers.find(&:primary?)
-          peer.primary = true
-          peer.start_block_header_download
+        mutex.synchronize do
+          peer.id = allocate_peer_id
+          unless peers.find(&:primary?)
+            peer.primary = true
+            peer.start_block_header_download
+          end
+          peers << peer
         end
-        peers << peer
         pending_peers.delete(peer)
         filter_load(peer) if node.wallet
       end
