@@ -10,13 +10,15 @@ describe Bitcoin::Network::Pool do
   let(:peer3) { Bitcoin::Network::Peer.new('192.168.0.3', 18333, pool, configuration) }
 
   before do
+    threads = []
     allow(node_mock).to receive(:wallet).and_return(nil)
-    allow(peer1).to receive(:start_block_header_download).and_return(nil)
-    allow(peer2).to receive(:start_block_header_download).and_return(nil)
-    allow(peer3).to receive(:start_block_header_download).and_return(nil)
-    pool.handle_new_peer(peer1)
-    pool.handle_new_peer(peer2)
-    pool.handle_new_peer(peer3)
+    [peer1, peer2, peer3].each do |peer|
+      allow(peer).to receive(:start_block_header_download) { sleep(1) }
+      threads << Thread.start(peer) do |p|
+        pool.handle_new_peer(peer)
+      end
+    end
+    threads.each(&:join)
   end
 
   after { chain.db.close }
@@ -48,6 +50,14 @@ describe Bitcoin::Network::Pool do
     end
   end
 
+  describe '#handle_new_peer' do
+    subject { pool }
+
+    it 'primary peer is unique' do
+      expect(subject.peers.select(&:primary?).size).to eq 1
+    end
+  end
+
   describe '#handle_close_peer' do
     subject do
       pool.started = true
@@ -57,7 +67,6 @@ describe Bitcoin::Network::Pool do
     end
 
     it { expect { subject }.to change(pool.peers, :size).from(3).to(2) }
-    it { expect(subject.peers[0].host).to eq '192.168.0.1' }
-    it { expect(subject.peers[1].host).to eq '192.168.0.3' }
+    it { expect(subject.peers.map(&:host)).to match_array ['192.168.0.1', '192.168.0.3'] }
   end
 end
