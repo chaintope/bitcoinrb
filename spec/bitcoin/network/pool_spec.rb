@@ -37,8 +37,10 @@ describe Bitcoin::Network::Pool do
       subject {
         pool.started = true
         allow(pool).to receive(:connect).and_return(nil)
-        pool.handle_close_peer(peer2)
-        pool.handle_new_peer(peer2)
+        # delete second peer and register again.
+        peer = pool.peers[1]
+        pool.handle_close_peer(peer)
+        pool.handle_new_peer(peer)
         pool
       }
       it 'should allocate peer id' do
