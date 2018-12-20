@@ -2,6 +2,29 @@ require 'spec_helper'
 
 describe Bitcoin::Wallet do
 
+  describe '#default_path_prefix' do
+    context 'testnet', network: :testnet do
+      subject { Bitcoin::Wallet::Base.default_path_prefix }
+
+      it { is_expected.to eq "#{Dir.home}/.bitcoinrb/testnet/db/wallet/" }
+    end
+
+    context 'regtest', network: :regtest do
+      subject { Bitcoin::Wallet::Base.default_path_prefix }
+
+      it { is_expected.to eq "#{Dir.home}/.bitcoinrb/regtest/db/wallet/" }
+    end
+
+    context 'change network from regtest to testnet', network: :regtest do
+      it 'should return path with network prefix' do
+        expect(Bitcoin::Wallet::Base.default_path_prefix).to eq "#{Dir.home}/.bitcoinrb/regtest/db/wallet/"
+        Bitcoin.chain_params = :testnet
+        expect(Bitcoin::Wallet::Base.default_path_prefix).to eq "#{Dir.home}/.bitcoinrb/testnet/db/wallet/"
+      end
+    end
+
+  end
+
   describe '#load' do
     context 'existing wallet' do
       subject {

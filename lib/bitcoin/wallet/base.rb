@@ -11,6 +11,11 @@ module Bitcoin
       DEFAULT_PATH_PREFIX = "#{Bitcoin.base_dir}/db/wallet/"
       VERSION = 1
 
+      # get wallet dir path
+      def self.default_path_prefix
+        "#{Bitcoin.base_dir}/db/wallet/"
+      end
+
       # Create new wallet. If wallet already exist, throw error.
       # The wallet generates a seed using SecureRandom and store to db at initialization.
       # @param [String] wallet_id new wallet id.
