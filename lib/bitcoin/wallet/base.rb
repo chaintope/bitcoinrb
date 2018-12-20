@@ -8,7 +8,6 @@ module Bitcoin
       attr_reader :db
       attr_reader :path
 
-      DEFAULT_PATH_PREFIX = "#{Bitcoin.base_dir}/db/wallet/"
       VERSION = 1
 
       # get wallet dir path
@@ -21,7 +20,7 @@ module Bitcoin
       # @param [String] wallet_id new wallet id.
       # @param [String] path_prefix wallet file path prefix.
       # @return [Bitcoin::Wallet::Base] the wallet
-      def self.create(wallet_id = 1, path_prefix = DEFAULT_PATH_PREFIX)
+      def self.create(wallet_id = 1, path_prefix = default_path_prefix)
         raise ArgumentError, "wallet_id : #{wallet_id} already exist." if self.exist?(wallet_id, path_prefix)
         w = self.new(wallet_id, path_prefix)
         # generate seed
@@ -34,19 +33,19 @@ module Bitcoin
 
       # load wallet with specified +wallet_id+
       # @return [Bitcoin::Wallet::Base] the wallet
-      def self.load(wallet_id, path_prefix = DEFAULT_PATH_PREFIX)
+      def self.load(wallet_id, path_prefix = default_path_prefix)
         raise ArgumentError, "wallet_id : #{wallet_id} dose not exist." unless self.exist?(wallet_id, path_prefix)
         self.new(wallet_id, path_prefix)
       end
 
       # get wallets path
       # @return [Array] Array of paths for each wallet dir.
-      def self.wallet_paths(path_prefix = DEFAULT_PATH_PREFIX)
+      def self.wallet_paths(path_prefix = default_path_prefix)
         Dir.glob("#{path_prefix}wallet*/").sort
       end
 
       # get current wallet
-      def self.current_wallet(path_prefix = DEFAULT_PATH_PREFIX)
+      def self.current_wallet(path_prefix = default_path_prefix)
         path = wallet_paths.first # TODO default wallet selection
         return nil unless path
         wallet_id = path.delete(path_prefix + '/wallet').delete('/').to_i
