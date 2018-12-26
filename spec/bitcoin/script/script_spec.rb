@@ -210,12 +210,21 @@ describe Bitcoin::Script do
   end
 
   describe 'parse from payload' do
-    subject {
-      Bitcoin::Script.parse_from_payload('76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac'.htb)
-    }
-    it 'should be parsed' do
-      expect(subject.to_s).to eq('OP_DUP OP_HASH160 46c2fbfbecc99a63148fa076de58cf29b0bcf0b0 OP_EQUALVERIFY OP_CHECKSIG')
-      expect(subject.p2pkh?).to be true
+    context 'spendable' do
+      subject { Bitcoin::Script.parse_from_payload('76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac'.htb) }
+      it 'should be parsed' do
+        expect(subject.to_s).to eq('OP_DUP OP_HASH160 46c2fbfbecc99a63148fa076de58cf29b0bcf0b0 OP_EQUALVERIFY OP_CHECKSIG')
+        expect(subject.p2pkh?).to be true
+      end
+    end
+
+    context 'unspendable' do
+      subject { Bitcoin::Script.parse_from_payload('76a914c486de584a735ec2f22da7cd9681614681f92173d83d0aa68688ac'.htb) }
+      it 'should be parsed' do
+        expect(subject.to_payload.bth).to eq('76a914c486de584a735ec2f22da7cd9681614681f92173d83d0aa68688ac')
+        expect(subject.p2pkh?).to be false
+        expect(subject.to_s).to eq('OP_DUP OP_HASH160 c486de584a735ec2f22da7cd9681614681f92173 OP_UNKNOWN [error]')
+      end
     end
   end
 

@@ -130,7 +130,11 @@ module Bitcoin
             end
           end
         else
-          s << opcode.ord
+          if Opcodes.defined?(opcode.ord)
+            s << opcode.ord
+          else
+            s.chunks << (opcode + buf.read) # If opcode is invalid, put all remaining data in last chunk.
+          end
         end
       end
       s
@@ -331,7 +335,8 @@ module Bitcoin
               end
             end
           else
-            Opcodes.opcode_to_name(c.ord)
+            opcode = Opcodes.opcode_to_name(c.ord)
+            opcode ? opcode : 'OP_UNKNOWN [error]'
           end
         end
       }.join(' ')
