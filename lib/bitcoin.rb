@@ -47,6 +47,10 @@ module Bitcoin
   autoload :BloomFilter, 'bitcoin/bloom_filter'
   autoload :Payments, 'bitcoin/payments'
   autoload :PSBT, 'bitcoin/psbt'
+  autoload :GCSFilter, 'bitcoin/gcs_filter'
+  autoload :BlockFilter, 'bitcoin/block_filter'
+  autoload :BitStreamWriter, 'bitcoin/bit_stream'
+  autoload :BitStreamReader, 'bitcoin/bit_stream'
 
   require_relative 'bitcoin/constants'
 
