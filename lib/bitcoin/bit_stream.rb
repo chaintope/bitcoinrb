@@ -35,20 +35,35 @@ module Bitcoin
 
   end
 
-
   class BitStreamReader
 
-    attr_reader :buffer
-    attr_reader :offset
+    attr_reader :stream
+    attr_accessor :buffer
+    attr_accessor :offset
 
-    def initialize
+    def initialize(payload)
       @offset = 8
-      # @buffer =
+      @buffer = 0
+      @stream = StringIO.new(payload)
     end
 
     # offset
-    def read(bits)
-
+    def read(nbits)
+      raise 'nbits must be between 0 and 64' if nbits < 0 || nbits > 64
+      data = 0
+      while nbits > 0
+        if offset == 8
+          self.buffer = stream.read(1).bth.to_i(16)
+          self.offset = 0
+        end
+        bits = [8 - offset, nbits].min
+        data <<= bits
+        tmp = (buffer << offset) & 255
+        data = data | (tmp >> (8 - bits))
+        self.offset += bits
+        nbits -= bits
+      end
+      data
     end
 
   end

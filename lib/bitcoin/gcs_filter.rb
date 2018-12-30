@@ -52,10 +52,19 @@ module Bitcoin
     end
 
     # Hash a data element to an integer in the range [0, F).
-    # @param [String] element with hex format.
+    # @param [String] element with binary format.
+    # @return [Integer]
     def hash_to_range(element)
       hash = SipHash.digest(key, element)
       map_into_range(hash, f)
+    end
+
+    # Checks if the element may be in the set. False positives are possible with probability 1/M.
+    # @param [String] element with binary format
+    # @return [Boolean] whether element in set.
+    def match?(element)
+      query = hash_to_range(element)
+      match_internal([query], 1)
     end
 
     private
@@ -65,6 +74,28 @@ module Bitcoin
     # https://stackoverflow.com/a/26855440
     def map_into_range(x, y)
       (x * y) >> 64
+    end
+
+    # Checks if the elements may be in the set.
+    # @param [Array[Integer]] hashes the query hash list.
+    # @param [Integer] size query size.
+    # @return [Boolean] whether elements in set.
+    def match_internal(hashes, size)
+      n, payload = Bitcoin.unpack_var_int(encoded.htb)
+      bit_reader = Bitcoin::BitStreamReader.new(payload)
+      value = 0
+      hashes_index = 0
+      n.times do
+        delta = golomb_rice_decode(bit_reader, p)
+        value += delta
+        loop do
+          return false if hashes_index == size
+          return true if hashes[hashes_index] == value
+          break if hashes[hashes_index] > value
+          hashes_index += 1
+        end
+      end
+      false
     end
 
     # encode golomb rice
@@ -77,6 +108,16 @@ module Bitcoin
       end
       bit_writer.write(0, 1)
       bit_writer.write(x, p)
+    end
+
+    # decode golomb rice
+    def golomb_rice_decode(bit_reader, p)
+      q = 0
+      while bit_reader.read(1) == 1
+        q +=1
+      end
+      r = bit_reader.read(p)
+      (q << p) + r
     end
 
   end

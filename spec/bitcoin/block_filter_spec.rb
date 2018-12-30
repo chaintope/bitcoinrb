@@ -17,4 +17,55 @@ describe Bitcoin::BlockFilter do
     end
   end
 
+  describe '#match?' do
+    it 'should generate filter' do
+      included = []
+      # P2PK
+      included[0] = Bitcoin::Script.parse_from_payload('00ac'.htb)
+      # p2PKH
+      included[1] = Bitcoin::Script.parse_from_payload('76a9011488ac'.htb)
+      # 1-of-1 multisig
+      included[2] = Bitcoin::Script.parse_from_payload('5102212151ae'.htb)
+      included[3] = Bitcoin::Script.parse_from_payload('0003202020'.htb)
+      included[4] = Bitcoin::Script.parse_from_payload('54935887'.htb)
+
+      excluded = []
+      # op_return
+      excluded[0] = Bitcoin::Script.parse_from_payload('6a0428282828'.htb)
+      # not related P2PK
+      excluded[1] = Bitcoin::Script.parse_from_payload('052121212121ac'.htb)
+      # empty
+      excluded[2] = Bitcoin::Script.new
+
+      tx1 = Bitcoin::Tx.new
+      tx1.out << Bitcoin::TxOut.new(value: 100, script_pubkey: included[0])
+      tx1.out << Bitcoin::TxOut.new(value: 200, script_pubkey: included[1])
+
+      tx2 = Bitcoin::Tx.new
+      tx2.out << Bitcoin::TxOut.new(value: 300, script_pubkey: included[2])
+      tx2.out << Bitcoin::TxOut.new(script_pubkey: excluded[0])
+      tx2.out << Bitcoin::TxOut.new(value: 400, script_pubkey: excluded[2])
+
+      header = Bitcoin::BlockHeader.new(0, '00' * 32, '00' * 32, 0, 0, 0)
+      block = Bitcoin::Block.new(header, [tx1, tx2])
+
+      prev_out_scripts = []
+      prev_out_scripts << included[3]
+      prev_out_scripts << included[4]
+      prev_out_scripts << excluded[2]
+
+      block_filter = Bitcoin::BlockFilter.build_from_block(Bitcoin::BlockFilter::TYPE[:basic], block, prev_out_scripts)
+      filter = block_filter.filter
+      expect(filter.encoded).to eq('05812be2f176a9b8066fa3b1264f')
+
+      included.each do |i|
+        expect(filter.match?(i.to_payload)).to be true
+      end
+
+      excluded.each do |e|
+        expect(filter.match?(e.to_payload)).to be false
+      end
+    end
+  end
+
 end
