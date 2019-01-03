@@ -64,7 +64,16 @@ module Bitcoin
     # @return [Boolean] whether element in set.
     def match?(element)
       query = hash_to_range(element)
-      match_internal([query], 1)
+      match_internal?([query], 1)
+    end
+
+    # Checks if any of the given elements may be in the set. False positives are possible with probability 1/M per element checked.
+    # This is more efficient that checking Match on multiple elements separately.
+    # @param [Array] elements list of elements with binary format.
+    # @return [Boolean] whether element in set.
+    def match_any?(elements)
+      queries = elements.reverse.map{|e| hash_to_range(e) }.sort
+      match_internal?(queries, queries.size)
     end
 
     private
@@ -80,7 +89,7 @@ module Bitcoin
     # @param [Array[Integer]] hashes the query hash list.
     # @param [Integer] size query size.
     # @return [Boolean] whether elements in set.
-    def match_internal(hashes, size)
+    def match_internal?(hashes, size)
       n, payload = Bitcoin.unpack_var_int(encoded.htb)
       bit_reader = Bitcoin::BitStreamReader.new(payload)
       value = 0
