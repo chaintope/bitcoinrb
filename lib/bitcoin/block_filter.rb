@@ -2,6 +2,8 @@ module Bitcoin
 
   # Compact Block Filter
   # https://github.com/bitcoin/bips/blob/master/bip-0158.mediawiki
+  # This implementation ported the implementation of Bitcoin Core's blockfilter.cpp.
+  # https://github.com/bitcoin/bitcoin/blob/master/src/blockfilter.cpp
   class BlockFilter
 
     TYPE = {basic: 0}

@@ -29,7 +29,7 @@ module Bitcoin
       bit_writer = Bitcoin::BitStreamWriter.new
       unless elements.empty?
         last_value = 0
-        hashed_set = elements.reverse.map{|e| hash_to_range(e) }.sort
+        hashed_set = elements.map{|e| hash_to_range(e) }.sort
         hashed_set.each do |v|
           delta = v - last_value
           golomb_rice_encode(bit_writer, p, delta)
@@ -72,7 +72,7 @@ module Bitcoin
     # @param [Array] elements list of elements with binary format.
     # @return [Boolean] whether element in set.
     def match_any?(elements)
-      queries = elements.reverse.map{|e| hash_to_range(e) }.sort
+      queries = elements.map{|e| hash_to_range(e) }.sort
       match_internal?(queries, queries.size)
     end
 
