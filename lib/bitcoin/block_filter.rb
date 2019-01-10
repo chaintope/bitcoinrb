@@ -36,7 +36,7 @@ module Bitcoin
       block_hash = block.block_hash.htb[0...16]
       filter = case filter_type
                when TYPE[:basic]
-                 GCSFilter.new(block_hash, BASIC_FILTER_P, BASIC_FILTER_M, build_basic_filter_elements(block, prev_out_scripts))
+                 GCSFilter.new(block_hash, BASIC_FILTER_P, BASIC_FILTER_M, elements: build_basic_filter_elements(block, prev_out_scripts))
                else
                  raise "unknown filter type: #{filter_type}."
                end

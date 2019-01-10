@@ -6,44 +6,46 @@ module Bitcoin
   # see https://github.com/bitcoin/bips/blob/master/bip-0158.mediawiki
   class GCSFilter
 
-    attr_reader :elements # elements in the filter
     attr_reader :p # Golomb-Rice coding parameter
     attr_reader :m # Inverse false positive rate
+    attr_reader :n # Number of elements in the filter
     attr_reader :key # SipHash key
-    attr_reader :encoded
+    attr_reader :encoded # encoded filter with hex format.
 
     # initialize Filter object.
     # @param [String] key the 128-bit key used to randomize the SipHash outputs.
     # @param [Integer] p the bit parameter of the Golomb-Rice coding.
     # @param [Integer] m which determines the false positive rate.
     # @param [Array] elements the filter elements.
+    # @param [String] encoded_filter encoded filter with hex format.
     # @return [Bitcoin::GCSFilter]
-    def initialize(key, p, m, elements)
-      raise 'elements size must be < 2**32.' if elements.size >= (2**32)
+    def initialize(key, p, m, elements: nil, encoded_filter: nil)
+      raise 'specify either elements or encoded_filter.' if elements.nil? && encoded_filter.nil?
       raise 'p must be <= 32' if p > 32
       @key = key
       @p = p
       @m = m
-      @elements = elements
-      encoded = Bitcoin.pack_var_int(n)
-      bit_writer = Bitcoin::BitStreamWriter.new
-      unless elements.empty?
-        last_value = 0
-        hashed_set = elements.map{|e| hash_to_range(e) }.sort
-        hashed_set.each do |v|
-          delta = v - last_value
-          golomb_rice_encode(bit_writer, p, delta)
-          last_value = v
+      if elements
+        raise 'elements size must be < 2**32.' if elements.size >= (2**32)
+        @n = elements.size
+        encoded = Bitcoin.pack_var_int(@n)
+        bit_writer = Bitcoin::BitStreamWriter.new
+        unless elements.empty?
+          last_value = 0
+          hashed_set = elements.map{|e| hash_to_range(e) }.sort
+          hashed_set.each do |v|
+            delta = v - last_value
+            golomb_rice_encode(bit_writer, p, delta)
+            last_value = v
+          end
         end
+        bit_writer.flush
+        encoded << bit_writer.stream
+        @encoded = encoded.bth
+      else
+        @encoded = encoded_filter
+        @n, payload = Bitcoin.unpack_var_int(encoded_filter.htb)
       end
-      bit_writer.flush
-      encoded << bit_writer.stream
-      @encoded = encoded.bth
-    end
-
-    # Number of elements in the filter
-    def n
-      elements.size
     end
 
     # Range of element hashes, F = N * M
