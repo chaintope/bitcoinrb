@@ -14,7 +14,9 @@ describe Bitcoin::GCSFilter do
         element2[1] = i.to_even_length_hex.htb
         excluded << element2
       end
-      filter = Bitcoin::GCSFilter.new(('0' * 32).htb, 10, 1<<10, included)
+      encoded_filter = Bitcoin::GCSFilter.new(('0' * 32).htb, 10, 1<<10, elements: included).encoded
+      filter = Bitcoin::GCSFilter.new(('0' * 32).htb, 10, 1<<10, encoded_filter: encoded_filter)
+      expect(encoded_filter).to eq(filter.encoded)
       included.each do |i|
         expect(filter.match?(i)).to be true
         excluded << i
