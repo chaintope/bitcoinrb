@@ -46,10 +46,11 @@ module Bitcoin
 
       # get current wallet
       def self.current_wallet(path_prefix = default_path_prefix)
-        path = wallet_paths.first # TODO default wallet selection
+        path = wallet_paths(path_prefix).first # TODO default wallet selection
         return nil unless path
-        wallet_id = path.delete(path_prefix + '/wallet').delete('/').to_i
-        self.load(wallet_id, path_prefix)
+        path.slice!(path_prefix + 'wallet')
+        path.slice!('/')
+        self.load(path.to_i, path_prefix)
       end
 
       # get account list based on BIP-44

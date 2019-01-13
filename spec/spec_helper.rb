@@ -54,7 +54,7 @@ def create_test_chain
   Bitcoin::Store::SPVChain.new(Bitcoin::Store::DB::LevelDB.new(TEST_DB_PATH))
 end
 
-TEST_WALLET_PATH = Dir.tmpdir + '/wallet/'
+TEST_WALLET_PATH = Dir.tmpdir + '/wallet-test/'
 
 def test_wallet_path(wallet_id = 1)
   "#{TEST_WALLET_PATH}wallet#{wallet_id}/"

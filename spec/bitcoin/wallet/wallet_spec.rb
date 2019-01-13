@@ -154,4 +154,17 @@ describe Bitcoin::Wallet do
     end
   end
 
+  describe '#current_wallet' do
+    subject {
+      if Bitcoin::Wallet::Base.wallet_paths(TEST_WALLET_PATH).empty?
+        wallet = create_test_wallet
+        wallet.close
+      end
+      Bitcoin::Wallet::Base.current_wallet(TEST_WALLET_PATH)
+    }
+    it 'should return wallet' do
+      expect(subject.path).to start_with TEST_WALLET_PATH
+    end
+  end
+
 end
