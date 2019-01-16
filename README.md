@@ -46,7 +46,7 @@ gem leveldb-ruby
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'bitcoinrb'
+gem 'bitcoinrb', require: 'bitcoin'
 ```
 
 And then execute:
@@ -57,6 +57,9 @@ Or install it yourself as:
 
     $ gem install bitcoinrb
 
+And then add to your .rb file:
+
+    require 'bitcoin'
 
 ## Usage
 
