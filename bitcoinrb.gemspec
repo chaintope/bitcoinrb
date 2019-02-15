@@ -32,7 +32,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'rest-client'
   spec.add_runtime_dependency 'iniparse'
   spec.add_runtime_dependency 'siphash'
-  spec.add_runtime_dependency 'protobuf'
+  spec.add_runtime_dependency 'protobuf', '3.8.5'
   spec.add_runtime_dependency 'scrypt'
 
   # for options
