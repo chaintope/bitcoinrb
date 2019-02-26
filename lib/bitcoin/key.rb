@@ -253,9 +253,7 @@ module Bitcoin
     # @param [Boolean] compressed pubkey compressed?
     # @return [String] a pubkey which generate from privkey
     def generate_pubkey(privkey, compressed: true)
-      public_key = ECDSA::Group::Secp256k1.generator.multiply_by_scalar(privkey.to_i(16))
-      pubkey = ECDSA::Format::PointOctetString.encode(public_key, compression: compressed)
-      pubkey.bth
+      @secp256k1_module.generate_pubkey(privkey, compressed: compressed)
     end
 
     # check private key range.
