@@ -27,11 +27,14 @@ describe Bitcoin::Wallet do
 
   describe '#load' do
     context 'existing wallet' do
-      subject {
+      subject { Bitcoin::Wallet::Base.load(1, TEST_WALLET_PATH)}
+
+      before do
         wallet = create_test_wallet
         wallet.close
-        Bitcoin::Wallet::Base.load(1, TEST_WALLET_PATH)
-      }
+      end
+      after { subject.close }
+
       it 'should return wallet' do
         expect(subject.wallet_id).to eq(1)
         expect(subject.path).to eq(test_wallet_path(1))
