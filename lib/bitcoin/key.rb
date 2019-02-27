@@ -18,7 +18,7 @@ module Bitcoin
 
     TYPES = {uncompressed: 0x00, compressed: 0x01, p2pkh: 0x10, p2wpkh: 0x11, pw2pkh_p2sh: 0x12}
 
-    MIN_PRIV_KEy_MOD_ORDER = 0x01
+    MIN_PRIV_KEY_MOD_ORDER = 0x01
     # Order of secp256k1's generator minus 1.
     MAX_PRIV_KEY_MOD_ORDER = ECDSA::Group::Secp256k1.order - 1
 
@@ -253,15 +253,13 @@ module Bitcoin
     # @param [Boolean] compressed pubkey compressed?
     # @return [String] a pubkey which generate from privkey
     def generate_pubkey(privkey, compressed: true)
-      public_key = ECDSA::Group::Secp256k1.generator.multiply_by_scalar(privkey.to_i(16))
-      pubkey = ECDSA::Format::PointOctetString.encode(public_key, compression: compressed)
-      pubkey.bth
+      @secp256k1_module.generate_pubkey(privkey, compressed: compressed)
     end
 
     # check private key range.
     def validate_private_key_range(private_key)
       value = private_key.to_i(16)
-      MIN_PRIV_KEy_MOD_ORDER <= value && value <= MAX_PRIV_KEY_MOD_ORDER
+      MIN_PRIV_KEY_MOD_ORDER <= value && value <= MAX_PRIV_KEY_MOD_ORDER
     end
 
     # Supported violations include negative integers, excessive padding, garbage

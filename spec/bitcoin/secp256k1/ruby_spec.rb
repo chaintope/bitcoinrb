@@ -44,6 +44,14 @@ describe Bitcoin::Secp256k1::Ruby do
     end
   end
 
+  describe '#generate_pubkey' do
+    subject { Bitcoin::Secp256k1::Ruby.generate_pubkey(privkey, compressed: true) }
+
+    let(:privkey) { '206f3acb5b7ac66dacf87910bb0b04bed78284b9b50c0d061705a44447a947ff' }
+
+    it { is_expected.to eq '020025aeb645b64b632c91d135683e227cb508ebb1766c65ee40405f53b8f1bb3a' }
+  end
+
   describe '#sign_data/#verify_data', use_secp256k1: true do
     it 'should be signed' do
       message = 'message'.htb

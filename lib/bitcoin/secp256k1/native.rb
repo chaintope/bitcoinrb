@@ -78,23 +78,8 @@ module Bitcoin
             priv_key = FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, SecureRandom.random_bytes(32))
             ret = secp256k1_ec_seckey_verify(context, priv_key)
           end
-
-          internal_pubkey = FFI::MemoryPointer.new(:uchar, 64)
-          result = secp256k1_ec_pubkey_create(context, internal_pubkey, priv_key)
-          raise 'error creating pubkey' unless result
-
-          pubkey = FFI::MemoryPointer.new(:uchar, 65)
-          pubkey_len = FFI::MemoryPointer.new(:uint64)
-          result = if compressed
-                     pubkey_len.put_uint64(0, 33)
-                     secp256k1_ec_pubkey_serialize(context, pubkey, pubkey_len, internal_pubkey, SECP256K1_EC_COMPRESSED)
-                   else
-                     pubkey_len.put_uint64(0, 65)
-                     secp256k1_ec_pubkey_serialize(context, pubkey, pubkey_len, internal_pubkey, SECP256K1_EC_UNCOMPRESSED)
-                   end
-          raise 'error serialize pubkey' unless result || pubkey_len.read_uint64 > 0
-
-          [ priv_key.read_string(32).bth, pubkey.read_string(pubkey_len.read_uint64).bth ]
+          private_key =  priv_key.read_string(32).bth
+          [private_key , generate_pubkey_in_context(context,  private_key, compressed: compressed) ]
         end
       end
 
@@ -102,6 +87,12 @@ module Bitcoin
       def generate_key(compressed: true)
         privkey, pubkey = generate_key_pair(compressed: compressed)
         Bitcoin::Key.new(priv_key: privkey, pubkey: pubkey, compressed: compressed)
+      end
+
+      def generate_pubkey(priv_key, compressed: true)
+        with_context do |context|
+          generate_pubkey_in_context(context, priv_key, compressed: compressed)
+        end
       end
 
       # sign data.
@@ -159,7 +150,25 @@ module Bitcoin
         end
       end
 
-    end
+      private
 
+      def generate_pubkey_in_context(context, privkey, compressed: true)
+        internal_pubkey = FFI::MemoryPointer.new(:uchar, 64)
+        result = secp256k1_ec_pubkey_create(context, internal_pubkey, privkey.htb)
+        raise 'error creating pubkey' unless result
+
+        pubkey = FFI::MemoryPointer.new(:uchar, 65)
+        pubkey_len = FFI::MemoryPointer.new(:uint64)
+        result = if compressed
+                   pubkey_len.put_uint64(0, 33)
+                   secp256k1_ec_pubkey_serialize(context, pubkey, pubkey_len, internal_pubkey, SECP256K1_EC_COMPRESSED)
+                 else
+                   pubkey_len.put_uint64(0, 65)
+                   secp256k1_ec_pubkey_serialize(context, pubkey, pubkey_len, internal_pubkey, SECP256K1_EC_UNCOMPRESSED)
+                 end
+        raise 'error serialize pubkey' unless result || pubkey_len.read_uint64 > 0
+        pubkey.read_string(pubkey_len.read_uint64).bth
+      end
+    end
   end
 end

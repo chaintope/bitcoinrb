@@ -22,6 +22,11 @@ module Bitcoin
         Bitcoin::Key.new(priv_key: privkey, pubkey: pubkey, compressed: compressed)
       end
 
+      def generate_pubkey(privkey, compressed: true)
+        public_key = ECDSA::Group::Secp256k1.generator.multiply_by_scalar(privkey.to_i(16))
+        ECDSA::Format::PointOctetString.encode(public_key, compression: compressed).bth
+      end
+
       # sign data.
       # @param [String] data a data to be signed with binary format
       # @param [String] privkey a private key using sign
