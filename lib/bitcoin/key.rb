@@ -18,7 +18,7 @@ module Bitcoin
 
     TYPES = {uncompressed: 0x00, compressed: 0x01, p2pkh: 0x10, p2wpkh: 0x11, pw2pkh_p2sh: 0x12}
 
-    MIN_PRIV_KEy_MOD_ORDER = 0x01
+    MIN_PRIV_KEY_MOD_ORDER = 0x01
     # Order of secp256k1's generator minus 1.
     MAX_PRIV_KEY_MOD_ORDER = ECDSA::Group::Secp256k1.order - 1
 
@@ -259,7 +259,7 @@ module Bitcoin
     # check private key range.
     def validate_private_key_range(private_key)
       value = private_key.to_i(16)
-      MIN_PRIV_KEy_MOD_ORDER <= value && value <= MAX_PRIV_KEY_MOD_ORDER
+      MIN_PRIV_KEY_MOD_ORDER <= value && value <= MAX_PRIV_KEY_MOD_ORDER
     end
 
     # Supported violations include negative integers, excessive padding, garbage
