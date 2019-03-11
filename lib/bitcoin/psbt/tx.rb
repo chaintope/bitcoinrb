@@ -86,13 +86,13 @@ module Bitcoin
       # generate payload.
       # @return [String] a payload with binary format.
       def to_payload
-        payload = PSBT_MAGIC_BYTES.to_even_length_hex.htb << 0xff.to_even_length_hex.htb
+        payload = PSBT_MAGIC_BYTES.itb << 0xff.itb
 
         payload << PSBT.serialize_to_vector(PSBT_GLOBAL_TYPES[:unsigned_tx], value: tx.to_payload)
 
         payload << unknowns.map {|k,v|Bitcoin.pack_var_int(k.htb.bytesize) << k.htb << Bitcoin.pack_var_int(v.bytesize) << v}.join
 
-        payload << PSBT_SEPARATOR.to_even_length_hex.htb
+        payload << PSBT_SEPARATOR.itb
 
         payload << inputs.map(&:to_payload).join
         payload << outputs.map(&:to_payload).join

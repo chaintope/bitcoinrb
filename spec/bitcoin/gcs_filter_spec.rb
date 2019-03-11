@@ -8,10 +8,10 @@ describe Bitcoin::GCSFilter do
       excluded = []
       (1..100).each do |i|
         element1 = ('0' * 32).htb
-        element1[0] = i.to_even_length_hex.htb
+        element1[0] = i.itb
         included << element1
         element2 = ('0' * 32).htb
-        element2[1] = i.to_even_length_hex.htb
+        element2[1] = i.itb
         excluded << element2
       end
       encoded_filter = Bitcoin::GCSFilter.new(('0' * 32).htb, 10, 1<<10, elements: included).encoded

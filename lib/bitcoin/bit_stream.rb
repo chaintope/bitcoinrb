@@ -28,7 +28,7 @@ module Bitcoin
 
     def flush
       return if offset == 0
-      self.stream << [buffer.to_even_length_hex].pack('H*')
+      self.stream << buffer.itb
       self.offset = 0
       self.buffer = 0
     end

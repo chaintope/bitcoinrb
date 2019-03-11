@@ -186,6 +186,10 @@ module Bitcoin
       hex = to_s(16)
       hex.rjust((hex.length / 2.0).ceil * 2, '0')
     end
+
+    def itb
+      to_even_length_hex.htb
+    end
   end
 
   class ::ECDSA::Signature

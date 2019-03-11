@@ -21,7 +21,7 @@ module Bitcoin
     module_function
 
     def self.serialize_to_vector(key_type, key: nil, value: nil)
-      key_len = key_type.to_even_length_hex.htb.bytesize
+      key_len = key_type.itb.bytesize
       key_len += key.bytesize if key
       s = Bitcoin.pack_var_int(key_len) << Bitcoin.pack_var_int(key_type)
       s << key if key

@@ -52,7 +52,7 @@ module Bitcoin
         payload << PSBT.serialize_to_vector(PSBT_OUT_TYPES[:witness_script], value: witness_script) if witness_script
         payload << hd_key_paths.values.map{|v|v.to_payload(PSBT_OUT_TYPES[:bip32_derivation])}.join
         payload << unknowns.map {|k,v|Bitcoin.pack_var_int(k.htb.bytesize) << k.htb << Bitcoin.pack_var_int(v.bytesize) << v}.join
-        payload << PSBT_SEPARATOR.to_even_length_hex.htb
+        payload << PSBT_SEPARATOR.itb
         payload
       end
 
