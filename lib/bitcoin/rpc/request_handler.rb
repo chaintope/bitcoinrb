@@ -26,6 +26,7 @@ module Bitcoin
       def getblockheader(block_id, verbose)
         block_hash = block_id.rhex
         entry = node.chain.find_entry_by_hash(block_hash)
+        raise ArgumentError.new('Block not found') unless entry
         if verbose
           {
               hash: block_id,

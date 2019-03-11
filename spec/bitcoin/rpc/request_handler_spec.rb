@@ -37,21 +37,29 @@ describe Bitcoin::RPC::RequestHandler do
   end
 
   describe '#getblockheader' do
-    it 'should return header info' do
-      result = subject.getblockheader('00000000fb0350a72d7316a2006de44e74c16b56843a29bd85e0535d71edbc5b', true)
-      expect(result[:hash]).to eq('00000000fb0350a72d7316a2006de44e74c16b56843a29bd85e0535d71edbc5b')
-      expect(result[:height]).to eq(1210337)
-      expect(result[:version]).to eq(536870912)
-      expect(result[:versionHex]).to eq('20000000')
-      expect(result[:merkleroot]).to eq('ac92cbb5ccd160f9b474f27a1ed50aa9f503b4d39c5acd7f24ef0a6a0287c7c6')
-      expect(result[:time]).to eq(1508130596)
-      expect(result[:mediantime]).to eq(1508125317)
-      expect(result[:nonce]).to eq(1647419287)
-      expect(result[:bits]).to eq('1d00ffff')
-      expect(result[:previousblockhash]).to eq('00000000cd01007346f9a3d384a507f97afb164c057bcd1694ca20bb3302bb8d')
-      expect(result[:nextblockhash]).to eq('000000008f71fb3f76a19075987a5d5653efce9bab90474497c9e1151ac94b69')
-      header = subject.getblockheader('00000000fb0350a72d7316a2006de44e74c16b56843a29bd85e0535d71edbc5b', false)
-      expect(header).to eq('000000208dbb0233bb20ca9416cd7b054c16fb7af907a584d3a3f946730001cd00000000c6c787026a0aef247fcd5a9cd3b403f5a90ad51e7af274b4f960d1ccb5cb92ac243fe459ffff001d979f3162')
+    context 'has block header' do
+      it 'should return header info' do
+        result = subject.getblockheader('00000000fb0350a72d7316a2006de44e74c16b56843a29bd85e0535d71edbc5b', true)
+        expect(result[:hash]).to eq('00000000fb0350a72d7316a2006de44e74c16b56843a29bd85e0535d71edbc5b')
+        expect(result[:height]).to eq(1210337)
+        expect(result[:version]).to eq(536870912)
+        expect(result[:versionHex]).to eq('20000000')
+        expect(result[:merkleroot]).to eq('ac92cbb5ccd160f9b474f27a1ed50aa9f503b4d39c5acd7f24ef0a6a0287c7c6')
+        expect(result[:time]).to eq(1508130596)
+        expect(result[:mediantime]).to eq(1508125317)
+        expect(result[:nonce]).to eq(1647419287)
+        expect(result[:bits]).to eq('1d00ffff')
+        expect(result[:previousblockhash]).to eq('00000000cd01007346f9a3d384a507f97afb164c057bcd1694ca20bb3302bb8d')
+        expect(result[:nextblockhash]).to eq('000000008f71fb3f76a19075987a5d5653efce9bab90474497c9e1151ac94b69')
+        header = subject.getblockheader('00000000fb0350a72d7316a2006de44e74c16b56843a29bd85e0535d71edbc5b', false)
+        expect(header).to eq('000000208dbb0233bb20ca9416cd7b054c16fb7af907a584d3a3f946730001cd00000000c6c787026a0aef247fcd5a9cd3b403f5a90ad51e7af274b4f960d1ccb5cb92ac243fe459ffff001d979f3162')
+      end
+    end
+
+    context 'has not block header' do
+      it 'should return error' do
+        expect{subject.getblockheader('00', true)}.to raise_error(ArgumentError, 'Block not found')
+      end
     end
   end
 
@@ -301,6 +309,7 @@ describe Bitcoin::RPC::RequestHandler do
     allow(chain_mock).to receive(:find_entry_by_hash).with('f1bd62cf4502b7f88eeae4bb8cf2caa3615caac0dde9bf064994e43500000000').and_return(load_entry('04000000587b7ec2f7b00aecadc816f74c4734f5d3b57744fa98061b2452245300000000acf407f07491f3c7e326702c84c2319b98989b1d287e612385b35f01bb49a29e7518e459ffff001d40cce489', 1210328))
     allow(chain_mock).to receive(:find_entry_by_hash).with('587b7ec2f7b00aecadc816f74c4734f5d3b57744fa98061b2452245300000000').and_return(load_entry('00000020b5b07293524eece44221a180a6c67538b5685b474015993ea9422e7600000000ae01949e6bac5a828216d89ea91fc7dfe0bee5488644c7f228e15e0b87b3322fc113e459ffff001d5ef80539', 1210327))
     allow(chain_mock).to receive(:find_entry_by_hash).with('b5b07293524eece44221a180a6c67538b5685b474015993ea9422e7600000000').and_return(load_entry('00000020fbf65774599e7bf53452a61f0784f30159ffa98e4bfa7091624bb3760000000012e5e283f096b9c14669c38049f4012462f48adb7d7d5e6dc32f3576688ef5480c0fe459ffff001dabe97de2', 1210326))
+    allow(chain_mock).to receive(:find_entry_by_hash).with('00').and_return(nil)
 
     # previous block
     allow(chain_mock).to receive(:next_hash).with('5bbced715d53e085bd293a84566bc1744ee46d00a216732da75003fb00000000').and_return('694bc91a15e1c997444790ab9bceef53565d7a987590a1763ffb718f00000000')
