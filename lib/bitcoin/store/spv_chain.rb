@@ -36,6 +36,7 @@ module Bitcoin
       # find block entry with the specified hash
       def find_entry_by_hash(hash)
         payload = db.get_entry_payload_from_hash(hash)
+        return nil unless payload
         ChainEntry.parse_from_payload(payload)
       end
 
