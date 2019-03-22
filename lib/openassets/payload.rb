@@ -24,14 +24,19 @@ module OpenAssets
       version = buf.read(2)
       return nil if marker != MARKER || version != VERSION
       count = Bitcoin.unpack_var_int_from_io(buf)
+      return nil unless count
       quantities = []
       count.times do
         quantities << LEB128.decode_unsigned(buf, buf.pos)
       end
       metadata_length = Bitcoin.unpack_var_int_from_io(buf)
-      return nil if buf.length < metadata_length + buf.pos
+      return nil if metadata_length.nil? || buf.length < metadata_length + buf.pos
       metadata = buf.read(metadata_length).each_byte.map(&:chr).join
       new(quantities, metadata)
+    rescue
+      # LEB128#decode_unsigned raise 'undefined method `unpack' for nil:NilClass'
+      # for invalid format such as "018f8f" (the most significant bit of the last byte should be 0)
+      nil
     end
 
     # generate binary payload

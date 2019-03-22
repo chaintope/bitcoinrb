@@ -28,6 +28,20 @@ describe Bitcoin::Util do
       expect(util.unpack_var_int([0xfd, 0xfd, 0x00].pack('C*')).first).to eq(253)
       expect(util.unpack_var_int([0xfd, 0xff, 0xff].pack('C*')).first).to eq(65535)
       expect(util.unpack_var_int([0xfe, 0x00, 0x00, 0x01, 0x00].pack('C*')).first).to eq(65536)
+      expect(util.unpack_var_int([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff].pack('C*')).first).to eq(0xffffffffffffffff)
+      expect(util.unpack_var_int([0xff].pack('C*')).first).to be_nil
+      expect(util.unpack_var_int('').first).to be_nil
+    end
+
+    it 'should unpack var int from io' do
+      expect(util.unpack_var_int_from_io(StringIO.new([0x04].pack('C')))).to eq(4)
+      expect(util.unpack_var_int_from_io(StringIO.new([0xfc].pack('C')))).to eq(252)
+      expect(util.unpack_var_int_from_io(StringIO.new([0xfd, 0xfd, 0x00].pack('C*')))).to eq(253)
+      expect(util.unpack_var_int_from_io(StringIO.new([0xfd, 0xff, 0xff].pack('C*')))).to eq(65535)
+      expect(util.unpack_var_int_from_io(StringIO.new([0xfe, 0x00, 0x00, 0x01, 0x00].pack('C*')))).to eq(65536)
+      expect(util.unpack_var_int_from_io(StringIO.new([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff].pack('C*')))).to eq(0xffffffffffffffff)
+      expect(util.unpack_var_int_from_io(StringIO.new([0xff].pack('C*')))).to be_nil
+      expect(util.unpack_var_int_from_io(StringIO.new)).to be_nil
     end
 
     it 'should pack boolean' do

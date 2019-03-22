@@ -31,6 +31,7 @@ module Bitcoin
       end
     end
 
+    # @return an integer for a valid payload, otherwise nil
     def unpack_var_int(payload)
       case payload.unpack('C').first
       when 0xfd
@@ -44,15 +45,16 @@ module Bitcoin
       end
     end
 
+    # @return an integer for a valid payload, otherwise nil
     def unpack_var_int_from_io(buf)
-      uchar = buf.read(1).unpack('C').first
+      uchar = buf.read(1)&.unpack('C')&.first
       case uchar
       when 0xfd
-        buf.read(2).unpack('v').first
+        buf.read(2)&.unpack('v')&.first
       when 0xfe
-        buf.read(4).unpack('V').first
+        buf.read(4)&.unpack('V')&.first
       when 0xff
-        buf.read(8).unpack('Q').first
+        buf.read(8)&.unpack('Q')&.first
       else
         uchar
       end
