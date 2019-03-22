@@ -29,6 +29,22 @@ describe OpenAssets::MarkerOutput do
         script = Bitcoin::Script.new << OP_RETURN << '4f4102000364007b1b753d68747470733a2f2f6370722e736d2f35596753553150672d71'
         expect(Bitcoin::TxOut.new(script_pubkey: script).open_assets_marker?).to be false
 
+        # can not parse varint
+        script = Bitcoin::Script.new << OP_RETURN << '4f410100ff'
+        expect(Bitcoin::TxOut.new(script_pubkey: script).open_assets_marker?).to be false
+
+        # can not decode leb128 data(invalid format)
+        script = Bitcoin::Script.new << OP_RETURN << '4f410100018f8f'
+        expect(Bitcoin::TxOut.new(script_pubkey: script).open_assets_marker?).to be false
+
+        # can not decode leb128 data(EOFError)
+        script = Bitcoin::Script.new << OP_RETURN << '4f410100028f7f'
+        expect(Bitcoin::TxOut.new(script_pubkey: script).open_assets_marker?).to be false
+
+        # no metadata length
+        script = Bitcoin::Script.new << OP_RETURN << '4f410100018f7f'
+        expect(Bitcoin::TxOut.new(script_pubkey: script).open_assets_marker?).to be false
+
         # invalid metadata length
         script = Bitcoin::Script.new << OP_RETURN << '4f4101000364007b1b753d68747470733a2f2f6370722e736d2f35596753553150672d' # short
         expect(Bitcoin::TxOut.new(script_pubkey: script).open_assets_marker?).to be false
