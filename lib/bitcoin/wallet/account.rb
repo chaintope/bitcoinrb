@@ -140,8 +140,8 @@ module Bitcoin
 
       def validate_params!(account_key, purpose, index)
         raise 'account_key must be an instance of Bitcoin::ExtPubkey.' unless account_key.is_a?(Bitcoin::ExtPubkey)
-        raise 'Account key and index does not match.' unless account_key.number == (index + 2**31)
-        version_bytes = Bitcoin::ExtPubkey.version_from_purpose(purpose + 2**31)
+        raise 'Account key and index does not match.' unless account_key.number == (index + Bitcoin::HARDENED_THRESHOLD)
+        version_bytes = Bitcoin::ExtPubkey.version_from_purpose(purpose + Bitcoin::HARDENED_THRESHOLD)
         raise 'The purpose and the account key do not match.' unless account_key.version == version_bytes
       end
 

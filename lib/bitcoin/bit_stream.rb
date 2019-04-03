@@ -2,7 +2,7 @@ module Bitcoin
 
   class BitStreamWriter
 
-    MAX_BIT = 2**64
+    MAX_BIT = 4611686018427387904 # 2**64
 
     attr_reader :stream
     attr_accessor :buffer

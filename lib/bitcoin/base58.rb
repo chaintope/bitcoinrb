@@ -25,7 +25,7 @@ module Bitcoin
       int_val = 0
       base58_val.reverse.split(//).each_with_index do |char,index|
         raise ArgumentError, 'Value passed not a valid Base58 String.' if (char_index = ALPHABET.index(char)).nil?
-        int_val += char_index * (SIZE**index)
+        int_val += char_index * SIZE.pow(index)
       end
       s = int_val.to_even_length_hex
       s = '' if s == '00'

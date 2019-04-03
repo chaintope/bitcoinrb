@@ -33,7 +33,7 @@ module Bitcoin
       exponent = ((bits >> 24) & 0xff)
       mantissa = bits & 0x7fffff
       mantissa *= -1 if (bits & 0x800000) > 0
-      (mantissa * 2 ** (8 * (exponent - 3)))
+      (mantissa * 2.pow(8 * (exponent - 3)))
     end
 
     def hash
@@ -70,7 +70,7 @@ module Bitcoin
     def work
       target = difficulty_target
       return 0 if target < 1
-      (2**256) / (target + 1)
+      115792089237316195423570985008687907853269984665640564039457584007913129639936.div(target + 1) # 115792089237316195423570985008687907853269984665640564039457584007913129639936 is 2**256
     end
 
     def ==(other)

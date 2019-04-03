@@ -6,6 +6,8 @@ module Bitcoin
   # see https://github.com/bitcoin/bips/blob/master/bip-0158.mediawiki
   class GCSFilter
 
+    MAX_ELEMENTS_SIZE = 4294967296 # 2**32
+
     attr_reader :p # Golomb-Rice coding parameter
     attr_reader :m # Inverse false positive rate
     attr_reader :n # Number of elements in the filter
@@ -26,7 +28,7 @@ module Bitcoin
       @p = p
       @m = m
       if elements
-        raise 'elements size must be < 2**32.' if elements.size >= (2**32)
+        raise 'elements size must be < 2**32.' if elements.size >= MAX_ELEMENTS_SIZE
         @n = elements.size
         encoded = Bitcoin.pack_var_int(@n)
         bit_writer = Bitcoin::BitStreamWriter.new

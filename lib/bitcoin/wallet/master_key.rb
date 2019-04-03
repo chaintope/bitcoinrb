@@ -71,7 +71,7 @@ module Bitcoin
             next
           end
           raise ArgumentError.new("#{path} is invalid format.") unless p.delete("'") =~ /^[0-9]+$/
-          num = (p[-1] == "'" ? p.delete("'").to_i + 2**31 : p.to_i)
+          num = (p[-1] == "'" ? p.delete("'").to_i + Bitcoin::HARDENED_THRESHOLD : p.to_i)
           derived_key = derived_key.derive(num)
         end
         derived_key
