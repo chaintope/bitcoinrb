@@ -33,7 +33,7 @@ module Bitcoin
       exponent = ((bits >> 24) & 0xff)
       mantissa = bits & 0x7fffff
       mantissa *= -1 if (bits & 0x800000) > 0
-      (mantissa * 2.pow(8 * (exponent - 3)))
+      (mantissa * 2 ** (8 * (exponent - 3)))
     end
 
     def hash
