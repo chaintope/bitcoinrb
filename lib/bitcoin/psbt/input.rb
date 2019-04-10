@@ -105,11 +105,39 @@ module Bitcoin
       end
 
       # Sanity check
+      # @return [Boolean]
       def sane?
         return false if non_witness_utxo && witness_utxo
         return false if witness_script && witness_utxo.nil?
         return false if final_script_witness && witness_utxo.nil?
         true
+      end
+
+      # Check whether input's scriptPubkey is correct witness.
+      # @return [Boolean]
+      def valid_witness_input?
+        return true if witness_utxo.script_pubkey.p2wpkh? # P2WPKH
+        return true if witness_utxo.script_pubkey.p2wsh? && witness_utxo.script_pubkey == redeem_script.to_p2wsh # P2WSH
+        return true if witness_utxo.script_pubkey.p2sh? && redeem_script&.witness_program? && # segwit nested in P2SH
+            redeem_script.to_p2sh == witness_utxo.script_pubkey && witness_script&.to_sha256 == redeem_script.witness_data[1]
+        false
+      end
+
+      # Check whether input's scriptPubkey is correct witness.
+      # @return [Boolean]
+      def valid_non_witness_input?
+        non_witness_utxo.outputs.each do |o|
+          return true if o.script_pubkey.p2sh? && redeem_script.to_p2sh == o.script_pubkey
+        end
+        false
+      end
+
+      # Check whether the signer can sign this input.
+      # @return [Boolean]
+      def ready_to_sign?
+        return false unless sane?
+        return valid_witness_input? if witness_utxo
+        valid_non_witness_input? # non_witness_utxo
       end
 
       # add signature as partial sig.

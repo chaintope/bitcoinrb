@@ -129,6 +129,16 @@ module Bitcoin
         end
       end
 
+      # Check whether the signer can sign. Specifically, check the following.
+      # * If a non-witness UTXO is provided, its hash must match the hash specified in the prevout
+      # * If a witness UTXO is provided, no non-witness signature may be created
+      # * If a redeemScript is provided, the scriptPubKey must be for that redeemScript
+      # * If a witnessScript is provided, the scriptPubKey or the redeemScript must be for that witnessScript
+      # @return [Boolean]
+      def ready_to_sign?
+        inputs.all?(&:ready_to_sign?)
+      end
+
       # get signature script of input specified by +index+
       # @param [Integer] index input index.
       # @return [Bitcoin::Script]
