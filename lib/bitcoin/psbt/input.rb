@@ -119,7 +119,7 @@ module Bitcoin
         return true if witness_utxo.script_pubkey.p2wpkh? # P2WPKH
         return true if witness_utxo.script_pubkey.p2wsh? && witness_utxo.script_pubkey == redeem_script.to_p2wsh # P2WSH
         return true if witness_utxo.script_pubkey.p2sh? && redeem_script&.witness_program? && # segwit nested in P2SH
-            redeem_script.to_p2sh == witness_utxo.script_pubkey && witness_script&.to_sha256 == redeem_script.witness_data[1]
+            redeem_script.to_p2sh == witness_utxo.script_pubkey && witness_script&.to_sha256 == redeem_script.witness_data[1].bth
         false
       end
 
