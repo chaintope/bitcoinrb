@@ -66,7 +66,7 @@ module Bitcoin
         combined = Bitcoin::PSBT::Output.new
         combined.redeem_script = redeem_script
         combined.witness_script = witness_script
-        combined.unknowns = unknowns.merge(psbo.unknowns)
+        combined.unknowns = Hash[unknowns.merge(psbo.unknowns).sort]
         combined.hd_key_paths = hd_key_paths.merge(psbo.hd_key_paths)
         combined
       end

@@ -132,7 +132,7 @@ module Bitcoin
         raise ArgumentError, 'The Partially Signed Input\'s redeem_script are different.' unless redeem_script == psbi.redeem_script
         raise ArgumentError, 'The Partially Signed Input\'s witness_script are different.' unless witness_script == psbi.witness_script
         combined = Bitcoin::PSBT::Input.new(non_witness_utxo: non_witness_utxo, witness_utxo: witness_utxo)
-        combined.unknowns = unknowns.merge(psbi.unknowns)
+        combined.unknowns = Hash[unknowns.merge(psbi.unknowns).sort]
         combined.redeem_script = redeem_script
         combined.witness_script = witness_script
         combined.sighash_type = sighash_type

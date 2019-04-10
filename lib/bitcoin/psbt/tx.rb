@@ -158,7 +158,8 @@ module Bitcoin
         outputs.each_with_index do |o, index|
           combined.outputs[index] = o.merge(psbt.outputs[index])
         end
-        combined.unknowns = unknowns.merge(psbt.unknowns)
+
+        combined.unknowns = Hash[unknowns.merge(psbt.unknowns).sort]
         combined
       end
 
