@@ -9,13 +9,14 @@ NOTE: Bitcoinrb work in progress, and there is a possibility of incompatible cha
 
 Bitcoinrb supports following feature:
 
-* Bitcoin script interpreter
+* Bitcoin script interpreter(including [BIP-65](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki), [BIP-68](https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki), [BIP-112](https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki))
 * De/serialization of Bitcoin protocol network messages
 * De/serialization of blocks and transactions
 * Key generation and verification for ECDSA, including [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) and [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) supports.
 * ECDSA signature(RFC6979 -Deterministic ECDSA, LOW-S, LOW-R support)
-* Segwit support (parsing segwit payload, Bech32 address, sign for segwit tx, etc..)
-* PSBT(Partially Signed Bitcoin Transaction) support
+* Segwit support (parsing segwit payload, Bech32 address, sign for segwit tx, [BIP-141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki), [BIP-143](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki), [BIP-144](https://github.com/bitcoin/bips/blob/master/bip-0144.mediawiki))
+* [BIP-173](https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki) Bech32 address support
+* [BIP-174](https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki) PSBT(Partially Signed Bitcoin Transaction) support
 * [WIP] SPV node
 * [WIP] 0ff-chain protocol
 
