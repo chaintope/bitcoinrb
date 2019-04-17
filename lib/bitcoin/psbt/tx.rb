@@ -83,6 +83,17 @@ module Bitcoin
         partial_tx
       end
 
+      # Finds the UTXO for a given input index
+      # @param [Integer] index input_index Index of the input to retrieve the UTXO of
+      # @return [Bitcoin::TxOut] The UTXO of the input if found.
+      def input_utxo(index)
+        input = inputs[index]
+        prevout_index = tx.in[index].out_point.index
+        return input.non_witness_utxo.out[prevout_index] if input.non_witness_utxo
+        return input.witness_utxo if input.witness_utxo
+        nil
+      end
+
       # generate payload.
       # @return [String] a payload with binary format.
       def to_payload
@@ -136,7 +147,8 @@ module Bitcoin
       # * If a witnessScript is provided, the scriptPubKey or the redeemScript must be for that witnessScript
       # @return [Boolean]
       def ready_to_sign?
-        inputs.all?(&:ready_to_sign?)
+        inputs.each.with_index{|psbt_in, index|return false unless psbt_in.ready_to_sign?(input_utxo(index))}
+        true
       end
 
       # get signature script of input specified by +index+

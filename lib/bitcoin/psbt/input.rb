@@ -125,19 +125,23 @@ module Bitcoin
 
       # Check whether input's scriptPubkey is correct witness.
       # @return [Boolean]
-      def valid_non_witness_input?
-        non_witness_utxo.outputs.each do |o|
-          return true if o.script_pubkey.p2sh? && redeem_script.to_p2sh == o.script_pubkey
-        end
-        false
+      def valid_non_witness_input?(utxo)
+        utxo.script_pubkey.p2sh? && redeem_script.to_p2sh == utxo.script_pubkey
       end
 
       # Check whether the signer can sign this input.
+      # @param [Bitcoin::TxOut] utxo utxo object which input refers.
       # @return [Boolean]
-      def ready_to_sign?
+      def ready_to_sign?(utxo)
         return false unless sane?
         return valid_witness_input? if witness_utxo
-        valid_non_witness_input? # non_witness_utxo
+        valid_non_witness_input?(utxo) # non_witness_utxo
+      end
+
+      # Checks whether a PSBTInput is already signed.
+      # @return [Boolean] return true if already signed.
+      def signed?
+        final_script_sig || final_script_witness
       end
 
       # add signature as partial sig.
