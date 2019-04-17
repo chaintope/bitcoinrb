@@ -116,10 +116,13 @@ module Bitcoin
       # Check whether input's scriptPubkey is correct witness.
       # @return [Boolean]
       def valid_witness_input?
-        return true if witness_utxo.script_pubkey.p2wpkh? # P2WPKH
-        return true if witness_utxo.script_pubkey.p2wsh? && witness_utxo.script_pubkey == redeem_script.to_p2wsh # P2WSH
-        return true if witness_utxo.script_pubkey.p2sh? && redeem_script&.witness_program? && # segwit nested in P2SH
-            redeem_script.to_p2sh == witness_utxo.script_pubkey && witness_script&.to_sha256 == redeem_script.witness_data[1].bth
+        return true if witness_utxo&.script_pubkey.p2wpkh? # P2WPKH
+        return true if witness_utxo&.script_pubkey.p2wsh? && witness_utxo&.script_pubkey == redeem_script.to_p2wsh # P2WSH
+        # segwit nested in P2SH
+        if witness_utxo&.script_pubkey.p2sh? && redeem_script&.witness_program? && redeem_script.to_p2sh == witness_utxo&.script_pubkey
+          return true if redeem_script.p2wpkh?# nested p2wpkh
+          return true if witness_script&.to_sha256 == redeem_script.witness_data[1].bth # nested p2wsh
+        end
         false
       end
 
