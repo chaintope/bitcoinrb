@@ -260,6 +260,21 @@ describe Bitcoin::PSBT do
         expect{Bitcoin::PSBT::Tx.parse_from_base64(v)}.not_to raise_error
       end
     end
+
+    vectors['finalizer'].each do |v|
+      it "#{v['finalize']} should finalize psbt." do
+        psbt = Bitcoin::PSBT::Tx.parse_from_base64(v['finalize'])
+        psbt.finalize!
+        expect(psbt.to_base64).to eq(v['result'])
+      end
+    end
+
+    vectors['extractor'].each do |v|
+      it "#{v['extract']} should extract tx." do
+        psbt = Bitcoin::PSBT::Tx.parse_from_base64(v['extract'])
+        expect(psbt.extract_tx.to_payload.bth).to eq(v['result'])
+      end
+    end
   end
 
 end
