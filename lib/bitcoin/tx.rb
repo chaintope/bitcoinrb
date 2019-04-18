@@ -31,14 +31,14 @@ module Bitcoin
     alias_method :in, :inputs
     alias_method :out, :outputs
 
-    def self.parse_from_payload(payload)
+    def self.parse_from_payload(payload, non_witness: false)
       buf = payload.is_a?(String) ? StringIO.new(payload) : payload
       tx = new
       tx.version = buf.read(4).unpack('V').first
 
       in_count = Bitcoin.unpack_var_int_from_io(buf)
       witness = false
-      if in_count.zero?
+      if in_count.zero? && !non_witness
         tx.marker = 0
         tx.flag = buf.read(1).unpack('c').first
         if tx.flag.zero?
