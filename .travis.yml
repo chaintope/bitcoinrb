@@ -3,16 +3,9 @@ rvm:
   - 2.4.5
   - 2.5.5
   - 2.6.2
-env:
-  - "TEST_GROUP=1"
-  - "TEST_GROUP=2"
-  - "TEST_GROUP=3"
-  - "TEST_GROUP=4"
-  - "TEST_GROUP=5"
-  - "TEST_GROUP=6"
 addons:
   apt:
     packages:
       - libleveldb-dev
 script:
-  - bundle exec parallel_test spec/ -n 6 --only-group $TEST_GROUP --group-by filesize --type rspec
+  - bundle exec parallel_test spec/ -n 6 --type rspec
