@@ -19,9 +19,13 @@ module Bitcoin
       # @return [Bitcoin::PSBTOutput] psbt output.
       def self.parse_from_buf(buf)
         output = self.new
+        found_sep = false
         until buf.eof?
           key_len = Bitcoin.unpack_var_int_from_io(buf)
-          break if key_len == 0
+          if key_len == 0
+            found_sep = true
+            break
+          end
           key_type = buf.read(1).unpack('C').first
           key = buf.read(key_len - 1)
           value = buf.read(Bitcoin.unpack_var_int_from_io(buf))
@@ -43,6 +47,7 @@ module Bitcoin
             output.unknowns[unknown_key] = value
           end
         end
+        raise ArgumentError, 'Separator is missing at the end of an output map.' unless found_sep
         output
       end
 

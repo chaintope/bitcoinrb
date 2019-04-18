@@ -29,11 +29,14 @@ module Bitcoin
         raise ArgumentError, 'Invalid PSBT magic bytes.' unless buf.read(4).unpack('N').first == PSBT_MAGIC_BYTES
         raise ArgumentError, 'Invalid PSBT separator.' unless buf.read(1).bth.to_i(16) == 0xff
         partial_tx = self.new
-
+        found_sep = false
         # read global data.
         until buf.eof?
           key_len = Bitcoin.unpack_var_int_from_io(buf)
-          break if key_len == 0
+          if key_len == 0
+            found_sep = true
+            break
+          end
           key_type = buf.read(1).unpack('C').first
           key = buf.read(key_len - 1)
           value = buf.read(Bitcoin.unpack_var_int_from_io(buf))
@@ -52,6 +55,7 @@ module Bitcoin
           end
         end
 
+        raise ArgumentError, 'Separator is missing at the end of an output map.' unless found_sep
         raise ArgumentError, 'No unsigned transaction was provided.' unless partial_tx.tx
 
         # read input data.
