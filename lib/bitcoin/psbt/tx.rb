@@ -45,7 +45,7 @@ module Bitcoin
           when PSBT_GLOBAL_TYPES[:unsigned_tx]
             raise ArgumentError, 'Invalid global transaction typed key.' unless key_len == 1
             raise ArgumentError, 'Duplicate Key, unsigned tx already provided.' if partial_tx.tx
-            partial_tx.tx = Bitcoin::Tx.parse_from_payload(value)
+            partial_tx.tx = Bitcoin::Tx.parse_from_payload(value, non_witness: true)
             partial_tx.tx.in.each do |tx_in|
               raise ArgumentError, 'Unsigned tx does not have empty scriptSigs and scriptWitnesses.' if !tx_in.script_sig.empty? || !tx_in.script_witness.empty?
             end

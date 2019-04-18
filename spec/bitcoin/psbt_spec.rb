@@ -254,6 +254,12 @@ describe Bitcoin::PSBT do
         expect{Bitcoin::PSBT::Tx.parse_from_base64(v)}.to raise_error(ArgumentError)
       end
     end
+
+    vectors['valid'].each do |v|
+      it "#{v} should not raise error." do
+        expect{Bitcoin::PSBT::Tx.parse_from_base64(v)}.not_to raise_error
+      end
+    end
   end
 
 end
