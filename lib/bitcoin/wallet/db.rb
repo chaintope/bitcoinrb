@@ -53,6 +53,30 @@ module Bitcoin
         level_db.each(from: from, to: to).map { |k, v| v}
       end
 
+      def get_keys_type(account, purpose)
+        id = [account.purpose, account.index, purpose].pack('I*').bth
+        from = KEY_PREFIX[:key] + id + '00000000'
+        to = KEY_PREFIX[:key] + id + 'ffffffff'
+        level_db.each(from: from, to: to).map { |k, v| v}
+      end
+
+      def get_keys_and_addresses(account)
+        return [] unless account.purpose == Bitcoin::Wallet::Account::PURPOSE_TYPE[:legacy] or account.purpose == Bitcoin::Wallet::Account::PURPOSE_TYPE[:native_segwit]
+        keys = get_keys(account)
+        addresses = []
+        keys.each do |key|
+          case account.purpose 
+          when Bitcoin::Wallet::Account::PURPOSE_TYPE[:legacy]
+            addresses.push(Bitcoin::Key.new(pubkey: key, key_type: Bitcoin::Key::TYPES[:p2pkh]).to_p2pkh)
+          when Bitcoin::Wallet::Account::PURPOSE_TYPE[:nested_witness]
+            addresses.push(Bitcoin::Key.new(pubkey: key, key_type: Bitcoin::Key::TYPES[:p2pkh]).to_nested_p2wpkh)
+          when Bitcoin::Wallet::Account::PURPOSE_TYPE[:native_segwit]
+            addresses.push(Bitcoin::Key.new(pubkey: key, key_type: Bitcoin::Key::TYPES[:p2wpkh]).to_p2wpkh)
+          end
+        end
+        addresses
+      end
+
       # get master_key
       def master_key
         @master_key ||= Bitcoin::Wallet::MasterKey.parse_from_payload(level_db.get(KEY_PREFIX[:master]))

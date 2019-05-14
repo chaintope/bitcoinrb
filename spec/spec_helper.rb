@@ -60,15 +60,22 @@ def test_wallet_path(wallet_id = 1)
   "#{TEST_WALLET_PATH}wallet#{wallet_id}/"
 end
 
-def create_test_wallet(wallet_id = 1)
+def create_test_wallet(wallet_id = 1, purpose = Bitcoin::Wallet::Account::PURPOSE_TYPE[:native_segwit])
   path = test_wallet_path(wallet_id)
   FileUtils.rm_r(path) if Dir.exist?(path)
-  Bitcoin::Wallet::Base.create(wallet_id, TEST_WALLET_PATH)
+  Bitcoin::Wallet::Base.create(wallet_id, TEST_WALLET_PATH, purpose)
 end
 
 def test_master_key
   words = %w(abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about)
   Bitcoin::Wallet::MasterKey.recover_from_words(words)
+end
+
+TEST_UTXO_DB_PATH = Dir.tmpdir + '/db/test_utxo'
+
+def create_test_utxo_db(wallet = nil)
+  FileUtils.rm_r(TEST_UTXO_DB_PATH) if Dir.exist?(TEST_UTXO_DB_PATH)
+  Bitcoin::Store::UtxoDB.new(TEST_UTXO_DB_PATH, wallet)
 end
 
 module Bitcoin
