@@ -54,13 +54,13 @@ module Bitcoin
         out
       end
 
+      # @param  [Bitcoin::Tx] tx
+      # @param  [Integer] index
+      # @param  [Bitcoin::TxOut] output
+      # @param  [Integer] block_height
+      # @return [Bitcoin::OutPoint]
       def save(tx, index, output, block_height=nil)
-        out_point = nil
-        if !tx.coinbase_tx?
-          out_point = Bitcoin::OutPoint.from_txid(tx.txid, index)
-        else
-          out_point = Bitcoin::OutPoint.create_coinbase_outpoint()
-        end
+        out_point = !tx.coinbase_tx? ? Bitcoin::OutPoint.from_txid(tx.txid, index) : Bitcoin::OutPoint.create_coinbase_outpoint()
 
         save_tx(tx.tx_hash, tx.to_payload)
 
@@ -71,6 +71,8 @@ module Bitcoin
         out_point
       end
 
+      # @param  [String] tx_hash
+      # @param  [String] tx_payload
       def save_tx(tx_hash, tx_payload)
         level_db.batch do
           # tx_hash -> [block_height, tx_index]
@@ -79,6 +81,9 @@ module Bitcoin
         end
       end
 
+      # @param  [String] tx_hash
+      # @param  [Integer] block_height
+      # @param  [Integer] tx_index
       def save_tx_position(tx_hash, block_height, tx_index)
         logger.info("UtxoDB#save_tx:#{[tx_hash, block_height, tx_index]}")
         level_db.batch do
@@ -92,6 +97,10 @@ module Bitcoin
         end
       end
 
+      # @param [Bitcoin::OutPoint] out_point
+      # @param [Double] value
+      # @param [Bitcoin::Script] script_pubkey
+      # @param [Integer] block_height
       def save_utxo(out_point, value, script_pubkey, block_height=nil)
         logger.info("UtxoDB#save_utxo:#{[out_point, value, script_pubkey, block_height]}")
         level_db.batch do
@@ -119,6 +128,7 @@ module Bitcoin
         end
       end
 
+      # @param  [string] tx_hash
       # @return [block_height, tx_index, tx_payload]
       def get_tx(tx_hash)
         key = KEY_PREFIX[:tx_hash] + tx_hash
@@ -130,7 +140,7 @@ module Bitcoin
       end
 
       # @param  [Bitcoin::Outpoint] out_point
-      # @return [Bitcoin::Utxo ...] 
+      # @return [Bitcoin::Utxo] 
       def delete_utxo(out_point)
         level_db.batch do
           # [:out_point]
@@ -169,6 +179,8 @@ module Bitcoin
         end
       end
 
+      # @param  [Bitcoin::Outpoint] out_point
+      # @return [Bitcoin::Utxo]
       def get_utxo(out_point)
         level_db.batch do
           key = KEY_PREFIX[:out_point] + out_point.to_payload.bth
@@ -178,6 +190,7 @@ module Bitcoin
         end
       end
 
+      # return [Bitcoin::Utxo ...]
       def list_unspent(current_block_height: 9999999, min: 0, max: 9999999, addresses: nil)
         if addresses
           list_unspent_by_addresses(current_block_height, min: min, max: max, addresses: addresses)
@@ -186,6 +199,8 @@ module Bitcoin
         end
       end
 
+      # @param [Bitcoin::Wallet::Account]
+      # return [Bitcoin::Utxo ...]
       def list_unspent_in_account(account, current_block_height: 9999999, min: 0, max: 9999999)
         return [] unless account
         return [] unless account.purpose == Bitcoin::Wallet::Account::PURPOSE_TYPE[:legacy] or account.purpose == Bitcoin::Wallet::Account::PURPOSE_TYPE[:native_segwit]
@@ -200,6 +215,8 @@ module Bitcoin
         list_unspent_by_script_pubkeys(current_block_height, min: min, max: max, script_pubkeys: script_pubkeys)
       end
 
+      # @param [Bitcoin::Wallet::Account]
+      # return [Bitcoin::Utxo ...]
       def get_balance(account, current_block_height: 9999999, min: 0, max: 9999999)
         list_unspent_in_account(account, current_block_height: current_block_height, min: min, max: max).sum { |u| u.value }
       end
