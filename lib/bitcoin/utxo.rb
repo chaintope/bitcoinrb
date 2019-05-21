@@ -14,18 +14,6 @@ module Bitcoin
       @script_pubkey = script_pubkey
     end
 
-    # def to_payload()
-    #   buf = [hash, index, block_height, value, script_pubkey].pack('V')
-    #   # buf << Bitcoin.pack_var_int(inputs.length) << inputs.map(&:to_payload).join
-    #   # buf << Bitcoin.pack_var_int(outputs.length) << outputs.map(&:to_payload).join
-    #   # buf << [lock_time].pack('V')
-    #   buf
-    # end
-
-    # def parse_from_payload(payload)
-    #   nil
-    # end
-
     def self.parse_from_payload(payload)
       return nil if payload.nil?
 

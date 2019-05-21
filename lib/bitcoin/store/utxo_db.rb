@@ -47,7 +47,6 @@ module Bitcoin
             out.push(save(tx, index, output, block_height))
 
           elsif (output.script_pubkey.p2sh? or output.script_pubkey.p2wsh?) and hashes.include?(output.script_pubkey.to_s)
-            save(tx, index, output, block_height)
             out.push(save(tx, index, output, block_height))
           end
         end
@@ -130,13 +129,8 @@ module Bitcoin
         [block_height, tx_index, tx_payload]
       end
 
-      # deletion:
-      # out_point -> utxo                         [:out_point]
-      # utxo.script_pubkey + out_point -> utxo    [:script]
-      # utxo.block_height + out_point -> utxo     [:height]
-      # utxo.tx_hash -> block_height + tx_index   [:tx_hash]
-      # utxo.block_height + utxo.index -> tx_hash [:block]
-      # utxo.tx_hash -> tx                        [:tx_payload]
+      # @param  [Bitcoin::Outpoint] out_point
+      # @return [Bitcoin::Utxo ...] 
       def delete_utxo(out_point)
         level_db.batch do
           # [:out_point]
@@ -184,15 +178,6 @@ module Bitcoin
         end
       end
 
-      def get_utxo(out_point)
-        level_db.batch do
-          key = KEY_PREFIX[:out_point] + out_point.to_payload.bth
-          return unless level_db.contains?(key)
-          # return Bitcoin::Grpc::Utxo.decode(level_db.get(key).htb)
-          return Bitcoin::Utxo.parse_from_payload(level_db.get(key))
-        end
-      end
-
       def list_unspent(current_block_height: 9999999, min: 0, max: 9999999, addresses: nil)
         if addresses
           list_unspent_by_addresses(current_block_height, min: min, max: max, addresses: addresses)
@@ -212,7 +197,6 @@ module Bitcoin
           script_pubkeys = account.watch_targets.map { |t| Bitcoin::Script.to_p2wpkh(t).to_payload.bth }
         end
         
-        # puts script_pubkeys
         list_unspent_by_script_pubkeys(current_block_height, min: min, max: max, script_pubkeys: script_pubkeys)
       end
 
