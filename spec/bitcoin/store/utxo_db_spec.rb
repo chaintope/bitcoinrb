@@ -17,7 +17,7 @@ describe Bitcoin::Store::UtxoDB do
       addresses
     end
   
-    subject { create_test_utxo_db(wallet) }
+    subject { create_test_utxo_db() }
     after do
       subject.close
     end
@@ -73,7 +73,7 @@ describe Bitcoin::Store::UtxoDB do
       payloads
     end
   
-    subject { create_test_utxo_db(wallet) }
+    subject { create_test_utxo_db() }
     after do
       subject.close
     end
@@ -200,7 +200,7 @@ describe Bitcoin::Store::UtxoDB do
       payloads
     end
   
-    subject { create_test_utxo_db(wallet) }
+    subject { create_test_utxo_db() }
     after do
       subject.close
     end
@@ -252,7 +252,7 @@ describe Bitcoin::Store::UtxoDB do
       payloads
     end
   
-    subject { create_test_utxo_db(wallet) }
+    subject { create_test_utxo_db() }
     after do
       subject.close
     end
@@ -304,7 +304,7 @@ describe Bitcoin::Store::UtxoDB do
       payloads
     end
   
-    subject { create_test_utxo_db(wallet) }
+    subject { create_test_utxo_db() }
     after do
       subject.close
     end

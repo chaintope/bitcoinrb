@@ -15,15 +15,10 @@ module Bitcoin
 
       attr_reader :level_db, :logger
 
-      def initialize(path = "#{Bitcoin.base_dir}/db/utxo", wallet = nil)
+      def initialize(path = "#{Bitcoin.base_dir}/db/utxo")
         FileUtils.mkdir_p(path)
         @level_db = ::LevelDB::DB.new(path)
         @logger = Bitcoin::Logger.create(:debug)
-        if wallet.nil?
-          @wallet = Bitcoin::Wallet::Base.current_wallet
-        else
-          @wallet = wallet
-        end
       end
 
       def close
@@ -64,7 +59,7 @@ module Bitcoin
 
         save_tx(tx.tx_hash, tx.to_payload)
 
-        save_tx_position(tx.tx_hash, block_height, index) if !block_height.nil?
+        save_tx_position(tx.tx_hash, block_height, index) unless block_height.nil?
 
         save_utxo(out_point, output.value, output.script_pubkey, block_height)
 
@@ -74,6 +69,7 @@ module Bitcoin
       # @param  [String] tx_hash
       # @param  [String] tx_payload
       def save_tx(tx_hash, tx_payload)
+        logger.info("UtxoDB#save_tx:#{[tx_hash, tx_payload]}")
         level_db.batch do
           # tx_hash -> [block_height, tx_index]
           key = KEY_PREFIX[:tx_payload] + tx_hash
@@ -85,7 +81,7 @@ module Bitcoin
       # @param  [Integer] block_height
       # @param  [Integer] tx_index
       def save_tx_position(tx_hash, block_height, tx_index)
-        logger.info("UtxoDB#save_tx:#{[tx_hash, block_height, tx_index]}")
+        logger.info("UtxoDB#save_tx_position:#{[tx_hash, block_height, tx_index]}")
         level_db.batch do
           # tx_hash -> [block_height, tx_index]
           key = KEY_PREFIX[:tx_hash] + tx_hash
@@ -146,7 +142,6 @@ module Bitcoin
           # [:out_point]
           key = KEY_PREFIX[:out_point] + out_point.to_payload.bth
           return unless level_db.contains?(key)
-          # utxo = Bitcoin::Grpc::Utxo.decode(level_db.get(key).htb)
           utxo = Bitcoin::Utxo.parse_from_payload(level_db.get(key))
           level_db.delete(key)
 
@@ -185,7 +180,6 @@ module Bitcoin
         level_db.batch do
           key = KEY_PREFIX[:out_point] + out_point.to_payload.bth
           return unless level_db.contains?(key)
-          # return Bitcoin::Grpc::Utxo.decode(level_db.get(key).htb)
           return Bitcoin::Utxo.parse_from_payload(level_db.get(key))
         end
       end
@@ -224,7 +218,6 @@ module Bitcoin
       private
 
       def utxos_between(from, to)
-        # level_db.each(from: from, to: to).map { |k, v| Bitcoin::Grpc::Utxo.decode(v.htb) }
         level_db.each(from: from, to: to).map { |k, v| Bitcoin::Utxo.parse_from_payload(v) }
       end
 

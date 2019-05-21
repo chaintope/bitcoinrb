@@ -73,9 +73,9 @@ end
 
 TEST_UTXO_DB_PATH = Dir.tmpdir + '/db/test_utxo'
 
-def create_test_utxo_db(wallet = nil)
+def create_test_utxo_db()
   FileUtils.rm_r(TEST_UTXO_DB_PATH) if Dir.exist?(TEST_UTXO_DB_PATH)
-  Bitcoin::Store::UtxoDB.new(TEST_UTXO_DB_PATH, wallet)
+  Bitcoin::Store::UtxoDB.new(TEST_UTXO_DB_PATH)
 end
 
 module Bitcoin
