@@ -126,7 +126,7 @@ module Bitcoin
       v = version
       case v
       when Bitcoin.chain_params.bip49_privkey_p2wpkh_p2sh_version
-        Bitcoin::Key::TYPES[:pw2pkh_p2sh]
+        Bitcoin::Key::TYPES[:p2wpkh_p2sh]
       when Bitcoin.chain_params.bip84_privkey_p2wpkh_version
         Bitcoin::Key::TYPES[:p2wpkh]
       when Bitcoin.chain_params.extended_privkey_version
@@ -280,7 +280,7 @@ module Bitcoin
       v = version
       case v
       when Bitcoin.chain_params.bip49_pubkey_p2wpkh_p2sh_version
-        Bitcoin::Key::TYPES[:pw2pkh_p2sh]
+        Bitcoin::Key::TYPES[:p2wpkh_p2sh]
       when Bitcoin.chain_params.bip84_pubkey_p2wpkh_version
         Bitcoin::Key::TYPES[:p2wpkh]
       when Bitcoin.chain_params.extended_pubkey_version

@@ -248,7 +248,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
         expect(receive_key.ext_pubkey.version).to eq('044a5262')
         # address derivation for P2WPKH-in-P2SH
         expect(receive_key.addr).to eq('2Mww8dCYPUpKHofjgcXcBCEGmniw9CoaiD2')
-        expect(receive_key.key_type).to eq(Bitcoin::Key::TYPES[:pw2pkh_p2sh])
+        expect(receive_key.key_type).to eq(Bitcoin::Key::TYPES[:p2wpkh_p2sh])
       end
     end
   end

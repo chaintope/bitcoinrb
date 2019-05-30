@@ -16,7 +16,7 @@ module Bitcoin
     attr_accessor :key_type
     attr_reader :secp256k1_module
 
-    TYPES = {uncompressed: 0x00, compressed: 0x01, p2pkh: 0x10, p2wpkh: 0x11, pw2pkh_p2sh: 0x12}
+    TYPES = {uncompressed: 0x00, compressed: 0x01, p2pkh: 0x10, p2wpkh: 0x11, p2wpkh_p2sh: 0x12}
 
     MIN_PRIV_KEY_MOD_ORDER = 0x01
     # Order of secp256k1's generator minus 1.
