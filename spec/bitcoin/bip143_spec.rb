@@ -4,7 +4,7 @@ describe 'BIP 143 spec', use_secp256k1: true do
 
   # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#Example
 
-  describe 'Native P2WPKPH' do
+  describe 'Native P2WPKH' do
     it 'verify ecdsa signature' do
       tx = Bitcoin::Tx.parse_from_payload('0100000002fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f0000000000eeffffffef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a0100000000ffffffff02202cb206000000001976a9148280b37df378db99f66f85c95a783a76ac7a6d5988ac9093510d000000001976a9143bde42dbee7e4dbe6a21b2d50ce2f0167faa815988ac11000000'.htb)
 
@@ -41,7 +41,7 @@ describe 'BIP 143 spec', use_secp256k1: true do
 
       tx.inputs[0].script_sig = Bitcoin::Script.parse_from_payload(Bitcoin::Script.pack_pushdata(redeem_script.to_payload))
 
-      key = Bitcoin::Key.new(priv_key: 'eb696a065ef48a2192da5b28b694f87544b30fae8327c4510137a922f32c6dcf', key_type: Bitcoin::Key::TYPES[:pw2pkh_p2sh])
+      key = Bitcoin::Key.new(priv_key: 'eb696a065ef48a2192da5b28b694f87544b30fae8327c4510137a922f32c6dcf', key_type: Bitcoin::Key::TYPES[:p2wpkh_p2sh])
       sig_hash = tx.sighash_for_input(0, redeem_script, amount: 1000000000, sig_version: :witness_v0)
       sig = key.sign(sig_hash, false) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
 
@@ -97,7 +97,7 @@ describe 'BIP 143 spec', use_secp256k1: true do
 
       tx = Bitcoin::Tx.parse_from_payload('010000000136641869ca081e70f394c6948e8af409e18b619df2ed74aa106c1ca29787b96e0100000000ffffffff0200e9a435000000001976a914389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2688acc0832f05000000001976a9147480a33f950689af511e6e84c138dbbd3c3ee41588ac00000000'.htb)
       tx.inputs[0].script_sig = Bitcoin::Script.parse_from_payload(Bitcoin::Script.pack_pushdata(redeem_script.to_payload))
-      
+
       tx.inputs[0].script_witness.stack << ''
 
       sig_hash0 = tx.sighash_for_input(0, witness_script, amount: 987654321, sig_version: :witness_v0)
