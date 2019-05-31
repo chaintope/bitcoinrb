@@ -103,7 +103,7 @@ module Bitcoin
       end
 
       def next_partial
-        return nil if root? && (flag.zero? || (left.partial? && right.partial?))
+        return nil if root? && (flag.zero? || (left.nil? && right.nil?) || (left.partial? && right.partial?))
         return parent.next_partial if flag.zero? || leaf?
         return left unless left.partial?
         self.right = left.dup unless right

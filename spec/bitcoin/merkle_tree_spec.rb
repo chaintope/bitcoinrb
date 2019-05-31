@@ -60,6 +60,16 @@ describe Bitcoin::MerkleTree do
       end
     end
 
+    context 'include coinbase tx only' do
+      subject {
+        hashes = ['36a39ed285a4ffdb141c16af1eb1029bf18a18a7fdc54c70561d9371714f0c74']
+        Bitcoin::MerkleTree.build_partial(1, hashes, Bitcoin.byte_to_bit('01'.htb))
+      }
+      it 'should be build' do
+        expect(subject.merkle_root).to eq('36a39ed285a4ffdb141c16af1eb1029bf18a18a7fdc54c70561d9371714f0c74')
+      end
+    end
+
     context 'include tx' do
       subject {
         # 000000000000b731f2eef9e8c63173adfb07e41bd53eb0ef0a6b720d6cb6dea4 mainnet block
