@@ -14,11 +14,15 @@ module Bitcoin
     end
 
     def self.build_from_leaf(txids)
-      nodes = txids.each_slice(2).map{ |m|
-        left = Node.new(m[0])
-        right = Node.new(m[1] ? m[1] : m[0])
-        [left, right]
-      }.flatten
+      if txids.size == 1
+        nodes = [Node.new(txids.first)]
+      else
+        nodes = txids.each_slice(2).map{ |m|
+          left = Node.new(m[0])
+          right = Node.new(m[1] ? m[1] : m[0])
+          [left, right]
+        }.flatten
+      end
       new(build_initial_tree(nodes))
     end
 
