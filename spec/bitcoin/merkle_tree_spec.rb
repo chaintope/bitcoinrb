@@ -46,6 +46,16 @@ describe Bitcoin::MerkleTree do
     it 'should be build' do
       expect(subject.merkle_root).to eq('8c380e4ec4582616f5fa29dfb8a7e47b4b3cf82fc8b504a17fca24407aafe9ef')
     end
+
+    context 'include coinbase tx only' do
+      subject {
+        tx_hashes = ['36a39ed285a4ffdb141c16af1eb1029bf18a18a7fdc54c70561d9371714f0c74']
+        Bitcoin::MerkleTree.build_from_leaf(tx_hashes)
+      }
+      it 'should be build' do
+        expect(subject.merkle_root).to eq('36a39ed285a4ffdb141c16af1eb1029bf18a18a7fdc54c70561d9371714f0c74')
+      end
+    end
   end
 
   describe 'build partial merkle tree' do
@@ -57,6 +67,16 @@ describe Bitcoin::MerkleTree do
       }
       it 'should be build' do
         expect(subject.merkle_root).to eq('5be239fdd6c626d196288bd2a4175258dc772370be25d52ea46a09ece54f6f9f')
+      end
+    end
+
+    context 'include coinbase tx only' do
+      subject {
+        hashes = ['36a39ed285a4ffdb141c16af1eb1029bf18a18a7fdc54c70561d9371714f0c74']
+        Bitcoin::MerkleTree.build_partial(1, hashes, Bitcoin.byte_to_bit('01'.htb))
+      }
+      it 'should be build' do
+        expect(subject.merkle_root).to eq('36a39ed285a4ffdb141c16af1eb1029bf18a18a7fdc54c70561d9371714f0c74')
       end
     end
 

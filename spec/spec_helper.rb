@@ -47,14 +47,14 @@ def load_payment(file_name)
   File.read(File.join(File.dirname(__FILE__), 'fixtures', "payments/#{file_name}"))
 end
 
-TEST_DB_PATH = Dir.tmpdir + '/spv'
+TEST_DB_PATH = "#{Dir.tmpdir}/#{ENV['TEST_ENV_NUMBER']}/spv"
 
 def create_test_chain
   FileUtils.rm_r(TEST_DB_PATH) if Dir.exist?(TEST_DB_PATH)
   Bitcoin::Store::SPVChain.new(Bitcoin::Store::DB::LevelDB.new(TEST_DB_PATH))
 end
 
-TEST_WALLET_PATH = Dir.tmpdir + '/wallet-test/'
+TEST_WALLET_PATH = "#{Dir.tmpdir}/#{ENV['TEST_ENV_NUMBER']}/wallet-test/"
 
 def test_wallet_path(wallet_id = 1)
   "#{TEST_WALLET_PATH}wallet#{wallet_id}/"
