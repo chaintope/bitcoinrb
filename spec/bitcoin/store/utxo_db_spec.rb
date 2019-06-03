@@ -1,6 +1,25 @@
 require 'spec_helper'
 
 describe Bitcoin::Store::UtxoDB do 
+  class Helper
+    def get_addresses(account)
+      return [] unless account.purpose == Bitcoin::Wallet::Account::PURPOSE_TYPE[:legacy] or account.purpose == Bitcoin::Wallet::Account::PURPOSE_TYPE[:nested_witness] or account.purpose == Bitcoin::Wallet::Account::PURPOSE_TYPE[:native_segwit]
+      keys = account.wallet.db.get_keys(account)
+      addresses = []
+      keys.each do |key|
+        case account.purpose 
+        when Bitcoin::Wallet::Account::PURPOSE_TYPE[:legacy]
+          addresses.push(Bitcoin::Key.new(pubkey: key, key_type: Bitcoin::Key::TYPES[:p2pkh]).to_p2pkh)
+        when Bitcoin::Wallet::Account::PURPOSE_TYPE[:nested_witness]
+          addresses.push(Bitcoin::Key.new(pubkey: key, key_type: Bitcoin::Key::TYPES[:p2pkh]).to_nested_p2wpkh)
+        when Bitcoin::Wallet::Account::PURPOSE_TYPE[:native_segwit]
+          addresses.push(Bitcoin::Key.new(pubkey: key, key_type: Bitcoin::Key::TYPES[:p2wpkh]).to_p2wpkh)
+        end
+      end
+      addresses
+    end
+  end
+
   describe 'verify test setup' do
     let(:wallet) do
       wallet = create_test_wallet(1, Bitcoin::Wallet::Account::PURPOSE_TYPE[:legacy])
@@ -113,7 +132,9 @@ describe Bitcoin::Store::UtxoDB do
       payload = payloads[0]
       tx = Bitcoin::Tx.parse_from_payload(payload.htb)
 
-      hashes = wallet.db.get_keys_and_addresses(wallet.accounts[0])
+      # hashes = wallet.db.get_keys_and_addresses(wallet.accounts[0])
+      helper = Helper.new
+      hashes = helper.get_addresses(wallet.accounts[0])
       out = subject.filter_and_save_tx(hashes, tx)
       expect(out.length).to eq(1)
 
@@ -133,7 +154,9 @@ describe Bitcoin::Store::UtxoDB do
       tx = Bitcoin::Tx.parse_from_payload(payload.htb)
 
       # save utxo
-      hashes = wallet.db.get_keys_and_addresses(wallet.accounts[0])
+      # hashes = wallet.db.get_keys_and_addresses(wallet.accounts[0])
+      helper = Helper.new
+      hashes = helper.get_addresses(wallet.accounts[0])
       out = subject.filter_and_save_tx(hashes, tx, block_height)
       expect(out.length).to eq(1)
 
@@ -209,7 +232,9 @@ describe Bitcoin::Store::UtxoDB do
       payload = payloads[0]
       tx = Bitcoin::Tx.parse_from_payload(payload.htb)
 
-      hashes = wallet.db.get_keys_and_addresses(wallet.accounts[0])
+      # hashes = wallet.db.get_keys_and_addresses(wallet.accounts[0])
+      helper = Helper.new
+      hashes = helper.get_addresses(wallet.accounts[0])
       out = subject.filter_and_save_tx(hashes, tx)
       expect(out.length).to eq(1)
 
