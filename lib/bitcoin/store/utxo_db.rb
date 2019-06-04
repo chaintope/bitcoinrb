@@ -100,7 +100,7 @@ module Bitcoin
       def save_utxo(out_point, value, script_pubkey, block_height=nil)
         logger.info("UtxoDB#save_utxo:#{[out_point, value, script_pubkey, block_height]}")
         level_db.batch do
-          utxo = Bitcoin::Utxo.new(out_point.hash, out_point.index, value, script_pubkey, block_height)
+          utxo = Bitcoin::Wallet::Utxo.new(out_point.hash, out_point.index, value, script_pubkey, block_height)
           payload = utxo.to_payload
 
           # out_point
@@ -136,13 +136,13 @@ module Bitcoin
       end
 
       # @param  [Bitcoin::Outpoint] out_point
-      # @return [Bitcoin::Utxo] 
+      # @return [Bitcoin::Wallet::Utxo] 
       def delete_utxo(out_point)
         level_db.batch do
           # [:out_point]
           key = KEY_PREFIX[:out_point] + out_point.to_payload.bth
           return unless level_db.contains?(key)
-          utxo = Bitcoin::Utxo.parse_from_payload(level_db.get(key))
+          utxo = Bitcoin::Wallet::Utxo.parse_from_payload(level_db.get(key))
           level_db.delete(key)
 
           # [:script]
@@ -175,16 +175,16 @@ module Bitcoin
       end
 
       # @param  [Bitcoin::Outpoint] out_point
-      # @return [Bitcoin::Utxo]
+      # @return [Bitcoin::Wallet::Utxo]
       def get_utxo(out_point)
         level_db.batch do
           key = KEY_PREFIX[:out_point] + out_point.to_payload.bth
           return unless level_db.contains?(key)
-          return Bitcoin::Utxo.parse_from_payload(level_db.get(key))
+          return Bitcoin::Wallet::Utxo.parse_from_payload(level_db.get(key))
         end
       end
 
-      # return [Bitcoin::Utxo ...]
+      # return [Bitcoin::Wallet::Utxo ...]
       def list_unspent(current_block_height: 9999999, min: 0, max: 9999999, addresses: nil)
         if addresses
           list_unspent_by_addresses(current_block_height, min: min, max: max, addresses: addresses)
@@ -194,7 +194,7 @@ module Bitcoin
       end
 
       # @param [Bitcoin::Wallet::Account]
-      # return [Bitcoin::Utxo ...]
+      # return [Bitcoin::Wallet::Utxo ...]
       def list_unspent_in_account(account, current_block_height: 9999999, min: 0, max: 9999999)
         return [] unless account
         return [] unless account.purpose == Bitcoin::Wallet::Account::PURPOSE_TYPE[:legacy] or account.purpose == Bitcoin::Wallet::Account::PURPOSE_TYPE[:native_segwit]
@@ -210,7 +210,7 @@ module Bitcoin
       end
 
       # @param [Bitcoin::Wallet::Account]
-      # return [Bitcoin::Utxo ...]
+      # return [Bitcoin::Wallet::Utxo ...]
       def get_balance(account, current_block_height: 9999999, min: 0, max: 9999999)
         list_unspent_in_account(account, current_block_height: current_block_height, min: min, max: max).sum { |u| u.value }
       end
@@ -218,7 +218,7 @@ module Bitcoin
       private
 
       def utxos_between(from, to)
-        level_db.each(from: from, to: to).map { |k, v| Bitcoin::Utxo.parse_from_payload(v) }
+        level_db.each(from: from, to: to).map { |k, v| Bitcoin::Wallet::Utxo.parse_from_payload(v) }
       end
 
       class ::Array

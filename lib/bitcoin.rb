@@ -51,7 +51,6 @@ module Bitcoin
   autoload :BlockFilter, 'bitcoin/block_filter'
   autoload :BitStreamWriter, 'bitcoin/bit_stream'
   autoload :BitStreamReader, 'bitcoin/bit_stream'
-  autoload :Utxo, 'bitcoin/utxo'
 
   require_relative 'bitcoin/constants'
 

@@ -141,7 +141,7 @@ describe Bitcoin::Store::UtxoDB do
       value = tx.outputs[0].value;
       script_pubkey = tx.outputs[0].script_pubkey
       block_height = nil
-      utxo = Bitcoin::Utxo.new(out_point.hash, out_point.index, value, script_pubkey, block_height)
+      utxo = Bitcoin::Wallet::Utxo.new(out_point.hash, out_point.index, value, script_pubkey, block_height)
       got_utxo = subject.get_utxo(out_point)
       expect(got_utxo.to_payload.unpack('H*')).to eq(utxo.to_payload.unpack('H*'))
     end
@@ -162,7 +162,7 @@ describe Bitcoin::Store::UtxoDB do
       out_point = out[0]
       value = tx.outputs[0].value;
       script_pubkey = tx.outputs[0].script_pubkey      
-      utxo = Bitcoin::Utxo.new(out_point.hash, out_point.index, value, script_pubkey, block_height)
+      utxo = Bitcoin::Wallet::Utxo.new(out_point.hash, out_point.index, value, script_pubkey, block_height)
       got_utxo = subject.get_utxo(out_point)
       expect(got_utxo.to_payload.unpack('H*')).to eq(utxo.to_payload.unpack('H*'))
 
@@ -239,7 +239,7 @@ describe Bitcoin::Store::UtxoDB do
       value = tx.outputs[0].value;
       script_pubkey = tx.outputs[0].script_pubkey
       block_height = nil
-      utxo = Bitcoin::Utxo.new(out_point.hash, out_point.index, value, script_pubkey, block_height)
+      utxo = Bitcoin::Wallet::Utxo.new(out_point.hash, out_point.index, value, script_pubkey, block_height)
       got_utxo = subject.get_utxo(out_point)
       expect(got_utxo.to_payload.unpack('H*')).to eq(utxo.to_payload.unpack('H*'))
     end
@@ -290,7 +290,7 @@ describe Bitcoin::Store::UtxoDB do
       value = tx.outputs[0].value;
       script_pubkey = tx.outputs[0].script_pubkey
       block_height = nil
-      utxo = Bitcoin::Utxo.new(out_point.hash, out_point.index, value, script_pubkey, block_height)
+      utxo = Bitcoin::Wallet::Utxo.new(out_point.hash, out_point.index, value, script_pubkey, block_height)
       got_utxo = subject.get_utxo(out_point)
       expect(got_utxo.to_payload.unpack('H*')).to eq(utxo.to_payload.unpack('H*'))
     end
@@ -346,7 +346,7 @@ describe Bitcoin::Store::UtxoDB do
       value = tx.outputs[0].value;
       script_pubkey = tx.outputs[0].script_pubkey
       block_height = nil
-      utxo = Bitcoin::Utxo.new(out_point.hash, out_point.index, value, script_pubkey, block_height)
+      utxo = Bitcoin::Wallet::Utxo.new(out_point.hash, out_point.index, value, script_pubkey, block_height)
       got_utxo = subject.get_utxo(out_point)
       expect(got_utxo.to_payload.unpack('H*')).to eq(utxo.to_payload.unpack('H*'))
     end
