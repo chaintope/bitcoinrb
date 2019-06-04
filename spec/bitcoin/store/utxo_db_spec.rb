@@ -132,7 +132,6 @@ describe Bitcoin::Store::UtxoDB do
       payload = payloads[0]
       tx = Bitcoin::Tx.parse_from_payload(payload.htb)
 
-      # hashes = wallet.db.get_keys_and_addresses(wallet.accounts[0])
       helper = Helper.new
       hashes = helper.get_addresses(wallet.accounts[0])
       out = subject.filter_and_save_tx(hashes, tx)
@@ -154,7 +153,6 @@ describe Bitcoin::Store::UtxoDB do
       tx = Bitcoin::Tx.parse_from_payload(payload.htb)
 
       # save utxo
-      # hashes = wallet.db.get_keys_and_addresses(wallet.accounts[0])
       helper = Helper.new
       hashes = helper.get_addresses(wallet.accounts[0])
       out = subject.filter_and_save_tx(hashes, tx, block_height)
@@ -232,7 +230,6 @@ describe Bitcoin::Store::UtxoDB do
       payload = payloads[0]
       tx = Bitcoin::Tx.parse_from_payload(payload.htb)
 
-      # hashes = wallet.db.get_keys_and_addresses(wallet.accounts[0])
       helper = Helper.new
       hashes = helper.get_addresses(wallet.accounts[0])
       out = subject.filter_and_save_tx(hashes, tx)
