@@ -233,6 +233,14 @@ module Bitcoin
       }
     end
 
+    # Verify transaction validity.
+    # @return [Boolean] whether this tx is valid or not.
+    def valid?
+      state = Bitcoin::ValidationState.new
+      validation = Bitcoin::Validation.new
+      validation.check_tx(self, state) && state.valid?
+    end
+
     private
 
     # generate sighash with legacy format
