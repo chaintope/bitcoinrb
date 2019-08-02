@@ -45,6 +45,30 @@ module Bitcoin
       to_payload == other.to_payload
     end
 
+    # Returns this output bytesize
+    # @return [Integer] bytesize
+    def size
+      to_payload.bytesize
+    end
+
+    # Whether this output is dust or not
+    # @return [Boolean]
+    def dust?
+      value < dust_threshold
+    end
+
+    private
+
+    def dust_threshold
+      return 0 if script_pubkey.unspendable?
+      n_size = size
+      n_size += script_pubkey.witness_program? ? (32 + 4 + 1 + (107 / Bitcoin::WITNESS_SCALE_FACTOR) + 4) : (32 + 4 + 1 + 107 + 4)
+      fee = n_size * Bitcoin.chain_params.dust_relay_fee / 1000
+      if fee == 0 && n_size != 0
+        fee = Bitcoin.chain_params.dust_relay_fee > 0 ? 1 : -1
+      end
+      fee
+    end
   end
 
 end

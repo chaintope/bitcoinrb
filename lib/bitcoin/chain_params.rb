@@ -34,22 +34,24 @@ module Bitcoin
     attr_reader :genesis
     attr_reader :bip44_coin_type
 
+    attr_accessor :dust_relay_fee
+
     # fork coin id.
     attr_accessor :fork_id
 
     # mainnet genesis
     def self.mainnet
-      YAML.load(File.open("#{__dir__}/chainparams/mainnet.yml"))
+      init('mainnet')
     end
 
     # testnet genesis
     def self.testnet
-      YAML.load(File.open("#{__dir__}/chainparams/testnet.yml"))
+      init('testnet')
     end
 
     # regtest genesis
     def self.regtest
-      YAML.load(File.open("#{__dir__}/chainparams/regtest.yml"))
+      init('regtest')
     end
 
     def mainnet?
@@ -76,6 +78,13 @@ module Bitcoin
       !fork_id.nil?
     end
 
+    def self.init(name)
+      i = YAML.load(File.open("#{__dir__}/chainparams/#{name}.yml"))
+      i.dust_relay_fee ||= Bitcoin::DUST_RELAY_TX_FEE
+      i
+    end
+
+    private_class_method :init
   end
 
 end

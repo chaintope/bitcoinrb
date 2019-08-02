@@ -156,7 +156,7 @@ module Bitcoin
         return false unless o.script_pubkey.standard?
         data_count += 1 if o.script_pubkey.op_return?
         # TODO add non P2SH multisig relay(permitbaremultisig)
-        # TODO add dust relay check
+        return false if o.dust?
       end
       return false if data_count > 1
       true
