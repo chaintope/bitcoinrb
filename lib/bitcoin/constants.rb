@@ -22,6 +22,9 @@ module Bitcoin
   LOCKTIME_VERIFY_SEQUENCE = (1 << 0)
   LOCKTIME_MEDIAN_TIME_PAST = (1 << 1)
 
+  # Min feerate for defining dust.
+  DUST_RELAY_TX_FEE = 3000
+
   # script verify flags
   SCRIPT_VERIFY_NONE      = 0
   SCRIPT_VERIFY_P2SH      = (1 << 0)
