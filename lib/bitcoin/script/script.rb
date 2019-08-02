@@ -495,6 +495,13 @@ module Bitcoin
       h
     end
 
+    # Returns whether the script is guaranteed to fail at execution, regardless of the initial stack.
+    # This allows outputs to be pruned instantly when entering the UTXO set.
+    # @return [Boolean] whether the script is guaranteed to fail at execution
+    def unspendable?
+      (size > 0 && op_return?) || size > Bitcoin::MAX_SCRIPT_SIZE
+    end
+
     private
 
     # generate p2pkh address. if script dose not p2pkh, return nil.
