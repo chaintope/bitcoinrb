@@ -53,6 +53,7 @@ module Bitcoin
       data = 0
       while nbits > 0
         if offset == 8
+          raise IOError, 'stream is empty.' if stream.eof?
           self.buffer = stream.read(1).bth.to_i(16)
           self.offset = 0
         end
