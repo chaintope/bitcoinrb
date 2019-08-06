@@ -40,7 +40,7 @@ module Bitcoin
             output.witness_script = value
           when PSBT_OUT_TYPES[:bip32_derivation]
             raise ArgumentError, 'Duplicate Key, pubkey derivation path already provided' if output.hd_key_paths[key.bth]
-            output.hd_key_paths[key.bth] = Bitcoin::PSBT::HDKeyPath.parse_from_payload(key, value)
+            output.hd_key_paths[key.bth] = Bitcoin::PSBT::HDKeyPath.new(key, Bitcoin::PSBT::KeyOriginInfo.parse_from_payload(value))
           else
             unknown_key = ([key_type].pack('C') + key).bth
             raise ArgumentError, 'Duplicate Key, key for unknown value already provided' if output.unknowns[unknown_key]

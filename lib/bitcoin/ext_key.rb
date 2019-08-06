@@ -3,8 +3,6 @@ module Bitcoin
   # Integers modulo the order of the curve(secp256k1)
   CURVE_ORDER = ECDSA::Group::Secp256k1.order
 
-  HARDENED_THRESHOLD = 2147483648 # 2**31
-
   # BIP32 Extended private key
   class ExtKey
 
@@ -85,7 +83,7 @@ module Bitcoin
 
     # whether hardened key.
     def hardened?
-      number >= HARDENED_THRESHOLD
+      number >= Bitcoin::HARDENED_THRESHOLD
     end
 
     # derive new key
@@ -93,12 +91,12 @@ module Bitcoin
     # @param [Boolean] harden whether hardened key or not. If true, 2^31 is added to +number+.
     # @return [Bitcoin::ExtKey] derived new key.
     def derive(number, harden = false)
-      number += HARDENED_THRESHOLD if harden
+      number += Bitcoin::HARDENED_THRESHOLD if harden
       new_key = ExtKey.new
       new_key.depth = depth + 1
       new_key.number = number
       new_key.parent_fingerprint = fingerprint
-      if number > (HARDENED_THRESHOLD - 1)
+      if number > (Bitcoin::HARDENED_THRESHOLD - 1)
         data = [0x00].pack('C') << key.priv_key.htb << [number].pack('N')
       else
         data = key.pubkey.htb << [number].pack('N')
@@ -134,6 +132,10 @@ module Bitcoin
       end
     end
 
+    def ==(other)
+      to_payload == other.to_payload
+    end
+
     def self.parse_from_payload(payload)
       buf = StringIO.new(payload)
       ext_key = ExtKey.new
@@ -155,7 +157,7 @@ module Bitcoin
 
     # get version bytes from purpose' value.
     def self.version_from_purpose(purpose)
-      v = purpose - HARDENED_THRESHOLD
+      v = purpose - Bitcoin::HARDENED_THRESHOLD
       case v
         when 49
           Bitcoin.chain_params.bip49_privkey_p2wpkh_p2sh_version
@@ -247,7 +249,7 @@ module Bitcoin
 
     # whether hardened key.
     def hardened?
-      number >= HARDENED_THRESHOLD
+      number >= Bitcoin::HARDENED_THRESHOLD
     end
 
     # derive child key
@@ -256,7 +258,7 @@ module Bitcoin
       new_key.depth = depth + 1
       new_key.number = number
       new_key.parent_fingerprint = fingerprint
-      raise 'hardened key is not support' if number > (HARDENED_THRESHOLD - 1)
+      raise 'hardened key is not support' if number > (Bitcoin::HARDENED_THRESHOLD - 1)
       data = pub.htb << [number].pack('N')
       l = Bitcoin.hmac_sha512(chain_code, data)
       left = l[0..31].bth.to_i(16)
@@ -288,6 +290,10 @@ module Bitcoin
       end
     end
 
+    def ==(other)
+      to_payload == other.to_payload
+    end
+
     def self.parse_from_payload(payload)
       buf = StringIO.new(payload)
       ext_pubkey = ExtPubkey.new
@@ -301,6 +307,7 @@ module Bitcoin
       ext_pubkey
     end
 
+
     # import pub key from Base58 private key address
     def self.from_base58(address)
       ExtPubkey.parse_from_payload(Base58.decode(address).htb)
@@ -308,7 +315,7 @@ module Bitcoin
 
     # get version bytes from purpose' value.
     def self.version_from_purpose(purpose)
-      v = purpose - HARDENED_THRESHOLD
+      v = purpose - Bitcoin::HARDENED_THRESHOLD
       case v
         when 49
           Bitcoin.chain_params.bip49_pubkey_p2wpkh_p2sh_version

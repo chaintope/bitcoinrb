@@ -52,6 +52,14 @@ describe Bitcoin::PSBT do
     expect(psbt.inputs[0].partial_sigs.size).to eq(1)
     expect(psbt.to_base64).to eq('cHNidP8BAFUCAAAAASeaIyOl37UfxF8iD6WLD8E+HjNCeSqF1+Ns1jM7XLw5AAAAAAD/////AaBa6gsAAAAAGXapFP/pwAYQl8w7Y28ssEYPpPxCfStFiKwAAAAAAAEBIJVe6gsAAAAAF6kUY0UgD2jRieGtwN8cTRbqjxTA2+uHIgIDsTQcy6doO2r08SOM1ul+cWfVafrEfx5I1HVBhENVvUZGMEMCIAQktY7/qqaU4VWepck7v9SokGQiQFXN8HC2dxRpRC0HAh9cjrD+plFtYLisszrWTt5g6Hhb+zqpS5m9+GFR25qaAQEEIgAgdx/RitRZZm3Unz1WTj28QvTIR3TjYK2haBao7UiNVoEBBUdSIQOxNBzLp2g7avTxI4zW6X5xZ9Vp+sR/HkjUdUGEQ1W9RiED3lXR4drIBeP4pYwfv5uUwC89uq/hJ/78pJlfJvggg71SriIGA7E0HMunaDtq9PEjjNbpfnFn1Wn6xH8eSNR1QYRDVb1GELSmumcAAACAAAAAgAQAAIAiBgPeVdHh2sgF4/iljB+/m5TALz26r+En/vykmV8m+CCDvRC0prpnAAAAgAAAAIAFAACAAAA=')
 
+    # Case: PSBT with one P2WSH input of a 2-of-2 multisig. witnessScript, keypaths, and global xpubs are available. Contains no signatures. Outputs filled.
+    psbt = Bitcoin::PSBT::Tx.parse_from_payload('70736274ff01005202000000019dfc6628c26c5899fe1bd3dc338665bfd55d7ada10f6220973df2d386dec12760100000000ffffffff01f03dcd1d000000001600147b3a00bfdc14d27795c2b74901d09da6ef133579000000004f01043587cf02da3fd0088000000097048b1ad0445b1ec8275517727c87b4e4ebc18a203ffa0f94c01566bd38e9000351b743887ee1d40dc32a6043724f2d6459b3b5a4d73daec8fbae0472f3bc43e20cd90c6a4fae000080000000804f01043587cf02da3fd00880000001b90452427139cd78c2cff2444be353cd58605e3e513285e528b407fae3f6173503d30a5e97c8adbc557dac2ad9a7e39c1722ebac69e668b6f2667cc1d671c83cab0cd90c6a4fae000080010000800001012b0065cd1d000000002200202c5486126c4978079a814e13715d65f36459e4d6ccaded266d0508645bafa6320105475221029da12cdb5b235692b91536afefe5c91c3ab9473d8e43b533836ab456299c88712103372b34234ed7cf9c1fea5d05d441557927be9542b162eb02e1ab2ce80224c00b52ae2206029da12cdb5b235692b91536afefe5c91c3ab9473d8e43b533836ab456299c887110d90c6a4fae0000800000008000000000220603372b34234ed7cf9c1fea5d05d441557927be9542b162eb02e1ab2ce80224c00b10d90c6a4fae0000800100008000000000002202039eff1f547a1d5f92dfa2ba7af6ac971a4bd03ba4a734b03156a256b8ad3a1ef910ede45cc500000080000000800100008000'.htb)
+    expect(psbt.xpubs.size).to eq(2)
+    # Global xpub use key derivation for inputs
+    expect(psbt.inputs.first.hd_key_paths[psbt.xpubs[0].xpub.derive(0).pub].pubkey).to eq(psbt.xpubs[0].xpub.derive(0).pub)
+    expect(psbt.inputs.first.hd_key_paths[psbt.xpubs[1].xpub.derive(0).pub].pubkey).to eq(psbt.xpubs[1].xpub.derive(0).pub)
+    expect(psbt.to_base64).to eq('cHNidP8BAFICAAAAAZ38ZijCbFiZ/hvT3DOGZb/VXXraEPYiCXPfLTht7BJ2AQAAAAD/////AfA9zR0AAAAAFgAUezoAv9wU0neVwrdJAdCdpu8TNXkAAAAATwEENYfPAto/0AiAAAAAlwSLGtBEWx7IJ1UXcnyHtOTrwYogP/oPlMAVZr046QADUbdDiH7h1A3DKmBDck8tZFmztaTXPa7I+64EcvO8Q+IM2QxqT64AAIAAAACATwEENYfPAto/0AiAAAABuQRSQnE5zXjCz/JES+NTzVhgXj5RMoXlKLQH+uP2FzUD0wpel8itvFV9rCrZp+OcFyLrrGnmaLbyZnzB1nHIPKsM2QxqT64AAIABAACAAAEBKwBlzR0AAAAAIgAgLFSGEmxJeAeagU4TcV1l82RZ5NbMre0mbQUIZFuvpjIBBUdSIQKdoSzbWyNWkrkVNq/v5ckcOrlHPY5DtTODarRWKZyIcSEDNys0I07Xz5wf6l0F1EFVeSe+lUKxYusC4ass6AIkwAtSriIGAp2hLNtbI1aSuRU2r+/lyRw6uUc9jkO1M4NqtFYpnIhxENkMak+uAACAAAAAgAAAAAAiBgM3KzQjTtfPnB/qXQXUQVV5J76VQrFi6wLhqyzoAiTACxDZDGpPrgAAgAEAAIAAAAAAACICA57/H1R6HV+S36K6evaslxpL0DukpzSwMVaiVritOh75EO3kXMUAAACAAAAAgAEAAIAA')
+
     # Case: PSBT with unknown types in the inputs.
     psbt = Bitcoin::PSBT::Tx.parse_from_payload('70736274ff01003f0200000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000ffffffff010000000000000000036a010000000000000a0f0102030405060708090f0102030405060708090a0b0c0d0e0f0000'.htb)
     expect(psbt.inputs.size).to eq(1)
@@ -130,12 +138,12 @@ describe Bitcoin::PSBT do
     # for script 2
     witness_script = Bitcoin::Script.parse_from_payload('522103089dc10c7ac6db54f91329af617333db388cead0c231f723379d1b99030b02dc21023add904f3d6dcf59ddb906b0dee23529b7ffb9ed50e5e86151926860221f0e7352ae'.htb)
 
-    hk0 = Bitcoin::PSBT::HDKeyPath.new('029583bf39ae0a609747ad199addd634fa6108559d6c5cd39b4c2183f1ab96e07f', fingerprint: 'd90c6a4f', path: [2**31, 2**31, 2**31])
-    hk1 = Bitcoin::PSBT::HDKeyPath.new('02dab61ff49a14db6a7d02b0cd1fbb78fc4b18312b5b4e54dae4dba2fbfef536d7', fingerprint: 'd90c6a4f', path: [2**31, 2**31, 2**31 + 1])
-    hk2 = Bitcoin::PSBT::HDKeyPath.new('03089dc10c7ac6db54f91329af617333db388cead0c231f723379d1b99030b02dc', fingerprint: 'd90c6a4f', path: [2**31, 2**31, 2**31 + 2])
-    hk3 = Bitcoin::PSBT::HDKeyPath.new('023add904f3d6dcf59ddb906b0dee23529b7ffb9ed50e5e86151926860221f0e73', fingerprint: 'd90c6a4f', path: [2**31, 2**31, 2**31 + 3])
-    hk4 = Bitcoin::PSBT::HDKeyPath.new('03a9a4c37f5996d3aa25dbac6b570af0650394492942460b354753ed9eeca58771', fingerprint: 'd90c6a4f', path: [2**31, 2**31, 2**31 + 4])
-    hk5 = Bitcoin::PSBT::HDKeyPath.new('027f6399757d2eff55a136ad02c684b1838b6556e5f1b6b34282a94b6b50051096', fingerprint: 'd90c6a4f', path: [2**31, 2**31, 2**31 + 5])
+    hk0 = Bitcoin::PSBT::HDKeyPath.new('029583bf39ae0a609747ad199addd634fa6108559d6c5cd39b4c2183f1ab96e07f', Bitcoin::PSBT::KeyOriginInfo.new(fingerprint: 'd90c6a4f', key_paths: [2**31, 2**31, 2**31]))
+    hk1 = Bitcoin::PSBT::HDKeyPath.new('02dab61ff49a14db6a7d02b0cd1fbb78fc4b18312b5b4e54dae4dba2fbfef536d7', Bitcoin::PSBT::KeyOriginInfo.new(fingerprint: 'd90c6a4f', key_paths: [2**31, 2**31, 2**31 + 1]))
+    hk2 = Bitcoin::PSBT::HDKeyPath.new('03089dc10c7ac6db54f91329af617333db388cead0c231f723379d1b99030b02dc', Bitcoin::PSBT::KeyOriginInfo.new(fingerprint: 'd90c6a4f', key_paths: [2**31, 2**31, 2**31 + 2]))
+    hk3 = Bitcoin::PSBT::HDKeyPath.new('023add904f3d6dcf59ddb906b0dee23529b7ffb9ed50e5e86151926860221f0e73', Bitcoin::PSBT::KeyOriginInfo.new(fingerprint: 'd90c6a4f', key_paths: [2**31, 2**31, 2**31 + 3]))
+    hk4 = Bitcoin::PSBT::HDKeyPath.new('03a9a4c37f5996d3aa25dbac6b570af0650394492942460b354753ed9eeca58771', Bitcoin::PSBT::KeyOriginInfo.new(fingerprint: 'd90c6a4f', key_paths: [2**31, 2**31, 2**31 + 4]))
+    hk5 = Bitcoin::PSBT::HDKeyPath.new('027f6399757d2eff55a136ad02c684b1838b6556e5f1b6b34282a94b6b50051096', Bitcoin::PSBT::KeyOriginInfo.new(fingerprint: 'd90c6a4f', key_paths: [2**31, 2**31, 2**31 + 5]))
 
     psbt.update!(prev_tx1, redeem_script: redeem_script1, hd_key_paths: [hk0, hk1])
     psbt.update!(prev_tx2, redeem_script: redeem_script2, witness_script: witness_script, hd_key_paths: [hk3, hk2])

@@ -188,4 +188,8 @@ module Bitcoin
 
   # Size of set to pick median time from.
   MEDIAN_TIME_SPAN = 11
+
+  BIP32_EXTKEY_WITH_VERSION_SIZE = 78
+
+  HARDENED_THRESHOLD = 2147483648 # 2**31
 end

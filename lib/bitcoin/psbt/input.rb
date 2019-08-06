@@ -72,7 +72,7 @@ module Bitcoin
           when PSBT_IN_TYPES[:bip32_derivation]
             raise ArgumentError, 'Invalid bip32 typed key.' unless key_len
             raise ArgumentError, 'Duplicate Key, pubkey derivation path already provided.' if input.hd_key_paths[key.bth]
-            input.hd_key_paths[key.bth] = Bitcoin::PSBT::HDKeyPath.parse_from_payload(key, value)
+            input.hd_key_paths[key.bth] = Bitcoin::PSBT::HDKeyPath.new(key, Bitcoin::PSBT::KeyOriginInfo.parse_from_payload(value))
           when PSBT_IN_TYPES[:script_sig]
             raise ArgumentError, 'Invalid final scriptsig typed key.' unless key_len == 1
             raise ArgumentError, 'Duplicate Key, input final scriptSig already provided.' if input.final_script_sig

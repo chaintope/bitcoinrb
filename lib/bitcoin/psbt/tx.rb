@@ -1,14 +1,39 @@
 module Bitcoin
   module PSBT
 
+    class GlobalXpub
+
+      attr_reader :xpub # Bitcoin::ExtPubkey
+      attr_reader :info # Bitcoin::PSBT::KeyOriginInfo
+
+      def initialize(xpub, info)
+        @xpub = xpub
+        @info = info
+      end
+
+      def to_payload
+        PSBT.serialize_to_vector(PSBT_GLOBAL_TYPES[:xpub], key: xpub.to_payload, value: info.to_payload)
+      end
+
+      def to_h
+        {xpub: xpub.to_payload.bth}.merge(info.to_h)
+      end
+
+      def to_s
+        to_h.to_s
+      end
+    end
+
     class Tx
       attr_accessor :tx
+      attr_accessor :xpubs
       attr_reader :inputs
       attr_reader :outputs
       attr_accessor :unknowns
 
       def initialize(tx = nil)
         @tx = tx
+        @xpubs = []
         @inputs = tx ? tx.in.map{Input.new}: []
         @outputs = tx ? tx.out.map{Output.new}: []
         @unknowns = {}
@@ -49,6 +74,14 @@ module Bitcoin
             partial_tx.tx.in.each do |tx_in|
               raise ArgumentError, 'Unsigned tx does not have empty scriptSigs and scriptWitnesses.' if !tx_in.script_sig.empty? || !tx_in.script_witness.empty?
             end
+          when PSBT_GLOBAL_TYPES[:xpub]
+            raise ArgumentError, 'Size of key was not the expected size for the type global xpub.' unless key.size == Bitcoin::BIP32_EXTKEY_WITH_VERSION_SIZE
+            xpub = Bitcoin::ExtPubkey.parse_from_payload(key)
+            raise ArgumentError, 'Invalid pubkey.' unless xpub.key.fully_valid_pubkey?
+            raise ArgumentError, 'Duplicate key, global xpub already provided' if partial_tx.xpubs.any?{|x|x.xpub == xpub}
+            info = Bitcoin::PSBT::KeyOriginInfo.parse_from_payload(value)
+            raise ArgumentError, "global xpub's depth and the number of indexes not matched." unless xpub.depth == info.key_paths.size
+            partial_tx.xpubs << Bitcoin::PSBT::GlobalXpub.new(xpub, info)
           else
             raise ArgumentError, 'Duplicate Key, key for unknown value already provided.' if partial_tx.unknowns[key]
             partial_tx.unknowns[([key_type].pack('C') + key).bth] = value
@@ -104,6 +137,7 @@ module Bitcoin
         payload = PSBT_MAGIC_BYTES.itb << 0xff.itb
 
         payload << PSBT.serialize_to_vector(PSBT_GLOBAL_TYPES[:unsigned_tx], value: tx.to_payload)
+        payload << xpubs.map(&:to_payload).join
 
         payload << unknowns.map {|k,v|Bitcoin.pack_var_int(k.htb.bytesize) << k.htb << Bitcoin.pack_var_int(v.bytesize) << v}.join
 
