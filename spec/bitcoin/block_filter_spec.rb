@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe Bitcoin::BlockFilter do
 
-  describe 'Test Vector testnet-19.json' do
-    filter_json = fixture_file('bip158/testnet-19.json').select{|j|j.size > 1}
+  describe 'Test Vector blockfilters.json' do
+    filter_json = fixture_file('blockfilters.json').select{|j|j.size > 1}
     # Block Height,Block Hash,Block,[Prev Output Scripts for Block],Previous Basic Header,Basic Filter,Basic Header,Notes
     filter_json.each do |height, block_hash, raw_block, prev_out_scripts, prev_basic_header, basic_filter, basic_header, note|
       it "should validate #{note} block" do
