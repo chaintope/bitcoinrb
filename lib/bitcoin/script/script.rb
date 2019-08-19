@@ -58,7 +58,6 @@ module Bitcoin
       new << m << pubkeys << pubkeys.size << OP_CHECKMULTISIG
     end
 
-
     # generate p2wsh script for +redeem_script+
     # @param [Script] redeem_script target redeem script
     # @param [Script] p2wsh script
@@ -144,10 +143,6 @@ module Bitcoin
       chunks.join
     end
 
-    def to_hex
-      to_payload.bth
-    end
-
     def empty?
       chunks.size == 0
     end
@@ -217,6 +212,12 @@ module Bitcoin
         return false if !c.opcode.nil? && c.opcode > OP_16
       end
       true
+    end
+
+    # get public keys in the stack.
+    # @return[Array[String]] an array of the pubkeys with hex format.
+    def get_pubkeys
+      chunks.select{|c|c.pushdata? && [33, 65].include?(c.pushed_data.bytesize) && [2, 3, 4, 6, 7].include?(c.pushed_data[0].bth.to_i(16))}.map{|c|c.pushed_data.bth}
     end
 
     # A witness program is any valid Script that consists of a 1-byte push opcode followed by a data push between 2 and 40 bytes.

@@ -37,6 +37,15 @@ describe Bitcoin::Script do
     end
   end
 
+  describe 'p2pk script' do
+    subject {
+      Bitcoin::Script.new << '032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35' << OP_CHECKSIG
+    }
+    it 'should be p2pk' do
+      expect(subject.get_pubkeys).to eq(['032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35'])
+    end
+  end
+
   describe 'p2pkh script' do
     subject { Bitcoin::Script.to_p2pkh('46c2fbfbecc99a63148fa076de58cf29b0bcf0b0') }
 
@@ -53,6 +62,7 @@ describe Bitcoin::Script do
         expect(subject.op_return?).to be false
         expect(subject.standard?).to be true
         expect(subject.addresses.first).to eq('17T9tBC2dSpusL1rhT4T4AV4if963Tpfym')
+        expect(subject.get_pubkeys).to eq([])
       end
     end
 
@@ -79,6 +89,7 @@ describe Bitcoin::Script do
         expect(subject.op_return?).to be false
         expect(subject.standard?).to be true
         expect(subject.addresses.first).to eq('bc1qgmp0h7lvexdxx9y05pmdukx09xcteu9svvvxlw')
+        expect(subject.get_pubkeys).to eq([])
       end
     end
 
@@ -112,6 +123,7 @@ describe Bitcoin::Script do
         expect(subject[1].to_hex).to eq('5121021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e921032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e3552ae')
         expect(subject[1].to_s).to eq('1 021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9 032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35 2 OP_CHECKMULTISIG')
         expect(subject[1].addresses).to eq(['1QDN1JzVYKRuscrPdWE6AUvTxev6TP1cF4', '1GKVcitjqJDjs7yEy19FSGZMu81xyey62J'])
+        expect(subject[0].get_pubkeys).to eq([])
       end
     end
 
@@ -143,6 +155,7 @@ describe Bitcoin::Script do
         expect(subject.op_return?).to be false
         expect(subject.standard?).to be true
         expect(subject.addresses.first).to eq('bc1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607s264w7g')
+        expect(subject.get_pubkeys).to eq([])
       end
     end
 
@@ -168,6 +181,7 @@ describe Bitcoin::Script do
       expect(subject.op_return?).to be false
       expect(subject.standard?).to be true
       expect(subject.addresses).to eq(['n4jKJN5UMLsAejL1M5CTzQ8npeWoLBLCAH', 'mvqSumyieKezeESrga7dGBmgm7cfuATBvf'])
+      expect(subject.get_pubkeys).to eq(['021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9', '032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35'])
     end
   end
 
@@ -185,6 +199,7 @@ describe Bitcoin::Script do
         expect(subject.op_return?).to be true
         expect(subject.standard?).to be true
         expect(subject.op_return_data.bth).to eq('04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38')
+        expect(subject.get_pubkeys).to eq([])
       end
     end
 
