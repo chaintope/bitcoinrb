@@ -104,6 +104,12 @@ module Bitcoin
       witness? ? serialize_witness_format : serialize_old_format
     end
 
+    # convert tx to hex format.
+    # @return [String] tx with hex format.
+    def to_hex
+      to_payload.bth
+    end
+
     def coinbase_tx?
       inputs.length == 1 && inputs.first.coinbase?
     end

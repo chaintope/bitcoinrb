@@ -502,6 +502,12 @@ module Bitcoin
       (size > 0 && op_return?) || size > Bitcoin::MAX_SCRIPT_SIZE
     end
 
+    # convert payload to hex data.
+    # @return [String] script with hex format.
+    def to_hex
+      to_payload.bth
+    end
+
     private
 
     # generate p2pkh address. if script dose not p2pkh, return nil.

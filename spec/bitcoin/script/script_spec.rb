@@ -7,25 +7,25 @@ describe Bitcoin::Script do
     context 'data < 0xff' do
       subject { Bitcoin::Script.new << 'foo' }
       it 'should be append' do
-        expect(subject.to_payload.bth).to eq('02f880')
+        expect(subject.to_hex).to eq('02f880')
       end
     end
     context '0xff < data < 0xffff' do
       subject { Bitcoin::Script.new << 'f' * 256 }
       it 'should be append' do
-        expect(subject.to_payload.bth).to eq('4c80ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+        expect(subject.to_hex).to eq('4c80ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
       end
     end
     context 'int value include' do
       it 'should be append' do
         s = Bitcoin::Script.new << OP_1NEGATE << Bitcoin::Script.encode_number(1000) << OP_ADD
-        expect(s.to_payload.bth).to eq('4f02e80393')
+        expect(s.to_hex).to eq('4f02e80393')
         expect(s.to_s).to eq('OP_1NEGATE 1000 OP_ADD')
         s = Bitcoin::Script.new << OP_1NEGATE << Bitcoin::Script.encode_number(100) << OP_ADD
-        expect(s.to_payload.bth).to eq('4f016493')
+        expect(s.to_hex).to eq('4f016493')
         # negative value
         s = Bitcoin::Script.new << OP_1NEGATE << Bitcoin::Script.encode_number(-1000) << OP_ADD
-        expect(s.to_payload.bth).to eq('4f02e88393')
+        expect(s.to_hex).to eq('4f02e88393')
         expect(s.to_s).to eq('OP_1NEGATE -1000 OP_ADD')
       end
     end
@@ -99,7 +99,7 @@ describe Bitcoin::Script do
     context 'mainnet', network: :mainnet do
       it 'should be generate P2SH script' do
         expect(subject.length).to eq(2)
-        expect(subject[0].to_payload.bth).to eq('a9147620a79e8657d066cff10e21228bf983cf546ac687')
+        expect(subject[0].to_hex).to eq('a9147620a79e8657d066cff10e21228bf983cf546ac687')
         expect(subject[0].to_s).to eq('OP_HASH160 7620a79e8657d066cff10e21228bf983cf546ac6 OP_EQUAL')
         expect(subject[0].p2pkh?).to be false
         expect(subject[0].p2sh?).to be true
@@ -109,7 +109,7 @@ describe Bitcoin::Script do
         expect(subject[0].op_return?).to be false
         expect(subject[0].standard?).to be true
         expect(subject[0].addresses.first).to eq('3CTcn59uJ89wCsQbeiy8AGLydXE9mh6Yrr')
-        expect(subject[1].to_payload.bth).to eq('5121021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e921032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e3552ae')
+        expect(subject[1].to_hex).to eq('5121021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e921032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e3552ae')
         expect(subject[1].to_s).to eq('1 021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9 032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35 2 OP_CHECKMULTISIG')
         expect(subject[1].addresses).to eq(['1QDN1JzVYKRuscrPdWE6AUvTxev6TP1cF4', '1GKVcitjqJDjs7yEy19FSGZMu81xyey62J'])
       end
@@ -133,7 +133,7 @@ describe Bitcoin::Script do
 
     context 'mainnet', network: :mainnet do
       it 'should be generate P2WSH script' do
-        expect(subject.to_payload.bth).to eq('00203ce1c71303e564430e0c5721727739290046302a9674f1d67a249cfd2ce7d3fd')
+        expect(subject.to_hex).to eq('00203ce1c71303e564430e0c5721727739290046302a9674f1d67a249cfd2ce7d3fd')
         expect(subject.to_s).to eq('0 3ce1c71303e564430e0c5721727739290046302a9674f1d67a249cfd2ce7d3fd')
         expect(subject.p2pkh?).to be false
         expect(subject.p2sh?).to be false
@@ -221,7 +221,7 @@ describe Bitcoin::Script do
     context 'unspendable' do
       subject { Bitcoin::Script.parse_from_payload('76a914c486de584a735ec2f22da7cd9681614681f92173d83d0aa68688ac'.htb) }
       it 'should be parsed' do
-        expect(subject.to_payload.bth).to eq('76a914c486de584a735ec2f22da7cd9681614681f92173d83d0aa68688ac')
+        expect(subject.to_hex).to eq('76a914c486de584a735ec2f22da7cd9681614681f92173d83d0aa68688ac')
         expect(subject.p2pkh?).to be false
         expect(subject.to_s).to eq('OP_DUP OP_HASH160 c486de584a735ec2f22da7cd9681614681f92173 OP_UNKNOWN [error]')
       end
@@ -247,7 +247,7 @@ describe Bitcoin::Script do
       expect(pushdata.to_payload).to eq('1446c2fbfbecc99a63148fa076de58cf29b0bcf0b0'.htb)
 
       contract = Bitcoin::Script.from_string('OP_HASH160 b6ca66aa538d28518852b2104d01b8b499fc9b23 OP_EQUAL OP_IF 021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9 OP_ELSE 1000 OP_CHECKSEQUENCEVERIFY OP_DROP 032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35 OP_ENDIF OP_CHECKSIG')
-      expect(contract.to_payload.bth).to eq('a914b6ca66aa538d28518852b2104d01b8b499fc9b23876321021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e96702e803b27521032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e3568ac')
+      expect(contract.to_hex).to eq('a914b6ca66aa538d28518852b2104d01b8b499fc9b23876321021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e96702e803b27521032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e3568ac')
       expect(contract.to_s).to eq('OP_HASH160 b6ca66aa538d28518852b2104d01b8b499fc9b23 OP_EQUAL OP_IF 021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9 OP_ELSE 1000 OP_CSV OP_DROP 032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35 OP_ENDIF OP_CHECKSIG')
     end
   end
