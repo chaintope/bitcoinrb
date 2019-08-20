@@ -5,6 +5,7 @@ module Bitcoin
     class MasterKey
       extend Bitcoin::Util
       include Bitcoin::Util
+      include Bitcoin::KeyPath
 
       attr_reader :seed
       attr_accessor :salt
@@ -65,15 +66,7 @@ module Bitcoin
       # @return [Bitcoin::ExtKey]
       def derive(path)
         derived_key = key
-        path.split('/').each_with_index do|p, index|
-          if index == 0
-            raise ArgumentError.new("#{path} is invalid format.") unless p == 'm'
-            next
-          end
-          raise ArgumentError.new("#{path} is invalid format.") unless p.delete("'") =~ /^[0-9]+$/
-          num = (p[-1] == "'" ? p.delete("'").to_i + Bitcoin::HARDENED_THRESHOLD : p.to_i)
-          derived_key = derived_key.derive(num)
-        end
+        parse_key_path(path).each{|num| derived_key = derived_key.derive(num)}
         derived_key
       end
 

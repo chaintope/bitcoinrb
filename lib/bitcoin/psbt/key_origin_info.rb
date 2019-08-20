@@ -3,6 +3,8 @@ module Bitcoin
 
     class KeyOriginInfo
 
+      include Bitcoin::KeyPath
+
       attr_reader :fingerprint # String hex format
       attr_reader :key_paths    # Array[Integer]
 
@@ -21,8 +23,7 @@ module Bitcoin
       end
 
       def to_h
-        path = key_paths.map{|p| p >= Bitcoin::HARDENED_THRESHOLD ? "#{p - Bitcoin::HARDENED_THRESHOLD}'" : p.to_s}.join('/')
-        {fingerprint: fingerprint, key_paths: "m/#{path}"}
+        {fingerprint: fingerprint, key_paths: to_key_path(key_paths)}
       end
 
       def to_s
