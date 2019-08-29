@@ -74,6 +74,8 @@ module Bitcoin
         time = []
         Bitcoin::MEDIAN_TIME_SPAN.times do
           entry = find_entry_by_hash(hash)
+          break unless entry
+
           time << entry.header.time
           hash = entry.header.prev_hash
         end
