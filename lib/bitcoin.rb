@@ -110,6 +110,11 @@ module Bitcoin
       [self].pack('H*')
     end
 
+    # binary convert to integer
+    def bti
+      bth.to_i(16)
+    end
+
     # reverse hex string endian
     def rhex
       htb.reverse.bth
