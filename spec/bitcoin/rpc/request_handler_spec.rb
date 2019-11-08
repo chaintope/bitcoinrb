@@ -322,7 +322,7 @@ describe Bitcoin::RPC::RequestHandler do
     conn2 = double('connection_mock1')
     allow(conn1).to receive(:version).and_return(Bitcoin::Message::Version.new(
         version: 70015, user_agent: '/Satoshi:0.14.1/', start_height: 1210488,
-        remote_addr: '192.168.0.3:60519', services: 12
+        remote_addr: Bitcoin::Message::NetworkAddr.new(ip: '192.168.0.3', port: 60519, time: nil), services: 12
     ))
     allow(conn2).to receive(:version).and_return(Bitcoin::Message::Version.new)
 
