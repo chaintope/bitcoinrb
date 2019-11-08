@@ -50,7 +50,8 @@ module Bitcoin
         @bytes_recv = 0
         @relay = configuration.conf[:relay]
         current_height = @chain.latest_block.height
-        @local_version = Bitcoin::Message::Version.new(remote_addr: addr, start_height: current_height, relay: @relay)
+        remote_addr = Bitcoin::Message::NetworkAddr.new(ip: host, port: port, time: nil)
+        @local_version = Bitcoin::Message::Version.new(remote_addr: remote_addr, start_height: current_height, relay: @relay)
       end
 
       def connect
@@ -164,12 +165,7 @@ module Bitcoin
       # @return [Bitcoin::Message::NetworkAddr]
       def to_network_addr
         v = remote_version
-        addr = Bitcoin::Message::NetworkAddr.new
-        addr.time = v.timestamp
-        addr.services = v.services
-        addr.ip = host
-        addr.port = port
-        addr
+        Bitcoin::Message::NetworkAddr.new(ip: host, port: port, services: v.services, time: v.timestamp)
       end
 
       # send +addr+ message to remote peer

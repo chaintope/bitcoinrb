@@ -61,7 +61,7 @@ module Bitcoin
     end
 
     def pack_boolean(b)
-      b ? [0xFF].pack('C') : [0x00].pack('C')
+      b ? [0x01].pack('C') : [0x00].pack('C')
     end
 
     def unpack_boolean(payload)

@@ -5,20 +5,25 @@ describe Bitcoin::Message::Version do
 
   describe 'to_payload and parse_from_payload' do
     subject {
-      version = Bitcoin::Message::Version.new
-      version.start_height = 50_000
-      @nonce = version.nonce
-      version.remote_addr = '83.243.59.57:8333'
-      version.relay = false
-      Bitcoin::Message::Version.parse_from_payload(version.to_payload)
+      Bitcoin::Message::Version.parse_from_payload('721101000100000000000000bc8f5e5400000000010000000000000000000000000000000000ffffc61b6409208d010000000000000000000000000000000000ffffcb0071c0208d128035cbc97953f80f2f5361746f7368693a302e392e332fcf05050001'.htb)
     }
     it 'should parse payload' do
-      expect(subject.services).to eq(Bitcoin::Message::DEFAULT_SERVICE_FLAGS)
-      expect(subject.user_agent).to eq(Bitcoin::Message::USER_AGENT)
-      expect(subject.local_addr).to eq('83.243.59.57:8333')
-      expect(subject.relay).to be false
-      expect(subject.nonce).to eq(@nonce)
-      expect(subject.start_height).to eq(50_000)
+      expect(subject.version).to eq(70002)
+      expect(subject.services).to eq(Bitcoin::Message::SERVICE_FLAGS[:network])
+      expect(subject.timestamp).to eq(1415483324)
+      expect(subject.user_agent).to eq('/Satoshi:0.9.3/')
+      expect(subject.local_addr.port).to eq(8333)
+      expect(subject.local_addr.ip.to_s).to eq('198.27.100.9')
+      expect(subject.local_addr.services).to eq(Bitcoin::Message::SERVICE_FLAGS[:network])
+      expect(subject.local_addr.time).to be nil
+      expect(subject.remote_addr.port).to eq(8333)
+      expect(subject.remote_addr.ip.to_s).to eq('203.0.113.192')
+      expect(subject.remote_addr.services).to eq(Bitcoin::Message::SERVICE_FLAGS[:network])
+      expect(subject.remote_addr.time).to be nil
+      expect(subject.relay).to be true
+      expect(subject.nonce).to eq(["128035cbc97953f8"].pack('H*').reverse.bti)
+      expect(subject.start_height).to eq(329167)
+      expect(subject.to_payload.bth).to eq('721101000100000000000000bc8f5e5400000000010000000000000000000000000000000000ffffc61b6409208d010000000000000000000000000000000000ffffcb0071c0208d128035cbc97953f80f2f5361746f7368693a302e392e332fcf05050001')
     end
   end
 
@@ -34,23 +39,16 @@ describe Bitcoin::Message::Version do
 
   describe 'to_pkt' do
     subject {
-      Bitcoin::Message::Version.new(local_addr: '127.0.0.1:18333',
-                                    remote_addr: '127.0.0.1:18333',
+      Bitcoin::Message::Version.new(local_addr: Bitcoin::Message::NetworkAddr.new(port: 18333),
+                                    remote_addr: Bitcoin::Message::NetworkAddr.new(port: 18333),
                                     timestamp: 1497706959, services: 0,
                                     version: 70015,
                                     user_agent: '/bitcoinrb:0.1.0/',
                                     nonce: 13469974270669794112,
-                                    relay: true).to_pkt
+                                    relay: false).to_pkt
     }
     it 'should generate pkt' do
-      expect(subject.bth).to eq('0b11090776657273696f6e0000000000670000000f798e7e7f1101000000000000000000cf31455900000000010000000000000000000000000000000000ffff7f000001479d010000000000000000000000000000000000ffff7f000001479d40abec703bf6eeba112f626974636f696e72623a302e312e302f00000000ff')
-    end
-  end
-
-  describe '#pack_addr' do
-    subject { Bitcoin::Message::Version.new.pack_addr('::ffff:a00:1:18333') }
-    it 'should be parsed' do
-      expect(subject.bth).to eq('010000000000000000000000000000000000ffff0a000001479d')
+      expect(subject.bth).to eq('0b11090776657273696f6e000000000067000000613c82ee7f1101000000000000000000cf31455900000000080000000000000000000000000000000000ffff7f000001479d080000000000000000000000000000000000ffff7f000001479d40abec703bf6eeba112f626974636f696e72623a302e312e302f0000000000')
     end
   end
 

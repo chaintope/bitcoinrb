@@ -22,8 +22,8 @@ module Bitcoin
         @version = Bitcoin.chain_params.protocol_version
         @services = DEFAULT_SERVICE_FLAGS
         @timestamp = Time.now.to_i
-        @local_addr = "127.0.0.1:#{Bitcoin.chain_params.default_port}"
-        @remote_addr = "127.0.0.1:#{Bitcoin.chain_params.default_port}"
+        @local_addr = NetworkAddr.local_addr
+        @remote_addr = NetworkAddr.local_addr
         @nonce = SecureRandom.random_number(0xffffffffffffffff)
         @user_agent = Bitcoin::Message::USER_AGENT
         @start_height = 0
@@ -32,13 +32,13 @@ module Bitcoin
       end
 
       def self.parse_from_payload(payload)
-        version, services, timestamp, remote_addr, local_addr, nonce, rest = payload.unpack('VQQa26a26Qa*')
+        version, services, timestamp, local_addr, remote_addr, nonce, rest = payload.unpack('VQQa26a26Qa*')
         v = new
         v.version = version
         v.services = services
         v.timestamp = timestamp
-        v.remote_addr = v.unpack_addr(remote_addr)
-        v.local_addr = v.unpack_addr(local_addr)
+        v.local_addr = NetworkAddr.parse_from_payload(local_addr)
+        v.remote_addr = NetworkAddr.parse_from_payload(remote_addr)
         v.nonce = nonce
         user_agent, rest = unpack_var_string(rest)
         start_height, rest = rest.unpack('Va*')
@@ -51,28 +51,13 @@ module Bitcoin
       def to_payload
         [
           [version, services, timestamp].pack('VQQ'),
-          pack_addr(local_addr),
-          pack_addr(remote_addr),
+          local_addr.to_payload(true),
+          remote_addr.to_payload(true),
           [nonce].pack('Q'),
           pack_var_string(user_agent),
           [start_height].pack('V'),
           pack_boolean(relay)
         ].join
-      end
-
-      def pack_addr(addr)
-        separator = addr.rindex(':')
-        ip = addr[0...separator]
-        port = addr[separator + 1..-1].to_i
-        ip_addr = IPAddr.new(ip)
-        ip_addr = ip_addr.ipv4_mapped if ip_addr.ipv4?
-        [1].pack('Q') << ip_addr.hton << [port].pack('n')
-        # [[1].pack('Q'), "\x00" * 10, "\xFF\xFF", sockaddr[4...8], sockaddr[2...4]].join
-      end
-
-      def unpack_addr(addr)
-        host, port = addr.unpack('x8x12a4n')
-        "#{host.unpack('C*').join('.')}:#{port}"
       end
 
       def unpack_relay_field(payload)

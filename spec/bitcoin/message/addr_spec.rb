@@ -4,11 +4,7 @@ describe Bitcoin::Message::Addr do
 
   describe 'to_pkt' do
     subject{
-      addr = Bitcoin::Message::NetworkAddr.new
-      addr.ip = '92.169.156.82'
-      addr.port = 18333
-      addr.time = 2989705664
-      addr.services = 1
+      addr = Bitcoin::Message::NetworkAddr.new(ip: '92.169.156.82', port: 18333, time: 2989705664, services: 1)
       Bitcoin::Message::Addr.new([addr]).to_pkt
     }
     it 'should be generate' do
@@ -26,6 +22,7 @@ describe Bitcoin::Message::Addr do
       expect(subject.addrs[0].port).to eq(18333)
       expect(subject.addrs[0].time).to eq(2989705664)
       expect(subject.addrs[0].services).to eq(1)
+      expect(subject.to_payload.bth).to eq('01c04933b2010000000000000000000000000000000000ffff5ca99c52479d')
     end
   end
 
