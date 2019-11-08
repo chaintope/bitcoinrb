@@ -1,3 +1,5 @@
+require 'ipaddr'
+
 module Bitcoin
   module Message
 
