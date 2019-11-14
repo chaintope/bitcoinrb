@@ -30,6 +30,7 @@ module Bitcoin
       attr_reader :inputs
       attr_reader :outputs
       attr_accessor :unknowns
+      attr_accessor :version_number
 
       def initialize(tx = nil)
         @tx = tx
@@ -82,6 +83,9 @@ module Bitcoin
             info = Bitcoin::PSBT::KeyOriginInfo.parse_from_payload(value)
             raise ArgumentError, "global xpub's depth and the number of indexes not matched." unless xpub.depth == info.key_paths.size
             partial_tx.xpubs << Bitcoin::PSBT::GlobalXpub.new(xpub, info)
+          when PSBT_GLOBAL_TYPES[:ver]
+            partial_tx.version_number = value.unpack('V').first
+            raise ArgumentError, "An unsupported version was detected." if SUPPORT_VERSION < partial_tx.version_number
           else
             raise ArgumentError, 'Duplicate Key, key for unknown value already provided.' if partial_tx.unknowns[key]
             partial_tx.unknowns[([key_type].pack('C') + key).bth] = value
@@ -120,6 +124,12 @@ module Bitcoin
         partial_tx
       end
 
+      # get PSBT version
+      # @return [Integer] PSBT version number
+      def version
+        version_number ? version_number : 0
+      end
+
       # Finds the UTXO for a given input index
       # @param [Integer] index input_index Index of the input to retrieve the UTXO of
       # @return [Bitcoin::TxOut] The UTXO of the input if found.
@@ -138,6 +148,7 @@ module Bitcoin
 
         payload << PSBT.serialize_to_vector(PSBT_GLOBAL_TYPES[:unsigned_tx], value: tx.to_payload)
         payload << xpubs.map(&:to_payload).join
+        payload << PSBT.serialize_to_vector(PSBT_GLOBAL_TYPES[:ver], value: [version_number].pack('V')) if version_number
 
         payload << unknowns.map {|k,v|Bitcoin.pack_var_int(k.htb.bytesize) << k.htb << Bitcoin.pack_var_int(v.bytesize) << v}.join
 

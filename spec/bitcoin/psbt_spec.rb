@@ -72,6 +72,16 @@ describe Bitcoin::PSBT do
       expect(psbt.unknowns.size).to eq(1)
       expect(psbt.inputs[0].unknowns.size).to eq(1)
       expect(psbt.outputs[0].unknowns.size).to eq(1)
+      expect(psbt.to_base64).to eq('cHNidP8BAD8CAAAAAf//////////////////////////////////////////AAAAAAD/////AQAAAAAAAAAAA2oBAAAAAAAKDwECAwQFBgcICQ8BAgMEBQYHCAkKCwwNDg8ACg8BAgMEBQYHCAkPAQIDBAUGBwgJCgsMDQ4PAAoPAQIDBAUGBwgJDwECAwQFBgcICQoLDA0ODwA=')
+      expect(psbt.version).to eq(0)
+      expect(psbt.version_number).to be nil
+
+      # PSBT_GLOBAL_VERSION = 0
+      psbt = Bitcoin::PSBT::Tx.parse_from_payload('70736274ff01003f0200000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000ffffffff010000000000000000036a01000000000001fb04000000000a0f0102030405060708090f0102030405060708090a0b0c0d0e0f000a0f0102030405060708090f0102030405060708090a0b0c0d0e0f000a0f0102030405060708090f0102030405060708090a0b0c0d0e0f00'.htb)
+      expect(psbt.version).to eq(0)
+      expect(psbt.version_number).to eq(0)
+      # PSBT_GLOBAL_VERSION = 1
+      expect{Bitcoin::PSBT::Tx.parse_from_payload('70736274ff01003f0200000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000ffffffff010000000000000000036a01000000000001fb04010000000a0f0102030405060708090f0102030405060708090a0b0c0d0e0f000a0f0102030405060708090f0102030405060708090a0b0c0d0e0f000a0f0102030405060708090f0102030405060708090a0b0c0d0e0f00'.htb)}.to raise_error(ArgumentError, 'An unsupported version was detected.')
     end
   end
 
