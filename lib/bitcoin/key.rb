@@ -227,8 +227,12 @@ module Bitcoin
     # fully validate whether this is a valid public key (more expensive than IsValid())
     def fully_valid_pubkey?
       return false unless valid_pubkey?
-      point = ECDSA::Format::PointOctetString.decode(pubkey.htb, ECDSA::Group::Secp256k1)
-      ECDSA::Group::Secp256k1.valid_public_key?(point)
+      begin
+        point = ECDSA::Format::PointOctetString.decode(pubkey.htb, ECDSA::Group::Secp256k1)
+        ECDSA::Group::Secp256k1.valid_public_key?(point)
+      rescue ECDSA::Format::DecodeError
+        false
+      end
     end
 
     private
