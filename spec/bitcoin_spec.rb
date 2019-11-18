@@ -46,6 +46,13 @@ describe Bitcoin do
     end
   end
 
+  describe '#valid_hex?' do
+    it 'should be judge hex data.' do
+      expect('aaaa'.valid_hex?).to be true
+      expect('aaga'.valid_hex?).to be false
+    end
+  end
+
   class Test
     def initialize
       @foo = ["bar"]

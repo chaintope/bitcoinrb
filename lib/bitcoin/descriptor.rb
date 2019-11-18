@@ -32,6 +32,7 @@ module Bitcoin
     # @return [Bitcoin::Script] P2SH script.
     def sh(script)
       script = script.to_hex if script.is_a?(Bitcoin::Script)
+      raise ArgumentError, "P2SH script is too large, 547 bytes is larger than #{Bitcoin::MAX_SCRIPT_ELEMENT_SIZE} bytes." if script.htb.bytesize > Bitcoin::MAX_SCRIPT_ELEMENT_SIZE
       Bitcoin::Script.to_p2sh(Bitcoin.hash160(script))
     end
 
@@ -40,6 +41,7 @@ module Bitcoin
     # @return [Bitcoin::Script] P2WSH script.
     def wsh(script)
       script = Bitcoin::Script(script.htb) if script.is_a?(String)
+      raise ArgumentError, "P2SH script is too large, 547 bytes is larger than #{Bitcoin::MAX_SCRIPT_ELEMENT_SIZE} bytes." if script.to_payload.bytesize > Bitcoin::MAX_SCRIPT_ELEMENT_SIZE
       raise ArgumentError, "Uncompressed key are not allowed." if script.get_pubkeys.any?{|p|!compressed_key?(p)}
       Bitcoin::Script.to_p2wsh(script)
     end
@@ -58,6 +60,27 @@ module Bitcoin
       result
     end
 
+    # generate multisig output for given keys.
+    # @param [Integer] threshold the threshold of multisig.
+    # @param [Array[String]] keys an array of keys.
+    # @return [Bitcoin::Script] multisig script.
+    def multi(threshold, *keys, sort: false)
+      raise ArgumentError, 'Multisig threshold is not valid.' unless threshold.is_a?(Integer)
+      raise ArgumentError, 'Multisig threshold cannot be 0, must be at least 1.' unless threshold > 0
+      raise ArgumentError, 'Multisig threshold cannot be larger than the number of keys.' if threshold > keys.size
+      raise ArgumentError, 'Multisig must have between 1 and 16 keys, inclusive.' if keys.size > 16
+      pubkeys = keys.map{|key| extract_pubkey(key) }
+      Bitcoin::Script.to_multisig_script(threshold, pubkeys, sort: sort)
+    end
+
+    # generate sorted multisig output for given keys.
+    # @param [Integer] threshold the threshold of multisig.
+    # @param [Array[String]] keys an array of keys.
+    # @return [Bitcoin::Script] multisig script.
+    def sortedmulti(threshold, *keys)
+      multi(threshold, *keys, sort: true)
+    end
+
     private
 
     # extract public key from KEY format.
@@ -68,7 +91,8 @@ module Bitcoin
         raise ArgumentError, 'Invalid key origin.' if key.count('[') > 1 || key.count(']') > 1
         info = key[1...key.index(']')] # TODO
         fingerprint, *paths = info.split('/')
-        raise ArgumentError, 'Fingerprint is not 4 bytes.' unless fingerprint.htb.bytesize == 4
+        raise ArgumentError, 'Fingerprint is not hex.' unless fingerprint.valid_hex?
+        raise ArgumentError, 'Fingerprint is not 4 bytes.' unless fingerprint.size == 8
         key = key[(key.index(']') + 1)..-1]
       else
         raise ArgumentError, 'Invalid key origin.' if key.include?(']')

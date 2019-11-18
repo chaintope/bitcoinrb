@@ -160,6 +160,12 @@ module Bitcoin
       self[offset..-1]
     end
 
+    # whether value is hex or not hex
+    # @return [Boolean] return true if data is hex
+    def valid_hex?
+      !self[/\H/]
+    end
+
   end
 
   class ::Object

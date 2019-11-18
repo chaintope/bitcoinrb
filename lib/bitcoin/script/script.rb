@@ -54,7 +54,8 @@ module Bitcoin
     # @param [String] m the number of signatures required for multisig
     # @param [Array] pubkeys array of public keys that compose multisig
     # @return [Script] multisig script.
-    def self.to_multisig_script(m, pubkeys)
+    def self.to_multisig_script(m, pubkeys, sort: false)
+      pubkeys = pubkeys.sort if sort
       new << m << pubkeys << pubkeys.size << OP_CHECKMULTISIG
     end
 
