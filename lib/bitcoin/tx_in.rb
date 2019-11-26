@@ -78,7 +78,7 @@ module Bitcoin
     # return previous output hash (not txid)
     def prev_hash
       return nil unless out_point
-      out_point.hash
+      out_point.tx_hash
     end
 
   end

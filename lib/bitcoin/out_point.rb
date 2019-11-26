@@ -6,11 +6,11 @@ module Bitcoin
     COINBASE_HASH = '0000000000000000000000000000000000000000000000000000000000000000'
     COINBASE_INDEX = 4294967295
 
-    attr_reader :hash
+    attr_reader :tx_hash
     attr_reader :index
 
-    def initialize(hash, index = -1)
-      @hash = hash
+    def initialize(tx_hash, index = -1)
+      @tx_hash = tx_hash
       @index = index
     end
 
@@ -19,11 +19,11 @@ module Bitcoin
     end
 
     def coinbase?
-      hash == COINBASE_HASH && index == COINBASE_INDEX
+      tx_hash == COINBASE_HASH && index == COINBASE_INDEX
     end
 
     def to_payload
-      [hash.htb, index].pack('a32V')
+      [tx_hash.htb, index].pack('a32V')
     end
 
     def self.create_coinbase_outpoint
@@ -31,12 +31,12 @@ module Bitcoin
     end
 
     def valid?
-      index >= 0 && (!coinbase? && hash != COINBASE_HASH)
+      index >= 0 && (!coinbase? && tx_hash != COINBASE_HASH)
     end
 
     # convert hash to txid
     def txid
-      hash.rhex
+      tx_hash.rhex
     end
 
   end
