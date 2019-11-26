@@ -156,7 +156,7 @@ module Bitcoin
       # @param [String] pubkey a public key with hex format.
       # @param [String] sig a signature.
       def add_sig(pubkey, sig)
-        raise ArgumentError, 'The sighash in signature is invalid.' unless sig.unpack('C*')[-1] == sighash_type
+        raise ArgumentError, 'The sighash in signature is invalid.' if sighash_type && sig.unpack('C*')[-1] != sighash_type
         raise ArgumentError, 'Duplicate Key, input partial signature for pubkey already provided.' if partial_sigs[pubkey]
         partial_sigs[pubkey] = sig
       end
@@ -168,7 +168,7 @@ module Bitcoin
         raise ArgumentError, 'The argument psbt must be an instance of Bitcoin::PSBT::Input.' unless psbi.is_a?(Bitcoin::PSBT::Input)
         raise ArgumentError, 'The Partially Signed Input\'s non_witness_utxo are different.' unless non_witness_utxo == psbi.non_witness_utxo
         raise ArgumentError, 'The Partially Signed Input\'s witness_utxo are different.' unless witness_utxo == psbi.witness_utxo
-        raise ArgumentError, 'The Partially Signed Input\'s sighash_type are different.' unless sighash_type == psbi.sighash_type
+        raise ArgumentError, 'The Partially Signed Input\'s sighash_type are different.' if sighash_type && psbi.sighash_type && sighash_type != psbi.sighash_type
         raise ArgumentError, 'The Partially Signed Input\'s redeem_script are different.' unless redeem_script == psbi.redeem_script
         raise ArgumentError, 'The Partially Signed Input\'s witness_script are different.' unless witness_script == psbi.witness_script
         combined = Bitcoin::PSBT::Input.new(non_witness_utxo: non_witness_utxo, witness_utxo: witness_utxo)
