@@ -53,6 +53,7 @@ module Bitcoin
   autoload :BitStreamReader, 'bitcoin/bit_stream'
   autoload :KeyPath, 'bitcoin/key_path'
   autoload :Descriptor, 'bitcoin/descriptor'
+  autoload :SLIP39, 'bitcoin/slip39'
 
   require_relative 'bitcoin/constants'
 
