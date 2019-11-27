@@ -14,6 +14,8 @@ describe Bitcoin::SLIP39 do
         else
           shares = v[1].map{|words|Bitcoin::SLIP39::Share.from_words(words.split(' '))}
           expect(Bitcoin::SLIP39::SSS.recover_secret(shares, passphrase: 'TREZOR')).to eq(v[2])
+          words = shares.map{|s|s.to_words.join(' ')}
+          expect(words).to eq(v[1])
         end
       end
     end

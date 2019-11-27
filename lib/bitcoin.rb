@@ -204,6 +204,15 @@ module Bitcoin
     def itb
       to_even_length_hex.htb
     end
+
+    # convert bit string
+    def to_bits(length = nil )
+      if length
+        to_s(2).rjust(length, '0')
+      else
+        to_s(2)
+      end
+    end
   end
 
   class ::ECDSA::Signature

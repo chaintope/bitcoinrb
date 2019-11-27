@@ -33,8 +33,8 @@ module Bitcoin
         data = indices.map{|i|i.to_s(2).rjust(10, '0')}.join
 
         s = self.new
-        s.id = data[0...15].to_i(2)
-        s.iteration_exp = data[15...20].to_i(2)
+        s.id = data[0...ID_LENGTH_BITS].to_i(2)
+        s.iteration_exp = data[ID_LENGTH_BITS...(ID_LENGTH_BITS + ITERATION_EXP_LENGTH_BITS)].to_i(2)
         s.group_index = data[20...24].to_i(2)
         s.group_threshold = data[24...28].to_i(2) + 1
         s.group_count = data[28...32].to_i(2) + 1
@@ -49,6 +49,25 @@ module Bitcoin
         s.value = data[start_index...end_index].to_i(2).to_even_length_hex
         s.checksum = data[(40 + value_length)..-1].to_i(2)
         s
+      end
+
+      # Generate mnemonic words
+      # @return [Array[String]] array of mnemonic word.
+      def to_words
+        s = id.to_bits(ID_LENGTH_BITS)
+        s << iteration_exp.to_bits(ITERATION_EXP_LENGTH_BITS)
+        s << group_index.to_bits(4)
+        s << (group_threshold - 1).to_bits(4)
+        s << (group_count - 1).to_bits(4)
+        raise StandardError, "Group threshold(#{group_threshold}) cannot be greater than group count(#{group_count})." if group_threshold > group_count
+        s << member_index.to_bits(4)
+        s << (member_threshold - 1).to_bits(4)
+        value_length = value.to_i(16).bit_length
+        # raise StandardError, "Value length(#{value_length}) does not 8n bits." unless value_length % 8 == 0
+        padding_length = RADIX_BITS - (value_length % RADIX_BITS)
+        s << value.to_i(16).to_bits(value_length + padding_length)
+        s << checksum.to_bits(30)
+        s.chars.each_slice(10).map{|index| Bitcoin::SLIP39::WORDS[index.join.to_i(2)]}
       end
 
       private
