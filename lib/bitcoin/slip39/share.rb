@@ -63,7 +63,6 @@ module Bitcoin
         s << member_index.to_bits(4)
         s << (member_threshold - 1).to_bits(4)
         value_length = value.to_i(16).bit_length
-        # raise StandardError, "Value length(#{value_length}) does not 8n bits." unless value_length % 8 == 0
         padding_length = RADIX_BITS - (value_length % RADIX_BITS)
         s << value.to_i(16).to_bits(value_length + padding_length)
         s << checksum.to_bits(30)
@@ -90,29 +89,6 @@ module Bitcoin
       # @return [Boolean] verify result
       def self.verify_rs1024_checksum(data)
         rs1024_polymod(CUSTOMIZATION_STRING + data) == 1
-      end
-
-      # Converts a list of base 1024 indices in big endian order to an integer value.
-      # @param [Array[Integer]] array of index.
-      # @return [Integer] converted value.
-      def self.int_from_indices(indices)
-        value = 0
-        indices.each do |index|
-          value = value * RADIX + index
-        end
-        value
-      end
-
-      # Converts an integer value to indices in big endian order.
-      # @param [Integer] value
-      # @param [Integer] length
-      # @param [Integer] bits
-      # @return []
-      def self.int_to_indices(value, length, bits)
-        mask = (1 << bits) - 1
-        0.upto(length).map do |i|
-          (value >> (i * bits)) & mask
-        end
       end
 
     end
