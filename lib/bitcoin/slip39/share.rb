@@ -11,7 +11,7 @@ module Bitcoin
       attr_accessor :group_count      # 4 bits, Integer
       attr_accessor :member_index     # 4 bits, Integer
       attr_accessor :member_threshold # 4 bits, Integer
-      attr_accessor :padded_value     # padding + 8n bits, bit string.
+      attr_accessor :value            # 8n bits, hex string.
       attr_accessor :checksum         # 30 bits, Integer
 
       # Recover Share from the mnemonic words
@@ -46,7 +46,7 @@ module Bitcoin
         end_index = start_index + value_length - padding_length
         padding_value = data[40...(40 + padding_length)]
         raise ArgumentError, "Invalid mnemonic. padding must only zero." unless padding_value.to_i(2) == 0
-        s.padded_value = data[start_index...end_index].to_i(2).to_even_length_hex
+        s.value = data[start_index...end_index].to_i(2).to_even_length_hex
         s.checksum = data[(40 + value_length)..-1].to_i(2)
         s
       end

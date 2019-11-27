@@ -31,18 +31,18 @@ module Bitcoin
 
           raise ArgumentError, "Wrong number of mnemonics. Threshold is #{member_threshold}, but share count is #{shares.length}" if shares.length < member_threshold
           if shares.length == 1 && member_threshold == 1
-            group_shares[group_index] = shares.first.padded_value
+            group_shares[group_index] = shares.first.value
           else
-            value_length = shares.first.padded_value.length
+            value_length = shares.first.value.length
             x_coordinates = []
             shares.each do |share|
               raise ArgumentError, 'Invalid set of shares. All shares in a group must have the same member threshold.' unless member_threshold == share.member_threshold
-              raise ArgumentError, 'Invalid set of shares. All share values must have the same length.' unless value_length == share.padded_value.length
+              raise ArgumentError, 'Invalid set of shares. All share values must have the same length.' unless value_length == share.value.length
               x_coordinates << share.member_index
             end
             x_coordinates.uniq!
             raise ArgumentError, 'Invalid set of shares. Share indices must be unique.' unless x_coordinates.size == shares.size
-            interpolate_shares = shares.map{|s|[s.member_index, s.padded_value]}
+            interpolate_shares = shares.map{|s|[s.member_index, s.value]}
 
             secret = interpolate(interpolate_shares, SECRET_INDEX)
             digest_value = interpolate(interpolate_shares, DIGEST_INDEX).htb
@@ -76,7 +76,7 @@ module Bitcoin
       # @return [String] f(x) value with hex format.
       def self.interpolate(shares, x)
         s = shares.find{|s|s[0] == x}
-        return s.padded_value if s
+        return s[1] if s
 
         log_prod = shares.sum{|s|LOG_TABLE[s[0] ^ x]}
 
