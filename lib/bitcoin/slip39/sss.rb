@@ -24,6 +24,7 @@ module Bitcoin
         groups.each do |threshold, count|
           raise ArgumentError, 'Group threshold must be greater than 0.' if threshold.nil? || threshold < 1
           raise ArgumentError, "The requested member threshold (#{threshold}) must not exceed the number of share (#{count})." if threshold > count
+          raise ArgumentError, "Creating multiple member shares with member threshold 1 is not allowed. Use 1-of-1 member sharing instead." if threshold == 1 && count > 1
         end
 
         id = SecureRandom.random_number(32767) # 32767 is max number for 15 bits.
