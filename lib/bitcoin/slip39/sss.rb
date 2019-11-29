@@ -7,6 +7,23 @@ module Bitcoin
     class SSS
 
       # Create SSS shares.
+      #
+      # [Usage]
+      # 4 groups shares.
+      # = two for Alice
+      # = one for friends(required 3 of her 5 friends) and
+      # = one for family members(required 2 of her 6 family)
+      #
+      # Two of these group shares are required to reconstruct the master secret.
+      # groups = [1, 1], [1, 1], [3, 5], [2, 6]
+      #
+      # group_shares = Bitcoin::SLIP39::SSS.setup_shares(group_threshold: 2, groups: groups, secret: 'secret with hex format', passphrase: 'xxx')
+      # return 4 group array of Bitcoin::SLIP39::Share
+      #
+      # Get each share word
+      # groups[0][1].to_words
+      # => ["shadow", "pistol", "academic", "always", "adequate", "wildlife", "fancy", "gross", "oasis", "cylinder", "mustang", "wrist", "rescue", "view", "short", "owner", "flip", "making", "coding", "armed"]
+      #
       # @param [Array[Array[Integer, Integer]]] groups
       # @param [Integer] group_threshold threshold number of group shares required to reconstruct the master secret.
       # @param [Integer] exp Iteration exponent. default is 0.
@@ -54,6 +71,11 @@ module Bitcoin
       end
 
       # recovery master secret form shares.
+      #
+      # [Usage]
+      # shares: An array of shares required for recovery.
+      # master_secret = Bitcoin::SLIP39::SSS.recover_secret(shares, passphrase: 'xxx')
+      #
       # @param [Array[Bitcoin::SLIP30::Share]] shares an array of shares.
       # @param [String] passphrase the passphrase using decrypt master secret.
       # @return [String] a master secret.
