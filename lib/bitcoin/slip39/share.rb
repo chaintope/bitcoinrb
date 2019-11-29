@@ -54,22 +54,16 @@ module Bitcoin
       # Generate mnemonic words
       # @return [Array[String]] array of mnemonic word.
       def to_words
-        s = id.to_bits(ID_LENGTH_BITS)
-        s << iteration_exp.to_bits(ITERATION_EXP_LENGTH_BITS)
-        s << group_index.to_bits(4)
-        s << (group_threshold - 1).to_bits(4)
-        s << (group_count - 1).to_bits(4)
-        raise StandardError, "Group threshold(#{group_threshold}) cannot be greater than group count(#{group_count})." if group_threshold > group_count
-        s << member_index.to_bits(4)
-        s << (member_threshold - 1).to_bits(4)
-        value_length = value.to_i(16).bit_length
-        padding_length = RADIX_BITS - (value_length % RADIX_BITS)
-        s << value.to_i(16).to_bits(value_length + padding_length)
-        s << checksum.to_bits(30)
-        s.chars.each_slice(10).map{|index| Bitcoin::SLIP39::WORDS[index.join.to_i(2)]}
+        indices = build_word_indices
+        indices.map{|index| Bitcoin::SLIP39::WORDS[index]}
       end
 
-      private
+      # Calculate checksum using current fields
+      # @return [Integer] checksum
+      def calculate_checksum
+        indices = build_word_indices(false)
+        create_rs1024_checksum(indices).map{|i|i.to_bits(10)}.join.to_i(2)
+      end
 
       def self.rs1024_polymod(values)
         gen = [0xe0e040, 0x1c1c080, 0x3838100, 0x7070200, 0xe0e0009, 0x1c0c2412, 0x38086c24, 0x3090fc48, 0x21b1f890, 0x3f3f120]
@@ -84,12 +78,44 @@ module Bitcoin
         chk
       end
 
+      private
+
+      # Create word indices from this share.
+      # @param [Boolean] include_checksum whether include checksum when creating indices.
+      # @param [Array[Integer]] the array of index
+      def build_word_indices(include_checksum = true)
+        s = id.to_bits(ID_LENGTH_BITS)
+        s << iteration_exp.to_bits(ITERATION_EXP_LENGTH_BITS)
+        s << group_index.to_bits(4)
+        s << (group_threshold - 1).to_bits(4)
+        s << (group_count - 1).to_bits(4)
+        raise StandardError, "Group threshold(#{group_threshold}) cannot be greater than group count(#{group_count})." if group_threshold > group_count
+        s << member_index.to_bits(4)
+        s << (member_threshold - 1).to_bits(4)
+        value_length = value.to_i(16).bit_length
+        padding_length = RADIX_BITS - (value_length % RADIX_BITS)
+        s << value.to_i(16).to_bits(value_length + padding_length)
+        s << checksum.to_bits(30) if include_checksum
+        s.chars.each_slice(10).map{|index| index.join.to_i(2)}
+      end
+
       # Verify RS1024 checksum
-      # @param [Integer] data the data part as a list of 10-bit integers, each corresponding to one word of the mnemonic.
+      # @param [Array[Integer] data the array of mnemonic word index
       # @return [Boolean] verify result
       def self.verify_rs1024_checksum(data)
         rs1024_polymod(CUSTOMIZATION_STRING + data) == 1
       end
+
+      # Create RS1024 checksum
+      # @param [Array[Integer] data the array of mnemonic word index without checksum
+      # @return [Array[Integer]] the array of checksum integer
+      def create_rs1024_checksum(data)
+        values = CUSTOMIZATION_STRING + data + Array.new(CHECKSUM_LENGTH_WORDS, 0)
+        polymod = Bitcoin::SLIP39::Share.rs1024_polymod(values) ^ 1
+        CHECKSUM_LENGTH_WORDS.times.to_a.reverse.map {|i|(polymod >> (10 * i)) & 1023 }
+      end
+
+      private_class_method :verify_rs1024_checksum
 
     end
   end
