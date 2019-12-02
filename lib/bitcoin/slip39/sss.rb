@@ -6,6 +6,9 @@ module Bitcoin
     # Shamir's Secret Sharing
     class SSS
 
+      include Bitcoin::Util
+      extend Bitcoin::Util
+
       # Create SSS shares.
       #
       # [Usage]
@@ -171,7 +174,7 @@ module Bitcoin
         e = (Bitcoin::SLIP39::BASE_ITERATION_COUNT << exp) / Bitcoin::SLIP39::ROUND_COUNT
         Bitcoin::SLIP39::ROUND_COUNT.times.to_a.reverse.each do |i|
           f = OpenSSL::PKCS5.pbkdf2_hmac((i.itb + passphrase), salt + r, e, r.bytesize, 'sha256')
-          l, r = r, (l.bti ^ f.bti).itb
+          l, r = padding_zero(r, r.bytesize), padding_zero((l.bti ^ f.bti).itb, r.bytesize)
         end
         (r + l).bth
       end
@@ -189,7 +192,7 @@ module Bitcoin
         e = (Bitcoin::SLIP39::BASE_ITERATION_COUNT << exp) / Bitcoin::SLIP39::ROUND_COUNT
         Bitcoin::SLIP39::ROUND_COUNT.times.to_a.each do |i|
           f = OpenSSL::PKCS5.pbkdf2_hmac((i.itb + passphrase), salt + r, e, r.bytesize, 'sha256')
-          l, r = r, (l.bti ^ f.bti).itb
+          l, r = padding_zero(r, r.bytesize), padding_zero((l.bti ^ f.bti).itb, r.bytesize)
         end
         (r + l).bth
       end

@@ -82,6 +82,15 @@ module Bitcoin
       byte.unpack('b*').first
     end
 
+    # padding zero to the left of binary string until bytesize.
+    # @param [String] binary string
+    # @param [Integer] bytesize total bytesize.
+    # @return [String] padded binary string.
+    def padding_zero(binary, bytesize)
+      return binary unless binary.bytesize < bytesize
+      ('00' * (bytesize - binary.bytesize)).htb + binary
+    end
+
     # generate sha256-ripemd160 hash for value
     def hash160(hex)
       Digest::RMD160.hexdigest(Digest::SHA256.digest(hex.htb))
