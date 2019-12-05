@@ -14,7 +14,7 @@ describe 'BIP 143 spec', use_secp256k1: true do
       key0 = Bitcoin::Key.new(priv_key: 'bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866', key_type: Bitcoin::Key::TYPES[:p2pkh])
       sig0 = key0.sign(sig_hash0, false) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
 
-      tx.inputs[0].script_sig = Bitcoin::Script.parse_from_payload(Bitcoin::Script.pack_pushdata(sig0))
+      tx.inputs[0].script_sig = Bitcoin::Script.new << sig0
 
       script_pubkey1 = Bitcoin::Script.parse_from_payload('00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1'.htb)
       sig_hash1 = tx.sighash_for_input(1, script_pubkey1, amount: 600000000,
@@ -39,7 +39,7 @@ describe 'BIP 143 spec', use_secp256k1: true do
 
       tx = Bitcoin::Tx.parse_from_payload('0100000001db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb66092ac4d3ceb1a54770100000000feffffff02b8b4eb0b000000001976a914a457b684d7f0d539a46a45bbc043f35b59d0d96388ac0008af2f000000001976a914fd270b1ee6abcaea97fea7ad0402e8bd8ad6d77c88ac92040000'.htb)
 
-      tx.inputs[0].script_sig = Bitcoin::Script.parse_from_payload(Bitcoin::Script.pack_pushdata(redeem_script.to_payload))
+      tx.inputs[0].script_sig = Bitcoin::Script.new << redeem_script.to_payload
 
       key = Bitcoin::Key.new(priv_key: 'eb696a065ef48a2192da5b28b694f87544b30fae8327c4510137a922f32c6dcf', key_type: Bitcoin::Key::TYPES[:p2wpkh_p2sh])
       sig_hash = tx.sighash_for_input(0, redeem_script, amount: 1000000000, sig_version: :witness_v0)
@@ -64,7 +64,7 @@ describe 'BIP 143 spec', use_secp256k1: true do
       sig_hash0 = tx.sighash_for_input(0, script_pubkey0)
       key0 = Bitcoin::Key.new(priv_key: 'b8f28a772fccbf9b4f58a4f027e07dc2e35e7cd80529975e292ea34f84c4580c', key_type: Bitcoin::Key::TYPES[:compressed])
       sig0 = key0.sign(sig_hash0, false) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
-      tx.inputs[0].script_sig = Bitcoin::Script.parse_from_payload(Bitcoin::Script.pack_pushdata(sig0))
+      tx.inputs[0].script_sig = Bitcoin::Script.new << sig0
 
       script_pubkey1 = Bitcoin::Script.parse_from_payload('00205d1b56b63d714eebe542309525f484b7e9d6f686b3781b6f61ef925d66d6f6a0'.htb)
       sig_hash1 = tx.sighash_for_input(1, witness_script, amount: 4900000000,
@@ -96,7 +96,7 @@ describe 'BIP 143 spec', use_secp256k1: true do
       witness_script = Bitcoin::Script.parse_from_payload('56210307b8ae49ac90a048e9b53357a2354b3334e9c8bee813ecb98e99a7e07e8c3ba32103b28f0c28bfab54554ae8c658ac5c3e0ce6e79ad336331f78c428dd43eea8449b21034b8113d703413d57761b8b9781957b8c0ac1dfe69f492580ca4195f50376ba4a21033400f6afecb833092a9a21cfdf1ed1376e58c5d1f47de74683123987e967a8f42103a6d48b1131e94ba04d9737d61acdaa1322008af9602b3b14862c07a1789aac162102d8b661b0b3302ee2f162b09e07a55ad5dfbe673a9f01d9f0c19617681024306b56ae'.htb)
 
       tx = Bitcoin::Tx.parse_from_payload('010000000136641869ca081e70f394c6948e8af409e18b619df2ed74aa106c1ca29787b96e0100000000ffffffff0200e9a435000000001976a914389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2688acc0832f05000000001976a9147480a33f950689af511e6e84c138dbbd3c3ee41588ac00000000'.htb)
-      tx.inputs[0].script_sig = Bitcoin::Script.parse_from_payload(Bitcoin::Script.pack_pushdata(redeem_script.to_payload))
+      tx.inputs[0].script_sig = Bitcoin::Script.new << redeem_script.to_payload
 
       tx.inputs[0].script_witness.stack << ''
 
