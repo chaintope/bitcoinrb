@@ -1,4 +1,4 @@
-require 'leveldb'
+require 'leveldb-native'
 module Bitcoin
   module Wallet
 

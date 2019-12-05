@@ -15,7 +15,7 @@ module Bitcoin
 
       def initialize(path = "#{Bitcoin.base_dir}/db/wallet")
         FileUtils.mkdir_p(path)
-        @level_db = ::LevelDB::DB.new(path)
+        @level_db = ::LevelDBNative::DB.new(path)
       end
 
       # close database

@@ -37,7 +37,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'activesupport', '~> 5.2.3'
 
   # for options
-  spec.add_development_dependency 'leveldb-ruby'
+  spec.add_development_dependency 'leveldb-native'
 
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'rake', '~> 10.0'

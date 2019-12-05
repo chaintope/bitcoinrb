@@ -36,10 +36,10 @@ If you use node features, please install level DB as follows.
 
     $ brew install leveldb
 
-and put `leveldb-ruby` in your Gemfile and run bundle install.
+and put `leveldb-native` in your Gemfile and run bundle install.
 
 ```
-gem leveldb-ruby
+gem leveldb-native
 ```
 
 ## Installation
