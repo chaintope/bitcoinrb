@@ -39,6 +39,11 @@ module Bitcoin
       tx_hash.rhex
     end
 
+    def to_s
+      return "[#{index}]" unless tx_hash
+      "#{txid}[#{index}]"
+    end
+
   end
 
 end
