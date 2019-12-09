@@ -108,7 +108,7 @@ describe Bitcoin::Util do
     end
 
     context 'testnet', network: :testnet do
-      it 'should judge addoress format.' do
+      it 'should judge address format.' do
         expect(util.valid_address?('191arn68nSLRiNJXD8srnmw4bRykBkVv6o')).to be false
         expect(util.valid_address?('3HG15Tn6hEd1WVR1ySQtWRstTbvyy6B5V8')).to be false
         expect(util.valid_address?('bc1q2lw52zhd202wxhf42k3y4e7m70sg578ver73dn')).to be false
