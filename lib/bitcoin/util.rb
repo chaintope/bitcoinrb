@@ -128,6 +128,18 @@ module Bitcoin
       OpenSSL::HMAC.digest(DIGEST_NAME_SHA256, key, data)
     end
 
+    # check whether +addr+ is valid address.
+    # @param [String] addr an address
+    # @return [Boolean] if valid address return true, otherwise false.
+    def valid_address?(addr)
+      begin
+        Bitcoin::Script.parse_from_addr(addr)
+        true
+      rescue Exception
+        false
+      end
+    end
+
   end
 
 end

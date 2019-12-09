@@ -89,5 +89,40 @@ describe Bitcoin::Util do
     end
   end
 
+  describe '#valid_address' do
+    context 'mainnet', network: :mainnet do
+      it 'should judge addoress format.' do
+        expect(util.valid_address?('191arn68nSLRiNJXD8srnmw4bRykBkVv6o')).to be true
+        expect(util.valid_address?('3HG15Tn6hEd1WVR1ySQtWRstTbvyy6B5V8')).to be true
+        expect(util.valid_address?('bc1q2lw52zhd202wxhf42k3y4e7m70sg578ver73dn')).to be true
+        expect(util.valid_address?('bc1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607s264w7g')).to be true
+
+        expect(util.valid_address?('mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1')).to be false
+        expect(util.valid_address?('2N3wh1eYqMeqoLxuKFv8PBsYR4f8gYn8dHm')).to be false
+        expect(util.valid_address?('tb1qgmp0h7lvexdxx9y05pmdukx09xcteu9sx2h4ya')).to be false
+        expect(util.valid_address?('tb1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607sajrpy8')).to be false
+
+        # segwit version 1
+        expect(util.valid_address?('bc1qgmp0h7lvexdxx9y05pmdukx09xcteu9svvvxlw')).to be true
+      end
+    end
+
+    context 'testnet', network: :testnet do
+      it 'should judge addoress format.' do
+        expect(util.valid_address?('191arn68nSLRiNJXD8srnmw4bRykBkVv6o')).to be false
+        expect(util.valid_address?('3HG15Tn6hEd1WVR1ySQtWRstTbvyy6B5V8')).to be false
+        expect(util.valid_address?('bc1q2lw52zhd202wxhf42k3y4e7m70sg578ver73dn')).to be false
+        expect(util.valid_address?('bc1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607s264w7g')).to be false
+
+        expect(util.valid_address?('mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1')).to be true
+        expect(util.valid_address?('2N3wh1eYqMeqoLxuKFv8PBsYR4f8gYn8dHm')).to be true
+        expect(util.valid_address?('tb1qgmp0h7lvexdxx9y05pmdukx09xcteu9sx2h4ya')).to be true
+        expect(util.valid_address?('tb1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607sajrpy8')).to be true
+
+        # segwit version 1
+        expect(util.valid_address?('tb1qgmp0h7lvexdxx9y05pmdukx09xcteu9sx2h4ya')).to be true
+      end
+    end
+  end
 
 end
