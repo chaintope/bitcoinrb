@@ -133,7 +133,7 @@ module Bitcoin
 
       return false unless eval_script(script_pubkey, :witness_v0)
 
-      return set_error(SCRIPT_ERR_EVAL_FALSE) unless stack.size == 1
+      return set_error(SCRIPT_ERR_CLEANSTACK) unless stack.size == 1
       return set_error(SCRIPT_ERR_EVAL_FALSE) unless cast_to_bool(stack.last)
       true
     end
