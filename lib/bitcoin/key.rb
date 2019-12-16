@@ -125,19 +125,19 @@ module Bitcoin
     # get pay to pubkey hash address
     # @deprecated
     def to_p2pkh
-      Bitcoin::Script.to_p2pkh(hash160).addresses.first
+      Bitcoin::Script.to_p2pkh(hash160).to_addr
     end
 
     # get pay to witness pubkey hash address
     # @deprecated
     def to_p2wpkh
-      Bitcoin::Script.to_p2wpkh(hash160).addresses.first
+      Bitcoin::Script.to_p2wpkh(hash160).to_addr
     end
 
     # get p2wpkh address nested in p2sh.
     # @deprecated
     def to_nested_p2wpkh
-      Bitcoin::Script.to_p2wpkh(hash160).to_p2sh.addresses.first
+      Bitcoin::Script.to_p2wpkh(hash160).to_p2sh.to_addr
     end
 
     def compressed?

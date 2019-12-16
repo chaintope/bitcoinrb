@@ -31,7 +31,7 @@ describe Bitcoin::Base58 do
           expect(key.compressed?).to eq(compressed)
         else
           script = Bitcoin::Script.parse_from_payload(payload.htb)
-          expect(script.addresses.first).to eq(base58_str)
+          expect(script.to_addr).to eq(base58_str)
         end
       end
     end
@@ -41,7 +41,6 @@ describe Bitcoin::Base58 do
     invalid_json = fixture_file('key_io_invalid.json')
     invalid_json.each do |json|
       it "should be invalid. #{json}" do
-        puts json
         base58_str = json[0]
         expect{Bitcoin::Key.from_wif(base58_str)}.to raise_error(ArgumentError)
       end

@@ -96,7 +96,7 @@ module Bitcoin
           script = Bitcoin::Script.parse_from_payload(hex_script.htb)
           h = script.to_h
           h.delete(:hex)
-          h[:p2sh] = script.to_p2sh.addresses.first unless script.p2sh?
+          h[:p2sh] = script.to_p2sh.to_addr unless script.p2sh?
           h
         rescue Exception
           raise ArgumentError.new('Script decode failed')
