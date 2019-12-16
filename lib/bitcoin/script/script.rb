@@ -148,12 +148,23 @@ module Bitcoin
       chunks.size == 0
     end
 
+    # @deprecated
     def addresses
+      puts "WARNING: Bitcoin::Script#addresses is deprecated. Use Bitcoin::Script#to_addr instead."
       return [p2pkh_addr] if p2pkh?
       return [p2sh_addr] if p2sh?
       return [bech32_addr] if witness_program?
       return get_multisig_pubkeys.map{|pubkey| Bitcoin::Key.new(pubkey: pubkey.bth).to_p2pkh} if multisig?
       []
+    end
+
+    # convert to address
+    # @return [String] if script type is p2pkh or p2sh or witness program, return address, otherwise nil.
+    def to_addr
+      return p2pkh_addr if p2pkh?
+      return p2sh_addr if p2sh?
+      return bech32_addr if witness_program?
+      nil
     end
 
     # check whether standard script.
