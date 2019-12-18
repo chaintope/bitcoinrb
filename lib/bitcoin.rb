@@ -54,6 +54,7 @@ module Bitcoin
   autoload :KeyPath, 'bitcoin/key_path'
   autoload :Descriptor, 'bitcoin/descriptor'
   autoload :SLIP39, 'bitcoin/slip39'
+  autoload :Aezeed, 'bitcoin/aezeed'
 
   require_relative 'bitcoin/constants'
 

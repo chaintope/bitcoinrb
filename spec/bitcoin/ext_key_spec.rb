@@ -239,6 +239,9 @@ describe Bitcoin::ExtKey, network: :mainnet do
 
     context 'testnet', network: :testnet do
       it 'should be used bip44 encoding' do
+        expect(@account.to_base58).to eq('uprv91G7gZkzehuMVxDJTYE6tLivdF8e4rvzSu1LFfKw3b2Qx1Aj8vpoFnHdfUZ3hmi9jsvPifmZ24RTN2KhwB8BfMLTVqaBReibyaFFcTP1s9n')
+        expect(@account.ext_pubkey.to_base58).to eq('upub5EFU65HtV5TeiSHmZZm7FUffBGy8UKeqp7vw43jYbvZPpoVsgU93oac7Wk3u6moKegAEWtGNF8DehrnHtv21XXEMYRUocHqguyjknFHYfgY')
+
         # m/49'/1'/0'/0/0
         receive_key = @account.derive(0).derive(0)
         expect(receive_key.version).to eq('044a4e28')
