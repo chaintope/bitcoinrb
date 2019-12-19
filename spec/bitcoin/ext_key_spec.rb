@@ -298,4 +298,19 @@ describe Bitcoin::ExtKey, network: :mainnet do
     end
   end
 
+  describe 'Invalid depth' do
+    it 'should be raise error' do
+      # extended key with depth 255
+      xpriv = Bitcoin::ExtKey.from_base58('xprvJA6Ny8Rf8a6VUtRS3vuxTJtDjiCjJ8LEPHtfBVsUQkdnN3UoZ5j1JD6SRFT6oqPKbaXctkvx8rEsZcYhS1QKyJrQmNf7VQV1N2dtfNmzQ1b')
+      xpub = Bitcoin::ExtPubkey.from_base58('xpubEP5jNdxYxwenhNVu9xSxpSpxHk3Dhb45kWpFytH5y6AmEqox6d3Fr1QvGYezEdDtqKfLr9LwHKTo6MxcaLgcnPwnzmAj3hkhTXoQzW5UMaz')
+      expect{xpriv.derive(1)}.to raise_error(IndexError, 'Depth over 255.')
+      expect{xpub.derive(1)}.to raise_error(IndexError, 'Depth over 255.')
+
+      # extended key with depth 256
+      # This key is parsed as a depth 0 master key, but the fingerprints do not match.
+      expect{Bitcoin::ExtKey.from_base58('xprv9sU6B1UPLTVNmywVg1ercki679w1vvjX2YxUxEeBpp2nEdQ26ENepCL5r9kB3tdmJoaiGSx73k4wQtLMrhW5eVcjrngoZrjHTE6xZHkDBnm')}.to raise_error(ArgumentError, "Invalid parent fingerprint.")
+      expect{Bitcoin::ExtPubkey.from_base58('xpub66TSaX1HAq3fzU1xn3BrytepfBmWLPTNPmt5kd3oP9Zm7RjAdmguMzeZhR2gZNaUGEt9nMR9fGWi52dCjTFUg3UpTBfdXN1hRzDonyFuZQW')}.to raise_error(ArgumentError, "Invalid parent fingerprint.")
+    end
+  end
+
 end

@@ -6,6 +6,9 @@ module Bitcoin
   # BIP32 Extended private key
   class ExtKey
 
+    MAX_DEPTH = 255
+    MASTER_FINGERPRINT = '00000000'
+
     attr_accessor :ver
     attr_accessor :depth
     attr_accessor :number
@@ -18,7 +21,7 @@ module Bitcoin
     def self.generate_master(seed)
       ext_key = ExtKey.new
       ext_key.depth = ext_key.number = 0
-      ext_key.parent_fingerprint = '00000000'
+      ext_key.parent_fingerprint = MASTER_FINGERPRINT
       l = Bitcoin.hmac_sha512('Bitcoin seed', seed.htb)
       left = l[0..31].bth.to_i(16)
       raise 'invalid key' if left >= CURVE_ORDER || left == 0
@@ -94,6 +97,7 @@ module Bitcoin
       number += Bitcoin::HARDENED_THRESHOLD if harden
       new_key = ExtKey.new
       new_key.depth = depth + 1
+      raise IndexError, 'Depth over 255.' if new_key.depth > MAX_DEPTH
       new_key.number = number
       new_key.parent_fingerprint = fingerprint
       if number > (Bitcoin::HARDENED_THRESHOLD - 1)
@@ -143,6 +147,9 @@ module Bitcoin
       raise 'An unsupported version byte was specified.' unless ExtKey.support_version?(ext_key.ver)
       ext_key.depth = buf.read(1).unpack('C').first
       ext_key.parent_fingerprint = buf.read(4).bth
+      if ext_key.depth == 0
+        raise ArgumentError, 'Invalid parent fingerprint.' unless ext_key.parent_fingerprint == MASTER_FINGERPRINT
+      end
       ext_key.number = buf.read(4).unpack('N').first
       ext_key.chain_code = buf.read(32)
       buf.read(1) # 0x00
@@ -256,6 +263,7 @@ module Bitcoin
     def derive(number)
       new_key = ExtPubkey.new
       new_key.depth = depth + 1
+      raise IndexError, 'Depth over 255.' if new_key.depth > Bitcoin::ExtKey::MAX_DEPTH
       new_key.number = number
       new_key.parent_fingerprint = fingerprint
       raise 'hardened key is not support' if number > (Bitcoin::HARDENED_THRESHOLD - 1)
@@ -301,6 +309,9 @@ module Bitcoin
       raise 'An unsupported version byte was specified.' unless ExtPubkey.support_version?(ext_pubkey.ver)
       ext_pubkey.depth = buf.read(1).unpack('C').first
       ext_pubkey.parent_fingerprint = buf.read(4).bth
+      if ext_pubkey.depth == 0
+        raise ArgumentError, 'Invalid parent fingerprint.' unless ext_pubkey.parent_fingerprint == ExtKey::MASTER_FINGERPRINT
+      end
       ext_pubkey.number = buf.read(4).unpack('N').first
       ext_pubkey.chain_code = buf.read(32)
       ext_pubkey.pubkey = buf.read(33).bth
