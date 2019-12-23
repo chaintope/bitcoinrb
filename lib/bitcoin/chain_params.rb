@@ -36,9 +36,6 @@ module Bitcoin
 
     attr_accessor :dust_relay_fee
 
-    # fork coin id.
-    attr_accessor :fork_id
-
     # mainnet genesis
     def self.mainnet
       init('mainnet')
@@ -71,11 +68,6 @@ module Bitcoin
           genesis['version'], genesis['prev_hash'].rhex, genesis['merkle_root'].rhex,
           genesis['time'], genesis['bits'], genesis['nonce'])
       Bitcoin::Block.new(header)
-    end
-
-    # whether fork coin.
-    def fork_chain?
-      !fork_id.nil?
     end
 
     def self.init(name)
