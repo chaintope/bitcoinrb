@@ -9,9 +9,9 @@ NOTE: Bitcoinrb work in progress, and there is a possibility of incompatible cha
 
 Bitcoinrb supports following feature:
 
-* Bitcoin script interpreter(including [BIP-65](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki), [BIP-68](https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki), [BIP-112](https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki))
-* De/serialization of Bitcoin protocol network messages
-* De/serialization of blocks and transactions
+* [Bitcoin script interpreter](https://github.com/chaintope/bitcoinrb/wiki/Script)(including [BIP-65](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki), [BIP-68](https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki), [BIP-112](https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki))
+* [De/serialization of Bitcoin protocol network messages](https://github.com/chaintope/bitcoinrb/wiki/P2P-Message)
+* De/serialization of blocks and [transactions](https://github.com/chaintope/bitcoinrb/wiki/Transaction)
 * Key generation and verification for ECDSA, including [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) and [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) supports.
 * ECDSA signature(RFC6979 -Deterministic ECDSA, LOW-S, LOW-R support)
 * Segwit support (parsing segwit payload, Bech32 address, sign for segwit tx, [BIP-141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki), [BIP-143](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki), [BIP-144](https://github.com/bitcoin/bips/blob/master/bip-0144.mediawiki))
