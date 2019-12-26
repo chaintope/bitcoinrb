@@ -2,6 +2,7 @@ $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'bitcoin'
 require 'logger'
 require 'timecop'
+require 'webmock/rspec'
 
 RSpec.configure do |config|
   config.before(:each) do |example|
