@@ -56,7 +56,7 @@ module Bitcoin
         post(server_url, @config[:timeout], @config[:open_timeout], data.to_json, content_type: :json) do |respdata, request, result|
           raise result.message if !result.kind_of?(Net::HTTPSuccess) && respdata.empty?
           response = JSON.parse(respdata.gsub(/\\u([\da-fA-F]{4})/) { [$1].pack('H*').unpack('n*').pack('U*').encode('ISO-8859-1').force_encoding('UTF-8') })
-          raise response['error'] if response['error']
+          raise response['error'].to_s if response['error']
           response['result']
         end
       end
