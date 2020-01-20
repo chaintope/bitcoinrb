@@ -65,6 +65,16 @@ module Bitcoin
         RestClient::Request.execute(method: :post, url: url, timeout: timeout,
                                     open_timeout: open_timeout, payload: payload, headers: headers, &block)
       end
+      
+      # Call CLI command on Ruby-like method names.
+      # e.g. generate_to_address, send_to_address, get_wallet_info
+      def method_missing(name, *args)
+        if name.to_s.include?('_')
+          send(name.to_s.gsub('_', '').to_sym, args)
+        else
+          super
+        end
+      end
 
     end
 
