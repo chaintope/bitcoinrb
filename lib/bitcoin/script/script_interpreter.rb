@@ -61,7 +61,6 @@ module Bitcoin
       # Additional validation for spend-to-script-hash transactions
       if flag?(SCRIPT_VERIFY_P2SH) && script_pubkey.p2sh?
         return set_error(SCRIPT_ERR_SIG_PUSHONLY) unless script_sig.push_only?
-        tmp = stack
         @stack = stack_copy
         raise 'stack cannot be empty.' if stack.empty?
         begin
