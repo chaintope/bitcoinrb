@@ -6,6 +6,7 @@ module Bitcoin
 
     autoload :Ruby, 'bitcoin/secp256k1/ruby'
     autoload :Native, 'bitcoin/secp256k1/native'
+    autoload :RFC6979, 'bitcoin/secp256k1/rfc6979'
 
   end
 
