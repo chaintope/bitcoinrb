@@ -146,7 +146,7 @@ module Bitcoin
         op_count = 0
 
         script.chunks.each_with_index do |c, index|
-          need_exec = !flow_stack.include?(false)
+          need_exec = flow_stack.rindex(false).nil?
 
           return set_error(SCRIPT_ERR_PUSH_SIZE) if c.pushdata? && c.pushed_data.bytesize > MAX_SCRIPT_ELEMENT_SIZE
 
