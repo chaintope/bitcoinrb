@@ -5,6 +5,7 @@ module Bitcoin
     attr_accessor :x_value
 
     VERSION_BYTE = '47'
+    SUPPORT_VERSIONS = ['01']
 
     def initialize
       @version = '01'
@@ -46,6 +47,9 @@ module Bitcoin
     # @params [String] base58_payment_code base58 encoded payment code
     def self.from_base58(base58_payment_code)
       hex = Bitcoin::Base58.decode(base58_payment_code)
+
+      raise ArgumentError, 'invalid version byte' unless hex[0..1] == VERSION_BYTE
+      raise ArgumentError, 'an unsupported version was detected' unless PaymentCode.support_version?(hex[2..3])
       payment_code = hex[0...-8]
       raise ArgumentError, 'invalid checksum' unless Bitcoin.calc_checksum(payment_code) == hex[-8..-1]
 
@@ -59,6 +63,13 @@ module Bitcoin
 
       payment_code_pubkey.to_payload
     end
+
+    # check whether +version+ is supported version bytes.
+    def self.support_version?(version)
+      SUPPORT_VERSIONS.include?(version)
+    end
+
   end
+
 end
   
