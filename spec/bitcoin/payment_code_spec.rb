@@ -11,7 +11,7 @@ describe Bitcoin::PaymentCode, network: :mainnet do
 
     it 'generates Payment Code for Alice' do
       expect(@payment_code.payment_code).to eq('PM8TJTLJbPRGxSbc8EJi42Wrr6QbNSaSSVJ5Y3E4pbCYiTHUskHg13935Ubb7q8tx9GVbh2UuRnBc3WSyJHhUrw8KhprKnn9eDznYGieTzFcwQRya4GA')
-  end
+    end
   end
 
   describe "Bob's Wallet" do
