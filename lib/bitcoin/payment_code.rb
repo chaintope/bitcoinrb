@@ -43,9 +43,9 @@ module Bitcoin
     end
 
     # decode base58 encoded payment code
-    # @params [String] paymen_code_string base58 encoded payment code
-    def self.from_payment_code_string(paymen_code_string)
-      hex = Bitcoin::Base58.decode(paymen_code_string)
+    # @params [String] base58_payment_code base58 encoded payment code
+    def self.from_base58(base58_payment_code)
+      hex = Bitcoin::Base58.decode(base58_payment_code)
       row_payment_code = hex[0...-8]
       raise ArgumentError, 'invalid checksum' unless Bitcoin.calc_checksum(row_payment_code) == hex[-8..-1]
 
