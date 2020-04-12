@@ -4,8 +4,9 @@ module Bitcoin
   class PaymentCode < ExtKey
     attr_accessor :x_value
 
+    VERSION_BYTE = '47'
+
     def initialize
-      @prefix = '47'
       @version = '01'
       @features_bits = '00'
       @sign = '02'
@@ -31,7 +32,7 @@ module Bitcoin
 
     # get payment code
     def row_payment_code
-      @prefix + @version + @features_bits + @sign + @x_value + @chain_code.unpack('H*').first + @reserve_field
+      VERSION_BYTE + @version + @features_bits + @sign + @x_value + @chain_code.unpack('H*').first + @reserve_field
     end
 
     # get notification address
