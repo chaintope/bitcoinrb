@@ -27,12 +27,13 @@ module Bitcoin
     end
 
     def payment_code
-      Bitcoin::Base58.encode(row_payment_code + Bitcoin.calc_checksum(row_payment_code))
+      payment_code_with_version_byte = VERSION_BYTE + row_payment_code
+      Bitcoin::Base58.encode(payment_code_with_version_byte + Bitcoin.calc_checksum(payment_code_with_version_byte))
     end
 
     # get payment code
     def row_payment_code
-      VERSION_BYTE + @version + @features_bits + @sign + @x_value + @chain_code.unpack('H*').first + @reserve_field
+      @version + @features_bits + @sign + @x_value + @chain_code.unpack('H*').first + @reserve_field
     end
 
     # get notification address
