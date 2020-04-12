@@ -1,4 +1,6 @@
 module Bitcoin
+
+  # BIP47 payment code
   class PaymentCode < ExtKey
     attr_accessor :x_value
 
@@ -10,6 +12,8 @@ module Bitcoin
       @reserve_field = '0' * 26
     end
 
+    # generate master key from seed.
+    # @params [String] seed a seed data with hex format.
     def self.generate_master(seed)
       master_ext_key = super.derive(47, harden=true).derive(0, harden=true).derive(0, harden=true)
 
@@ -25,14 +29,18 @@ module Bitcoin
       Bitcoin::Base58.encode(row_payment_code + Bitcoin.calc_checksum(row_payment_code))
     end
 
+    # get payment code
     def row_payment_code
       @prefix + @version + @features_bits + @sign + @x_value + @chain_code.unpack('H*').first + @reserve_field
     end
 
+    # get notification address
     def notification_address
       ext_pubkey.derive(0).addr
     end
 
+    # decode base58 encoded payment code
+    # @params [String] paymen_code_string base58 encoded payment code
     def self.from_payment_code_string(paymen_code_string)
       hex = Bitcoin::Base58.decode(paymen_code_string)
       row_payment_code = hex[0...-8]
