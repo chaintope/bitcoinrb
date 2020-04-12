@@ -26,7 +26,8 @@ module Bitcoin
       payment_code
     end
 
-    def payment_code
+    # Base58 encoded payment code
+    def to_base58
       payment_code_with_version_byte = VERSION_BYTE + row_payment_code
       Bitcoin::Base58.encode(payment_code_with_version_byte + Bitcoin.calc_checksum(payment_code_with_version_byte))
     end
