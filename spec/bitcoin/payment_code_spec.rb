@@ -10,7 +10,7 @@ describe Bitcoin::PaymentCode, network: :mainnet do
     end
 
     it 'generates Payment Code for Alice' do
-      expect(@payment_code.payment_code).to eq('PM8TJTLJbPRGxSbc8EJi42Wrr6QbNSaSSVJ5Y3E4pbCYiTHUskHg13935Ubb7q8tx9GVbh2UuRnBc3WSyJHhUrw8KhprKnn9eDznYGieTzFcwQRya4GA')
+      expect(@payment_code.to_base58).to eq('PM8TJTLJbPRGxSbc8EJi42Wrr6QbNSaSSVJ5Y3E4pbCYiTHUskHg13935Ubb7q8tx9GVbh2UuRnBc3WSyJHhUrw8KhprKnn9eDznYGieTzFcwQRya4GA')
     end
   end
 
@@ -20,7 +20,7 @@ describe Bitcoin::PaymentCode, network: :mainnet do
     end
 
     it 'generates Payment Code for Bob' do
-      expect(@payment_code.payment_code).to eq('PM8TJS2JxQ5ztXUpBBRnpTbcUXbUHy2T1abfrb3KkAAtMEGNbey4oumH7Hc578WgQJhPjBxteQ5GHHToTYHE3A1w6p7tU6KSoFmWBVbFGjKPisZDbP97')
+      expect(@payment_code.to_base58).to eq('PM8TJS2JxQ5ztXUpBBRnpTbcUXbUHy2T1abfrb3KkAAtMEGNbey4oumH7Hc578WgQJhPjBxteQ5GHHToTYHE3A1w6p7tU6KSoFmWBVbFGjKPisZDbP97')
     end
 
     it 'derive ECDH parameters' do
@@ -62,8 +62,8 @@ describe Bitcoin::PaymentCode, network: :mainnet do
 
   describe 'Decode Payment Code' do
     it 'decodes Base58 encoded payment code' do
-      expect(Bitcoin::PaymentCode.from_payment_code_string('PM8TJTLJbPRGxSbc8EJi42Wrr6QbNSaSSVJ5Y3E4pbCYiTHUskHg13935Ubb7q8tx9GVbh2UuRnBc3WSyJHhUrw8KhprKnn9eDznYGieTzFcwQRya4GA')).to eq('47010002b85034fb08a8bfefd22848238257b252721454bbbfba2c3667f168837ea2cdad671af9f65904632e2dcc0c6ad314e11d53fc82fa4c4ea27a4a14eccecc478fee00000000000000000000000000')
-      expect{Bitcoin::PaymentCode.from_payment_code_string('PM8TJTLJbPRGxSbc8EJi42Wrr6QbNSaSSVJ5Y3E4pbCYiTHUskHg13935Ubb7q8tx9GVbh2UuRnBc3WSyJHhUrw8KhprKnn9eDznYGieTzFcwQRya4GB')}.to raise_error(ArgumentError, 'invalid checksum')
+      expect(Bitcoin::PaymentCode.from_payment_code_string('PM8TJTLJbPRGxSbc8EJi42Wrr6QbNSaSSVJ5Y3E4pbCYiTHUskHg13935Ubb7q8tx9GVbh2UuRnBc3WSyJHhUrw8KhprKnn9eDznYGieTzFcwQRya4GA').bth).to eq('010002b85034fb08a8bfefd22848238257b252721454bbbfba2c3667f168837ea2cdad671af9f65904632e2dcc0c6ad314e11d53fc82fa4c4ea27a4a14eccecc478fee00000000000000000000000000')
+      expect{Bitcoin::PaymentCode.from_payment_code_string('PM8TJTLJbPRGxSbc8EJi42Wrr6QbNSaSSVJ5Y3E4pbCYiTHUskHg13935Ubb7q8tx9GVbh2UuRnBc3WSyJHhUrw8KhprKnn9eDznYGieTzFcwQRya4GB').bth}.to raise_error(ArgumentError, 'invalid checksum')
     end
   end
 end

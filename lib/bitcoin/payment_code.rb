@@ -28,13 +28,13 @@ module Bitcoin
 
     # Base58 encoded payment code
     def to_base58
-      payment_code_with_version_byte = VERSION_BYTE + row_payment_code
+      payment_code_with_version_byte = VERSION_BYTE + to_payload.bth
       Bitcoin::Base58.encode(payment_code_with_version_byte + Bitcoin.calc_checksum(payment_code_with_version_byte))
     end
 
-    # get payment code
-    def row_payment_code
-      @version + @features_bits + @sign + @x_value + @chain_code.unpack('H*').first + @reserve_field
+    # serialize payment code
+    def to_payload
+      @version.htb << @features_bits.htb << @sign.htb << @x_value.htb << @chain_code << @reserve_field.htb
     end
 
     # get notification address
@@ -57,7 +57,7 @@ module Bitcoin
       payment_code_pubkey.x_value = x_value
       payment_code_pubkey.chain_code = [chain_code_hex].pack('H*')
 
-      payment_code_pubkey.row_payment_code
+      payment_code_pubkey.to_payload
     end
   end
 end
