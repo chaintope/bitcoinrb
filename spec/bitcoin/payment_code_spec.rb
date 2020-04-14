@@ -67,6 +67,7 @@ describe Bitcoin::PaymentCode, network: :mainnet do
       expect{Bitcoin::PaymentCode.from_base58('AM8TJTLJbPRGxSbc8EJi42Wrr6QbNSaSSVJ5Y3E4pbCYiTHUskHg13935Ubb7q8tx9GVbh2UuRnBc3WSyJHhUrw8KhprKnn9eDznYGieTzFcwQRya4GA').bth}.to raise_error(ArgumentError, 'invalid version byte')
       expect{Bitcoin::PaymentCode.from_base58('PMCbB5gHcpvkWfGPAz1QYR7X9jFwYvwc8rJTCK4VAzADbs9DoQUyr2r23aXfTUYtDjunfQcUUwjRWzAKqi4PDzyK2ftyoPAkkFsVQRxHP7PyxxgGunwu').bth}.to raise_error(ArgumentError, 'invalid version')
       expect{Bitcoin::PaymentCode.from_base58('PM8TJrebgLcDCJa1ygSPNa3hrcG1C4t9j7MEKGVCep5MdnUsUZDPhW2oyA5P4H4N3KXauS4JSjj4gFikc6zdFz2ByvZ9dBvorEeKBZCydK5BMwrgNfyu').bth}.to raise_error(ArgumentError, 'invalid sign')
+      expect{Bitcoin::PaymentCode.from_base58('PM8TJVeCupU7EcGA3XXTAfNRybqxPhdHa1NAPfYof2W9u4vuBhBEW7sdm6WYJRoYMEYm867vZyEbpDANpPEjGWc7HnYWMiMnDt6EFZubsjjvMNChusQi').bth}.to raise_error(ArgumentError, 'invalid public key')
     end
   end
 end

@@ -48,11 +48,15 @@ module Bitcoin
     # @params [String] base58_payment_code base58 encoded payment code
     def self.from_base58(base58_payment_code)
       hex = Bitcoin::Base58.decode(base58_payment_code)
+      version = hex[2..3]
+      sign = hex[6..7]
+      public_key = hex[8..71]
+      payment_code = hex[0...-8]
 
       raise ArgumentError, 'invalid version byte' unless hex[0..1] == VERSION_BYTE
-      raise ArgumentError, 'invalid version' unless PaymentCode.support_version?(hex[2..3])
-      raise ArgumentError, 'invalid sign' unless PaymentCode.support_sign?(hex[6..7])
-      payment_code = hex[0...-8]
+      raise ArgumentError, 'invalid version' unless PaymentCode.support_version?(version)
+      raise ArgumentError, 'invalid sign' unless PaymentCode.support_sign?(sign)
+      raise ArgumentError, 'invalid public key' unless Bitcoin::Key.new(priv_key: nil, pubkey: sign + public_key).fully_valid_pubkey?
       raise ArgumentError, 'invalid checksum' unless Bitcoin.calc_checksum(payment_code) == hex[-8..-1]
 
       x_value = payment_code[8..71]
