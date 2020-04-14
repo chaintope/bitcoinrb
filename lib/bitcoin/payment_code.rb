@@ -3,6 +3,7 @@ module Bitcoin
   # BIP47 payment code
   class PaymentCode < ExtKey
     attr_accessor :x_value
+    attr_accessor :sign
 
     VERSION_BYTE = '47'
     SUPPORT_VERSIONS = ['01']
@@ -11,7 +12,6 @@ module Bitcoin
     def initialize
       @version = '01'
       @features_bits = '00'
-      @sign = '02'
       @reserve_field = '0' * 26
     end
 
@@ -19,11 +19,13 @@ module Bitcoin
     # @params [String] seed a seed data with hex format.
     def self.generate_master(seed)
       master_ext_key = super.derive(47, harden=true).derive(0, harden=true).derive(0, harden=true)
+      compressed_pubkey = master_ext_key.pub
 
       payment_code = PaymentCode.new
       payment_code.depth = master_ext_key.depth
       payment_code.key = master_ext_key.key
-      payment_code.x_value = master_ext_key.pub.slice(2...master_ext_key.pub.length) # x of pubkey
+      payment_code.sign = compressed_pubkey[..1]
+      payment_code.x_value = compressed_pubkey[2...compressed_pubkey.length]
       payment_code.chain_code = master_ext_key.chain_code
       payment_code
     end
@@ -64,6 +66,7 @@ module Bitcoin
 
       payment_code_pubkey = PaymentCode.new
       payment_code_pubkey.depth = 3
+      payment_code_pubkey.sign = sign
       payment_code_pubkey.x_value = x_value
       payment_code_pubkey.chain_code = [chain_code_hex].pack('H*')
 
