@@ -38,8 +38,8 @@ If you use node features, please install level DB as follows.
 
 and put `leveldb-native` in your Gemfile and run bundle install.
 
-```
-gem leveldb-native
+```ruby
+gem 'leveldb-native'
 ```
 
 ## Installation
