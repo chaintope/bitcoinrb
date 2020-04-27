@@ -24,8 +24,8 @@ module Bitcoin
       payment_code = PaymentCode.new
       payment_code.depth = master_ext_key.depth
       payment_code.key = master_ext_key.key
-      payment_code.sign = compressed_pubkey[..1]
-      payment_code.x_value = compressed_pubkey[2...compressed_pubkey.length]
+      payment_code.sign = compressed_pubkey[0..1]
+      payment_code.x_value = compressed_pubkey[2..-1]
       payment_code.chain_code = master_ext_key.chain_code
       payment_code
     end
