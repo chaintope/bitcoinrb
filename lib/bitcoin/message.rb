@@ -42,6 +42,7 @@ module Bitcoin
     autoload :CFParser, 'bitcoin/message/cf_parser'
     autoload :GetCFCheckpt, 'bitcoin/message/get_cfcheckpt'
     autoload :CFCheckpt, 'bitcoin/message/cfcheckpt'
+    autoload :CFilter, 'bitcoin/message/cfilter'
 
     USER_AGENT = "/bitcoinrb:#{Bitcoin::VERSION}/"
 
