@@ -37,6 +37,7 @@ module Bitcoin
     autoload :BlockTransactionRequest, 'bitcoin/message/block_transaction_request'
     autoload :BlockTxn, 'bitcoin/message/block_txn'
     autoload :BlockTransactions, 'bitcoin/message/block_transactions'
+    autoload :GetCFilters, 'bitcoin/message/get_cfilters'
 
     USER_AGENT = "/bitcoinrb:#{Bitcoin::VERSION}/"
 
