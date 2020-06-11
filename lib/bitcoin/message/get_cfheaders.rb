@@ -1,13 +1,13 @@
 module Bitcoin
   module Message
 
-    # getcfilters message for BIP-157
-    # https://github.com/bitcoin/bips/blob/master/bip-0157.mediawiki#getcfilters
-    class GetCFilters < Base
+    # getcfheaders message for BIP-157
+    # https://github.com/bitcoin/bips/blob/master/bip-0157.mediawiki#getcfheaders
+    class GetCFHeaders < Base
       include CFParser
       extend CFParser
 
-      COMMAND = 'getcfilters'
+      COMMAND = 'getcfheaders'
 
       attr_accessor :filter_type
       attr_accessor :start_height
@@ -20,6 +20,5 @@ module Bitcoin
       end
 
     end
-
   end
 end

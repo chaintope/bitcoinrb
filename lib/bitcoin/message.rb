@@ -38,6 +38,8 @@ module Bitcoin
     autoload :BlockTxn, 'bitcoin/message/block_txn'
     autoload :BlockTransactions, 'bitcoin/message/block_transactions'
     autoload :GetCFilters, 'bitcoin/message/get_cfilters'
+    autoload :GetCFHeaders, 'bitcoin/message/get_cfheaders'
+    autoload :CFParser, 'bitcoin/message/cf_parser'
 
     USER_AGENT = "/bitcoinrb:#{Bitcoin::VERSION}/"
 
