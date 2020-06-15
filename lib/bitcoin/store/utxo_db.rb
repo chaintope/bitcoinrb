@@ -1,4 +1,4 @@
-require 'leveldb'
+require 'leveldb-native'
 
 module Bitcoin
   module Store
@@ -17,7 +17,7 @@ module Bitcoin
 
       def initialize(path = "#{Bitcoin.base_dir}/db/utxo")
         FileUtils.mkdir_p(path)
-        @level_db = ::LevelDB::DB.new(path)
+        @level_db = ::LevelDBNative::DB.new(path)
         @logger = Bitcoin::Logger.create(:debug)
       end
 
