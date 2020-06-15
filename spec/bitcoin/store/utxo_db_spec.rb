@@ -18,6 +18,23 @@ describe Bitcoin::Store::UtxoDB do
       end
       addresses
     end
+
+    # @param  [String] hashes - array of String from hash160
+    #                         - can also be hash of redeem script
+    # @param  [Bitcoin::Tx] tx - incoming tx.
+    # @param  [Integer] block_height - block height number.
+    # @return [Bitcoin::OutPoint ...]
+    def filter_and_save_tx(hashes, tx, block_height=nil)
+      out = []
+      tx.outputs.each_with_index do |output, index|
+        if (output.script_pubkey.p2pkh? or output.script_pubkey.p2wpkh?) and !(output.script_pubkey.addresses & hashes).empty?
+          out.push(save(tx, index, output, block_height))
+        elsif (output.script_pubkey.p2sh? or output.script_pubkey.p2wsh?) and hashes.include?(output.script_pubkey.to_s)
+          out.push(save(tx, index, output, block_height))
+        end
+      end
+      out
+    end
   end
 
   describe 'verify test setup' do
