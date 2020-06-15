@@ -100,7 +100,7 @@ module Bitcoin
       def save_utxo(out_point, value, script_pubkey, block_height=nil)
         logger.info("UtxoDB#save_utxo:#{[out_point, value, script_pubkey, block_height]}")
         level_db.batch do
-          utxo = Bitcoin::Wallet::Utxo.new(out_point.hash, out_point.index, value, script_pubkey, block_height)
+          utxo = Bitcoin::Wallet::Utxo.new(out_point.tx_hash, out_point.index, value, script_pubkey, block_height)
           payload = utxo.to_payload
 
           # out_point
