@@ -39,6 +39,7 @@ describe Bitcoin::Store::UtxoDB do
     subject { create_test_utxo_db() }
     after do
       subject.close
+      wallet.close
     end
 
     it 'should have initialized correctly' do
@@ -95,6 +96,7 @@ describe Bitcoin::Store::UtxoDB do
     subject { create_test_utxo_db() }
     after do
       subject.close
+      wallet.close
     end
 
     it 'should replace script_pubkey correctly' do
@@ -224,6 +226,7 @@ describe Bitcoin::Store::UtxoDB do
     subject { create_test_utxo_db() }
     after do
       subject.close
+      wallet.close
     end
 
     it 'should save p2wpkh to utxo' do
@@ -277,6 +280,7 @@ describe Bitcoin::Store::UtxoDB do
     subject { create_test_utxo_db() }
     after do
       subject.close
+      wallet.close
     end
 
     it 'should save p2sh to utxo' do
@@ -329,6 +333,7 @@ describe Bitcoin::Store::UtxoDB do
     subject { create_test_utxo_db() }
     after do
       subject.close
+      wallet.close
     end
 
     it 'should save p2wsh to utxo' do
