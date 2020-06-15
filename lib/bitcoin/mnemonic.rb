@@ -6,11 +6,11 @@ module Bitcoin
 
     WORD_DIR = "#{__dir__}/mnemonic/wordlist"
 
-    attr_reader :word_list
+    attr_reader :language
 
-    def initialize(word_list)
-      raise ArgumentError, 'specified language is not supported.' unless Mnemonic.word_lists.include?(word_list)
-      @word_list = word_list
+    def initialize(language)
+      raise ArgumentError, 'specified language is not supported.' unless Mnemonic.word_lists.include?(language)
+      @language = language
     end
 
     # get support language list
@@ -69,7 +69,7 @@ module Bitcoin
 
     # load word list contents
     def load_words
-      File.readlines("#{WORD_DIR}/#{word_list}.txt").map(&:strip)
+      File.readlines("#{WORD_DIR}/#{language}.txt").map(&:strip)
     end
 
   end

@@ -6,7 +6,7 @@ describe Bitcoin::Mnemonic, network: :mainnet do
 
   describe '#initialize' do
     it 'should check supported words' do
-      expect(subject.word_list).to eq('english')
+      expect(subject.language).to eq('english')
       expect {Bitcoin::Mnemonic.new('english1')}.to raise_error(ArgumentError)
     end
   end
