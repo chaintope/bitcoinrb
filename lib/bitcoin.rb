@@ -56,6 +56,7 @@ module Bitcoin
   autoload :SLIP39, 'bitcoin/slip39'
   autoload :Aezeed, 'bitcoin/aezeed'
   autoload :PaymentCode, 'bitcoin/payment_code'
+  autoload :BIP85Entropy, 'bitcoin/bip85_entropy'
 
   require_relative 'bitcoin/constants'
 
