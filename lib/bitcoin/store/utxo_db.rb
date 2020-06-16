@@ -25,9 +25,8 @@ module Bitcoin
         level_db.close
       end
 
-
-
-
+      # Save payload of a transaction into db
+      #
       # @param  [String] tx_hash
       # @param  [String] tx_payload
       def save_tx(tx_hash, tx_payload)
@@ -39,6 +38,9 @@ module Bitcoin
         end
       end
 
+      # Save tx position (block height and index in the block) into db
+      # When node receives `header` message, node should call save_tx_position to store block height and its index.
+      #
       # @param  [String] tx_hash
       # @param  [Integer] block_height
       # @param  [Integer] tx_index
@@ -55,6 +57,8 @@ module Bitcoin
         end
       end
 
+      # Save utxo into db
+      #
       # @param [Bitcoin::OutPoint] out_point
       # @param [Double] value
       # @param [Bitcoin::Script] script_pubkey
@@ -86,6 +90,8 @@ module Bitcoin
         end
       end
 
+      # Get transaction stored via save_tx and save_tx_position
+      #
       # @param  [string] tx_hash
       # @return [block_height, tx_index, tx_payload]
       def get_tx(tx_hash)
@@ -97,6 +103,8 @@ module Bitcoin
         [block_height, tx_index, tx_payload]
       end
 
+      # Delete utxo from db
+      #
       # @param  [Bitcoin::Outpoint] out_point
       # @return [Bitcoin::Wallet::Utxo] 
       def delete_utxo(out_point)
@@ -136,6 +144,8 @@ module Bitcoin
         end
       end
 
+      # Get utxo of the specified out point
+      #
       # @param  [Bitcoin::Outpoint] out_point
       # @return [Bitcoin::Wallet::Utxo]
       def get_utxo(out_point)
