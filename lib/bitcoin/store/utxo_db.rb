@@ -25,26 +25,8 @@ module Bitcoin
         level_db.close
       end
 
-      def version
-        1
-      end
 
-      # @param  [Bitcoin::Tx] tx
-      # @param  [Integer] index
-      # @param  [Bitcoin::TxOut] output
-      # @param  [Integer] block_height
-      # @return [Bitcoin::OutPoint]
-      def save(tx, index, output, block_height=nil)
-        out_point = !tx.coinbase_tx? ? Bitcoin::OutPoint.from_txid(tx.txid, index) : Bitcoin::OutPoint.create_coinbase_outpoint()
 
-        save_tx(tx.tx_hash, tx.to_payload)
-
-        save_tx_position(tx.tx_hash, block_height, index) unless block_height.nil?
-
-        save_utxo(out_point, output.value, output.script_pubkey, block_height)
-
-        out_point
-      end
 
       # @param  [String] tx_hash
       # @param  [String] tx_payload
