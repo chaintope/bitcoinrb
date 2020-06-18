@@ -169,15 +169,15 @@ module Bitcoin
       # return [Bitcoin::Wallet::Utxo ...]
       def list_unspent_in_account(account, current_block_height: 9999999, min: 0, max: 9999999)
         return [] unless account
-        return [] unless account.purpose == Bitcoin::Wallet::Account::PURPOSE_TYPE[:legacy] or account.purpose == Bitcoin::Wallet::Account::PURPOSE_TYPE[:native_segwit]
 
-        script_pubkeys = nil
-        if account.purpose == Bitcoin::Wallet::Account::PURPOSE_TYPE[:legacy]
-          script_pubkeys = account.watch_targets.map { |t| Bitcoin::Script.to_p2pkh(t).to_payload.bth }
-        elsif account.purpose == Bitcoin::Wallet::Account::PURPOSE_TYPE[:native_segwit]
-          script_pubkeys = account.watch_targets.map { |t| Bitcoin::Script.to_p2wpkh(t).to_payload.bth }
-        end
-        
+        script_pubkeys = case account.purpose
+          when Bitcoin::Wallet::Account::PURPOSE_TYPE[:legacy]
+            account.watch_targets.map { |t| Bitcoin::Script.to_p2pkh(t).to_payload.bth }
+          when Bitcoin::Wallet::Account::PURPOSE_TYPE[:nested_witness]
+            account.watch_targets.map { |t| Bitcoin::Script.to_p2wpkh(t).to_p2sh.to_payload.bth }
+          when Bitcoin::Wallet::Account::PURPOSE_TYPE[:native_segwit]
+            account.watch_targets.map { |t| Bitcoin::Script.to_p2wpkh(t).to_payload.bth }
+          end
         list_unspent_by_script_pubkeys(current_block_height, min: min, max: max, script_pubkeys: script_pubkeys)
       end
 
