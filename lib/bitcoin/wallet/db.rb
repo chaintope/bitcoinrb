@@ -53,13 +53,6 @@ module Bitcoin
         level_db.each(from: from, to: to).map { |k, v| v}
       end
 
-      def get_keys_type(account, purpose)
-        id = [account.purpose, account.index, purpose].pack('I*').bth
-        from = KEY_PREFIX[:key] + id + '00000000'
-        to = KEY_PREFIX[:key] + id + 'ffffffff'
-        level_db.each(from: from, to: to).map { |k, v| v}
-      end
-
       # get master_key
       def master_key
         @master_key ||= Bitcoin::Wallet::MasterKey.parse_from_payload(level_db.get(KEY_PREFIX[:master]))
