@@ -70,23 +70,23 @@ module Bitcoin
           payload = utxo.to_payload
 
           # out_point
-          key = KEY_PREFIX[:out_point] + out_point.to_payload.bth
+          key = KEY_PREFIX[:out_point] + out_point.to_hex
           return if level_db.contains?(key)
           level_db.put(key, payload)
 
           # script_pubkey
           if script_pubkey
-            key = KEY_PREFIX[:script] + script_pubkey.to_payload.bth + out_point.to_payload.bth
+            key = KEY_PREFIX[:script] + script_pubkey.to_hex + out_point.to_hex
             level_db.put(key, payload)
           end
 
           # height
-          if !block_height.nil?
-            key = KEY_PREFIX[:height] + [block_height].pack('N').bth + out_point.to_payload.bth
+          unless block_height.nil?
+            key = KEY_PREFIX[:height] + [block_height].pack('N').bth + out_point.to_hex
             level_db.put(key, payload)
           end
 
-          return utxo
+          utxo
         end
       end
 
@@ -110,20 +110,20 @@ module Bitcoin
       def delete_utxo(out_point)
         level_db.batch do
           # [:out_point]
-          key = KEY_PREFIX[:out_point] + out_point.to_payload.bth
+          key = KEY_PREFIX[:out_point] + out_point.to_hex
           return unless level_db.contains?(key)
           utxo = Bitcoin::Wallet::Utxo.parse_from_payload(level_db.get(key))
           level_db.delete(key)
 
           # [:script]
           if utxo.script_pubkey
-            key = KEY_PREFIX[:script] + utxo.script_pubkey.to_payload.bth + out_point.to_payload.bth
+            key = KEY_PREFIX[:script] + utxo.script_pubkey.to_hex + out_point.to_hex
             level_db.delete(key)
           end
 
           if utxo.block_height
             # [:height]
-            key = KEY_PREFIX[:height] + [utxo.block_height].pack('N').bth + out_point.to_payload.bth
+            key = KEY_PREFIX[:height] + [utxo.block_height].pack('N').bth + out_point.to_hex
             level_db.delete(key)
 
             # [:block]
@@ -140,7 +140,7 @@ module Bitcoin
             level_db.delete(key)
           end
 
-          return utxo
+          utxo
         end
       end
 
@@ -150,7 +150,7 @@ module Bitcoin
       # @return [Bitcoin::Wallet::Utxo]
       def get_utxo(out_point)
         level_db.batch do
-          key = KEY_PREFIX[:out_point] + out_point.to_payload.bth
+          key = KEY_PREFIX[:out_point] + out_point.to_hex
           return unless level_db.contains?(key)
           return Bitcoin::Wallet::Utxo.parse_from_payload(level_db.get(key))
         end
@@ -172,11 +172,11 @@ module Bitcoin
 
         script_pubkeys = case account.purpose
           when Bitcoin::Wallet::Account::PURPOSE_TYPE[:legacy]
-            account.watch_targets.map { |t| Bitcoin::Script.to_p2pkh(t).to_payload.bth }
+            account.watch_targets.map { |t| Bitcoin::Script.to_p2pkh(t).to_hex }
           when Bitcoin::Wallet::Account::PURPOSE_TYPE[:nested_witness]
-            account.watch_targets.map { |t| Bitcoin::Script.to_p2wpkh(t).to_p2sh.to_payload.bth }
+            account.watch_targets.map { |t| Bitcoin::Script.to_p2wpkh(t).to_p2sh.to_hex }
           when Bitcoin::Wallet::Account::PURPOSE_TYPE[:native_segwit]
-            account.watch_targets.map { |t| Bitcoin::Script.to_p2wpkh(t).to_payload.bth }
+            account.watch_targets.map { |t| Bitcoin::Script.to_p2wpkh(t).to_hex }
           end
         list_unspent_by_script_pubkeys(current_block_height, min: min, max: max, script_pubkeys: script_pubkeys)
       end
@@ -208,7 +208,7 @@ module Bitcoin
       end
 
       def list_unspent_by_addresses(current_block_height, min: 0, max: 9999999, addresses: [])
-        script_pubkeys = addresses.map { |a| Bitcoin::Script.parse_from_addr(a).to_payload.bth }
+        script_pubkeys = addresses.map { |a| Bitcoin::Script.parse_from_addr(a).to_hex }
         list_unspent_by_script_pubkeys(current_block_height, min: min, max: max, script_pubkeys: script_pubkeys)
       end
 
