@@ -12,6 +12,11 @@ class BitcoinDaemon < DaemonSpawn::Base
     node.run
   end
 
+  def stop
+    puts "Stopping Bitcoinrb daemon : #{Time.now}"
+    node.shutdown
+  end
+
 end
 
 class Bitcoinrbd < Thor

@@ -20,14 +20,14 @@ module Bitcoin
       # @param [String] wallet_id new wallet id.
       # @param [String] path_prefix wallet file path prefix.
       # @return [Bitcoin::Wallet::Base] the wallet
-      def self.create(wallet_id = 1, path_prefix = default_path_prefix)
+      def self.create(wallet_id = 1, path_prefix = default_path_prefix, purpose = Account::PURPOSE_TYPE[:native_segwit])
         raise ArgumentError, "wallet_id : #{wallet_id} already exist." if self.exist?(wallet_id, path_prefix)
         w = self.new(wallet_id, path_prefix)
         # generate seed
         raise RuntimeError, 'the seed already exist.' if w.db.registered_master?
         master = Bitcoin::Wallet::MasterKey.generate
         w.db.register_master_key(master)
-        w.create_account('Default')
+        w.create_account(purpose, 'Default')
         w
       end
 
