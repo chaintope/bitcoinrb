@@ -191,7 +191,7 @@ module Bitcoin
         if value.is_a?(Array)
           result.update(key => value.map{|v|v.to_h})
         else
-          result.update(key => value)
+          result.update(key => value.class.to_s.start_with?("Bitcoin::") ? value.to_h : value)
         end
       end
     end
