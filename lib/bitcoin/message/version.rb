@@ -64,6 +64,13 @@ module Bitcoin
         ( version >= 70001 && payload ) ? unpack_boolean(payload) : [ true, nil ]
       end
 
+      # Check whether +service_flag+ support this version.
+      # @param [Integer] service_flag the service flags.
+      # @return [Boolean] whether support +service_flag+
+      def support?(service_flag)
+        (services & service_flag) != 0
+      end
+
     end
   end
 end

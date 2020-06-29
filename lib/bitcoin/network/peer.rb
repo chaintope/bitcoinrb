@@ -83,10 +83,15 @@ module Bitcoin
 
       def post_handshake
         @connected = true
-        pool.handle_new_peer(self)
-        # require remote peer to use headers message instead fo inv message.
-        conn.send_message(Bitcoin::Message::SendHeaders.new)
-        EM.add_periodic_timer(PING_INTERVAL) {send_ping}
+        if remote_version.support?(Bitcoin::Message::SERVICE_FLAGS[:bloom])
+          pool.handle_new_peer(self)
+          # require remote peer to use headers message instead fo inv message.
+          conn.send_message(Bitcoin::Message::SendHeaders.new)
+          EM.add_periodic_timer(PING_INTERVAL) {send_ping}
+        else
+          close("peer does not support NODE_BLOOM.")
+          pool.pending_peers.delete(self)
+        end
       end
 
       # start block header download
