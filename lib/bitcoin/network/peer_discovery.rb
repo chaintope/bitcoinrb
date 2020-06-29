@@ -30,7 +30,9 @@ module Bitcoin
         logger.debug 'discover peer address from DNS seeds.'
         dns_seeds.map { |seed|
           begin
-            Socket.getaddrinfo(seed, Bitcoin.chain_params.default_port).map{|a|a[2]}.uniq
+            # x5 is a prefix for finding nodes that support NODE_BLOOM.
+            # https://github.com/bitcoin/bitcoin/pull/8083#issuecomment-221552835
+            Socket.getaddrinfo("x5.#{seed}", Bitcoin.chain_params.default_port).map{|a|a[2]}.uniq
           rescue SocketError => e
             logger.error "SocketError occurred when load DNS seed: #{seed}, error: #{e.message}"
             nil
