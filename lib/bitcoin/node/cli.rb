@@ -1,4 +1,4 @@
-require 'rest-client'
+require 'net/http'
 require 'thor'
 require 'json'
 
@@ -92,15 +92,19 @@ module Bitcoin
             :id => 'jsonrpc'
         }
         begin
-          RestClient::Request.execute(method: :post, url: config.server_url, payload: data.to_json,
-                                      headers: {content_type: :json}) do |response, request, result|
-            return false if !result.kind_of?(Net::HTTPSuccess) && response.empty?
-            begin
-              json = JSON.parse(response.to_str)
-              puts JSON.pretty_generate(json)
-            rescue Exception
-              puts response.to_str
-            end
+          uri = URI.parse(config.server_url)
+          http = Net::HTTP.new(uri.hostname, uri.port)
+          http.use_ssl = uri.scheme === "https"
+          request = Net::HTTP::Post.new('/')
+          request.content_type = 'application/json'
+          request.body = data.to_json
+          response = http.request(request)
+          body = response.body
+          begin
+          json = JSON.parse(body.to_str)
+          puts JSON.pretty_generate(json)
+          rescue Exception
+            puts body.to_str
           end
         rescue Exception => e
           puts e.message
