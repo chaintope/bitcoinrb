@@ -161,7 +161,13 @@ module Bitcoin
         if addresses
           list_unspent_by_addresses(current_block_height, min: min, max: max, addresses: addresses)
         else
-          list_unspent_by_block_height(current_block_height, min: min, max: max)
+          max_height = [current_block_height - min, 0].max
+          min_height = [current_block_height - max, 0].max
+
+          # Retrieve all UTXOs in UtxoDB
+          from = KEY_PREFIX[:out_point] + '000000000000000000000000000000000000000000000000000000000000000000000000'
+          to = KEY_PREFIX[:out_point] + 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+          with_height(utxos_between(from, to), min_height, max_height)
         end
       end
 
@@ -193,10 +199,8 @@ module Bitcoin
         level_db.each(from: from, to: to).map { |k, v| Bitcoin::Wallet::Utxo.parse_from_payload(v) }
       end
 
-      class ::Array
-        def with_height(min, max)
-          select { |u| u.block_height >= min && u.block_height <= max }
-        end
+      def with_height(utxos, min, max)
+        utxos.select { |u| u.block_height.nil? || (u.block_height >= min && u.block_height <= max) }
       end
 
       def list_unspent_by_block_height(current_block_height, min: 0, max: 9999999)
@@ -218,7 +222,7 @@ module Bitcoin
         script_pubkeys.map do |key|
           from = KEY_PREFIX[:script] + key + '000000000000000000000000000000000000000000000000000000000000000000000000'
           to = KEY_PREFIX[:script] + key + 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
-          utxos_between(from, to).with_height(min_height, max_height)
+          with_height(utxos_between(from, to), min_height, max_height)
         end.flatten
       end
     end
