@@ -4,14 +4,21 @@ module Bitcoin
     # key path convert an array of derive number
     # @param [String] path_string
     # @return [Array[Integer]] key path numbers.
+    # @raise [ArgumentError] if invalid +path_string+.
     def parse_key_path(path_string)
-      path_string.split('/').map.with_index do|p, index|
+      paths = path_string.split('/')
+      raise ArgumentError, "Invalid path." if path_string.include?(" ")
+      raise ArgumentError, "Invalid path." unless path_string.count("/") <= paths.size
+      paths.map.with_index do|p, index|
         if index == 0
-          raise ArgumentError.new("#{path_string} is invalid format.") unless p == 'm'
-          next
+          next if p == 'm'
+          raise ArgumentError, "Invalid path." unless p == 'm'
         end
-        raise ArgumentError.new("#{path_string} is invalid format.") unless p.delete("'") =~ /^[0-9]+$/
-        (p[-1] == "'" ? p.delete("'").to_i + Bitcoin::HARDENED_THRESHOLD : p.to_i)
+        raise ArgumentError, "Invalid path." if p.count("'") > 1 || (p.count("'") == 1 && p[-1] != "'")
+        raise ArgumentError, "Invalid path." unless p.delete("'") =~ /^[0-9]+$/
+        value = (p[-1] == "'" ? p.delete("'").to_i + Bitcoin::HARDENED_THRESHOLD : p.to_i)
+        raise ArgumentError, "Invalid path." if value > 4294967295 # 4294967295 = 0xFFFFFFFF (uint32 max)
+        value
       end[1..-1]
     end
 
