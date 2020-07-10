@@ -93,7 +93,8 @@ module Bitcoin
 
       def to_payload
         payload = ''
-        payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:non_witness_utxo], value: non_witness_utxo.to_payload) if non_witness_utxo
+        payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:non_witness_utxo], value:
+            (witness_utxo && valid_witness_input?) ? non_witness_utxo.serialize_old_format : non_witness_utxo.to_payload) if non_witness_utxo
         payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:witness_utxo], value: witness_utxo.to_payload) if witness_utxo
         if final_script_sig.nil? && final_script_witness.nil?
           payload << partial_sigs.map{|k, v|PSBT.serialize_to_vector(PSBT_IN_TYPES[:partial_sig], key: k.htb, value: v)}.join
@@ -107,15 +108,6 @@ module Bitcoin
         payload << unknowns.map {|k,v|Bitcoin.pack_var_int(k.htb.bytesize) << k.htb << Bitcoin.pack_var_int(v.bytesize) << v}.join
         payload << PSBT_SEPARATOR.itb
         payload
-      end
-
-      # Sanity check
-      # @return [Boolean]
-      def sane?
-        return false if non_witness_utxo && witness_utxo
-        return false if witness_script && witness_utxo.nil?
-        return false if final_script_witness && witness_utxo.nil?
-        true
       end
 
       # Check whether input's scriptPubkey is correct witness.
@@ -141,7 +133,6 @@ module Bitcoin
       # @param [Bitcoin::TxOut] utxo utxo object which input refers.
       # @return [Boolean]
       def ready_to_sign?(utxo)
-        return false unless sane?
         return valid_witness_input? if witness_utxo
         valid_non_witness_input?(utxo) # non_witness_utxo
       end
@@ -177,8 +168,8 @@ module Bitcoin
         combined.witness_script = witness_script
         combined.sighash_type = sighash_type
         sigs = Hash[partial_sigs.merge(psbi.partial_sigs)]
-        redeem_script.get_multisig_pubkeys.each{|pubkey|combined.partial_sigs[pubkey.bth] = sigs[pubkey.bth]} if redeem_script && redeem_script.multisig?
-        witness_script.get_multisig_pubkeys.each{|pubkey|combined.partial_sigs[pubkey.bth] = sigs[pubkey.bth]} if witness_script && witness_script.multisig?
+        redeem_script.get_multisig_pubkeys.each{|pubkey|combined.partial_sigs[pubkey.bth] = sigs[pubkey.bth]} if redeem_script&.multisig?
+        witness_script.get_multisig_pubkeys.each{|pubkey|combined.partial_sigs[pubkey.bth] = sigs[pubkey.bth]} if witness_script&.multisig?
         combined.hd_key_paths = hd_key_paths.merge(psbi.hd_key_paths)
         combined
       end

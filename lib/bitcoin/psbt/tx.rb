@@ -117,10 +117,6 @@ module Bitcoin
 
         raise ArgumentError, 'Outputs provided does not match the number of outputs in transaction.' unless partial_tx.outputs.size == partial_tx.tx.out.size
 
-        partial_tx.inputs.each do |input|
-          raise ArgumentError, 'PSBT is not sane.' unless input.sane?
-        end
-
         partial_tx
       end
 
@@ -149,11 +145,9 @@ module Bitcoin
         payload << PSBT.serialize_to_vector(PSBT_GLOBAL_TYPES[:unsigned_tx], value: tx.to_payload)
         payload << xpubs.map(&:to_payload).join
         payload << PSBT.serialize_to_vector(PSBT_GLOBAL_TYPES[:ver], value: [version_number].pack('V')) if version_number
-
         payload << unknowns.map {|k,v|Bitcoin.pack_var_int(k.htb.bytesize) << k.htb << Bitcoin.pack_var_int(v.bytesize) << v}.join
 
         payload << PSBT_SEPARATOR.itb
-
         payload << inputs.map(&:to_payload).join
         payload << outputs.map(&:to_payload).join
         payload
@@ -177,14 +171,12 @@ module Bitcoin
             utxo = prev_tx.out[tx_in.out_point.index]
             raise ArgumentError, 'redeem script does not match utxo.' if redeem_script && !utxo.script_pubkey.include?(redeem_script.to_hash160)
             raise ArgumentError, 'witness script does not match redeem script.' if redeem_script && witness_script && !redeem_script.include?(witness_script.to_sha256)
-            if utxo.script_pubkey.witness_program? || (redeem_script && redeem_script.witness_program?)
-              inputs[i].witness_utxo = utxo
-            else
-              inputs[i].non_witness_utxo = prev_tx
-            end
+            inputs[i].witness_utxo = utxo if utxo.script_pubkey.witness_program? || redeem_script&.witness_program?
+            inputs[i].non_witness_utxo = prev_tx
             inputs[i].redeem_script = redeem_script if redeem_script
             inputs[i].witness_script = witness_script if witness_script
             inputs[i].hd_key_paths = hd_key_paths.map(&:pubkey).zip(hd_key_paths).to_h
+            break
           end
         end
       end
