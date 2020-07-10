@@ -3,6 +3,7 @@ module Bitcoin
 
     # HD Wallet master seed
     class MasterKey
+      include Bitcoin::HexConverter
       extend Bitcoin::Util
       include Bitcoin::Util
       include Bitcoin::KeyPath

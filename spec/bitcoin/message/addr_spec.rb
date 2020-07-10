@@ -22,7 +22,7 @@ describe Bitcoin::Message::Addr do
       expect(subject.addrs[0].port).to eq(18333)
       expect(subject.addrs[0].time).to eq(2989705664)
       expect(subject.addrs[0].services).to eq(1)
-      expect(subject.to_payload.bth).to eq('01c04933b2010000000000000000000000000000000000ffff5ca99c52479d')
+      expect(subject.to_hex).to eq('01c04933b2010000000000000000000000000000000000ffff5ca99c52479d')
     end
   end
 

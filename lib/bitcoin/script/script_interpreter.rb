@@ -75,7 +75,7 @@ module Bitcoin
         if flag?(SCRIPT_VERIFY_WITNESS) && redeem_script.witness_program?
           had_witness = true
           # The scriptSig must be _exactly_ a single push of the redeemScript. Otherwise we reintroduce malleability.
-          return set_error(SCRIPT_ERR_WITNESS_MALLEATED_P2SH) unless script_sig == (Bitcoin::Script.new << redeem_script.to_payload.bth)
+          return set_error(SCRIPT_ERR_WITNESS_MALLEATED_P2SH) unless script_sig == (Bitcoin::Script.new << redeem_script.to_hex)
 
           version, program = redeem_script.witness_data
           return false unless verify_witness_program(witness, version, program)

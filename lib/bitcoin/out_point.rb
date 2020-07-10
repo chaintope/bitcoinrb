@@ -3,6 +3,8 @@ module Bitcoin
   # outpoint class
   class OutPoint
 
+    include Bitcoin::HexConverter
+
     COINBASE_HASH = '0000000000000000000000000000000000000000000000000000000000000000'
     COINBASE_INDEX = 4294967295
 
@@ -24,10 +26,6 @@ module Bitcoin
 
     def to_payload
       [tx_hash.htb, index].pack('a32V')
-    end
-
-    def to_hex
-      to_payload.bth
     end
 
     def self.create_coinbase_outpoint

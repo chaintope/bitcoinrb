@@ -2,6 +2,9 @@ module Bitcoin
 
   # BIP47 payment code
   class PaymentCode < ExtKey
+
+    include Bitcoin::HexConverter
+
     attr_accessor :x_value
     attr_accessor :sign
 
@@ -32,7 +35,7 @@ module Bitcoin
 
     # Base58 encoded payment code
     def to_base58
-      payment_code_with_version_byte = VERSION_BYTE + to_payload.bth
+      payment_code_with_version_byte = VERSION_BYTE + to_hex
       Bitcoin::Base58.encode(payment_code_with_version_byte + Bitcoin.calc_checksum(payment_code_with_version_byte))
     end
 

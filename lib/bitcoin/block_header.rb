@@ -3,6 +3,8 @@ module Bitcoin
   # Block Header
   class BlockHeader
 
+    include Bitcoin::HexConverter
+
     attr_accessor :version
     attr_accessor :prev_hash
     attr_accessor :merkle_root

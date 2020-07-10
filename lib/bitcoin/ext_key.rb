@@ -6,6 +6,8 @@ module Bitcoin
   # BIP32 Extended private key
   class ExtKey
 
+    include Bitcoin::HexConverter
+
     MAX_DEPTH = 255
     MASTER_FINGERPRINT = '00000000'
 
@@ -50,7 +52,7 @@ module Bitcoin
 
     # Base58 encoded extended private key
     def to_base58
-      h = to_payload.bth
+      h = to_hex
       hex = h + Bitcoin.calc_checksum(h)
       Base58.encode(hex)
     end
@@ -198,6 +200,8 @@ module Bitcoin
   # BIP-32 Extended public key
   class ExtPubkey
 
+    include Bitcoin::HexConverter
+
     attr_accessor :ver
     attr_accessor :depth
     attr_accessor :number
@@ -249,7 +253,7 @@ module Bitcoin
 
     # Base58 encoded extended pubkey
     def to_base58
-      h = to_payload.bth
+      h = to_hex
       hex = h + Bitcoin.calc_checksum(h)
       Base58.encode(hex)
     end

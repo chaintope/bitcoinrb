@@ -3,6 +3,7 @@ module Bitcoin
 
     # wrap a block header object with extra data.
     class ChainEntry
+      include Bitcoin::HexConverter
 
       attr_reader :header
       attr_reader :height

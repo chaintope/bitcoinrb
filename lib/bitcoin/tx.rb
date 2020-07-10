@@ -6,6 +6,8 @@ module Bitcoin
   # Transaction class
   class Tx
 
+    include Bitcoin::HexConverter
+
     MAX_STANDARD_VERSION = 2
 
     # The maximum weight for transactions we're willing to relay/mine
@@ -70,7 +72,7 @@ module Bitcoin
     end
 
     def hash
-      to_payload.bth.to_i(16)
+      to_hex.to_i(16)
     end
 
     def tx_hash
@@ -102,12 +104,6 @@ module Bitcoin
 
     def to_payload
       witness? ? serialize_witness_format : serialize_old_format
-    end
-
-    # convert tx to hex format.
-    # @return [String] tx with hex format.
-    def to_hex
-      to_payload.bth
     end
 
     def coinbase_tx?

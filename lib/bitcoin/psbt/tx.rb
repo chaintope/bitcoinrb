@@ -2,6 +2,7 @@ module Bitcoin
   module PSBT
 
     class GlobalXpub
+      include Bitcoin::HexConverter
 
       attr_reader :xpub # Bitcoin::ExtPubkey
       attr_reader :info # Bitcoin::PSBT::KeyOriginInfo
@@ -16,7 +17,7 @@ module Bitcoin
       end
 
       def to_h
-        {xpub: xpub.to_payload.bth}.merge(info.to_h)
+        {xpub: xpub.to_hex}.merge(info.to_h)
       end
 
       def to_s
@@ -25,6 +26,8 @@ module Bitcoin
     end
 
     class Tx
+      include Bitcoin::HexConverter
+
       attr_accessor :tx
       attr_accessor :xpubs
       attr_reader :inputs

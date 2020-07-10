@@ -16,7 +16,7 @@ describe Bitcoin::Wallet::Account do
       expect(subject.lookahead).to eq(10)
       expect(subject.witness?).to be true
       expect(subject.account_key.to_base58).to eq('vpub5Y6cjg78GGuNorMWAGjx5ut5eKJxY5Nyq1hMuxswC8xpjZ8ndWj17CUJt3yjFpbMKYfuRgJbVMRsefm9hbc9hMDycx5nYHuakCsVk6ZA1ZV')
-      expect(subject.to_payload.bth).to eq('045f1cf6030ef4b1af8000000ad25ad4af81ddaf5f9577f082c333976c67038e0ab1674c2f1ae2c3f531f7198d0352b292231392201da3861e4004ffe41b1432de6f8545a080dde2988b8b8a716b09e38386e382b9e38388540000000a00000001000000010000000a000000')
+      expect(subject.to_hex).to eq('045f1cf6030ef4b1af8000000ad25ad4af81ddaf5f9577f082c333976c67038e0ab1674c2f1ae2c3f531f7198d0352b292231392201da3861e4004ffe41b1432de6f8545a080dde2988b8b8a716b09e38386e382b9e38388540000000a00000001000000010000000a000000')
     end
   end
 

@@ -6,6 +6,7 @@ module Bitcoin
   # bitcoin script
   class Script
     include Bitcoin::Opcodes
+    include Bitcoin::HexConverter
 
     attr_accessor :chunks
 
@@ -363,7 +364,7 @@ module Bitcoin
 
     # generate hash160 hash for payload
     def to_hash160
-      Bitcoin.hash160(to_payload.bth)
+      Bitcoin.hash160(to_hex)
     end
 
     # script size
@@ -500,7 +501,7 @@ module Bitcoin
     end
 
     def to_h
-      h = {asm: to_s, hex: to_payload.bth, type: type}
+      h = {asm: to_s, hex: to_hex, type: type}
       addrs = addresses
       unless addrs.empty?
         h[:req_sigs] = multisig? ? Bitcoin::Opcodes.opcode_to_small_int(chunks[0].bth.to_i(16)) :addrs.size
@@ -514,12 +515,6 @@ module Bitcoin
     # @return [Boolean] whether the script is guaranteed to fail at execution
     def unspendable?
       (size > 0 && op_return?) || size > Bitcoin::MAX_SCRIPT_SIZE
-    end
-
-    # convert payload to hex data.
-    # @return [String] script with hex format.
-    def to_hex
-      to_payload.bth
     end
 
     private
@@ -554,7 +549,7 @@ module Bitcoin
     def bech32_addr
       segwit_addr = Bech32::SegwitAddr.new
       segwit_addr.hrp = Bitcoin.chain_params.bech32_hrp
-      segwit_addr.script_pubkey = to_payload.bth
+      segwit_addr.script_pubkey = to_hex
       segwit_addr.addr
     end
 

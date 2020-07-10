@@ -42,7 +42,7 @@ module Bitcoin
               nextblockhash: node.chain.next_hash(block_hash).rhex
           }
         else
-          entry.header.to_payload.bth
+          entry.header.to_hex
         end
       end
 

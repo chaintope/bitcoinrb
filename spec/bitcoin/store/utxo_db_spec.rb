@@ -28,7 +28,7 @@ describe Bitcoin::Store::UtxoDB do
       expect(utxo.tx_hash).to eq '4484ec8b4801ada92fc4d9a90bb7d9336d02058e9547d027fa0a5fc9d2c9cc77'.rhex
       expect(utxo.index).to eq 0
       expect(utxo.value).to eq 129_000_000
-      expect(utxo.script_pubkey.to_payload.bth).to eq '76a914f86f0bc0a2232970ccdf4569815db500f126836188ac'
+      expect(utxo.script_pubkey.to_hex).to eq '76a914f86f0bc0a2232970ccdf4569815db500f126836188ac'
       expect(utxo.block_height).to eq 1_351_985
 
       utxo_db.delete_utxo(out_point)

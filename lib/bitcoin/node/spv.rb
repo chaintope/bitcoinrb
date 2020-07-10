@@ -45,7 +45,7 @@ module Bitcoin
       # broadcast a transaction
       def broadcast(tx)
         pool.broadcast(tx)
-        logger.debug "broadcast tx: #{tx.to_payload.bth}"
+        logger.debug "broadcast tx: #{tx.to_hex}"
       end
 
       # add filter element to bloom filter.

@@ -3,6 +3,7 @@ module Bitcoin
 
     # Base message class
     class Base
+      include Bitcoin::HexConverter
       include Bitcoin::Util
       extend Bitcoin::Util
 

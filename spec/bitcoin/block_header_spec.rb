@@ -19,7 +19,7 @@ describe Bitcoin::BlockHeader do
       Bitcoin::BlockHeader.parse_from_payload('00000020f29ae31fe472fea5a9812cd8bd9d73c7e4491ee62fbaf9b1be20000000000000e4e24580186a17432dee5ada29678f3f5e6b51a451f3b8d09917a2de11dba12d11bd48590bd6001bcd3c87cb'.htb)
     }
     it 'should be generate payload' do
-      expect(subject.to_payload.bth).to eq('00000020f29ae31fe472fea5a9812cd8bd9d73c7e4491ee62fbaf9b1be20000000000000e4e24580186a17432dee5ada29678f3f5e6b51a451f3b8d09917a2de11dba12d11bd48590bd6001bcd3c87cb')
+      expect(subject.to_hex).to eq('00000020f29ae31fe472fea5a9812cd8bd9d73c7e4491ee62fbaf9b1be20000000000000e4e24580186a17432dee5ada29678f3f5e6b51a451f3b8d09917a2de11dba12d11bd48590bd6001bcd3c87cb')
     end
   end
 

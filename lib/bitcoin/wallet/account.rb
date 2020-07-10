@@ -3,6 +3,7 @@ module Bitcoin
 
     # the account in BIP-44
     class Account
+      include Bitcoin::HexConverter
 
       PURPOSE_TYPE = {legacy: 44, nested_witness: 49, native_segwit: 84}
 
