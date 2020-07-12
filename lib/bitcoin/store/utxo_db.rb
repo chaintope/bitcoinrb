@@ -7,9 +7,7 @@ module Bitcoin
       KEY_PREFIX = {
         out_point: 'o',        # key: out_point(tx_hash and index), value: Utxo
         script: 's',           # key: script_pubkey and out_point(tx_hash and index), value: Utxo
-        height: 'h',           # key: block_height and out_point, value: Utxo
         tx_hash: 't',          # key: tx_hash of transaction, value: [block_height, tx_index]
-        block: 'b',            # key: block_height and tx_index, value: tx_hash
         tx_payload: 'p',       # key: tx_hash, value: Tx
       }
 
@@ -50,10 +48,6 @@ module Bitcoin
           # tx_hash -> [block_height, tx_index]
           key = KEY_PREFIX[:tx_hash] + tx_hash
           level_db.put(key, [block_height, tx_index].pack('N2').bth)
-
-          # block_hash and tx_index -> tx_hash
-          key = KEY_PREFIX[:block] + [block_height, tx_index].pack('N2').bth
-          level_db.put(key, tx_hash)
         end
       end
 
@@ -79,13 +73,6 @@ module Bitcoin
             key = KEY_PREFIX[:script] + script_pubkey.to_hex + out_point.to_hex
             level_db.put(key, payload)
           end
-
-          # height
-          unless block_height.nil?
-            key = KEY_PREFIX[:height] + [block_height].pack('N').bth + out_point.to_hex
-            level_db.put(key, payload)
-          end
-
           utxo
         end
       end
@@ -118,25 +105,6 @@ module Bitcoin
           # [:script]
           if utxo.script_pubkey
             key = KEY_PREFIX[:script] + utxo.script_pubkey.to_hex + out_point.to_hex
-            level_db.delete(key)
-          end
-
-          if utxo.block_height
-            # [:height]
-            key = KEY_PREFIX[:height] + [utxo.block_height].pack('N').bth + out_point.to_hex
-            level_db.delete(key)
-
-            # [:block]
-            key = KEY_PREFIX[:block] + [utxo.block_height, utxo.index].pack('N2').bth
-            level_db.delete(key)
-          end
-
-          # handles both [:tx_hash] and [:tx_payload]
-          if utxo.tx_hash
-            key = KEY_PREFIX[:tx_hash] + utxo.tx_hash
-            level_db.delete(key)
-
-            key = KEY_PREFIX[:tx_payload] + utxo.tx_hash
             level_db.delete(key)
           end
 
@@ -201,14 +169,6 @@ module Bitcoin
 
       def with_height(utxos, min, max)
         utxos.select { |u| u.block_height.nil? || (u.block_height >= min && u.block_height <= max) }
-      end
-
-      def list_unspent_by_block_height(current_block_height, min: 0, max: 9999999)
-        max_height = [current_block_height - min, 0].max
-        min_height = [current_block_height - max, 0].max
-        from = KEY_PREFIX[:height] + [min_height].pack('N').bth + '000000000000000000000000000000000000000000000000000000000000000000000000'
-        to = KEY_PREFIX[:height] + [max_height].pack('N').bth + 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
-        utxos_between(from, to)
       end
 
       def list_unspent_by_addresses(current_block_height, min: 0, max: 9999999, addresses: [])
