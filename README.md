@@ -92,9 +92,12 @@ Bitcoin.chain_params = :regtest
 
 This parameter is described in https://github.com/chaintope/bitcoinrb/blob/master/lib/bitcoin/chainparams/regtest.yml.
 
-### Running SPV node
+### Running SPV node(Experimental)
 
-Bitcoinrb supports SPV node.
+> :warning: **This is experimental**
+> Implementation for SPV node feature is still in development.
+> Don't use bitcoinrb as SPV node for production.
+
 The following is the sample code to run as SPV node.
 
 The SPV node connect to 3 peers("172.18.1.1", "172.18.1.2", "172.18.1.3") and then receive messages(tx, headers, merkleblock, ...) from these peers.

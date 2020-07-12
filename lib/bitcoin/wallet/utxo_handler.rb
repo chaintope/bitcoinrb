@@ -37,9 +37,11 @@ module Bitcoin
       end
 
       def header(data)
+        # No implementation
       end
 
       def merkleblock(data)
+        # No implementation
       end
 
       # Return if specified output is contained in watch_targets
