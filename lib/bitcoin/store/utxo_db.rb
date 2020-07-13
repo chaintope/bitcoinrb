@@ -48,6 +48,8 @@ module Bitcoin
           # tx_hash -> [block_height, tx_index]
           key = KEY_PREFIX[:tx_hash] + tx_hash
           level_db.put(key, [block_height, tx_index].pack('N2').bth)
+
+          update_utxo_height(tx_hash, block_height)
         end
       end
 
@@ -65,7 +67,6 @@ module Bitcoin
 
           # out_point
           key = KEY_PREFIX[:out_point] + out_point.to_hex
-          return if level_db.contains?(key)
           level_db.put(key, payload)
 
           # script_pubkey
@@ -74,6 +75,20 @@ module Bitcoin
             level_db.put(key, payload)
           end
           utxo
+        end
+      end
+
+      # Update height in UTXO which have specified tx_hash
+      #
+      # @param [String] tx_hash
+      def update_utxo_height(tx_hash, block_height)
+        from = KEY_PREFIX[:out_point] + tx_hash + '00000000'
+        to = KEY_PREFIX[:out_point] + tx_hash + 'ffffffff'
+        # fetch utxos in tx
+        utxos = level_db.each(from: from, to: to).each do |k, v|
+          # update height only
+          utxo = Bitcoin::Wallet::Utxo.parse_from_payload(v)
+          save_utxo(Bitcoin::OutPoint.new(utxo.tx_hash, utxo.index), utxo.value, utxo.script_pubkey, block_height)
         end
       end
 
