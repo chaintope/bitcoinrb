@@ -46,6 +46,15 @@ describe Bitcoin::RPC::BitcoinCoreClient do
         expect(client.rpc_command['amount']).to eq("0.08495981")
       end
     end
+
+    context 'wallet is specified in config' do
+      let(:config) { super().merge({ wallet: 'mywallet' }) }
+      let(:server_url) { "#{config[:schema]}://#{config[:host]}:#{config[:port]}/wallet/#{config[:wallet]}" }
+      it 'should have wallet name in the path like "/wallet/[wallet_name]"' do
+        assert_requested(:post, server_url)
+        client.rpc_command
+      end
+    end
   end
   
   describe '#method_missing' do
