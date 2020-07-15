@@ -33,6 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'siphash'
   spec.add_runtime_dependency 'protobuf', '3.8.5'
   spec.add_runtime_dependency 'scrypt'
+  spec.add_runtime_dependency 'json_pure', '>= 2.3.1'
 
   # for options
   spec.add_development_dependency 'leveldb-native'

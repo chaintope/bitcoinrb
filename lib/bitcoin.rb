@@ -14,6 +14,7 @@ require_relative 'openassets'
 
 module Bitcoin
 
+  autoload :Ext, 'bitcoin/ext'
   autoload :Util, 'bitcoin/util'
   autoload :ChainParams, 'bitcoin/chain_params'
   autoload :Message, 'bitcoin/message'

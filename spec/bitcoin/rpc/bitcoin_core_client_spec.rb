@@ -37,6 +37,15 @@ describe Bitcoin::RPC::BitcoinCoreClient do
         expect { client.rpccommand }.to raise_error(RuntimeError, /RPC ERROR/)
       end
     end
+
+    context 'contains float value' do
+      it 'should convert string value' do
+        stub_request(:post, server_url).to_return(
+            body: JSON.generate({ 'result': {'amount': 0.08495981} })
+        )
+        expect(client.rpc_command['amount']).to eq("0.08495981")
+      end
+    end
   end
   
   describe '#method_missing' do
