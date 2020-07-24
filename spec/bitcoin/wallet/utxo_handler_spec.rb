@@ -109,6 +109,11 @@ describe 'Bitcoin::Wallet::UtxoHandler' do
       it 'delete from pending blocks' do
         expect { subject }.to change { handler.pending_blocks.size }.from(1).to(0)
       end
+
+      it 'can retrieve by block height' do
+        subject
+        expect(utxo_db.list_unspent(current_block_height: 100015, min: 1, max: 1, addresses: nil).size).to eq 1
+      end
     end
   end
 
@@ -146,6 +151,11 @@ describe 'Bitcoin::Wallet::UtxoHandler' do
 
       it 'delete from pending txs' do
         expect { subject }.to change { handler.pending_txs.size }.from(1).to(0)
+      end
+
+      it 'can retrieve by block height' do
+        subject
+        expect(utxo_db.list_unspent(current_block_height: 100015, min: 1, max: 1, addresses: nil).size).to eq 1
       end
     end
   end
