@@ -277,7 +277,7 @@ module Bitcoin
       raise 'invalid key' if left >= CURVE_ORDER
       p1 = Bitcoin::Secp256k1::GROUP.generator.multiply_by_scalar(left)
       p2 = Bitcoin::Key.new(pubkey: pubkey, key_type: key_type).to_point
-      new_key.pubkey = ECDSA::Format::PointOctetString.encode(p1 + p2, compression: true).bth
+      new_key.pubkey = (p1 + p2).to_hex
       new_key.chain_code = l[32..-1]
       new_key.ver = version
       new_key

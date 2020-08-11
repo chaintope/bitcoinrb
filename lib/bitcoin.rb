@@ -226,4 +226,10 @@ module Bitcoin
     end
   end
 
+  class ::ECDSA::Point
+    def to_hex(compression = true)
+      ECDSA::Format::PointOctetString.encode(self, compression: compression).bth
+    end
+  end
+
 end

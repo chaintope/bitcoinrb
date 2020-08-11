@@ -12,8 +12,8 @@ module Bitcoin
         private_key = 1 + SecureRandom.random_number(GROUP.order - 1)
         public_key = GROUP.generator.multiply_by_scalar(private_key)
         privkey = ECDSA::Format::IntegerOctetString.encode(private_key, 32)
-        pubkey = ECDSA::Format::PointOctetString.encode(public_key, compression: compressed)
-        [privkey.bth, pubkey.bth]
+        pubkey = public_key.to_hex(compressed)
+        [privkey.bth, pubkey]
       end
 
       # generate bitcoin key object
@@ -24,7 +24,7 @@ module Bitcoin
 
       def generate_pubkey(privkey, compressed: true)
         public_key = ECDSA::Group::Secp256k1.generator.multiply_by_scalar(privkey.to_i(16))
-        ECDSA::Format::PointOctetString.encode(public_key, compression: compressed).bth
+        public_key.to_hex(compressed)
       end
 
       # sign data.
