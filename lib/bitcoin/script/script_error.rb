@@ -76,6 +76,14 @@ module Bitcoin
         'NOPx reserved for soft-fork upgrades'
       when SCRIPT_ERR_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM
         'Witness version reserved for soft-fork upgrades'
+      when SCRIPT_ERR_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION
+        'Taproot version reserved for soft-fork upgrades'
+      when SCRIPT_ERR_DISCOURAGE_UNKNOWN_ANNEX
+        'Unknown input annex reserved for soft-fork upgrades'
+      when SCRIPT_ERR_DISCOURAGE_OP_SUCCESS
+        'SUCCESSx reserved for soft-fork upgrades'
+      when SCRIPT_ERR_DISCOURAGE_UPGRADABLE_PUBKEYTYPE
+        'Public key version reserved for soft-fork upgrades'
       when SCRIPT_ERR_PUBKEYTYPE
         'Public key is neither compressed or uncompressed'
       when SCRIPT_ERR_WITNESS_PROGRAM_WRONG_LENGTH
@@ -92,6 +100,12 @@ module Bitcoin
         'Witness provided for non-witness script'
       when SCRIPT_ERR_WITNESS_PUBKEYTYPE
         'Using non-compressed keys in segwit'
+      when SCRIPT_ERR_TAPROOT_INVALID_SIG
+        'Invalid signature for Taproot key path spending'
+      when SCRIPT_ERR_TAPROOT_WRONG_CONTROL_SIZE
+        'Invalid Taproot control block size'
+      when SCRIPT_ERR_TAPSCRIPT_VALIDATION_WEIGHT
+        'Too much signature validation relative to witness weight'
       when SCRIPT_ERR_OP_CODESEPARATOR
         'Using OP_CODESEPARATOR in non-witness scrip'
       when SCRIPT_ERR_SIG_FINDANDDELETE
