@@ -44,6 +44,11 @@ module Bitcoin
   SCRIPT_VERIFY_NULLFAIL = (1 << 14) # Signature(s) must be empty vector if an CHECK(MULTI)SIG operation failed
   SCRIPT_VERIFY_WITNESS_PUBKEYTYPE = (1 << 15) # Public keys in segregated witness scripts must be compressed
   SCRIPT_VERIFY_CONST_SCRIPTCODE = (1 << 16) # Making OP_CODESEPARATOR and FindAndDelete fail any non-segwit scripts
+  SCRIPT_VERIFY_TAPROOT = (1 << 17) # Taproot/Tapscript validation (BIPs 341 & 342)
+  SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION = (1 << 18) # Making unknown Taproot leaf versions non-standard
+  SCRIPT_VERIFY_DISCOURAGE_UNKNOWN_ANNEX = (1 << 19) # Making the use of (unknown) annexes non-standard (currently no annexes are known)
+  SCRIPT_VERIFY_DISCOURAGE_OP_SUCCESS = (1 << 20) # Making unknown OP_SUCCESS non-standard
+  SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_PUBKEYTYPE = (1 << 21) # Making unknown public key versions (in BIP 342 scripts) non-standard
 
   MANDATORY_SCRIPT_VERIFY_FLAGS = SCRIPT_VERIFY_P2SH
 
@@ -87,6 +92,17 @@ module Bitcoin
 
   # Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp.
   LOCKTIME_THRESHOLD = 500000000
+
+  # Tag for input annex. If there are at least two witness elements for a transaction input,
+  # and the first byte of the last element is 0x50, this last element is called annex, and
+  # has meanings independent of the script
+  ANNEX_TAG = 0x50
+
+  # Validation weight per passing signature (Tapscript only, see BIP 342).
+  VALIDATION_WEIGHT_PER_SIGOP_PASSED = 50
+
+  # How much weight budget is added to the witness size (Tapscript only, see BIP 342).
+  VALIDATION_WEIGHT_OFFSET = 50
 
   # Signature hash types/flags
   SIGHASH_TYPE = { all: 1, none: 2, single: 3, anyonecanpay: 128 }
