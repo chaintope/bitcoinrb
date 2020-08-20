@@ -116,7 +116,7 @@ module Bitcoin
         end
       end
       key = key.is_a?(Bitcoin::Key) ? key : key.key
-      raise ArgumentError, 'Invalid pubkey.' unless key.fully_valid_pubkey?
+      raise ArgumentError, Errors::Messages::INVALID_PUBLIC_KEY unless key.fully_valid_pubkey?
       key.pubkey
     end
 

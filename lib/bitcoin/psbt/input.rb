@@ -54,7 +54,7 @@ module Bitcoin
               raise ArgumentError, 'Size of key was not the expected size for the type partial signature pubkey.'
             end
             pubkey = Bitcoin::Key.new(pubkey: key.bth)
-            raise ArgumentError, 'Invalid pubkey.' unless pubkey.fully_valid_pubkey?
+            raise ArgumentError, Errors::Messages::INVALID_PUBLIC_KEY unless pubkey.fully_valid_pubkey?
             raise ArgumentError, 'Duplicate Key, input partial signature for pubkey already provided.' if input.partial_sigs[pubkey.pubkey]
             input.partial_sigs[pubkey.pubkey] = value
           when PSBT_IN_TYPES[:sighash]

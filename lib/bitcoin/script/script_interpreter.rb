@@ -411,7 +411,7 @@ module Bitcoin
 
                   return false if !check_pubkey_encoding(pubkey, sig_version) || !check_signature_encoding(sig) # error already set.
 
-                  success = checker.check_sig(sig, pubkey, subscript, sig_version)
+                  success = checker.check_sig(sig, pubkey, subscript, sig_version, allow_hybrid: !flag?(SCRIPT_VERIFY_STRICTENC))
 
                   # https://github.com/bitcoin/bips/blob/master/bip-0146.mediawiki#NULLFAIL
                   if !success && flag?(SCRIPT_VERIFY_NULLFAIL) && sig.bytesize > 0
@@ -466,7 +466,7 @@ module Bitcoin
                     sig = sigs.pop
                     pubkey = pubkeys.pop
                     return false if !check_pubkey_encoding(pubkey, sig_version) || !check_signature_encoding(sig) # error already set.
-                    ok = checker.check_sig(sig, pubkey, subscript, sig_version)
+                    ok = checker.check_sig(sig, pubkey, subscript, sig_version, allow_hybrid: !flag?(SCRIPT_VERIFY_STRICTENC))
                     if ok
                       sig_count -= 1
                     else

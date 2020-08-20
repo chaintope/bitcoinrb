@@ -28,7 +28,7 @@ module Bitcoin
     # @param [Integer] key_type a key type which determine address type.
     # @param [Boolean] compressed [Deprecated] whether public key is compressed.
     # @return [Bitcoin::Key] a key object.
-    def initialize(priv_key: nil, pubkey: nil, key_type: nil, compressed: true)
+    def initialize(priv_key: nil, pubkey: nil, key_type: nil, compressed: true, allow_hybrid: false)
       puts "[Warning] Use key_type parameter instead of compressed. compressed parameter removed in the future." if key_type.nil? && !compressed.nil? && pubkey.nil?
       if key_type
         @key_type = key_type
@@ -46,6 +46,7 @@ module Bitcoin
       else
         @pubkey = generate_pubkey(priv_key, compressed: compressed) if priv_key
       end
+      raise ArgumentError, Errors::Messages::INVALID_PUBLIC_KEY unless fully_valid_pubkey?(allow_hybrid)
     end
 
     # generate key pair
@@ -225,10 +226,10 @@ module Bitcoin
     end
 
     # fully validate whether this is a valid public key (more expensive than IsValid())
-    def fully_valid_pubkey?
+    def fully_valid_pubkey?(allow_hybrid = false)
       return false unless valid_pubkey?
       begin
-        point = ECDSA::Format::PointOctetString.decode(pubkey.htb, ECDSA::Group::Secp256k1)
+        point = ECDSA::Format::PointOctetString.decode(pubkey.htb, ECDSA::Group::Secp256k1, allow_hybrid: allow_hybrid)
         ECDSA::Group::Secp256k1.valid_public_key?(point)
       rescue ECDSA::Format::DecodeError
         false

@@ -16,7 +16,7 @@ module Bitcoin
     # @param [String] pubkey
     # @param [Bitcoin::Script] script_code
     # @param [Integer] sig_version
-    def check_sig(script_sig, pubkey, script_code, sig_version)
+    def check_sig(script_sig, pubkey, script_code, sig_version, allow_hybrid: false)
       return false if script_sig.empty?
       script_sig = script_sig.htb
       hash_type = script_sig[-1].unpack('C').first
@@ -24,8 +24,12 @@ module Bitcoin
       sighash = tx.sighash_for_input(input_index, script_code, hash_type: hash_type,
                                      amount: amount, sig_version: sig_version)
       key_type = pubkey.start_with?('02') || pubkey.start_with?('03') ? Key::TYPES[:compressed] : Key::TYPES[:uncompressed]
-      key = Key.new(pubkey: pubkey, key_type: key_type)
-      key.verify(sig, sighash)
+      begin
+        key = Key.new(pubkey: pubkey, key_type: key_type, allow_hybrid: allow_hybrid)
+        key.verify(sig, sighash)
+      rescue Exception
+        false
+      end
     end
 
     def check_locktime(locktime)

@@ -14,7 +14,7 @@ describe Bitcoin::Descriptor, network: :mainnet do
       expect(pk("03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd").to_hex).to eq('2103a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bdac')
       expect(pkh("[deadbeef/1/2'/3/4']L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1").to_hex).to eq('76a9149a1c78a507689f6f54b847ad1cef1e614ee23f1e88ac')
       expect(sh(wpkh('L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1')).to_hex).to eq('a91484ab21b1b2fd065d4504ff693d832434b6108d7b87')
-      expect{sh(wpkh('L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY2'))}.to raise_error(ArgumentError, 'Invalid pubkey.')
+      expect{sh(wpkh('L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY2'))}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_PUBLIC_KEY)
       expect{pkh("deadbeef/1/2'/3/4']L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1")}.to raise_error(ArgumentError, 'Invalid key origin.')
       expect{pkh("[deadbeef]/1/2'/3/4']L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1")}.to raise_error(ArgumentError, 'Invalid key origin.')
 

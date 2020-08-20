@@ -12,7 +12,7 @@ module Bitcoin
         pubkey = pubkey.encoding == Encoding::ASCII_8BIT ? pubkey : pubkey.htb
         raise ArgumentError, 'Size of key was not the expected size for the type BIP32 keypath.' unless [Bitcoin::Key::PUBLIC_KEY_SIZE, Bitcoin::Key::COMPRESSED_PUBLIC_KEY_SIZE].include?(pubkey.bytesize)
         pubkey = Bitcoin::Key.new(pubkey: pubkey.bth)
-        raise ArgumentError, 'Invalid pubkey' unless pubkey.fully_valid_pubkey?
+        raise ArgumentError, Errors::Messages::INVALID_PUBLIC_KEY unless pubkey.fully_valid_pubkey?
         @pubkey = pubkey.pubkey
         @info = info
       end

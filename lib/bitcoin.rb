@@ -58,8 +58,10 @@ module Bitcoin
   autoload :Aezeed, 'bitcoin/aezeed'
   autoload :PaymentCode, 'bitcoin/payment_code'
   autoload :BIP85Entropy, 'bitcoin/bip85_entropy'
+  autoload :Errors, 'bitcoin/errors'
 
   require_relative 'bitcoin/constants'
+  require_relative 'bitcoin/ext/ecdsa'
 
   extend Util
 
@@ -216,19 +218,6 @@ module Bitcoin
       else
         to_s(2)
       end
-    end
-  end
-
-  class ::ECDSA::Signature
-    # convert signature to der string.
-    def to_der
-      ECDSA::Format::SignatureDerString.encode(self)
-    end
-  end
-
-  class ::ECDSA::Point
-    def to_hex(compression = true)
-      ECDSA::Format::PointOctetString.encode(self, compression: compression).bth
     end
   end
 

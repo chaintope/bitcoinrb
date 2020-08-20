@@ -81,7 +81,7 @@ module Bitcoin
           when PSBT_GLOBAL_TYPES[:xpub]
             raise ArgumentError, 'Size of key was not the expected size for the type global xpub.' unless key.size == Bitcoin::BIP32_EXTKEY_WITH_VERSION_SIZE
             xpub = Bitcoin::ExtPubkey.parse_from_payload(key)
-            raise ArgumentError, 'Invalid pubkey.' unless xpub.key.fully_valid_pubkey?
+            raise ArgumentError, Errors::Messages::INVALID_PUBLIC_KEY unless xpub.key.fully_valid_pubkey?
             raise ArgumentError, 'Duplicate key, global xpub already provided' if partial_tx.xpubs.any?{|x|x.xpub == xpub}
             info = Bitcoin::PSBT::KeyOriginInfo.parse_from_payload(value)
             raise ArgumentError, "global xpub's depth and the number of indexes not matched." unless xpub.depth == info.key_paths.size

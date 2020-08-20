@@ -318,7 +318,7 @@ module Bitcoin
       end
       ext_pubkey.number = buf.read(4).unpack('N').first
       ext_pubkey.chain_code = buf.read(32)
-      ext_pubkey.pubkey = buf.read(33).bth
+      ext_pubkey.pubkey = Bitcoin::Key.new(pubkey: buf.read(33).bth).pubkey
       ext_pubkey
     end
 
