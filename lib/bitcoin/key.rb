@@ -39,7 +39,7 @@ module Bitcoin
       @secp256k1_module =  Bitcoin.secp_impl
       @priv_key = priv_key
       if @priv_key
-        raise ArgumentError, 'private key is not on curve' unless validate_private_key_range(@priv_key)
+        raise ArgumentError, Errors::Messages::INVALID_PRIV_KEY unless validate_private_key_range(@priv_key)
       end
       if pubkey
         @pubkey = pubkey
@@ -64,7 +64,7 @@ module Bitcoin
       data = hex[2...-8].htb
       checksum = hex[-8..-1]
       raise ArgumentError, 'invalid version' unless version == Bitcoin.chain_params.privkey_version
-      raise ArgumentError, 'invalid checksum' unless Bitcoin.calc_checksum(version + data.bth) == checksum
+      raise ArgumentError, Errors::Messages::INVALID_CHECKSUM unless Bitcoin.calc_checksum(version + data.bth) == checksum
       key_len = data.bytesize
       if key_len == COMPRESSED_PUBLIC_KEY_SIZE && data[-1].unpack('C').first == 1
         key_type = TYPES[:compressed]

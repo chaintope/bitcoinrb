@@ -63,7 +63,7 @@ describe Bitcoin::PaymentCode, network: :mainnet do
   describe 'Decode Payment Code' do
     it 'decodes Base58 encoded payment code' do
       expect(Bitcoin::PaymentCode.from_base58('PM8TJTLJbPRGxSbc8EJi42Wrr6QbNSaSSVJ5Y3E4pbCYiTHUskHg13935Ubb7q8tx9GVbh2UuRnBc3WSyJHhUrw8KhprKnn9eDznYGieTzFcwQRya4GA').bth).to eq('010002b85034fb08a8bfefd22848238257b252721454bbbfba2c3667f168837ea2cdad671af9f65904632e2dcc0c6ad314e11d53fc82fa4c4ea27a4a14eccecc478fee00000000000000000000000000')
-      expect{Bitcoin::PaymentCode.from_base58('PM8TJTLJbPRGxSbc8EJi42Wrr6QbNSaSSVJ5Y3E4pbCYiTHUskHg13935Ubb7q8tx9GVbh2UuRnBc3WSyJHhUrw8KhprKnn9eDznYGieTzFcwQRya4GB').bth}.to raise_error(ArgumentError, 'invalid checksum')
+      expect{Bitcoin::PaymentCode.from_base58('PM8TJTLJbPRGxSbc8EJi42Wrr6QbNSaSSVJ5Y3E4pbCYiTHUskHg13935Ubb7q8tx9GVbh2UuRnBc3WSyJHhUrw8KhprKnn9eDznYGieTzFcwQRya4GB').bth}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_CHECKSUM)
       expect{Bitcoin::PaymentCode.from_base58('AM8TJTLJbPRGxSbc8EJi42Wrr6QbNSaSSVJ5Y3E4pbCYiTHUskHg13935Ubb7q8tx9GVbh2UuRnBc3WSyJHhUrw8KhprKnn9eDznYGieTzFcwQRya4GA').bth}.to raise_error(ArgumentError, 'invalid version byte')
       expect{Bitcoin::PaymentCode.from_base58('PMCbB5gHcpvkWfGPAz1QYR7X9jFwYvwc8rJTCK4VAzADbs9DoQUyr2r23aXfTUYtDjunfQcUUwjRWzAKqi4PDzyK2ftyoPAkkFsVQRxHP7PyxxgGunwu').bth}.to raise_error(ArgumentError, 'invalid version')
       expect{Bitcoin::PaymentCode.from_base58('PM8TJrebgLcDCJa1ygSPNa3hrcG1C4t9j7MEKGVCep5MdnUsUZDPhW2oyA5P4H4N3KXauS4JSjj4gFikc6zdFz2ByvZ9dBvorEeKBZCydK5BMwrgNfyu').bth}.to raise_error(ArgumentError, 'invalid sign')

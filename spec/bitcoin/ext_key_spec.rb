@@ -326,4 +326,48 @@ describe Bitcoin::ExtKey, network: :mainnet do
     end
   end
 
+  describe 'Test Vector 4' do
+    it 'should raise error.' do
+      # pubkey version / prvkey mismatch
+      expect{Bitcoin::ExtPubkey.from_base58('xpub661MyMwAqRbcEYS8w7XLSVeEsBXy79zSzH1J8vCdxAZningWLdN3zgtU6LBpB85b3D2yc8sfvZU521AAwdZafEz7mnzBBsz4wKY5fTtTQBm')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_PUBLIC_KEY)
+      # prvkey version / pubkey mismatch
+      expect{Bitcoin::ExtKey.from_base58('xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzFGTQQD3dC4H2D5GBj7vWvSQaaBv5cxi9gafk7NF3pnBju6dwKvH')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_BIP32_PRIV_PREFIX)
+
+      # invalid pubkey prefix 04
+      expect{Bitcoin::ExtPubkey.from_base58('xpub661MyMwAqRbcEYS8w7XLSVeEsBXy79zSzH1J8vCdxAZningWLdN3zgtU6Txnt3siSujt9RCVYsx4qHZGc62TG4McvMGcAUjeuwZdduYEvFn')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_PUBLIC_KEY)
+      expect{Bitcoin::ExtKey.from_base58('xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzFGpWnsj83BHtEy5Zt8CcDr1UiRXuWCmTQLxEK9vbz5gPstX92JQ')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_BIP32_PRIV_PREFIX)
+
+      # invalid pubkey prefix 01
+      expect{Bitcoin::ExtPubkey.from_base58('xpub661MyMwAqRbcEYS8w7XLSVeEsBXy79zSzH1J8vCdxAZningWLdN3zgtU6N8ZMMXctdiCjxTNq964yKkwrkBJJwpzZS4HS2fxvyYUA4q2Xe4')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_PUBLIC_KEY)
+      expect{Bitcoin::ExtKey.from_base58('xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzFAzHGBP2UuGCqWLTAPLcMtD9y5gkZ6Eq3Rjuahrv17fEQ3Qen6J')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_BIP32_PRIV_PREFIX)
+
+      # zero depth with non-zero parent fingerprint
+      expect{Bitcoin::ExtPubkey.from_base58('xpub661no6RGEX3uJkY4bNnPcw4URcQTrSibUZ4NqJEw5eBkv7ovTwgiT91XX27VbEXGENhYRCf7hyEbWrR3FewATdCEebj6znwMfQkhRYHRLpJ')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_BIP32_FINGERPRINT)
+      expect{Bitcoin::ExtKey.from_base58('xprv9s2SPatNQ9Vc6GTbVMFPFo7jsaZySyzk7L8n2uqKXJen3KUmvQNTuLh3fhZMBoG3G4ZW1N2kZuHEPY53qmbZzCHshoQnNf4GvELZfqTUrcv')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_BIP32_FINGERPRINT)
+
+      # zero depth with non-zero index
+      expect{Bitcoin::ExtPubkey.from_base58('xpub661MyMwAuDcm6CRQ5N4qiHKrJ39Xe1R1NyfouMKTTWcguwVcfrZJaNvhpebzGerh7gucBvzEQWRugZDuDXjNDRmXzSZe4c7mnTK97pTvGS8')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_BIP32_ZERO_INDEX)
+      expect{Bitcoin::ExtKey.from_base58('xprv9s21ZrQH4r4TsiLvyLXqM9P7k1K3EYhA1kkD6xuquB5i39AU8KF42acDyL3qsDbU9NmZn6MsGSUYZEsuoePmjzsB3eFKSUEh3Gu1N3cqVUN')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_BIP32_ZERO_INDEX)
+
+      # zero parent fingerprint with non-zero depth
+      expect{Bitcoin::ExtPubkey.from_base58('xpub67tVq9TC3jGc6K4by6z6kdQafQSuot6u4B8hWn5Jd6vh9hdKNusPnNU4r2sXEKbgYVAAkbLpeut3DMSgLDAvSEQFHEp3f2MJaNQRiCpcWj3')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_BIP32_ZERO_DEPTH)
+      expect{Bitcoin::ExtKey.from_base58('xprv9tu9RdvJDMiJspz8s5T6PVTr7NcRQRP3gxD6iPfh4mPiGuJAqNZ9Ea9aziKNptLTaB28LkiTWqvg636gvKqKxoVtLSVj2tUDqBzHxUKKS2m')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_BIP32_ZERO_DEPTH)
+
+      # unknown extended key version
+      expect{Bitcoin::ExtPubkey.from_base58('DMwo58pR1QLEFihHiXPVykYB6fJmsTeHvyTp7hRThAtCX8CvYzgPcn8XnmdfHPmHJiEDXkTiJTVV9rHEBUem2mwVbbNfvT2MTcAqj3nesx8uBf9')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_BIP32_VERSION)
+      expect{Bitcoin::ExtKey.from_base58('DMwo58pR1QLEFihHiXPVykYB6fJmsTeHvyTp7hRThAtCX8CvYzgPcn8XnmdfHGMQzT7ayAmfo4z3gY5KfbrZWZ6St24UVf2Qgo6oujFktLHdHY4')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_BIP32_VERSION)
+
+      # private key 0 not in 1..n-1
+      expect{Bitcoin::ExtKey.from_base58('xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzF93Y5wvzdUayhgkkFoicQZcP3y52uPPxFnfoLZB21Teqt1VvEHx')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_PRIV_KEY)
+      # private key n not in 1..n-1
+      expect{Bitcoin::ExtKey.from_base58('xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzFAzHGBP2UuGCqWLTAPLcMtD5SDKr24z3aiUvKr9bJpdrcLg1y3G')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_PRIV_KEY)
+
+      # invalid pubkey 020000000000000000000000000000000000000000000000000000000000000007
+      expect{Bitcoin::ExtPubkey.from_base58('xpub661MyMwAqRbcEYS8w7XLSVeEsBXy79zSzH1J8vCdxAZningWLdN3zgtU6Q5JXayek4PRsn35jii4veMimro1xefsM58PgBMrvdYre8QyULY')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_PUBLIC_KEY)
+
+      # invalid checksum
+      expect{Bitcoin::ExtKey.from_base58('xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHL')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_CHECKSUM)
+    end
+  end
+
 end
