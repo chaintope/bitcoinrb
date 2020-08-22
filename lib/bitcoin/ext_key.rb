@@ -52,9 +52,7 @@ module Bitcoin
 
     # Base58 encoded extended private key
     def to_base58
-      h = to_hex
-      hex = h + Bitcoin.calc_checksum(h)
-      Base58.encode(hex)
+      ExtPubkey.encode_base58(to_hex)
     end
 
     # get private key(hex)
@@ -162,10 +160,8 @@ module Bitcoin
     end
 
     # import private key from Base58 private key address
-    def self.from_base58(address)
-      raw = Base58.decode(address)
-      raise ArgumentError, Errors::Messages::INVALID_CHECKSUM unless Bitcoin.calc_checksum(raw[0...-8]) == raw[-8..-1]
-      ExtKey.parse_from_payload(raw[0...-8].htb)
+    def self.from_base58(base58)
+      ExtKey.parse_from_payload(ExtPubkey.validate_base58(base58))
     end
 
     # get version bytes from purpose' value.
@@ -257,9 +253,14 @@ module Bitcoin
 
     # Base58 encoded extended pubkey
     def to_base58
-      h = to_hex
-      hex = h + Bitcoin.calc_checksum(h)
-      Base58.encode(hex)
+      ExtPubkey.encode_base58(to_hex)
+    end
+
+    # Generate Base58 encoded key from BIP32 payload with hex format.
+    # @param [String] hex BIP32 payload with hex format.
+    # @return [String] Base58 encoded extended key.
+    def self.encode_base58(hex)
+      Base58.encode(hex + Bitcoin.calc_checksum(hex))
     end
 
     # whether hardened key.
@@ -331,9 +332,16 @@ module Bitcoin
 
     # import pub key from Base58 private key address
     def self.from_base58(address)
+      ExtPubkey.parse_from_payload(ExtPubkey.validate_base58(address))
+    end
+
+    # Validate address checksum and return payload.
+    # @param [String] BIP32 Base58 address
+    # @return [String] BIP32 payload with binary format
+    def self.validate_base58(address)
       raw = Base58.decode(address)
       raise ArgumentError, Errors::Messages::INVALID_CHECKSUM unless Bitcoin.calc_checksum(raw[0...-8]) == raw[-8..-1]
-      ExtPubkey.parse_from_payload(raw[0...-8].htb)
+      raw[0...-8].htb
     end
 
     # get version bytes from purpose' value.
