@@ -60,7 +60,49 @@ describe Bitcoin::Opcodes do
       it 'should be false' do
         expect(Bitcoin::Opcodes.defined?(0xc1.chr.opcode)).to be false
         expect(Bitcoin::Opcodes.defined?(0xfff)).to be false
-        expect(Bitcoin::Opcodes.defined?(0xba.chr.opcode)).to be false
+        expect(Bitcoin::Opcodes.defined?(0xbb.chr.opcode)).to be false
+      end
+    end
+  end
+
+  describe 'op_success?' do
+    context 'opcode is within range OP_SUCCESS' do
+      it 'should return true.' do
+        expect(Bitcoin::Opcodes.op_success?(80)).to be true
+        expect(Bitcoin::Opcodes.op_success?(98)).to be true
+        expect(Bitcoin::Opcodes.op_success?(126)).to be true
+        expect(Bitcoin::Opcodes.op_success?(129)).to be true
+        expect(Bitcoin::Opcodes.op_success?(131)).to be true
+        expect(Bitcoin::Opcodes.op_success?(134)).to be true
+        expect(Bitcoin::Opcodes.op_success?(137)).to be true
+        expect(Bitcoin::Opcodes.op_success?(138)).to be true
+        expect(Bitcoin::Opcodes.op_success?(141)).to be true
+        expect(Bitcoin::Opcodes.op_success?(142)).to be true
+        expect(Bitcoin::Opcodes.op_success?(149)).to be true
+        expect(Bitcoin::Opcodes.op_success?(153)).to be true
+        expect(Bitcoin::Opcodes.op_success?(187)).to be true
+        expect(Bitcoin::Opcodes.op_success?(254)).to be true
+
+      end
+    end
+
+    context 'opcode is outside the scope of OP_SUCCESS' do
+      it 'should return false.' do
+        expect(Bitcoin::Opcodes.op_success?(79)).to be false
+        expect(Bitcoin::Opcodes.op_success?(81)).to be false
+        expect(Bitcoin::Opcodes.op_success?(97)).to be false
+        expect(Bitcoin::Opcodes.op_success?(99)).to be false
+        expect(Bitcoin::Opcodes.op_success?(125)).to be false
+        expect(Bitcoin::Opcodes.op_success?(130)).to be false
+        expect(Bitcoin::Opcodes.op_success?(135)).to be false
+        expect(Bitcoin::Opcodes.op_success?(136)).to be false
+        expect(Bitcoin::Opcodes.op_success?(139)).to be false
+        expect(Bitcoin::Opcodes.op_success?(140)).to be false
+        expect(Bitcoin::Opcodes.op_success?(143)).to be false
+        expect(Bitcoin::Opcodes.op_success?(148)).to be false
+        expect(Bitcoin::Opcodes.op_success?(154)).to be false
+        expect(Bitcoin::Opcodes.op_success?(186)).to be false
+        expect(Bitcoin::Opcodes.op_success?(255)).to be false
       end
     end
   end

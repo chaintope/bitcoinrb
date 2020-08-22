@@ -136,6 +136,8 @@ module Bitcoin
     OP_NOP9 = 0xb8
     OP_NOP10 = 0xb9
 
+    OP_CHECKSIGADD = 0xba # BIP 342 opcodes (Tapscript)
+
     # https://en.bitcoin.it/wiki/Script#Pseudo-words
     OP_PUBKEYHASH = 0xfd
     OP_PUBKEY = 0xfe
@@ -144,6 +146,9 @@ module Bitcoin
     DUPLICATE_KEY = [:OP_NOP2, :OP_NOP3]
     OPCODES_MAP = Hash[*(constants.grep(/^OP_/) - [:OP_NOP2, :OP_NOP3, :OP_CHECKLOCKTIMEVERIFY, :OP_CHECKSEQUENCEVERIFY]).map { |c| [const_get(c), c.to_s] }.flatten]
     NAME_MAP = Hash[*constants.grep(/^OP_/).map { |c| [c.to_s, const_get(c)] }.flatten]
+
+    OP_SUCCESSES = [0x50, 0x62, 0x89, 0x8a, 0x8d, 0x8e, (0x7e..0x81).to_a,
+                    (0x83..0x86).to_a, (0x95..0x99).to_a, (0xbb..0xfe).to_a].flatten
 
     def opcode_to_name(opcode)
       return OPCODES_MAP[opcode].delete('OP_') if opcode == OP_0 || (opcode <= OP_16 && opcode >= OP_1)
@@ -172,6 +177,13 @@ module Bitcoin
       return -1 if opcode == OP_1NEGATE
       return opcode - (OP_1 - 1) if opcode >= OP_1 && opcode <= OP_16
       nil
+    end
+
+    # Check whether +opcode+ is OP_SUCCESSx or not?
+    # @param [Integer] opcode an opcode.
+    # @return [Boolean] if +opcode+ is OP_SUCCESSx return true, otherwise false.
+    def op_success?(opcode)
+      OP_SUCCESSES.include?(opcode)
     end
 
   end
