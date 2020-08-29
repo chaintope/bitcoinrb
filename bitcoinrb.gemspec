@@ -34,6 +34,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'protobuf', '3.8.5'
   spec.add_runtime_dependency 'scrypt'
   spec.add_runtime_dependency 'json_pure', '>= 2.3.1'
+  spec.add_runtime_dependency 'bip-schnorr', '>= 0.3.0'
 
   # for options
   spec.add_development_dependency 'leveldb-native'
