@@ -63,7 +63,7 @@ module Bitcoin
         response = http.request(request)
         body = response.body
         response = Bitcoin::Ext::JsonParser.new(body.gsub(/\\u([\da-fA-F]{4})/) { [$1].pack('H*').unpack('n*').pack('U*').encode('ISO-8859-1').force_encoding('UTF-8') }).parse
-        raise response['error'].to_s if response['error']
+        raise response['error'].to_json if response['error']
         response['result']
       end
       
