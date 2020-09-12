@@ -4,14 +4,14 @@ describe 'Bitcoin::Wallet::UtxoHandler' do
   let(:handler) { Bitcoin::Wallet::UtxoHandler.new(spv, utxo_db) }
   let(:utxo_db) { create_test_utxo_db }
   let(:spv) { create_test_spv }
-  let(:wallet) { Bitcoin::Wallet::Base.create(1, 'tmp/wallet_db/') }
+  let(:wallet) { create_test_wallet }
 
   before { allow(spv).to receive(:wallet).and_return(wallet) }
 
   after do
     utxo_db.close
     wallet.close
-    FileUtils.rm_r('tmp/wallet_db/')
+    FileUtils.rm_r(test_wallet_path(1))
   end
 
   context 'when node receives tx message' do
