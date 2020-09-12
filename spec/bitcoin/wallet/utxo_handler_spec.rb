@@ -45,7 +45,7 @@ describe 'Bitcoin::Wallet::UtxoHandler' do
 
     context 'delete utxo' do
       before do
-        output = funding_tx.outputs[0];
+        output = funding_tx.outputs[0]
         utxo_db.save_utxo(out_point, output.value, output.script_pubkey)
       end
 
