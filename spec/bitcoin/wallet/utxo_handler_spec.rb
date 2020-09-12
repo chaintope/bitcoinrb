@@ -22,7 +22,7 @@ describe 'Bitcoin::Wallet::UtxoHandler' do
       key = wallet.accounts.first.create_receive
 
       # default script is native_segwit
-      script = Bitcoin::Script.to_p2wpkh(Bitcoin.hash160(key.pubkey))
+      script = Bitcoin::Script.to_p2wpkh(key.hash160)
       Bitcoin::Tx.new.tap do |tx|
         tx.inputs << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new('00' * 32, -1))
         tx.outputs << Bitcoin::TxOut.new(value: 600, script_pubkey: script)
