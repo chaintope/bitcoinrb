@@ -150,6 +150,21 @@ module Bitcoin
         end
       end
 
+      # # validate whether this is a valid public key (more expensive than IsValid())
+      # @param [String] pub_key public key with hex format.
+      # @param [Boolean] allow_hybrid whether support hybrid public key.
+      # @return [Boolean] If valid public key return true, otherwise false.
+      def parse_ec_pubkey?(pub_key, allow_hybrid = false)
+        pub_key = pub_key.htb
+        return false if !allow_hybrid && ![0x02, 0x03, 0x04].include?(pub_key[0].ord)
+        with_context do |context|
+          pubkey = FFI::MemoryPointer.new(:uchar, pub_key.bytesize).put_bytes(0, pub_key)
+          internal_pubkey = FFI::MemoryPointer.new(:uchar, 64)
+          result = secp256k1_ec_pubkey_parse(context, internal_pubkey, pubkey, pub_key.bytesize)
+          result == 1
+        end
+      end
+
       private
 
       def generate_pubkey_in_context(context, privkey, compressed: true)
