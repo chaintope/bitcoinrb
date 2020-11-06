@@ -50,6 +50,10 @@ module Bitcoin
         attach_function(:secp256k1_ecdsa_signature_parse_der, [:pointer, :pointer, :pointer, :size_t], :int)
         attach_function(:secp256k1_ecdsa_signature_normalize, [:pointer, :pointer, :pointer], :int)
         attach_function(:secp256k1_ecdsa_verify, [:pointer, :pointer, :pointer, :pointer], :int)
+        attach_function(:secp256k1_schnorrsig_sign, [:pointer, :pointer, :pointer, :pointer, :pointer, :pointer], :int)
+        attach_function(:secp256k1_schnorrsig_verify, [:pointer, :pointer, :pointer, :pointer], :int)
+        attach_function(:secp256k1_keypair_create, [:pointer, :pointer, :pointer], :int)
+        attach_function(:secp256k1_xonly_pubkey_parse, [:pointer, :pointer, :pointer], :int)
       end
 
       def with_context(flags: (SECP256K1_CONTEXT_VERIFY | SECP256K1_CONTEXT_SIGN))
@@ -100,53 +104,30 @@ module Bitcoin
       # @param [String] privkey a private key using sign
       # @param [String] extra_entropy a extra entropy for rfc6979
       # @return [String] signature data with binary format
-      def sign_data(data, privkey, extra_entropy)
-        with_context do |context|
-          secret = FFI::MemoryPointer.new(:uchar, privkey.htb.bytesize).put_bytes(0, privkey.htb)
-          raise 'priv_key invalid' unless secp256k1_ec_seckey_verify(context, secret)
-
-          internal_signature = FFI::MemoryPointer.new(:uchar, 64)
-          msg32 = FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, data)
-          entropy = extra_entropy ? FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, extra_entropy) : nil
-
-          ret, tries, max = 0, 0, 20
-
-          while ret != 1
-            raise 'secp256k1_ecdsa_sign failed.' if tries >= max
-            tries += 1
-            ret = secp256k1_ecdsa_sign(context, internal_signature, msg32, secret, nil, entropy)
-          end
-
-          signature = FFI::MemoryPointer.new(:uchar, 72)
-          signature_len = FFI::MemoryPointer.new(:uint64).put_uint64(0, 72)
-          result = secp256k1_ecdsa_signature_serialize_der(context, signature, signature_len, internal_signature)
-          raise 'secp256k1_ecdsa_signature_serialize_der failed' unless result
-
-          signature.read_string(signature_len.read_uint64)
+      def sign_data(data, privkey, extra_entropy = nil, algo: :ecdsa)
+        case algo
+        when :ecdsa
+          sign_ecdsa(data, privkey, extra_entropy)
+        when :schnorr
+          sign_schnorr(data, privkey)
+        else
+          nil
         end
       end
 
-      def verify_sig(data, sig, pub_key)
-        with_context do |context|
-          return false if data.bytesize == 0
-
-          pubkey = FFI::MemoryPointer.new(:uchar, pub_key.htb.bytesize).put_bytes(0, pub_key.htb)
-          internal_pubkey = FFI::MemoryPointer.new(:uchar, 64)
-          result = secp256k1_ec_pubkey_parse(context, internal_pubkey, pubkey, pubkey.size)
-          return false unless result
-
-          signature = FFI::MemoryPointer.new(:uchar, sig.bytesize).put_bytes(0, sig)
-          internal_signature = FFI::MemoryPointer.new(:uchar, 64)
-          result = secp256k1_ecdsa_signature_parse_der(context, internal_signature, signature, signature.size)
-          return false unless result
-
-          # libsecp256k1's ECDSA verification requires lower-S signatures, which have not historically been enforced in Bitcoin, so normalize them first.
-          secp256k1_ecdsa_signature_normalize(context, internal_signature, internal_signature)
-
-          msg32 = FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, data)
-          result = secp256k1_ecdsa_verify(context, internal_signature, msg32, internal_pubkey)
-
-          result == 1
+      # verify signature
+      # @param [String] data a data
+      # @param [String] sig signature data with binary format
+      # @param [String] pub_key a public key using verify.
+      # @return [Boolean] verification result.
+      def verify_sig(data, sig, pub_key, algo: :ecdsa)
+        case algo
+        when :ecdsa
+          verify_ecdsa(data, sig, pub_key)
+        when :schnorr
+          verify_schnorr(data, sig, pub_key)
+        else
+          false
         end
       end
 
@@ -162,6 +143,34 @@ module Bitcoin
           internal_pubkey = FFI::MemoryPointer.new(:uchar, 64)
           result = secp256k1_ec_pubkey_parse(context, internal_pubkey, pubkey, pub_key.bytesize)
           result == 1
+        end
+      end
+
+      # Create key pair data from private key.
+      # @param [String] priv_key with hex format
+      # @return [String] key pair data with hex format. data  = private key(32 bytes) | public key(64 bytes).
+      def create_keypair(priv_key)
+        with_context do |context|
+          priv_key = priv_key.htb
+          secret = FFI::MemoryPointer.new(:uchar, priv_key.bytesize).put_bytes(0, priv_key)
+          raise 'priv_key is invalid.' unless secp256k1_ec_seckey_verify(context, secret)
+          keypair = FFI::MemoryPointer.new(:uchar, 96)
+          raise 'priv_key is invalid.' unless secp256k1_keypair_create(context, keypair, secret) == 1
+          keypair.read_string(96).bth
+        end
+      end
+
+      # Calculate full public key(64 bytes) from public key(32 bytes).
+      # @param [String] pub_key public key with hex format(32 bytes).
+      # @return [String] x-only public key with hex format(64 bytes).
+      def full_pubkey_from_xonly_pubkey(pub_key)
+        with_context do |context|
+          pubkey = pub_key.htb
+          raise ArgumentError, 'pubkey size must be 32 bytes.' unless pubkey.bytesize == 32
+          xonly_pubkey = FFI::MemoryPointer.new(:uchar, pubkey.bytesize).put_bytes(0, pubkey)
+          full_pubkey = FFI::MemoryPointer.new(:uchar, 64)
+          raise 'pub_key can not parsed.' unless secp256k1_xonly_pubkey_parse(context, full_pubkey, xonly_pubkey) == 1
+          full_pubkey.read_string(64).bth
         end
       end
 
@@ -184,6 +193,80 @@ module Bitcoin
         raise 'error serialize pubkey' unless result || pubkey_len.read_uint64 > 0
         pubkey.read_string(pubkey_len.read_uint64).bth
       end
+
+      def sign_ecdsa(data, privkey, extra_entropy)
+        with_context do |context|
+          secret = FFI::MemoryPointer.new(:uchar, privkey.htb.bytesize).put_bytes(0, privkey.htb)
+          raise 'priv_key is invalid' unless secp256k1_ec_seckey_verify(context, secret)
+
+          internal_signature = FFI::MemoryPointer.new(:uchar, 64)
+          msg32 = FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, data)
+          entropy = extra_entropy ? FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, extra_entropy) : nil
+
+          ret, tries, max = 0, 0, 20
+
+          while ret != 1
+            raise 'secp256k1_ecdsa_sign failed.' if tries >= max
+            tries += 1
+            ret = secp256k1_ecdsa_sign(context, internal_signature, msg32, secret, nil, entropy)
+          end
+
+          signature = FFI::MemoryPointer.new(:uchar, 72)
+          signature_len = FFI::MemoryPointer.new(:uint64).put_uint64(0, 72)
+          result = secp256k1_ecdsa_signature_serialize_der(context, signature, signature_len, internal_signature)
+          raise 'secp256k1_ecdsa_signature_serialize_der failed' unless result
+
+          signature.read_string(signature_len.read_uint64)
+        end
+      end
+
+      def sign_schnorr(data, privkey)
+        with_context do |context|
+          keypair = create_keypair(privkey).htb
+          keypair = FFI::MemoryPointer.new(:uchar, 96).put_bytes(0, keypair)
+          signature = FFI::MemoryPointer.new(:uchar, 64)
+          msg32 = FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, data)
+          raise 'Failed to generate schnorr signature.' unless secp256k1_schnorrsig_sign(context, signature, msg32, keypair, nil, nil) == 1
+          signature.read_string(64)
+        end
+      end
+
+      def verify_ecdsa(data, sig, pubkey)
+        with_context do |context|
+          return false if data.bytesize == 0
+          pubkey = pubkey.htb
+          pubkey = FFI::MemoryPointer.new(:uchar, pubkey.bytesize).put_bytes(0, pubkey)
+          internal_pubkey = FFI::MemoryPointer.new(:uchar, 64)
+          result = secp256k1_ec_pubkey_parse(context, internal_pubkey, pubkey, pubkey.size)
+          return false unless result
+
+          signature = FFI::MemoryPointer.new(:uchar, sig.bytesize).put_bytes(0, sig)
+          internal_signature = FFI::MemoryPointer.new(:uchar, 64)
+          result = secp256k1_ecdsa_signature_parse_der(context, internal_signature, signature, signature.size)
+          return false unless result
+
+          # libsecp256k1's ECDSA verification requires lower-S signatures, which have not historically been enforced in Bitcoin, so normalize them first.
+          secp256k1_ecdsa_signature_normalize(context, internal_signature, internal_signature)
+
+          msg32 = FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, data)
+          result = secp256k1_ecdsa_verify(context, internal_signature, msg32, internal_pubkey)
+
+          result == 1
+        end
+      end
+
+      def verify_schnorr(data, sig, pubkey)
+        with_context do |context|
+          return false if data.bytesize == 0
+          pubkey = full_pubkey_from_xonly_pubkey(pubkey).htb
+          xonly_pubkey = FFI::MemoryPointer.new(:uchar, pubkey.bytesize).put_bytes(0, pubkey)
+          signature = FFI::MemoryPointer.new(:uchar, sig.bytesize).put_bytes(0, sig)
+          msg32 = FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, data)
+          result = secp256k1_schnorrsig_verify(context, signature, msg32, xonly_pubkey)
+          result == 1
+        end
+      end
+
     end
   end
 end

@@ -53,13 +53,26 @@ describe Bitcoin::Secp256k1::Native, use_secp256k1: true do
   end
 
   describe '#sign_data/#verify_data' do
-    it 'should be signed' do
-      message = 'message'
-      priv_key = '3b7845c14659d875b2e50093f07f950c96271f6cc71a3531750c5a567084d438'
-      pub_key = '0292ee82d9add0512294723f2c363aee24efdeb3f258cdaf5118a4fcf5263e92c9'
-      sig = Bitcoin::Secp256k1::Native.sign_data(message, priv_key, nil)
-      expect(Bitcoin::Secp256k1::Native.verify_sig(message, sig, pub_key)).to be true
-      expect(Bitcoin::Secp256k1::Native.verify_sig('hoge', sig, pub_key)).to be false
+    context 'ecdsa' do
+      it 'should be signed' do
+        message = Bitcoin.sha256('message')
+        priv_key = '3b7845c14659d875b2e50093f07f950c96271f6cc71a3531750c5a567084d438'
+        pub_key = '0292ee82d9add0512294723f2c363aee24efdeb3f258cdaf5118a4fcf5263e92c9'
+        sig = Bitcoin::Secp256k1::Native.sign_data(message, priv_key, nil)
+        expect(Bitcoin::Secp256k1::Native.verify_sig(message, sig, pub_key)).to be true
+        expect(Bitcoin::Secp256k1::Native.verify_sig('hoge', sig, pub_key)).to be false
+      end
+    end
+
+    context 'schnorr' do
+      it 'should be signed' do
+        message = Bitcoin.sha256('message')
+        priv_key = '3b7845c14659d875b2e50093f07f950c96271f6cc71a3531750c5a567084d438'
+        pub_key = Bitcoin::Secp256k1::Native.generate_pubkey(priv_key)
+        sig = Bitcoin::Secp256k1::Native.sign_data(message, priv_key, algo: :schnorr)
+        expect(Bitcoin::Secp256k1::Native.verify_sig(message, sig, pub_key[2..-1], algo: :schnorr)).to be true
+        expect(Bitcoin::Secp256k1::Native.verify_sig('hoge', sig, pub_key[2..-1], algo: :schnorr)).to be false
+      end
     end
   end
 
