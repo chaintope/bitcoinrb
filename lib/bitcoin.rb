@@ -3,7 +3,7 @@
 
 require 'bitcoin/version'
 require 'eventmachine'
-require 'ecdsa'
+require 'schnorr'
 require 'securerandom'
 require 'json'
 require 'bech32'

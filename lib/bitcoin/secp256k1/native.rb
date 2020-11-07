@@ -101,8 +101,9 @@ module Bitcoin
 
       # sign data.
       # @param [String] data a data to be signed with binary format
-      # @param [String] privkey a private key using sign
-      # @param [String] extra_entropy a extra entropy for rfc6979
+      # @param [String] privkey a private key with hex format using sign
+      # @param [String] extra_entropy a extra entropy with binary format for rfc6979
+      # @param [Symbol] algo signature algorithm. ecdsa(default) or schnorr.
       # @return [String] signature data with binary format
       def sign_data(data, privkey, extra_entropy = nil, algo: :ecdsa)
         case algo
@@ -118,14 +119,15 @@ module Bitcoin
       # verify signature
       # @param [String] data a data with binary format.
       # @param [String] sig signature data with binary format
-      # @param [String] pub_key a public key using verify.
+      # @param [String] pubkey a public key with hex format using verify.
+      # # @param [Symbol] algo signature algorithm. ecdsa(default) or schnorr.
       # @return [Boolean] verification result.
-      def verify_sig(data, sig, pub_key, algo: :ecdsa)
+      def verify_sig(data, sig, pubkey, algo: :ecdsa)
         case algo
         when :ecdsa
-          verify_ecdsa(data, sig, pub_key)
+          verify_ecdsa(data, sig, pubkey)
         when :schnorr
-          verify_schnorr(data, sig, pub_key)
+          verify_schnorr(data, sig, pubkey)
         else
           false
         end

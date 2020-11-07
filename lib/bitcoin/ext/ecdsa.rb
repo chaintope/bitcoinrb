@@ -13,26 +13,18 @@ end
 
 module ::ECDSA::Format::PointOctetString
 
+  class << self
+    alias_method :base_decode, :decode
+  end
+
   def self.decode(string, group, allow_hybrid: false)
     string = string.dup.force_encoding('BINARY')
-
     raise ECDSA::Format::DecodeError, 'Point octet string is empty.' if string.empty?
-
-    case string[0].ord
-    when 0
-      check_length string, 1
-      return group.infinity
-    when 2
-      decode_compressed string, group, 0
-    when 3
-      decode_compressed string, group, 1
-    when 4
-      decode_uncompressed string, group
-    when 6..7
+    if [6, 7].include?(string[0].ord)
       raise DecodeError, 'Unrecognized start byte for point octet string: 0x%x' % string[0].ord unless allow_hybrid
       decode_uncompressed string, group if allow_hybrid
     else
-      raise ECDSA::Format::DecodeError, 'Unrecognized start byte for point octet string: 0x%x' % string[0].ord
+      base_decode(string, group)
     end
   end
 
