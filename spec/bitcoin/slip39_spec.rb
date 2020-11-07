@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Bitcoin::SLIP39 do
 
-  let(:master_secret) {'4142434445464748494a4b4c4d4e4f50'}  # 'ABCDEFGHIJKLMNOP'.unpack("H*").first
+  let(:master_secret) {'4142434445464748494a4b4c4d4e4f50'}  # 'ABCDEFGHIJKLMNOP'.unpack1("H*")
   let(:passphrase) {'TREZOR'}
 
   describe 'Test Vector' do

@@ -145,9 +145,9 @@ module Bitcoin
       ext_key = ExtKey.new
       ext_key.ver = buf.read(4).bth # version
       raise ArgumentError, Errors::Messages::INVALID_BIP32_VERSION unless ExtKey.support_version?(ext_key.ver)
-      ext_key.depth = buf.read(1).unpack('C').first
+      ext_key.depth = buf.read(1).unpack1('C')
       ext_key.parent_fingerprint = buf.read(4).bth
-      ext_key.number = buf.read(4).unpack('N').first
+      ext_key.number = buf.read(4).unpack1('N')
       if ext_key.depth == 0
         raise ArgumentError, Errors::Messages::INVALID_BIP32_FINGERPRINT unless ext_key.parent_fingerprint == ExtKey::MASTER_FINGERPRINT
         raise ArgumentError, Errors::Messages::INVALID_BIP32_ZERO_INDEX if ext_key.number > 0
@@ -316,9 +316,9 @@ module Bitcoin
       ext_pubkey = ExtPubkey.new
       ext_pubkey.ver = buf.read(4).bth # version
       raise ArgumentError, Errors::Messages::INVALID_BIP32_VERSION unless ExtPubkey.support_version?(ext_pubkey.ver)
-      ext_pubkey.depth = buf.read(1).unpack('C').first
+      ext_pubkey.depth = buf.read(1).unpack1('C')
       ext_pubkey.parent_fingerprint = buf.read(4).bth
-      ext_pubkey.number = buf.read(4).unpack('N').first
+      ext_pubkey.number = buf.read(4).unpack1('N')
       if ext_pubkey.depth == 0
         raise ArgumentError, Errors::Messages::INVALID_BIP32_FINGERPRINT unless ext_pubkey.parent_fingerprint == ExtKey::MASTER_FINGERPRINT
         raise ArgumentError, Errors::Messages::INVALID_BIP32_ZERO_INDEX if ext_pubkey.number > 0

@@ -42,7 +42,7 @@ module Bitcoin
       else
         i.script_sig = Script.parse_from_payload(buf.read(sig_length))
       end
-      i.sequence = buf.read(4).unpack('V').first
+      i.sequence = buf.read(4).unpack1('V')
       i
     end
 

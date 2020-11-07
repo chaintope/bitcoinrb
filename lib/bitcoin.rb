@@ -110,7 +110,7 @@ module Bitcoin
   class ::String
     # binary convert to hex string
     def bth
-      unpack('H*').first
+      unpack1('H*')
     end
 
     # hex string convert to binary

@@ -21,8 +21,8 @@ module Bitcoin
 
       def self.parse_from_payload(payload)
         buf = StringIO.new(payload)
-        mode = buf.read(1).unpack('c').first
-        version = buf.read(8).unpack('Q').first
+        mode = buf.read(1).unpack1('c')
+        version = buf.read(8).unpack1('Q')
         new(mode, version)
       end
 

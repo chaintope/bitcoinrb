@@ -209,7 +209,7 @@ module Bitcoin
                     return set_error(SCRIPT_ERR_UNBALANCED_CONDITIONAL) if stack.size < 1
                     value = pop_string.htb
                     if sig_version == :witness_v0 && flag?(SCRIPT_VERIFY_MINIMALIF)
-                      if value.bytesize > 1 || (value.bytesize == 1 && value[0].unpack('C').first != 1)
+                      if value.bytesize > 1 || (value.bytesize == 1 && value[0].unpack1('C') != 1)
                         return set_error(SCRIPT_ERR_MINIMALIF)
                       end
                     end
@@ -648,13 +648,13 @@ module Bitcoin
       len = case opcode
               when OP_PUSHDATA1
                 offset += 1
-                buf.read(1).unpack('C').first
+                buf.read(1).unpack1('C')
               when OP_PUSHDATA2
                 offset += 2
-                buf.read(2).unpack('v').first
+                buf.read(2).unpack1('v')
               when OP_PUSHDATA4
                 offset += 4
-                buf.read(4).unpack('V').first
+                buf.read(4).unpack1('V')
               else
                 opcode
             end

@@ -113,13 +113,13 @@ module Bitcoin
           len = case pushcode
                   when OP_PUSHDATA1
                     packed_size = buf.read(1)
-                    packed_size.unpack('C').first
+                    packed_size.unpack1('C')
                   when OP_PUSHDATA2
                     packed_size = buf.read(2)
-                    packed_size.unpack('v').first
+                    packed_size.unpack1('v')
                   when OP_PUSHDATA4
                     packed_size = buf.read(4)
-                    packed_size.unpack('V').first
+                    packed_size.unpack1('V')
                   else
                     pushcode if pushcode < OP_PUSHDATA1
                 end
@@ -242,7 +242,7 @@ module Bitcoin
       return false if opcode != OP_0 && (opcode < OP_1 || opcode > OP_16)
       return false unless chunks[1].pushdata?
 
-      if size == (chunks[1][0].unpack('C').first + 2)
+      if size == (chunks[1][0].unpack1('C') + 2)
         program_size = chunks[1].pushed_data.bytesize
         return program_size >= 2 && program_size <= 40
       end
@@ -393,8 +393,8 @@ module Bitcoin
       hex = '0' + hex unless (hex.length % 2).zero?
       v = hex.htb.reverse # change endian
 
-      v = v << (negative ? 0x80 : 0x00) unless (v[-1].unpack('C').first & 0x80) == 0
-      v[-1] = [v[-1].unpack('C').first | 0x80].pack('C') if negative
+      v = v << (negative ? 0x80 : 0x00) unless (v[-1].unpack1('C') & 0x80) == 0
+      v[-1] = [v[-1].unpack1('C') | 0x80].pack('C') if negative
       v.bth
     end
 
@@ -402,7 +402,7 @@ module Bitcoin
     def self.decode_number(s)
       v = s.htb.reverse
       return 0 if v.length.zero?
-      mbs = v[0].unpack('C').first
+      mbs = v[0].unpack1('C')
       v[0] = [mbs - 0x80].pack('C') unless (mbs & 0x80) == 0
       result = v.bth.to_i(16)
       result = -result unless (mbs & 0x80) == 0

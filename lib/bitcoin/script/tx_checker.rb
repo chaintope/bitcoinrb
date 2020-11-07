@@ -19,7 +19,7 @@ module Bitcoin
     def check_sig(script_sig, pubkey, script_code, sig_version, allow_hybrid: false)
       return false if script_sig.empty?
       script_sig = script_sig.htb
-      hash_type = script_sig[-1].unpack('C').first
+      hash_type = script_sig[-1].unpack1('C')
       sig = script_sig[0..-2]
       sighash = tx.sighash_for_input(input_index, script_code, hash_type: hash_type,
                                      amount: amount, sig_version: sig_version)

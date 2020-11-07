@@ -39,7 +39,7 @@ module Bitcoin
     # @return [Array] the array of mnemonic word.
     def to_mnemonic(entropy)
       raise ArgumentError, 'entropy is empty.' if entropy.nil? || entropy.empty?
-      e = entropy.htb.unpack('B*').first
+      e = entropy.htb.unpack1('B*')
       seed = e + checksum(e)
       mnemonic_index = seed.chars.each_slice(11).map{|i|i.join.to_i(2)}
       word_master = load_words
@@ -61,7 +61,7 @@ module Bitcoin
     # @param [String] entropy an entropy with bit string format
     # @return [String] an entropy checksum with bit string format
     def checksum(entropy)
-      b = Bitcoin.sha256([entropy].pack('B*')).unpack('B*').first
+      b = Bitcoin.sha256([entropy].pack('B*')).unpack1('B*')
       b.slice(0, (entropy.length/32))
     end
 

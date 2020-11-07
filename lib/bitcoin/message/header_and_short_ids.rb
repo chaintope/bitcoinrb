@@ -22,7 +22,7 @@ module Bitcoin
       def self.parse_from_payload(payload)
         buf = StringIO.new(payload)
         header = Bitcoin::BlockHeader.parse_from_payload(buf.read(80))
-        nonce = buf.read(8).unpack('q*').first
+        nonce = buf.read(8).unpack1('q*')
         short_ids_len = Bitcoin.unpack_var_int_from_io(buf)
         short_ids = short_ids_len.times.map do
            buf.read(6).reverse.bth.to_i(16)

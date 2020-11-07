@@ -23,9 +23,9 @@ module Bitcoin
         buf = StringIO.new(payload)
         filter_count = Bitcoin.unpack_var_int_from_io(buf)
         filter = buf.read(filter_count).unpack('C*')
-        func_count = buf.read(4).unpack('V').first
-        tweak = buf.read(4).unpack('V').first
-        flag = buf.read(1).unpack('C').first
+        func_count = buf.read(4).unpack1('V')
+        tweak = buf.read(4).unpack1('V')
+        flag = buf.read(1).unpack1('C')
         FilterLoad.new(Bitcoin::BloomFilter.new(filter, func_count, tweak), flag)
       end
 

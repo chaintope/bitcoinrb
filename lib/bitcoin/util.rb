@@ -33,7 +33,7 @@ module Bitcoin
 
     # @return an integer for a valid payload, otherwise nil
     def unpack_var_int(payload)
-      case payload.unpack('C').first
+      case payload.unpack1('C')
       when 0xfd
         payload.unpack('xva*')
       when 0xfe
@@ -47,14 +47,14 @@ module Bitcoin
 
     # @return an integer for a valid payload, otherwise nil
     def unpack_var_int_from_io(buf)
-      uchar = buf.read(1)&.unpack('C')&.first
+      uchar = buf.read(1)&.unpack1('C')
       case uchar
       when 0xfd
-        buf.read(2)&.unpack('v')&.first
+        buf.read(2)&.unpack1('v')
       when 0xfe
-        buf.read(4)&.unpack('V')&.first
+        buf.read(4)&.unpack1('V')
       when 0xff
-        buf.read(8)&.unpack('Q')&.first
+        buf.read(8)&.unpack1('Q')
       else
         uchar
       end
@@ -79,7 +79,7 @@ module Bitcoin
 
     # byte convert to the sequence of bits packed eight in a byte with the least significant bit first.
     def byte_to_bit(byte)
-      byte.unpack('b*').first
+      byte.unpack1('b*')
     end
 
     # padding zero to the left of binary string until bytesize.

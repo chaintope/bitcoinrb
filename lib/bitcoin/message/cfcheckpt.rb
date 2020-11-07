@@ -19,8 +19,8 @@ module Bitcoin
 
       def self.parse_from_payload(payload)
         buf = StringIO.new(payload)
-        type = buf.read(1).unpack('C').first
-        hash = buf.read(32).unpack('H*').first
+        type = buf.read(1).unpack1('C')
+        hash = buf.read(32).unpack1('H*')
         count = Bitcoin.unpack_var_int_from_io(buf)
         headers = count.times.map{buf.read(32).bth}
         self.new(type, hash, headers)

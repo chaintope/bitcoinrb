@@ -26,7 +26,7 @@ module Bitcoin
             found_sep = true
             break
           end
-          key_type = buf.read(1).unpack('C').first
+          key_type = buf.read(1).unpack1('C')
           key = buf.read(key_len - 1)
           value = buf.read(Bitcoin.unpack_var_int_from_io(buf))
           case key_type

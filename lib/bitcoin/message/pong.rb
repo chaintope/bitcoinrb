@@ -14,7 +14,7 @@ module Bitcoin
       end
 
       def self.parse_from_payload(payload)
-        new(payload.unpack('Q').first)
+        new(payload.unpack1('Q'))
       end
 
       def to_payload

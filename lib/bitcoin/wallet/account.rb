@@ -43,7 +43,7 @@ module Bitcoin
 
       def to_payload
         payload = account_key.to_payload
-        payload << Bitcoin.pack_var_string(name.unpack('H*').first.htb)
+        payload << Bitcoin.pack_var_string(name.unpack1('H*').htb)
         payload << [purpose, index, receive_depth, change_depth, lookahead].pack('I*')
         payload
       end

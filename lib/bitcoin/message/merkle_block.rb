@@ -20,7 +20,7 @@ module Bitcoin
         m = new
         buf = StringIO.new(payload)
         m.header = Bitcoin::BlockHeader.parse_from_payload(buf.read(80))
-        m.tx_count = buf.read(4).unpack('V').first
+        m.tx_count = buf.read(4).unpack1('V')
         hash_count = Bitcoin.unpack_var_int_from_io(buf)
         hash_count.times do
           m.hashes << buf.read(32).bth

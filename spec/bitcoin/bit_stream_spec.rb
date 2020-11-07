@@ -14,7 +14,7 @@ describe 'Bitcoin::BitStream' do
       writer.write(7, 7)
       writer.write(30497, 16)
       writer.flush
-      serialize_int1 = writer.stream[0..3].unpack("I").first
+      serialize_int1 = writer.stream[0..3].unpack1("I")
       serialize_int2 = writer.stream[4..-1].reverse.bth.to_i(16)
       expect(serialize_int1).to eq(0x7700C35A)
       expect(serialize_int2).to eq(0x1072)

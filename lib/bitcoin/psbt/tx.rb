@@ -55,7 +55,7 @@ module Bitcoin
       # @return [Bitcoin::PartiallySignedTx]
       def self.parse_from_payload(payload)
         buf = StringIO.new(payload)
-        raise ArgumentError, 'Invalid PSBT magic bytes.' unless buf.read(4).unpack('N').first == PSBT_MAGIC_BYTES
+        raise ArgumentError, 'Invalid PSBT magic bytes.' unless buf.read(4).unpack1('N') == PSBT_MAGIC_BYTES
         raise ArgumentError, 'Invalid PSBT separator.' unless buf.read(1).bth.to_i(16) == 0xff
         partial_tx = self.new
         found_sep = false
@@ -66,7 +66,7 @@ module Bitcoin
             found_sep = true
             break
           end
-          key_type = buf.read(1).unpack('C').first
+          key_type = buf.read(1).unpack1('C')
           key = buf.read(key_len - 1)
           value = buf.read(Bitcoin.unpack_var_int_from_io(buf))
 
@@ -87,7 +87,7 @@ module Bitcoin
             raise ArgumentError, "global xpub's depth and the number of indexes not matched." unless xpub.depth == info.key_paths.size
             partial_tx.xpubs << Bitcoin::PSBT::GlobalXpub.new(xpub, info)
           when PSBT_GLOBAL_TYPES[:ver]
-            partial_tx.version_number = value.unpack('V').first
+            partial_tx.version_number = value.unpack1('V')
             raise ArgumentError, "An unsupported version was detected." if SUPPORT_VERSION < partial_tx.version_number
           else
             raise ArgumentError, 'Duplicate Key, key for unknown value already provided.' if partial_tx.unknowns[key]

@@ -31,10 +31,10 @@ module Bitcoin
         buf = payload.is_a?(String) ? StringIO.new(payload) : payload
         has_time = buf.size > 26
         addr = new(time: nil)
-        addr.time = buf.read(4).unpack('V').first if has_time
-        addr.services = buf.read(8).unpack('Q').first
+        addr.time = buf.read(4).unpack1('V') if has_time
+        addr.services = buf.read(8).unpack1('Q')
         addr.ip_addr = IPAddr::new_ntoh(buf.read(16))
-        addr.port = buf.read(2).unpack('n').first
+        addr.port = buf.read(2).unpack1('n')
         addr
       end
 

@@ -83,11 +83,11 @@ module Bitcoin
     def read_length(opcode, buf)
       case opcode
         when OP_PUSHDATA1
-          buf.read(1).unpack('C').first
+          buf.read(1).unpack1('C')
         when OP_PUSHDATA2
-          buf.read(2).unpack('v').first
+          buf.read(2).unpack1('v')
         when OP_PUSHDATA4
-          buf.read(4).unpack('V').first
+          buf.read(4).unpack1('V')
         else
           opcode if opcode < OP_PUSHDATA1
       end
