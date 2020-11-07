@@ -115,7 +115,7 @@ module Bitcoin
       end
 
       def sign_schnorr(data, privkey, aux_rand)
-        Schnorr.sign(data, privkey.htb, aux_rand).encode
+        aux_rand ? Schnorr.sign(data, privkey.htb, aux_rand).encode : Schnorr.sign(data, privkey.htb).encode
       end
 
       def verify_ecdsa(data, sig, pubkey)

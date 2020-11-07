@@ -91,11 +91,29 @@ describe Bitcoin::Key do
   end
 
   describe '#sign and verify' do
-    it 'should be success' do
-      message = 'message'.htb
+    context 'pure ruby' do
+      it 'should be success' do
+        test_sign_verify
+      end
+    end
+
+    context 'libsecp256k1', use_secp256k1: true do
+      it 'should be success' do
+        test_sign_verify
+      end
+    end
+
+    def test_sign_verify
+      # ecdsa
+      message = Bitcoin.sha256('message')
       key = Bitcoin::Key.generate
       sig = key.sign(message)
       expect(key.verify(sig, message)).to be true
+
+      #schnorr
+      sig = key.sign(message, algo: :schnorr)
+      expect(key.verify(sig, message, algo: :schnorr)).to be true
+      expect(key.verify(sig, message)).to be false
     end
   end
 

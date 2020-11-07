@@ -66,7 +66,7 @@ module Bitcoin
       raise ArgumentError, 'invalid version' unless version == Bitcoin.chain_params.privkey_version
       raise ArgumentError, Errors::Messages::INVALID_CHECKSUM unless Bitcoin.calc_checksum(version + data.bth) == checksum
       key_len = data.bytesize
-      if key_len == COMPRESSED_PUBLIC_KEY_SIZE && data[-1].unpack('C').first == 1
+      if key_len == COMPRESSED_PUBLIC_KEY_SIZE && data[-1].unpack1('C') == 1
         key_type = TYPES[:compressed]
         data = data[0..-2]
       elsif key_len == 32
@@ -89,30 +89,46 @@ module Bitcoin
     # sign +data+ with private key
     # @param [String] data a data to be signed with binary format
     # @param [Boolean] low_r flag to apply low-R.
-    # @param [String] extra_entropy the extra entropy for rfc6979.
+    # @param [String] extra_entropy the extra entropy with binary format for rfc6979.
+    # @param [Symbol] algo signature algorithm. ecdsa(default) or schnorr.
     # @return [String] signature data with binary format
-    def sign(data, low_r = true, extra_entropy = nil)
-      sig = secp256k1_module.sign_data(data, priv_key, extra_entropy)
-      if low_r && !sig_has_low_r?(sig)
-        counter = 1
-        until sig_has_low_r?(sig)
-          extra_entropy = [counter].pack('I*').bth.ljust(64, '0').htb
-          sig = secp256k1_module.sign_data(data, priv_key, extra_entropy)
-          counter += 1
+    def sign(data, low_r = true, extra_entropy = nil, algo: :ecdsa)
+      case algo
+      when :ecdsa
+        sig = secp256k1_module.sign_data(data, priv_key, extra_entropy)
+        if low_r && !sig_has_low_r?(sig)
+          counter = 1
+          until sig_has_low_r?(sig)
+            extra_entropy = [counter].pack('I*').bth.ljust(64, '0').htb
+            sig = secp256k1_module.sign_data(data, priv_key, extra_entropy)
+            counter += 1
+          end
         end
+        sig
+      when :schnorr
+        secp256k1_module.sign_data(data, priv_key, extra_entropy, algo: :schnorr)
+      else
+        raise ArgumentError "Unsupported algo specified: #{algo}"
       end
-      sig
     end
 
     # verify signature using public key
     # @param [String] sig signature data with binary format
-    # @param [String] origin original message
+    # @param [String] data original message
+    # @param [Symbol] algo signature algorithm. ecdsa(default) or schnorr.
     # @return [Boolean] verify result
-    def verify(sig, origin)
+    def verify(sig, data, algo: :ecdsa)
       return false unless valid_pubkey?
       begin
-        sig = ecdsa_signature_parse_der_lax(sig)
-        secp256k1_module.verify_sig(origin, sig, pubkey)
+        case algo
+        when :ecdsa
+          sig = ecdsa_signature_parse_der_lax(sig)
+          secp256k1_module.verify_sig(data, sig, pubkey)
+        when :schnorr
+          secp256k1_module.verify_sig(data, sig, pubkey[2..-1], algo: :schnorr)
+        else
+          false
+        end
       rescue Exception
         false
       end
