@@ -109,14 +109,14 @@ module Bitcoin
         when :ecdsa
           sign_ecdsa(data, privkey, extra_entropy)
         when :schnorr
-          sign_schnorr(data, privkey)
+          sign_schnorr(data, privkey, extra_entropy)
         else
           nil
         end
       end
 
       # verify signature
-      # @param [String] data a data
+      # @param [String] data a data with binary format.
       # @param [String] sig signature data with binary format
       # @param [String] pub_key a public key using verify.
       # @return [Boolean] verification result.
@@ -220,13 +220,14 @@ module Bitcoin
         end
       end
 
-      def sign_schnorr(data, privkey)
+      def sign_schnorr(data, privkey, aux_rand = nil)
         with_context do |context|
           keypair = create_keypair(privkey).htb
           keypair = FFI::MemoryPointer.new(:uchar, 96).put_bytes(0, keypair)
           signature = FFI::MemoryPointer.new(:uchar, 64)
           msg32 = FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, data)
-          raise 'Failed to generate schnorr signature.' unless secp256k1_schnorrsig_sign(context, signature, msg32, keypair, nil, nil) == 1
+          aux_rand = FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, aux_rand) if aux_rand
+          raise 'Failed to generate schnorr signature.' unless secp256k1_schnorrsig_sign(context, signature, msg32, keypair, nil, aux_rand) == 1
           signature.read_string(64)
         end
       end

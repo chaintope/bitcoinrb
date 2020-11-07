@@ -72,6 +72,13 @@ describe Bitcoin::Secp256k1::Native, use_secp256k1: true do
         sig = Bitcoin::Secp256k1::Native.sign_data(message, priv_key, algo: :schnorr)
         expect(Bitcoin::Secp256k1::Native.verify_sig(message, sig, pub_key[2..-1], algo: :schnorr)).to be true
         expect(Bitcoin::Secp256k1::Native.verify_sig('hoge', sig, pub_key[2..-1], algo: :schnorr)).to be false
+
+        # specify aux_rand
+        message = '7E2D58D8B3BCDF1ABADEC7829054F90DDA9805AAB56C77333024B9D0A508B75C'.htb
+        priv_key = 'C90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B14E5C9'
+        aux_rand = 'C87AA53824B4D7AE2EB035A2B5BBBCCC080E76CDC6D1692C4B0B62D798E6D906'.htb
+        sig = Bitcoin::Secp256k1::Native.sign_data(message, priv_key, aux_rand, algo: :schnorr)
+        expect(sig.bth).to eq('5831aaeed7b44bb74e5eab94ba9d4294c49bcf2a60728d8b4c200f50dd313c1bab745879a5ad954a72c45a91c3a51d3c7adea98d82f8481e0e1e03674a6f3fb7')
       end
     end
   end
