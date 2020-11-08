@@ -196,14 +196,9 @@ module Bitcoin
       raise ArgumentError, 'input_index must be specified.' unless input_index
       raise ArgumentError, 'does not exist input corresponding to input_index.' if input_index >= inputs.size
       raise ArgumentError, 'script_pubkey must be specified.' unless output_script
-      raise ArgumentError, 'unsupported sig version specified.' unless SIG_VERSION.include?(sig_version)
 
-      if sig_version == :witness_v0
-        raise ArgumentError, 'amount must be specified.' unless amount
-        sighash_for_witness(input_index, output_script, hash_type, amount, skip_separator_index)
-      else
-        sighash_for_legacy(input_index, output_script, hash_type)
-      end
+      sig_hash_gen = SigHashGenerator.load(sig_version)
+      sig_hash_gen.generate(self, input_index, output_script, hash_type, amount, skip_separator_index)
     end
 
     # verify input signature.
@@ -244,73 +239,6 @@ module Bitcoin
     end
 
     private
-
-    # generate sighash with legacy format
-    def sighash_for_legacy(index, script_code, hash_type)
-      ins = inputs.map.with_index do |i, idx|
-        if idx == index
-          i.to_payload(script_code.delete_opcode(Bitcoin::Opcodes::OP_CODESEPARATOR))
-        else
-          case hash_type & 0x1f
-            when SIGHASH_TYPE[:none], SIGHASH_TYPE[:single]
-              i.to_payload(Bitcoin::Script.new, 0)
-            else
-              i.to_payload(Bitcoin::Script.new)
-          end
-        end
-      end
-
-      outs = outputs.map(&:to_payload)
-      out_size = Bitcoin.pack_var_int(outputs.size)
-
-      case hash_type & 0x1f
-        when SIGHASH_TYPE[:none]
-          outs = ''
-          out_size = Bitcoin.pack_var_int(0)
-        when SIGHASH_TYPE[:single]
-          return "\x01".ljust(32, "\x00") if index >= outputs.size
-          outs = outputs[0...(index + 1)].map.with_index { |o, idx| (idx == index) ? o.to_payload : o.to_empty_payload }.join
-          out_size = Bitcoin.pack_var_int(index + 1)
-      end
-
-      if hash_type & SIGHASH_TYPE[:anyonecanpay] != 0
-        ins = [ins[index]]
-      end
-
-      buf = [[version].pack('V'), Bitcoin.pack_var_int(ins.size),
-          ins, out_size, outs, [lock_time, hash_type].pack('VV')].join
-
-      Bitcoin.double_sha256(buf)
-    end
-
-    # generate sighash with BIP-143 format
-    # https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
-    def sighash_for_witness(index, script_pubkey_or_script_code, hash_type, amount, skip_separator_index)
-      hash_prevouts = Bitcoin.double_sha256(inputs.map{|i|i.out_point.to_payload}.join)
-      hash_sequence = Bitcoin.double_sha256(inputs.map{|i|[i.sequence].pack('V')}.join)
-      outpoint = inputs[index].out_point.to_payload
-      amount = [amount].pack('Q')
-      nsequence = [inputs[index].sequence].pack('V')
-      hash_outputs = Bitcoin.double_sha256(outputs.map{|o|o.to_payload}.join)
-
-      script_code = script_pubkey_or_script_code.to_script_code(skip_separator_index)
-
-      case (hash_type & 0x1f)
-      when SIGHASH_TYPE[:single]
-        hash_outputs = index >= outputs.size ? "\x00".ljust(32, "\x00") : Bitcoin.double_sha256(outputs[index].to_payload)
-        hash_sequence = "\x00".ljust(32, "\x00")
-      when SIGHASH_TYPE[:none]
-        hash_sequence = hash_outputs = "\x00".ljust(32, "\x00")
-      end
-
-      if (hash_type & SIGHASH_TYPE[:anyonecanpay]) != 0
-        hash_prevouts = hash_sequence ="\x00".ljust(32, "\x00")
-      end
-
-      buf = [ [version].pack('V'), hash_prevouts, hash_sequence, outpoint,
-              script_code ,amount, nsequence, hash_outputs, [@lock_time, hash_type].pack('VV')].join
-      Bitcoin.double_sha256(buf)
-    end
 
     # verify input signature for legacy tx.
     def verify_input_sig_for_legacy(input_index, script_pubkey, flags)

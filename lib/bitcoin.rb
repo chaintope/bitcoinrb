@@ -59,6 +59,7 @@ module Bitcoin
   autoload :PaymentCode, 'bitcoin/payment_code'
   autoload :BIP85Entropy, 'bitcoin/bip85_entropy'
   autoload :Errors, 'bitcoin/errors'
+  autoload :SigHashGenerator, 'bitcoin/sighash_generator'
 
   require_relative 'bitcoin/constants'
   require_relative 'bitcoin/ext/ecdsa'
