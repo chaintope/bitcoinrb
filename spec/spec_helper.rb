@@ -36,8 +36,12 @@ def use_ecdsa_gem
 end
 
 def fixture_file(relative_path)
-  file = File.read(File.join(File.dirname(__FILE__), 'fixtures', relative_path))
+  file = File.read(fixture_path(relative_path))
   JSON.parse(file)
+end
+
+def fixture_path(relative_path)
+  File.join(File.dirname(__FILE__), 'fixtures', relative_path)
 end
 
 def load_block(hash)
