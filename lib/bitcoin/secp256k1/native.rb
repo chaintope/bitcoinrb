@@ -162,21 +162,33 @@ module Bitcoin
         end
       end
 
+      # Check whether valid x-only public key or not.
+      # @param [String] pub_key x-only public key with hex format(32 bytes).
+      # @return [Boolean] result.
+      def valid_xonly_pubkey?(pub_key)
+        begin
+          full_pubkey_from_xonly_pubkey(pub_key)
+        rescue Exception
+          return false
+        end
+        true
+      end
+
+      private
+
       # Calculate full public key(64 bytes) from public key(32 bytes).
-      # @param [String] pub_key public key with hex format(32 bytes).
+      # @param [String] pub_key x-only public key with hex format(32 bytes).
       # @return [String] x-only public key with hex format(64 bytes).
       def full_pubkey_from_xonly_pubkey(pub_key)
         with_context do |context|
           pubkey = pub_key.htb
-          raise ArgumentError, 'pubkey size must be 32 bytes.' unless pubkey.bytesize == 32
+          raise ArgumentError, 'Pubkey size must be 32 bytes.' unless pubkey.bytesize == 32
           xonly_pubkey = FFI::MemoryPointer.new(:uchar, pubkey.bytesize).put_bytes(0, pubkey)
           full_pubkey = FFI::MemoryPointer.new(:uchar, 64)
-          raise 'pub_key can not parsed.' unless secp256k1_xonly_pubkey_parse(context, full_pubkey, xonly_pubkey) == 1
+          raise ArgumentError, 'An invalid public key was specified.' unless secp256k1_xonly_pubkey_parse(context, full_pubkey, xonly_pubkey) == 1
           full_pubkey.read_string(64).bth
         end
       end
-
-      private
 
       def generate_pubkey_in_context(context, privkey, compressed: true)
         internal_pubkey = FFI::MemoryPointer.new(:uchar, 64)

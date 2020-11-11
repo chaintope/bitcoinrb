@@ -27,6 +27,20 @@ module Bitcoin
         public_key.to_hex(compressed)
       end
 
+      # Check whether valid x-only public key or not.
+      # @param [String] pub_key x-only public key with hex format(32 bytes).
+      # @return [Boolean] result.
+      def valid_xonly_pubkey?(pub_key)
+        pubkey = pub_key.htb
+        return false unless pubkey.bytesize == 32
+        begin
+          ECDSA::Format::PointOctetString.decode(pubkey, ECDSA::Group::Secp256k1)
+        rescue Exception
+          return false
+        end
+        true
+      end
+
       # sign data.
       # @param [String] data a data to be signed with binary format
       # @param [String] privkey a private key using sign

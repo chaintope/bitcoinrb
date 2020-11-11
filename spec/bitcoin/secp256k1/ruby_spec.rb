@@ -90,4 +90,19 @@ describe Bitcoin::Secp256k1::Ruby do
     end
   end
 
+  describe '#valid_xonly_pubkey' do
+    context 'valid public key' do
+      it 'should return true.' do
+        expect(Bitcoin::Secp256k1::Ruby.valid_xonly_pubkey?('92ee82d9add0512294723f2c363aee24efdeb3f258cdaf5118a4fcf5263e92c9')).to be true
+      end
+    end
+
+    context 'invalid public key(not on curve)' do
+      it 'should return false.' do
+        expect(Bitcoin::Secp256k1::Ruby.valid_xonly_pubkey?('0292ee82d9add0512294723f2c363aee24efdeb3f258cdaf5118a4fcf5263e92c9')).to be false
+        expect(Bitcoin::Secp256k1::Ruby.valid_xonly_pubkey?('00' * 32)).to be false
+      end
+    end
+  end
+
 end
