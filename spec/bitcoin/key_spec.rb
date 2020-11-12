@@ -206,4 +206,15 @@ describe Bitcoin::Key do
     end
   end
 
+  describe '#xonly_pubkey' do
+    it 'should return 32 bytes public key.' do
+      # compressed key
+      expect(Bitcoin::Key.new(pubkey: '0292ee82d9add0512294723f2c363aee24efdeb3f258cdaf5118a4fcf5263e92c9').xonly_pubkey).to eq('92ee82d9add0512294723f2c363aee24efdeb3f258cdaf5118a4fcf5263e92c9')
+      expect(Bitcoin::Key.new(pubkey: '0392ee82d9add0512294723f2c363aee24efdeb3f258cdaf5118a4fcf5263e92c9').xonly_pubkey).to eq('92ee82d9add0512294723f2c363aee24efdeb3f258cdaf5118a4fcf5263e92c9')
+
+      # uncompressed key
+      expect(Bitcoin::Key.new(pubkey: '04a232272863a59dfd3f5f643bfc7558711ce59df1fb1f3102b19aedb4f241db8f1fc4286d3ab3f8b6c60fc0e0d9f827745b09f1473c8f6ae6f915653765f5d313').xonly_pubkey).to eq('a232272863a59dfd3f5f643bfc7558711ce59df1fb1f3102b19aedb4f241db8f')
+    end
+  end
+
 end

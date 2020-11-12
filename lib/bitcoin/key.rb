@@ -125,7 +125,7 @@ module Bitcoin
           sig = ecdsa_signature_parse_der_lax(sig)
           secp256k1_module.verify_sig(data, sig, pubkey)
         when :schnorr
-          secp256k1_module.verify_sig(data, sig, pubkey[2..-1], algo: :schnorr)
+          secp256k1_module.verify_sig(data, sig, xonly_pubkey, algo: :schnorr)
         else
           false
         end
@@ -167,6 +167,12 @@ module Bitcoin
       p = pubkey
       p ||= generate_pubkey(priv_key, compressed: compressed)
       ECDSA::Format::PointOctetString.decode(p.htb, Bitcoin::Secp256k1::GROUP)
+    end
+
+    # get xonly public key (32 bytes).
+    # @return [String] xonly public key with hex format
+    def xonly_pubkey
+      pubkey[2..65]
     end
 
     # check +pubkey+ (hex) is compress or uncompress pubkey.
