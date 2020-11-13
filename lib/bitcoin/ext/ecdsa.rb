@@ -21,7 +21,7 @@ module ::ECDSA::Format::PointOctetString
     string = string.dup.force_encoding('BINARY')
     raise ECDSA::Format::DecodeError, 'Point octet string is empty.' if string.empty?
     if [6, 7].include?(string[0].ord)
-      raise DecodeError, 'Unrecognized start byte for point octet string: 0x%x' % string[0].ord unless allow_hybrid
+      raise ECDSA::Format::DecodeError, 'Unrecognized start byte for point octet string: 0x%x' % string[0].ord unless allow_hybrid
       decode_uncompressed string, group if allow_hybrid
     else
       base_decode(string, group)
