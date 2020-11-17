@@ -510,4 +510,13 @@ describe Bitcoin::Script do
     end
   end
 
+  describe '#has_success' do
+    it 'should check OP_SUCCESS opcodes.' do
+      expect((Bitcoin::Script.new << OP_1 << 0x50 << 'ffffffff' << OP_EQUAL).has_success?).to be true
+      expect((Bitcoin::Script.new << OP_1 << 0x4f << 'ffffffff' << OP_EQUAL).has_success?).to be false
+      expect((Bitcoin::Script.new << OP_1 << 0x7e << 'ffffffff' << OP_EQUAL).has_success?).to be true
+      expect(Bitcoin::Script.parse_from_payload('4f02e80393'.htb).has_success?).to be false
+    end
+  end
+
 end
