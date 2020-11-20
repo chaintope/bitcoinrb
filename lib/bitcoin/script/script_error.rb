@@ -117,6 +117,10 @@ module Bitcoin
       end
     end
 
+    def ok?
+      code == Bitcoin::SCRIPT_ERR_OK
+    end
+
     def self.name_to_code(name)
       NAME_MAP[name]
     end
