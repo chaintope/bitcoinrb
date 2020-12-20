@@ -96,6 +96,15 @@ module Bitcoin
       Digest::RMD160.hexdigest(Digest::SHA256.digest(hex.htb))
     end
 
+    # Generate tagged hash value.
+    # @param [String] tag tag value.
+    # @param [String] msg the message to be hashed.
+    # @return [String] the hash value with binary format.
+    def tagged_hash(tag, msg)
+      tag_hash = Digest::SHA256.digest(tag)
+      Digest::SHA256.digest(tag_hash + tag_hash + msg)
+    end
+
     # encode Base58 check address.
     # @param [String] hex the address payload.
     # @param [String] addr_version the address version for P2PKH and P2SH.
