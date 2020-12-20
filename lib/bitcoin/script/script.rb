@@ -141,8 +141,12 @@ module Bitcoin
       s
     end
 
-    def to_payload
-      chunks.join
+    # Output script payload.
+    # @param [Boolean] length_prefixed Flag whether the length of the pyrode should be given at the beginning.(default: false)
+    # @return [String] payload
+    def to_payload(length_prefixed = false)
+      p = chunks.join
+      length_prefixed ? (Bitcoin.pack_var_int(p.length) << p) : p
     end
 
     def empty?
@@ -523,6 +527,24 @@ module Bitcoin
       !chunks.find{|c|!c.pushdata? && Opcodes.op_success?(c.ord)}.nil?
     end
 
+    # Check whether bad opcode exist in chunks.
+    # @return [Boolean] If exist return true, otherwise false.
+    def has_bad_opcode?
+      chunks.each do |c|
+        next if c.empty?
+        if c.pushdata?
+          unless c.valid_pushdata_length?
+            return true
+          end
+        else
+          unless Opcodes.defined?(c.ord, true)
+            return true
+          end
+        end
+      end
+      false
+    end
+
     private
 
     # generate p2pkh address. if script dose not p2pkh, return nil.
@@ -557,6 +579,28 @@ module Bitcoin
       segwit_addr.hrp = Bitcoin.chain_params.bech32_hrp
       segwit_addr.script_pubkey = to_hex
       segwit_addr.addr
+    end
+
+    # Check whether push data length is valid.
+    # @return [Boolean] if valid return true, otherwise false.
+    def valid_pushdata_length?(chunk)
+      buf = StringIO.new(chunk)
+      opcode = buf.read(1).ord
+      offset = 1
+      len = case opcode
+            when OP_PUSHDATA1
+              offset += 1
+              buf.read(1).unpack1('C')
+            when OP_PUSHDATA2
+              offset += 2
+              buf.read(2).unpack1('v')
+            when OP_PUSHDATA4
+              offset += 4
+              buf.read(4).unpack1('V')
+            else
+              opcode
+            end
+      chunk.bytesize == len + offset
     end
 
   end
