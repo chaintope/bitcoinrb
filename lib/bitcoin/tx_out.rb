@@ -24,8 +24,7 @@ module Bitcoin
     end
 
     def to_payload
-      s = script_pubkey.to_payload
-      [value].pack('Q') << Bitcoin.pack_var_int(s.length) << s
+      [value].pack('Q') << script_pubkey.to_payload(true)
     end
 
     def to_empty_payload
