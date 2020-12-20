@@ -168,6 +168,26 @@ module Bitcoin
       self[offset..-1]
     end
 
+    def valid_pushdata_length?
+      buf = StringIO.new(self)
+      opcode = buf.read(1).ord
+      offset = 1
+      len = case opcode
+            when Bitcoin::Opcodes::OP_PUSHDATA1
+              offset += 1
+              buf.read(1).unpack1('C')
+            when Bitcoin::Opcodes::OP_PUSHDATA2
+              offset += 2
+              buf.read(2).unpack1('v')
+            when Bitcoin::Opcodes::OP_PUSHDATA4
+              offset += 4
+              buf.read(4).unpack1('V')
+            else
+              opcode
+            end
+      self.bytesize == len + offset
+    end
+
     # whether value is hex or not hex
     # @return [Boolean] return true if data is hex
     def valid_hex?
