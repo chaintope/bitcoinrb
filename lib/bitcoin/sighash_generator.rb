@@ -8,6 +8,8 @@ module Bitcoin
         LegacySigHashGenerator.new
       when :witness_v0
         SegwitSigHashGenerator.new
+      when :taproot, :tapscript
+        SchnorrSigHashGenerator.new
       else
         raise ArgumentError, "Unsupported sig version specified. #{sig_ver}"
       end
@@ -16,7 +18,8 @@ module Bitcoin
     # Legacy SigHash Generator
     class LegacySigHashGenerator
 
-      def generate(tx, input_index, output_script, hash_type, amount, skip_separator_index)
+      def generate(tx, input_index, hash_type, opts)
+        output_script = opts[:script_code]
         ins = tx.inputs.map.with_index do |i, idx|
           if idx == input_index
             i.to_payload(output_script.delete_opcode(Bitcoin::Opcodes::OP_CODESEPARATOR))
@@ -57,7 +60,10 @@ module Bitcoin
     # see: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
     class SegwitSigHashGenerator
 
-      def generate(tx, input_index, output_script, hash_type, amount, skip_separator_index)
+      def generate(tx, input_index, hash_type, opts)
+        amount = opts[:amount]
+        output_script = opts[:script_code]
+        skip_separator_index = opts[:skip_separator_index]
         hash_prevouts = Bitcoin.double_sha256(tx.inputs.map{|i|i.out_point.to_payload}.join)
         hash_sequence = Bitcoin.double_sha256(tx.inputs.map{|i|[i.sequence].pack('V')}.join)
         outpoint = tx.inputs[input_index].out_point.to_payload
@@ -82,6 +88,65 @@ module Bitcoin
         buf = [ [tx.version].pack('V'), hash_prevouts, hash_sequence, outpoint,
                 script_code ,amount, nsequence, hash_outputs, [tx.lock_time, hash_type].pack('VV')].join
         Bitcoin.double_sha256(buf)
+      end
+
+    end
+
+    # v1 witness sighash generator
+    # see: https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki
+    class SchnorrSigHashGenerator
+
+      # generate signature hash for taproot and tapscript
+      # @param [Hash] opts some data using signature. This class requires following key params:
+      # - sig_version: sig version. :taproot or :tapscript
+      # - prevouts: array of all prevout[Txout]
+      # - annex: annex value with binary format if annex exist.
+      # - leaf_hash: leaf version if sig_version is :tapscript, it required
+      # - last_code_separator_index: the index of last code separator
+      # @return [String] signature hash with binary format.
+      def generate(tx, input_index, hash_type, opts)
+        raise ArgumentError, 'Invalid sig_version was specified.' unless [:taproot, :tapscript].include?(opts[:sig_version])
+
+        ext_flag = opts[:sig_version] == :taproot ? 0 : 1
+        key_version = 0
+        output_ype = hash_type == SIGHASH_TYPE[:default] ? SIGHASH_TYPE[:all] : (hash_type & 0x03)
+        input_type = hash_type & 0x80
+        epoc = '00'.htb
+
+        buf = epoc # EPOC
+        buf << [hash_type, tx.version, tx.lock_time].pack('CVV')
+        unless input_type == SIGHASH_TYPE[:anyonecanpay]
+          buf << Bitcoin.sha256(tx.in.map{|i|i.out_point.to_payload}.join) # sha_prevouts
+          buf << Bitcoin.sha256(opts[:prevouts].map(&:value).pack('Q*'))# sha_amounts
+          buf << Bitcoin.sha256(opts[:prevouts].map{|o|o.script_pubkey.to_payload(true)}.join) # sha_scriptpubkeys
+          buf << Bitcoin.sha256(tx.in.map(&:sequence).pack('V*')) # sha_sequences
+        end
+
+        buf << Bitcoin.sha256(tx.out.map(&:to_payload).join) if output_ype == SIGHASH_TYPE[:all]
+
+        spend_type = (ext_flag << 1) + (opts[:annex] ? 1 : 0)
+        buf << [spend_type].pack('C')
+        if input_type == SIGHASH_TYPE[:anyonecanpay]
+          buf << tx.in[input_index].out_point.to_payload
+          buf << opts[:prevouts][input_index].to_payload
+          buf << [tx.in[input_index].sequence].pack('V')
+        else
+          buf << [input_index].pack('V')
+        end
+
+        buf << Bitcoin.sha256(Bitcoin::Script.pack_pushdata(opts[:annex])) if opts[:annex]
+
+        if output_ype == SIGHASH_TYPE[:single]
+          raise ArgumentError, "Tx does not have #{input_index} th output." if input_index >= tx.out.size
+          buf << Bitcoin.sha256(tx.out[input_index].to_payload)
+        end
+
+        if opts[:sig_version] == :tapscript
+          buf << opts[:leaf_hash]
+          buf << [key_version, opts[:last_code_separator_index] == 0 ? 0xffffffff : opts[:last_code_separator_index]].pack("CV")
+        end
+
+        Bitcoin.tagged_hash('TapSighash', buf)
       end
 
     end
