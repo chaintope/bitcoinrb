@@ -239,6 +239,10 @@ describe Bitcoin::Script do
         expect(subject.to_hex).to eq('76a914c486de584a735ec2f22da7cd9681614681f92173d83d0aa68688ac')
         expect(subject.p2pkh?).to be false
         expect(subject.to_s).to eq('OP_DUP OP_HASH160 c486de584a735ec2f22da7cd9681614681f92173 OP_UNKNOWN [error]')
+        # no push data
+        s = Bitcoin::Script.parse_from_payload('614c'.htb) # OP_NOP OP_PUSHDATA1
+        expect(s.to_hex).to eq('614c')
+        expect(s.has_bad_opcode?).to be true
       end
     end
   end

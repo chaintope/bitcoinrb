@@ -110,6 +110,10 @@ module Bitcoin
         if opcode.pushdata?
           pushcode = opcode.ord
           packed_size = nil
+          if buf.eof?
+            s.chunks << opcode
+            return s
+          end
           len = case pushcode
                   when OP_PUSHDATA1
                     packed_size = buf.read(1)
@@ -121,14 +125,13 @@ module Bitcoin
                     packed_size = buf.read(4)
                     packed_size.unpack1('V')
                   else
-                    pushcode if pushcode < OP_PUSHDATA1
+                    pushcode < OP_PUSHDATA1 ? pushcode : 0
                 end
-          if len
-            s.chunks << [len].pack('C') if buf.eof?
-            unless buf.eof?
-              chunk = (packed_size ? (opcode + packed_size) : (opcode)) + buf.read(len)
-              s.chunks << chunk
-            end
+          if buf.eof?
+            s.chunks << [len].pack('C')
+          else buf.eof?
+            chunk = (packed_size ? (opcode + packed_size) : (opcode)) + buf.read(len)
+            s.chunks << chunk
           end
         else
           if Opcodes.defined?(opcode.ord)
