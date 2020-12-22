@@ -161,7 +161,8 @@ module Bitcoin
     end
 
     # whether opcode is predefined opcode
-    def defined?(opcode)
+    def defined?(opcode, allow_success = false)
+      return true if allow_success && op_success?(opcode)
       !opcode_to_name(opcode).nil?
     end
 
