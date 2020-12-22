@@ -172,6 +172,7 @@ module Bitcoin
       buf = StringIO.new(self)
       opcode = buf.read(1).ord
       offset = 1
+      return false if buf.eof?
       len = case opcode
             when Bitcoin::Opcodes::OP_PUSHDATA1
               offset += 1
