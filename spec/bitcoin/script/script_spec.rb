@@ -242,6 +242,7 @@ describe Bitcoin::Script do
         # no push data
         s = Bitcoin::Script.parse_from_payload('614c'.htb) # OP_NOP OP_PUSHDATA1
         expect(s.to_hex).to eq('614c')
+        expect(s.to_s).to eq('OP_NOP 4c')
         expect(s.has_bad_opcode?).to be true
       end
     end

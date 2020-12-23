@@ -350,11 +350,14 @@ module Bitcoin
               v
             else
               data = c.pushed_data
-              next unless data
-              if data.bytesize <= 4
-                Script.decode_number(data.bth) # for scriptnum
+              if data
+                if data.bytesize <= 4
+                  Script.decode_number(data.bth) # for scriptnum
+                else
+                  data.bth
+                end
               else
-                data.bth
+                c.bth
               end
             end
           else
