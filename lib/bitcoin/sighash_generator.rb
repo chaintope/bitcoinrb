@@ -101,7 +101,7 @@ module Bitcoin
       # - sig_version: sig version. :taproot or :tapscript
       # - prevouts: array of all prevout[Txout]
       # - annex: annex value with binary format if annex exist.
-      # - leaf_hash: leaf version if sig_version is :tapscript, it required
+      # - leaf_hash: leaf hash with binary format if sig_version is :tapscript, it required
       # - last_code_separator_index: the index of last code separator
       # @return [String] signature hash with binary format.
       def generate(tx, input_index, hash_type, opts)
@@ -125,6 +125,7 @@ module Bitcoin
         buf << Bitcoin.sha256(tx.out.map(&:to_payload).join) if output_ype == SIGHASH_TYPE[:all]
 
         spend_type = (ext_flag << 1) + (opts[:annex] ? 1 : 0)
+        puts "spend_type = #{spend_type}"
         buf << [spend_type].pack('C')
         if input_type == SIGHASH_TYPE[:anyonecanpay]
           buf << tx.in[input_index].out_point.to_payload
@@ -134,7 +135,7 @@ module Bitcoin
           buf << [input_index].pack('V')
         end
 
-        buf << Bitcoin.sha256(Bitcoin::Script.pack_pushdata(opts[:annex])) if opts[:annex]
+        buf << Bitcoin.sha256(Bitcoin.pack_var_string(opts[:annex])) if opts[:annex]
 
         if output_ype == SIGHASH_TYPE[:single]
           raise ArgumentError, "Tx does not have #{input_index} th output." if input_index >= tx.out.size

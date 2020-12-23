@@ -4,31 +4,57 @@ module Bitcoin
     attr_reader :tx
     attr_reader :input_index
     attr_reader :amount
+    attr_reader :prevouts
 
-    def initialize(tx: nil, amount: 0, input_index: nil)
+    def initialize(tx: nil, amount: 0, input_index: nil, prevouts: [])
       @tx = tx
       @amount = amount
       @input_index = input_index
+      @prevouts = prevouts
     end
 
-    # check signature
-    # @param [String] script_sig
-    # @param [String] pubkey
+    # check ecdsa signature
+    # @param [String] sig signature with hex format
+    # @param [String] pubkey with hex format.
     # @param [Bitcoin::Script] script_code
     # @param [Integer] sig_version
-    def check_sig(script_sig, pubkey, script_code, sig_version, allow_hybrid: false)
-      return false if script_sig.empty?
-      script_sig = script_sig.htb
-      hash_type = script_sig[-1].unpack1('C')
-      sig = script_sig[0..-2]
-      sighash = tx.sighash_for_input(input_index, script_code, hash_type: hash_type,
-                                     amount: amount, sig_version: sig_version)
+    # @return [Boolean] verification result
+    def check_sig(sig, pubkey, script_code, sig_version, allow_hybrid: false)
+      return false if sig.empty?
+      sig = sig.htb
+      hash_type = sig[-1].unpack1('C')
+      sig = sig[0..-2]
+      sighash = tx.sighash_for_input(input_index, script_code, opts: {amount: amount}, hash_type: hash_type, sig_version: sig_version)
       key_type = pubkey.start_with?('02') || pubkey.start_with?('03') ? Key::TYPES[:compressed] : Key::TYPES[:uncompressed]
       begin
         key = Key.new(pubkey: pubkey, key_type: key_type, allow_hybrid: allow_hybrid)
         key.verify(sig, sighash)
       rescue Exception
         false
+      end
+    end
+
+    # check schnorr signature.
+    # @param [String] sig schnorr signature with hex format.
+    # @param [String] pubkey a public key with hex fromat.
+    # @param [Symbol] sig_version whether :taproot or :tapscript
+    # @return [Boolean] verification result
+    def check_schnorr_sig(sig, pubkey, sig_version, opts = {})
+      return false unless [:taproot, :tapscript].include?(sig_version)
+      return false if prevouts.size < input_index
+
+      sig = sig.htb
+      hash_type = SIGHASH_TYPE[:default]
+      if sig.bytesize == 65
+        hash_type = sig[-1].unpack1('C')
+        sig = sig[0..-2]
+        return false if hash_type == SIGHASH_TYPE[:default] # hash type can not specify 0x00.
+      end
+      opts[:prevouts] = prevouts
+      sighash = tx.sighash_for_input(input_index, opts: opts, hash_type: hash_type, sig_version: sig_version)
+      begin
+        key = Key.new(pubkey: "02#{pubkey}", key_type: Key::TYPES[:compressed])
+        key.verify(sig, sighash, algo: :schnorr)
       end
     end
 

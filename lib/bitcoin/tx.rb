@@ -188,17 +188,22 @@ module Bitcoin
     # @param [Integer] input_index input index.
     # @param [Integer] hash_type signature hash type
     # @param [Bitcoin::Script] output_script script pubkey or script code. if script pubkey is P2WSH, set witness script to this.
+    # @param [Hash] opts Data required for each sig version (amount and skip_separator_index params can also be set to this parameter)
     # @param [Integer] amount bitcoin amount locked in input. required for witness input only.
     # @param [Integer] skip_separator_index If output_script is P2WSH and output_script contains any OP_CODESEPARATOR,
     # the script code needs  is the witnessScript but removing everything up to and including the last executed OP_CODESEPARATOR before the signature checking opcode being executed.
-    def sighash_for_input(input_index, output_script, hash_type: SIGHASH_TYPE[:all],
+    def sighash_for_input(input_index, output_script = nil, opts: {}, hash_type: SIGHASH_TYPE[:all],
                           sig_version: :base, amount: nil, skip_separator_index: 0)
       raise ArgumentError, 'input_index must be specified.' unless input_index
       raise ArgumentError, 'does not exist input corresponding to input_index.' if input_index >= inputs.size
-      raise ArgumentError, 'script_pubkey must be specified.' unless output_script
+      raise ArgumentError, 'script_pubkey must be specified.' if [:base, :witness_v0].include?(sig_version) && output_script.nil?
 
+      opts[:amount] = amount if amount
+      opts[:skip_separator_index] = skip_separator_index
+      opts[:sig_version] = sig_version
+      opts[:script_code] = output_script
       sig_hash_gen = SigHashGenerator.load(sig_version)
-      sig_hash_gen.generate(self, input_index, output_script, hash_type, amount, skip_separator_index)
+      sig_hash_gen.generate(self, input_index, hash_type, opts)
     end
 
     # verify input signature.
