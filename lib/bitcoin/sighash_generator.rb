@@ -125,7 +125,6 @@ module Bitcoin
         buf << Bitcoin.sha256(tx.out.map(&:to_payload).join) if output_ype == SIGHASH_TYPE[:all]
 
         spend_type = (ext_flag << 1) + (opts[:annex] ? 1 : 0)
-        puts "spend_type = #{spend_type}"
         buf << [spend_type].pack('C')
         if input_type == SIGHASH_TYPE[:anyonecanpay]
           buf << tx.in[input_index].out_point.to_payload
