@@ -528,30 +528,6 @@ module Bitcoin
       (size > 0 && op_return?) || size > Bitcoin::MAX_SCRIPT_SIZE
     end
 
-    # Check whether OP_SUCCESS exist in chunks.
-    # @return [Boolean] If exist return true, otherwise false.
-    def has_success?
-      !chunks.find{|c|!c.pushdata? && Opcodes.op_success?(c.ord)}.nil?
-    end
-
-    # Check whether bad opcode exist in chunks.
-    # @return [Boolean] If exist return true, otherwise false.
-    def has_bad_opcode?
-      chunks.each do |c|
-        next if c.empty?
-        if c.pushdata?
-          unless c.valid_pushdata_length?
-            return true
-          end
-        else
-          unless Opcodes.defined?(c.ord, true)
-            return true
-          end
-        end
-      end
-      false
-    end
-
     private
 
     # generate p2pkh address. if script dose not p2pkh, return nil.

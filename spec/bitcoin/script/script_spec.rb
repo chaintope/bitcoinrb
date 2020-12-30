@@ -243,7 +243,6 @@ describe Bitcoin::Script do
         s = Bitcoin::Script.parse_from_payload('614c'.htb) # OP_NOP OP_PUSHDATA1
         expect(s.to_hex).to eq('614c')
         expect(s.to_s).to eq('OP_NOP 4c')
-        expect(s.has_bad_opcode?).to be true
       end
     end
   end
@@ -512,15 +511,6 @@ describe Bitcoin::Script do
       it 'should return false.' do
         expect(subject.run).to be false
       end
-    end
-  end
-
-  describe '#has_success' do
-    it 'should check OP_SUCCESS opcodes.' do
-      expect((Bitcoin::Script.new << OP_1 << 0x50 << 'ffffffff' << OP_EQUAL).has_success?).to be true
-      expect((Bitcoin::Script.new << OP_1 << 0x4f << 'ffffffff' << OP_EQUAL).has_success?).to be false
-      expect((Bitcoin::Script.new << OP_1 << 0x7e << 'ffffffff' << OP_EQUAL).has_success?).to be true
-      expect(Bitcoin::Script.parse_from_payload('4f02e80393'.htb).has_success?).to be false
     end
   end
 
