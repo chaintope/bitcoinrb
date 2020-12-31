@@ -102,7 +102,7 @@ module Bitcoin
       # - prevouts: array of all prevout[Txout]
       # - annex: annex value with binary format if annex exist.
       # - leaf_hash: leaf hash with binary format if sig_version is :tapscript, it required
-      # - last_code_separator_index: the index of last code separator
+      # - last_code_separator_pos: the position of last code separator
       # @return [String] signature hash with binary format.
       def generate(tx, input_index, hash_type, opts)
         raise ArgumentError, 'Invalid sig_version was specified.' unless [:taproot, :tapscript].include?(opts[:sig_version])
@@ -143,7 +143,7 @@ module Bitcoin
 
         if opts[:sig_version] == :tapscript
           buf << opts[:leaf_hash]
-          buf << [key_version, opts[:last_code_separator_index] == 0 ? 0xffffffff : opts[:last_code_separator_index]].pack("CV")
+          buf << [key_version, opts[:last_code_separator_pos]].pack("CV")
         end
 
         Bitcoin.tagged_hash('TapSighash', buf)
