@@ -100,14 +100,22 @@ module Bitcoin
         'Witness provided for non-witness script'
       when SCRIPT_ERR_WITNESS_PUBKEYTYPE
         'Using non-compressed keys in segwit'
-      when SCRIPT_ERR_TAPROOT_INVALID_SIG
-        'Invalid signature for Taproot key path spending'
+      when SCRIPT_ERR_SCHNORR_SIG_SIZE
+        'Invalid Schnorr signature size'
+      when SCRIPT_ERR_SCHNORR_SIG_HASHTYPE
+        'Invalid Schnorr signature hash type'
+      when SCRIPT_ERR_SCHNORR_SIG
+        'Invalid Schnorr signature'
       when SCRIPT_ERR_TAPROOT_WRONG_CONTROL_SIZE
         'Invalid Taproot control block size'
       when SCRIPT_ERR_TAPSCRIPT_VALIDATION_WEIGHT
         'Too much signature validation relative to witness weight'
+      when SCRIPT_ERR_TAPSCRIPT_CHECKMULTISIG
+        'OP_CHECKMULTISIG(VERIFY) is not available in tapscript'
+      when SCRIPT_ERR_TAPSCRIPT_MINIMALIF
+        'OP_IF/NOTIF argument must be minimal in tapscript'
       when SCRIPT_ERR_OP_CODESEPARATOR
-        'Using OP_CODESEPARATOR in non-witness scrip'
+        'Using OP_CODESEPARATOR in non-witness script'
       when SCRIPT_ERR_SIG_FINDANDDELETE
         'Signature is found in scriptCode'
       when SCRIPT_ERR_UNKNOWN_ERROR, SCRIPT_ERR_ERROR_COUNT
