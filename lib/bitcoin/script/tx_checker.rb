@@ -11,7 +11,7 @@ module Bitcoin
       @tx = tx
       @input_index = input_index
       @prevouts = prevouts
-      @amount = prevouts[input_index] ? prevouts[input_index].value : amount
+      @amount = input_index && prevouts[input_index] ? prevouts[input_index].value : amount
     end
 
     # check ecdsa signature
