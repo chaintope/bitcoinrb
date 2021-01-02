@@ -5,12 +5,13 @@ module Bitcoin
     attr_reader :input_index
     attr_reader :amount
     attr_reader :prevouts
+    attr_accessor :error_code
 
     def initialize(tx: nil, amount: 0, input_index: nil, prevouts: [])
       @tx = tx
-      @amount = amount
       @input_index = input_index
       @prevouts = prevouts
+      @amount = prevouts[input_index] ? prevouts[input_index].value : amount
     end
 
     # check ecdsa signature
@@ -44,17 +45,25 @@ module Bitcoin
       return false if prevouts.size < input_index
 
       sig = sig.htb
+      return set_error(SCRIPT_ERR_SCHNORR_SIG_SIZE) unless [64, 65].include?(sig.bytesize)
+
       hash_type = SIGHASH_TYPE[:default]
       if sig.bytesize == 65
         hash_type = sig[-1].unpack1('C')
         sig = sig[0..-2]
-        return false if hash_type == SIGHASH_TYPE[:default] # hash type can not specify 0x00.
+        return set_error(SCRIPT_ERR_SCHNORR_SIG_HASHTYPE) if hash_type == SIGHASH_TYPE[:default] # hash type can not specify 0x00.
       end
+
+      return set_error(SCRIPT_ERR_SCHNORR_SIG_HASHTYPE) unless (hash_type <= 0x03 || (hash_type >= 0x81 && hash_type <= 0x83))
+
       opts[:prevouts] = prevouts
-      sighash = tx.sighash_for_input(input_index, opts: opts, hash_type: hash_type, sig_version: sig_version)
+
       begin
+        sighash = tx.sighash_for_input(input_index, opts: opts, hash_type: hash_type, sig_version: sig_version)
         key = Key.new(pubkey: "02#{pubkey}", key_type: Key::TYPES[:compressed])
         key.verify(sig, sighash, algo: :schnorr)
+      rescue ArgumentError
+        return set_error(SCRIPT_ERR_SCHNORR_SIG_HASHTYPE)
       end
     end
 
@@ -105,6 +114,17 @@ module Bitcoin
 
       # Now that we know we're comparing apples-to-apples, the comparison is a simple numeric one.
       sequence_masked <= tx_sequence_masked
+    end
+
+    def has_error?
+      !@error_code.nil?
+    end
+
+    private
+
+    def set_error(code)
+      @error_code = code
+      false
     end
 
   end
