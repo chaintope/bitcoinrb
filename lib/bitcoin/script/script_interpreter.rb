@@ -698,7 +698,7 @@ module Bitcoin
       begin
         path_len = (control.bytesize - TAPROOT_CONTROL_BASE_SIZE) / TAPROOT_CONTROL_NODE_SIZE
         xonly_pubkey = control[1...TAPROOT_CONTROL_BASE_SIZE]
-        p = Bitcoin::Key.new(pubkey: "02#{xonly_pubkey.bth}")
+        p = Bitcoin::Key.new(pubkey: "02#{xonly_pubkey.bth}", key_type: Key::TYPES[:compressed])
         k = leaf_hash
         path_len.times do |i|
           pos = (TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * i)
@@ -706,7 +706,7 @@ module Bitcoin
           k = Bitcoin.tagged_hash('TapBranch', k.bth < e.bth ? k + e : e + k)
         end
         t = Bitcoin.tagged_hash('TapTweak', xonly_pubkey + k)
-        key = Bitcoin::Key.new(priv_key: t.bth)
+        key = Bitcoin::Key.new(priv_key: t.bth, key_type: Key::TYPES[:compressed])
         q = key.to_point + p.to_point
         return q.x == program.bti && (control[0].bti & 1) == (q.y % 2)
       rescue ArgumentError
