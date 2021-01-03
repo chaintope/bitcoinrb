@@ -13,7 +13,6 @@ module Bitcoin
 
     DISABLE_OPCODES = [OP_CAT, OP_SUBSTR, OP_LEFT, OP_RIGHT, OP_INVERT, OP_AND, OP_OR, OP_XOR, OP_2MUL, OP_2DIV, OP_DIV, OP_MUL, OP_MOD, OP_LSHIFT, OP_RSHIFT]
 
-
     # syntax sugar for simple evaluation for script.
     # @param [Bitcoin::Script] script_sig a scriptSig.
     # @param [Bitcoin::Script] script_pubkey a scriptPubkey.
@@ -55,7 +54,7 @@ module Bitcoin
         return set_error(SCRIPT_ERR_WITNESS_MALLEATED) unless script_sig.size == 0
         version, program = script_pubkey.witness_data
         stack_copy = stack.dup
-        return false unless verify_witness_program(witness, version, program)
+        return false unless verify_witness_program(witness, version, program, false)
       end
 
       # Additional validation for spend-to-script-hash transactions
@@ -63,11 +62,7 @@ module Bitcoin
         return set_error(SCRIPT_ERR_SIG_PUSHONLY) unless script_sig.push_only?
         @stack = stack_copy
         raise 'stack cannot be empty.' if stack.empty?
-        begin
-          redeem_script = Bitcoin::Script.parse_from_payload(stack.pop.htb)
-        rescue Exception => e
-          return set_error(SCRIPT_ERR_BAD_OPCODE, "Failed to parse serialized redeem script for P2SH. #{e.message}")
-        end
+        redeem_script = Bitcoin::Script.parse_from_payload(stack.pop.htb)
         return false unless eval_script(redeem_script, :base)
         return set_error(SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !cast_to_bool(stack.last)
 
@@ -78,7 +73,7 @@ module Bitcoin
           return set_error(SCRIPT_ERR_WITNESS_MALLEATED_P2SH) unless script_sig == (Bitcoin::Script.new << redeem_script.to_hex)
 
           version, program = redeem_script.witness_data
-          return false unless verify_witness_program(witness, version, program)
+          return false unless verify_witness_program(witness, version, program, true)
         end
       end
 
@@ -105,20 +100,70 @@ module Bitcoin
       false
     end
 
-    def verify_witness_program(witness, version, program)
+    def verify_witness_program(witness, version, program, is_p2sh)
+      @stack = witness.stack.map(&:bth)
+      need_evaluate = false
+      sig_version = nil
+      opts = {}
       if version == 0
-        if program.bytesize == 32
-          return set_error(SCRIPT_ERR_WITNESS_PROGRAM_WITNESS_EMPTY) if witness.stack.size == 0
-          script_pubkey = Bitcoin::Script.parse_from_payload(witness.stack.last)
-          @stack = witness.stack[0..-2].map{|w|w.bth}
+        need_evaluate = true
+        sig_version = :witness_v0
+        if program.bytesize == WITNESS_V0_SCRIPTHASH_SIZE # BIP141 P2WSH: 32-byte witness v0 program (which encodes SHA256(script))
+          return set_error(SCRIPT_ERR_WITNESS_PROGRAM_WITNESS_EMPTY) if stack.size == 0
+          script_pubkey = Bitcoin::Script.parse_from_payload(stack.pop.htb)
           script_hash = Bitcoin.sha256(script_pubkey.to_payload)
           return set_error(SCRIPT_ERR_WITNESS_PROGRAM_MISMATCH) unless script_hash == program
-        elsif program.bytesize == 20
-          return set_error(SCRIPT_ERR_WITNESS_PROGRAM_MISMATCH) unless witness.stack.size == 2
+        elsif program.bytesize == WITNESS_V0_KEYHASH_SIZE # BIP141 P2WPKH: 20-byte witness v0 program (which encodes Hash160(pubkey))
+          return set_error(SCRIPT_ERR_WITNESS_PROGRAM_MISMATCH) unless stack.size == 2
           script_pubkey = Bitcoin::Script.to_p2pkh(program.bth)
-          @stack = witness.stack.map{|w|w.bth}
         else
           return set_error(SCRIPT_ERR_WITNESS_PROGRAM_WRONG_LENGTH)
+        end
+      elsif version == 1 && program.bytesize == WITNESS_V1_TAPROOT_SIZE && !is_p2sh
+        # BIP341 Taproot: 32-byte non-P2SH witness v1 program (which encodes a P2C-tweaked pubkey)
+        return true unless flag?(SCRIPT_VERIFY_TAPROOT)
+        if stack.size == 0
+          return set_error(SCRIPT_ERR_WITNESS_PROGRAM_WITNESS_EMPTY)
+        elsif stack.size >= 2 && !stack.last.empty? && stack.last[0..1].to_i(16) == ANNEX_TAG
+          opts[:annex] = stack.pop.htb
+        end
+        if stack.size == 1 # Key path spending (stack size is 1 after removing optional annex)
+          result = checker.check_schnorr_sig(stack.last, program.bth, :taproot, opts)
+          return checker.has_error? ? set_error(checker.error_code) : result
+        else
+          sig_version = :tapscript
+          # Script path spending (stack size is >1 after removing optional annex)
+          control = stack.pop.htb
+          script_payload = stack.pop.htb
+          if control.bytesize < TAPROOT_CONTROL_BASE_SIZE || control.bytesize > TAPROOT_CONTROL_MAX_SIZE ||
+              (control.bytesize - TAPROOT_CONTROL_BASE_SIZE) % TAPROOT_CONTROL_NODE_SIZE != 0
+            return set_error(SCRIPT_ERR_TAPROOT_WRONG_CONTROL_SIZE)
+          end
+          leaf_ver = control[0].bti & TAPROOT_LEAF_MASK
+          opts[:leaf_hash] = Bitcoin.tagged_hash('TapLeaf', [leaf_ver].pack('C') + Bitcoin.pack_var_string(script_payload))
+          return set_error(SCRIPT_ERR_WITNESS_PROGRAM_MISMATCH) unless valid_taproot_commitment?(control, program, opts[:leaf_hash])
+          if (control[0].bti & TAPROOT_LEAF_MASK) == TAPROOT_LEAF_TAPSCRIPT
+            opts[:weight_left] = witness.to_payload.bytesize + VALIDATION_WEIGHT_OFFSET
+            script_pubkey = Bitcoin::Script.parse_from_payload(script_payload)
+            script_pubkey.chunks.each do |c|
+              next if c.empty?
+              # Note how this condition would not be reached if an unknown OP_SUCCESSx was found
+              if c.pushdata?
+                return set_error(SCRIPT_ERR_BAD_OPCODE) unless c.valid_pushdata_length?
+              elsif Opcodes.op_success?(c.ord)
+                # OP_SUCCESSx processing overrides everything, including stack element size limits
+                return set_error(SCRIPT_ERR_DISCOURAGE_OP_SUCCESS) if flag?(SCRIPT_VERIFY_DISCOURAGE_OP_SUCCESS)
+                return true
+              else
+                return set_error(SCRIPT_ERR_BAD_OPCODE) unless Opcodes.defined?(c.ord, true)
+              end
+            end
+            return set_error(SCRIPT_ERR_STACK_SIZE) if stack.size > MAX_STACK_SIZE
+            need_evaluate = true
+          end
+
+          return set_error(SCRIPT_ERR_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION) if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION)
+          return true unless need_evaluate
         end
       elsif flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM)
         return set_error(SCRIPT_ERR_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM)
@@ -130,19 +175,22 @@ module Bitcoin
         return set_error(SCRIPT_ERR_PUSH_SIZE) if s.htb.bytesize > MAX_SCRIPT_ELEMENT_SIZE
       end
 
-      return false unless eval_script(script_pubkey, :witness_v0)
+      return false unless eval_script(script_pubkey, sig_version, opts: opts)
 
       return set_error(SCRIPT_ERR_CLEANSTACK) unless stack.size == 1
       return set_error(SCRIPT_ERR_EVAL_FALSE) unless cast_to_bool(stack.last)
       true
     end
 
-    def eval_script(script, sig_version)
-      return set_error(SCRIPT_ERR_SCRIPT_SIZE) if script.size > MAX_SCRIPT_SIZE
+    def eval_script(script, sig_version, opts: {})
+      # sig_version cannot be TAPROOT here, as it admits no script execution.
+      raise ArgumentError, "Invalid sig version was specified: #{sig_version}" unless [:base, :witness_v0, :tapscript].include?(sig_version)
+      return set_error(SCRIPT_ERR_SCRIPT_SIZE) if script.size > MAX_SCRIPT_SIZE && [:base, :witness_v0].include?(sig_version)
       begin
         flow_stack = []
         alt_stack = []
-        last_code_separator_index = 0
+        opts[:last_code_separator_pos] = 0xffffffff
+        opts[:begincodehash] = 0
         op_count = 0
 
         script.chunks.each_with_index do |c, index|
@@ -156,10 +204,10 @@ module Bitcoin
             if require_minimal && !minimal_push?(c.pushed_data, opcode)
               return set_error(SCRIPT_ERR_MINIMALDATA)
             end
-            return set_error(SCRIPT_ERR_BAD_OPCODE) unless verify_pushdata_length(c)
+            return set_error(SCRIPT_ERR_BAD_OPCODE) unless c.valid_pushdata_length?
             stack << c.pushed_data.bth
           else
-            if opcode > OP_16 && (op_count += 1) > MAX_OPS_PER_SCRIPT
+            if [:base, :witness_v0].include?(sig_version) && opcode > OP_16 && (op_count += 1) > MAX_OPS_PER_SCRIPT
               return set_error(SCRIPT_ERR_OP_COUNT)
             end
             return set_error(SCRIPT_ERR_DISABLED_OPCODE) if DISABLE_OPCODES.include?(opcode)
@@ -208,9 +256,11 @@ module Bitcoin
                   if need_exec
                     return set_error(SCRIPT_ERR_UNBALANCED_CONDITIONAL) if stack.size < 1
                     value = pop_string.htb
-                    if sig_version == :witness_v0 && flag?(SCRIPT_VERIFY_MINIMALIF)
+                    if sig_version == :witness_v0 && flag?(SCRIPT_VERIFY_MINIMALIF) || sig_version == :tapscript
+                      # Under witness v0 rules it is only a policy rule, enabled through SCRIPT_VERIFY_MINIMALIF.
+                      # Tapscript requires minimal IF/NOTIF inputs as a consensus rule.
                       if value.bytesize > 1 || (value.bytesize == 1 && value[0].unpack1('C') != 1)
-                        return set_error(SCRIPT_ERR_MINIMALIF)
+                        return set_error(sig_version == :witness_v0 ? SCRIPT_ERR_MINIMALIF : SCRIPT_ERR_TAPSCRIPT_MINIMALIF)
                       end
                     end
                     result = cast_to_bool(value)
@@ -397,26 +447,14 @@ module Bitcoin
                   a, b = pop_int(2)
                   push_int(a == b ? 0 : 1)
                 when OP_CODESEPARATOR
-                  last_code_separator_index = index + 1
+                  opts[:begincodehash] = index + 1
+                  opts[:last_code_separator_pos] = index
                 when OP_CHECKSIG, OP_CHECKSIGVERIFY
                   return set_error(SCRIPT_ERR_INVALID_STACK_OPERATION)  if stack.size < 2
                   sig, pubkey = pop_string(2)
 
-                  subscript = script.subscript(last_code_separator_index..-1)
-                  if sig_version == :base
-                    tmp = subscript.find_and_delete(Script.new << sig)
-                    return set_error(SCRIPT_ERR_SIG_FINDANDDELETE) if flag?(SCRIPT_VERIFY_CONST_SCRIPTCODE) && tmp != subscript
-                    subscript = tmp
-                  end
-
-                  return false if !check_pubkey_encoding(pubkey, sig_version) || !check_signature_encoding(sig) # error already set.
-
-                  success = checker.check_sig(sig, pubkey, subscript, sig_version, allow_hybrid: !flag?(SCRIPT_VERIFY_STRICTENC))
-
-                  # https://github.com/bitcoin/bips/blob/master/bip-0146.mediawiki#NULLFAIL
-                  if !success && flag?(SCRIPT_VERIFY_NULLFAIL) && sig.bytesize > 0
-                    return set_error(SCRIPT_ERR_SIG_NULLFAIL)
-                  end
+                  success = valid_sig?(sig, pubkey, sig_version, script, opts)
+                  return false if error && !error.ok?
 
                   push_int(success ? 1 : 0)
 
@@ -427,6 +465,19 @@ module Bitcoin
                       return set_error(SCRIPT_ERR_CHECKSIGVERIFY)
                     end
                   end
+                when OP_CHECKSIGADD
+                  # OP_CHECKSIGADD is only available in Tapscript
+                  return set_error(SCRIPT_ERR_BAD_OPCODE) if [:base, :witness_v0].include?(sig_version)
+                  return set_error(SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 3
+
+                  pubkey = pop_string
+                  num = pop_int
+                  sig = pop_string
+
+                  success = valid_sig?(sig, pubkey, sig_version, script, opts) && !sig.empty?
+                  return false if error && !error.ok?
+
+                  push_int(success ? num + 1 : num)
                 when OP_CHECKMULTISIG, OP_CHECKMULTISIGVERIFY
                   return set_error(SCRIPT_ERR_INVALID_STACK_OPERATION)  if stack.size < 1
                   pubkey_count = pop_int
@@ -451,7 +502,7 @@ module Bitcoin
                   sigs = pop_string(sig_count)
                   sigs = [sigs] if sigs.is_a?(String)
                   
-                  subscript = script.subscript(last_code_separator_index..-1)
+                  subscript = script.subscript(opts[:begincodehash]..-1)
 
                   if sig_version == :base
                     sigs.each do |sig|
@@ -572,6 +623,7 @@ module Bitcoin
 
     # see https://github.com/bitcoin/bitcoin/blob/master/src/script/interpreter.cpp#L36-L49
     def cast_to_bool(v)
+      return false if v.empty?
       case v
         when Numeric
           return v != 0
@@ -641,24 +693,72 @@ module Bitcoin
       true
     end
 
-    def verify_pushdata_length(chunk)
-      buf = StringIO.new(chunk)
-      opcode = buf.read(1).ord
-      offset = 1
-      len = case opcode
-              when OP_PUSHDATA1
-                offset += 1
-                buf.read(1).unpack1('C')
-              when OP_PUSHDATA2
-                offset += 2
-                buf.read(2).unpack1('v')
-              when OP_PUSHDATA4
-                offset += 4
-                buf.read(4).unpack1('V')
-              else
-                opcode
-            end
-      chunk.bytesize == len + offset
+    # check whether valid taproot commitment.
+    def valid_taproot_commitment?(control, program, leaf_hash)
+      begin
+        path_len = (control.bytesize - TAPROOT_CONTROL_BASE_SIZE) / TAPROOT_CONTROL_NODE_SIZE
+        xonly_pubkey = control[1...TAPROOT_CONTROL_BASE_SIZE]
+        p = Bitcoin::Key.new(pubkey: "02#{xonly_pubkey.bth}")
+        k = leaf_hash
+        path_len.times do |i|
+          pos = (TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * i)
+          e = control[pos...(pos + TAPROOT_CONTROL_NODE_SIZE)]
+          k = Bitcoin.tagged_hash('TapBranch', k.bth < e.bth ? k + e : e + k)
+        end
+        t = Bitcoin.tagged_hash('TapTweak', xonly_pubkey + k)
+        key = Bitcoin::Key.new(priv_key: t.bth)
+        q = key.to_point + p.to_point
+        return q.x == program.bti && (control[0].bti & 1) == (q.y % 2)
+      rescue ArgumentError
+        return false
+      end
+    end
+
+    def valid_sig?(sig, pubkey, sig_version, script, opts)
+      case sig_version
+      when :base, :witness_v0
+        return eval_checksig_pre_tapscript(sig_version, sig, pubkey, script, opts)
+      when :tapscript
+        return eval_checksig_tapscript(sig, pubkey, opts)
+      end
+      false
+    end
+
+    def eval_checksig_pre_tapscript(sig_version, sig, pubkey, script, opts)
+      subscript = script.subscript(opts[:begincodehash]..-1)
+      if sig_version == :base
+        tmp = subscript.find_and_delete(Script.new << sig)
+        return set_error(SCRIPT_ERR_SIG_FINDANDDELETE) if flag?(SCRIPT_VERIFY_CONST_SCRIPTCODE) && tmp != subscript
+        subscript = tmp
+      end
+      return false if !check_pubkey_encoding(pubkey, sig_version) || !check_signature_encoding(sig) # error already set.
+      success = checker.check_sig(sig, pubkey, subscript, sig_version, allow_hybrid: !flag?(SCRIPT_VERIFY_STRICTENC))
+      # https://github.com/bitcoin/bips/blob/master/bip-0146.mediawiki#NULLFAIL
+      return set_error(SCRIPT_ERR_SIG_NULLFAIL) if !success && flag?(SCRIPT_VERIFY_NULLFAIL) && sig.bytesize > 0
+      success
+    end
+
+    def eval_checksig_tapscript(sig, pubkey, opts)
+      success = !sig.empty?
+      if success
+        # Implement the sigops/witnesssize ratio test.
+        opts[:weight_left] -= VALIDATION_WEIGHT_PER_SIGOP_PASSED
+        return set_error(SCRIPT_ERR_TAPSCRIPT_VALIDATION_WEIGHT) if opts[:weight_left] < 0
+      end
+
+      pubkey_size = pubkey.htb.bytesize
+      if pubkey_size == 0
+        return set_error(SCRIPT_ERR_PUBKEYTYPE)
+      elsif pubkey_size == 32
+        if success
+          result = checker.check_schnorr_sig(sig, pubkey, :tapscript, opts)
+          return checker.has_error? ? set_error(checker.error_code) : set_error(SCRIPT_ERR_SCHNORR_SIG) unless result
+        end
+      else
+        return set_error(SCRIPT_ERR_DISCOURAGE_UPGRADABLE_PUBKEYTYPE) if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_PUBKEYTYPE)
+      end
+      success
+      # return true
     end
 
   end
