@@ -61,7 +61,7 @@ describe Bitcoin::ScriptInterpreter do
       File.open(fixture_path('script_assets_test.json')).each_line do |row|
         count += 1
         row.chomp!
-        v = JSON.parse(row.delete_suffix(','))
+        v = JSON.parse(row[-1] == ',' ? row[0...-1] : row)
         tx = Bitcoin::Tx.parse_from_payload(v['tx'].htb)
         prevouts = v['prevouts'].map{|o|Bitcoin::TxOut.parse_from_payload(o.htb)}
         expect(tx.in.size).to eq(prevouts.size)
