@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Bitcoin::ScriptInterpreter do
+describe Bitcoin::ScriptInterpreter, use_secp256k1: true do
 
   describe 'check script_test.json' do
     script_json = fixture_file('script_tests.json').select{ |j|j.size > 3}
@@ -55,7 +55,7 @@ describe Bitcoin::ScriptInterpreter do
   # 3. for N in $(seq 1 10); do TEST_DUMP_DIR=dump test/functional/feature_taproot.py --dumptests; done
   # 4. (cat dump/*/* | head -c -2;) > script_assets_test.json
   # 5. copy script_assets_test.json into this spec/fixtures/ dir.
-  describe 'script assets test', use_secp256k1: true do
+  describe 'script assets test' do
     it 'should be passed.' do
       count = 1
       File.open(fixture_path('script_assets_test.json')).each_line do |row|

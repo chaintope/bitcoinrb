@@ -1,7 +1,7 @@
 require 'spec_helper'
 include Bitcoin::Opcodes
 
-describe Bitcoin::Tx do
+describe Bitcoin::Tx, use_secp256k1: true do
   include Bitcoin::Opcodes
   describe 'parse from payload' do
     context 'coinbase tx' do
