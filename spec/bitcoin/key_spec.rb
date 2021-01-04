@@ -115,6 +115,18 @@ describe Bitcoin::Key do
       expect(key.verify(sig, message, algo: :schnorr)).to be true
       expect(key.verify(sig, message)).to be false
     end
+
+    context 'pubkey start with 06' do
+      # The 33-byte public key starting with 06 is a hybrid type, while the 32-byte public key starting with 06 is an Xonly public key.
+      it 'should be treated as an Xonly public key.' do
+        message = Bitcoin.sha256('message')
+        key = Bitcoin::Key.new(priv_key: '4f0bdbfda0e7acf1aa44cc5c5e90068096b258089fd8230ed3a7ea5227214038',
+                               key_type: Bitcoin::Key::TYPES[:compressed])
+        aux = 'bf498c6e09a829330f59127ff176e5c6dbe108893fea46cd11e123ba0425a7b2'
+        sig = key.sign(message, false, aux.htb, algo: :schnorr)
+        expect(key.verify(sig, message, algo: :schnorr)).to be true
+      end
+    end
   end
 
   describe 'private key range check' do
