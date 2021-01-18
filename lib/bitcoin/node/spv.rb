@@ -13,6 +13,14 @@ module Bitcoin
       attr_accessor :wallet
       attr_accessor :bloom
 
+      # Initialize spv settings
+      # @param [Bitcoin::Node::Configuration] configuration configuration for spv.
+      #
+      # ```ruby
+      # config = Bitcoin::Node::Configuration.new(network: :mainnet)
+      # spv = Bitcoin::Node::SPV.new(config)
+      # spv.run
+      # ````
       def initialize(configuration)
         @chain = Bitcoin::Store::SPVChain.new
         @configuration = configuration

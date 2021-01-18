@@ -4,8 +4,10 @@ module Bitcoin
   module Node
     class Configuration
 
-      attr_reader :conf
+      attr_reader :conf # Hash
 
+      # initialize configuration
+      # @param [Hash] opts parameter for node.
       def initialize(opts = {})
         # TODO apply configuration file.
         opts[:network] = :mainnet unless opts[:network]
