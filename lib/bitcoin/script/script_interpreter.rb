@@ -564,7 +564,6 @@ module Bitcoin
         end
       rescue Exception => e
         puts e
-        puts e.backtrace
         return set_error(SCRIPT_ERR_UNKNOWN_ERROR, e.message)
       end
 
