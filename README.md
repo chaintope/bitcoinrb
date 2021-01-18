@@ -18,6 +18,8 @@ Bitcoinrb supports following feature:
 * [BIP-173](https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki) Bech32 address support
 * [BIP-174](https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki) PSBT(Partially Signed Bitcoin Transaction) support
 * [BIP-85](https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki) Deterministic Entropy From BIP32 Keychains support by `Bitcoin::BIP85Entropy` class.
+* Schnorr signature([BIP-340](https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki))  
+* Taproot consensus([BIP-341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki) and [BIP-342](https://github.com/bitcoin/bips/blob/master/bip-0342.mediawiki))  
 * [WIP] SPV node
 * [WIP] 0ff-chain protocol
 
@@ -92,6 +94,14 @@ Bitcoin.chain_params = :regtest
 ```
 
 This parameter is described in https://github.com/chaintope/bitcoinrb/blob/master/lib/bitcoin/chainparams/regtest.yml.
+
+* default signet
+
+```ruby
+Bitcoin.chain_params = :signet
+```
+
+This parameter is described in https://github.com/chaintope/bitcoinrb/blob/master/lib/bitcoin/chainparams/signet.yml.
 
 ## Contributing
 
