@@ -1,0 +1,39 @@
+--- !ruby/object:Bitcoin::ChainParams
+network: "signet"
+magic_head: "0a03cf40"
+message_magic: "Bitcoin Signed Message:\n"
+address_version: "6f"
+p2sh_version: "c4"
+bech32_hrp: 'tb'
+privkey_version: "ef"
+extended_privkey_version: "04358394"
+extended_pubkey_version: "043587cf"
+bip49_pubkey_p2wpkh_p2sh_version: "044a5262"
+bip49_pubkey_p2wsh_p2sh_version: "024289ef"
+bip49_privkey_p2wpkh_p2sh_version: "044a4e28"
+bip49_privkey_p2wsh_p2sh_version: "024285b5"
+bip84_pubkey_p2wpkh_version: "045f1cf6"
+bip84_pubkey_p2wsh_version: "02575483"
+bip84_privkey_p2wpkh_version: "045f18bc"
+bip84_privkey_p2wsh_version: "02575048"
+default_port: 38333
+protocol_version: 70013
+retarget_interval: 2016
+retarget_time: 1209600 # 2 weeks
+target_spacing: 600 # block interval
+max_money: 21000000
+bip34_height: 227931
+genesis_hash: "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6"
+proof_of_work_limit: 0x1d00ffff
+dns_seeds:
+  - "178.128.221.177"
+  - "2a01:7c8:d005:390::5"
+genesis:
+  hash: "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6"
+  merkle_root: "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
+  time: 1598918400
+  nonce: 52613770
+  bits: 0x1e0377ae
+  version: 1
+  prev_hash: "0000000000000000000000000000000000000000000000000000000000000000"
+bip44_coin_type: 1
