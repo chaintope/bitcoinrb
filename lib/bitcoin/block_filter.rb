@@ -43,6 +43,20 @@ module Bitcoin
       BlockFilter.new(filter_type, filter, block.block_hash)
     end
 
+    # Decode Block Filter from encoded filter
+    # @param [Integer] filter_type filter type.
+    # @param [String] block_hash block hash with hex format. not little endian.
+    # @param [String] encoded encoded_filter with hex format.
+    # @return [Bitcoin::BlockFilter] block filter object.
+    def self.decode(filter_type, block_hash, encoded)
+      filter = case filter_type
+               when TYPE[:basic]
+                GCSFilter.new(block_hash.htb[0...16], BASIC_FILTER_P, BASIC_FILTER_M, encoded_filter: encoded)
+              else
+                raise "unknown filter type: #{filter_type}."
+               end
+      BlockFilter.new(filter_type, filter, block_hash)
+    end
 
     # calculate filter hash.
     # @return [String] this filter hash with hex format.

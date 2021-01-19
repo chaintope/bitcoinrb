@@ -68,4 +68,18 @@ describe Bitcoin::BlockFilter do
     end
   end
 
+  describe '#decode' do
+    subject {
+      block_hash = '6e33538c0c3526e3590ebff9710dbc5d5472fed28e63d94bac8dc20fa7000000'
+      encoded_filter = '0c79dd114255fdef1542cd3f2495e0f9346b4fc32a154639f375e0691ce5a36d'
+      Bitcoin::BlockFilter.decode(Bitcoin::BlockFilter::TYPE[:basic], block_hash, encoded_filter)
+    }
+    it 'should decode encoded filter.' do
+      expect(subject.filter.encoded).to eq('0c79dd114255fdef1542cd3f2495e0f9346b4fc32a154639f375e0691ce5a36d')
+      target = '00141ed6f4590e7088dbebdf66b7072e87ab9c29b0c0'.htb
+      expect(subject.filter.match?(target)).to be true
+      target = '00141ed6f4590e7088dbebdf66b7072e87ab9c29b0c1'.htb
+      expect(subject.filter.match?(target)).to be false
+    end
+  end
 end
