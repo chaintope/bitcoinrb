@@ -73,5 +73,57 @@ module Bitcoin
         compact_witness: 70015
     }
 
+    module_function
+
+    # Decode P2P message.
+    # @param [String] command P2P message command string.
+    # @param [String] payload P2P message payload with hex format..
+    # @return [Bitcoin::Message::]
+    def decode(command, payload = nil)
+      payload = payload.htb if payload
+      case command
+      when Bitcoin::Message::Version::COMMAND
+        Bitcoin::Message::Version.parse_from_payload(payload)
+      when Bitcoin::Message::VerAck::COMMAND
+        Bitcoin::Message::VerAck.new
+      when Bitcoin::Message::GetAddr::COMMAND
+        Bitcoin::Message::GetAddr.new
+      when Bitcoin::Message::Addr::COMMAND
+        Bitcoin::Message::Addr.parse_from_payload(payload)
+      when Bitcoin::Message::SendHeaders::COMMAND
+        Bitcoin::Message::SendHeaders.new
+      when Bitcoin::Message::FeeFilter::COMMAND
+        Bitcoin::Message::FeeFilter.parse_from_payload(payload)
+      when Bitcoin::Message::Ping::COMMAND
+        Bitcoin::Message::Ping.parse_from_payload(payload)
+      when Bitcoin::Message::Pong::COMMAND
+        Bitcoin::Message::Pong.parse_from_payload(payload)
+      when Bitcoin::Message::GetHeaders::COMMAND
+        Bitcoin::Message::GetHeaders.parse_from_payload(payload)
+      when Bitcoin::Message::Headers::COMMAND
+        Bitcoin::Message::Headers.parse_from_payload(payload)
+      when Bitcoin::Message::Block::COMMAND
+        Bitcoin::Message::Block.parse_from_payload(payload)
+      when Bitcoin::Message::Tx::COMMAND
+        Bitcoin::Message::Tx.parse_from_payload(payload)
+      when Bitcoin::Message::NotFound::COMMAND
+        Bitcoin::Message::NotFound.parse_from_payload(payload)
+      when Bitcoin::Message::MemPool::COMMAND
+        Bitcoin::Message::MemPool.new
+      when Bitcoin::Message::Reject::COMMAND
+        Bitcoin::Message::Reject.parse_from_payload(payload)
+      when Bitcoin::Message::SendCmpct::COMMAND
+        Bitcoin::Message::SendCmpct.parse_from_payload(payload)
+      when Bitcoin::Message::Inv::COMMAND
+        Bitcoin::Message::Inv.parse_from_payload(payload)
+      when Bitcoin::Message::MerkleBlock::COMMAND
+        Bitcoin::Message::MerkleBlock.parse_from_payload(payload)
+      when Bitcoin::Message::CmpctBlock::COMMAND
+        Bitcoin::Message::CmpctBlock.parse_from_payload(payload)
+      when Bitcoin::Message::GetData::COMMAND
+        Bitcoin::Message::GetData.parse_from_payload(payload)
+      end
+    end
+
   end
 end
