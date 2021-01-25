@@ -44,6 +44,7 @@ module Bitcoin
     autoload :CFCheckpt, 'bitcoin/message/cfcheckpt'
     autoload :CFilter, 'bitcoin/message/cfilter'
     autoload :CFHeaders, 'bitcoin/message/cfheaders'
+    autoload :SendAddrV2, 'bitcoin/message/send_addr_v2'
 
     USER_AGENT = "/bitcoinrb:#{Bitcoin::VERSION}/"
 
@@ -122,6 +123,20 @@ module Bitcoin
         Bitcoin::Message::CmpctBlock.parse_from_payload(payload)
       when Bitcoin::Message::GetData::COMMAND
         Bitcoin::Message::GetData.parse_from_payload(payload)
+      when Bitcoin::Message::GetCFHeaders::COMMAND
+        Bitcoin::Message::GetCFHeaders.parse_from_payload(payload)
+      when Bitcoin::Message::GetCFilters::COMMAND
+        Bitcoin::Message::GetCFilters.parse_from_payload(payload)
+      when Bitcoin::Message::GetCFCheckpt::COMMAND
+        Bitcoin::Message::GetCFCheckpt.parse_from_payload(payload)
+      when Bitcoin::Message::CFCheckpt::COMMAND
+        Bitcoin::Message::CFCheckpt.parse_from_payload(payload)
+      when Bitcoin::Message::CFHeaders::COMMAND
+        Bitcoin::Message::CFHeaders.parse_from_payload(payload)
+      when Bitcoin::Message::CFilter::COMMAND
+        Bitcoin::Message::CFilter.parse_from_payload(payload)
+      when Bitcoin::Message::SendAddrV2::COMMAND
+        Bitcoin::Message::SendAddrV2.new
       end
     end
 
