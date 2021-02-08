@@ -37,6 +37,17 @@ describe Bitcoin do
       expect(OP_PUSHDATA1.chr.opcode).to eq(OP_PUSHDATA1)
       expect('1446c2fbfbecc99a63148fa076de58cf29b0bcf0b0'.htb.opcode?).to be false
     end
+
+    context 'different character code' do
+      it 'should be return same opcode' do
+        expect(OP_1.chr.opcode).to eq(OP_1)
+        expect(OP_1.chr.force_encoding("US-ASCII").opcode).to eq(OP_1)
+        expect(OP_1.chr.force_encoding("UTF-8").opcode).to eq(OP_1)
+        expect(OP_SIZE.chr.opcode).to eq(OP_SIZE)
+        expect(OP_SIZE.chr.force_encoding("US-ASCII").opcode).to eq(OP_SIZE)
+        expect(OP_SIZE.chr.force_encoding("UTF-8").opcode).to eq(OP_SIZE)
+      end
+    end
   end
 
   describe '#pushed_data' do

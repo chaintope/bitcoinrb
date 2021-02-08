@@ -133,14 +133,7 @@ module Bitcoin
 
     # get opcode
     def opcode
-      case encoding
-      when Encoding::ASCII_8BIT
-        each_byte.next
-      when Encoding::US_ASCII
-        ord
-      else
-        to_i
-      end
+      force_encoding(Encoding::ASCII_8BIT).ord
     end
 
     def opcode?
