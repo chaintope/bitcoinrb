@@ -13,11 +13,11 @@ describe Bitcoin::Message::Version do
       expect(subject.timestamp).to eq(1415483324)
       expect(subject.user_agent).to eq('/Satoshi:0.9.3/')
       expect(subject.local_addr.port).to eq(8333)
-      expect(subject.local_addr.ip.to_s).to eq('198.27.100.9')
+      expect(subject.local_addr.addr_string).to eq('198.27.100.9')
       expect(subject.local_addr.services).to eq(Bitcoin::Message::SERVICE_FLAGS[:network])
       expect(subject.local_addr.time).to be nil
       expect(subject.remote_addr.port).to eq(8333)
-      expect(subject.remote_addr.ip.to_s).to eq('203.0.113.192')
+      expect(subject.remote_addr.addr_string).to eq('203.0.113.192')
       expect(subject.remote_addr.services).to eq(Bitcoin::Message::SERVICE_FLAGS[:network])
       expect(subject.remote_addr.time).to be nil
       expect(subject.relay).to be true

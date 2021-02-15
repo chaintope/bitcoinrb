@@ -18,7 +18,7 @@ describe Bitcoin::Message::Addr do
     }
     it 'should be parsed' do
       expect(subject.addrs.length).to eq(1)
-      expect(subject.addrs[0].ip).to eq('92.169.156.82')
+      expect(subject.addrs[0].addr_string).to eq('92.169.156.82')
       expect(subject.addrs[0].port).to eq(18333)
       expect(subject.addrs[0].time).to eq(2989705664)
       expect(subject.addrs[0].services).to eq(1)

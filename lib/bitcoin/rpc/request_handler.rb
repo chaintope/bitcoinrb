@@ -49,7 +49,7 @@ module Bitcoin
       # Returns connected peer information.
       def getpeerinfo
         node.pool.peers.map do |peer|
-          local_addr = "#{peer.remote_version.remote_addr.ip}:18333"
+          local_addr = "#{peer.remote_version.remote_addr.addr_string}:18333"
           {
             id: peer.id,
             addr: "#{peer.host}:#{peer.port}",

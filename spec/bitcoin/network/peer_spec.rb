@@ -82,7 +82,7 @@ describe Bitcoin::Network::Peer do
     }
     it 'should be generate' do
       network_addr = subject.to_network_addr
-      expect(network_addr.ip).to eq('210.196.254.100')
+      expect(network_addr.addr_string).to eq('210.196.254.100')
       expect(network_addr.port).to eq(18333)
       expect(network_addr.services).to eq(13)
       expect(network_addr.time).to eq(1507879363)

@@ -1,6 +1,8 @@
 module Bitcoin
   module Message
 
+    class Error < StandardError; end
+
     autoload :Base, 'bitcoin/message/base'
     autoload :Inventory, 'bitcoin/message/inventory'
     autoload :InventoriesParser, 'bitcoin/message/inventories_parser'
@@ -45,6 +47,7 @@ module Bitcoin
     autoload :CFilter, 'bitcoin/message/cfilter'
     autoload :CFHeaders, 'bitcoin/message/cfheaders'
     autoload :SendAddrV2, 'bitcoin/message/send_addr_v2'
+    autoload :AddrV2, 'bitcoin/message/addr_v2'
 
     USER_AGENT = "/bitcoinrb:#{Bitcoin::VERSION}/"
 
@@ -137,6 +140,8 @@ module Bitcoin
         Bitcoin::Message::CFilter.parse_from_payload(payload)
       when Bitcoin::Message::SendAddrV2::COMMAND
         Bitcoin::Message::SendAddrV2.new
+      when Bitcoin::Message::AddrV2::COMMAND
+        Bitcoin::Message::AddrV2.parse_from_payload(payload)
       end
     end
 
