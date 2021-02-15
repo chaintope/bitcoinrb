@@ -23,6 +23,22 @@ module Bitcoin
         raise 'to_payload must be implemented in a child class.'
       end
 
+      # Decode message data to message object.
+      # @param [String] message with binary format.
+      # @return [Bitcoin::Message::XXX] An instance of a class that inherits Bitcoin::Message::Base
+      # @raise [ArgumentError] Occurs for data that cannot be decoded.
+      def self.from_pkt(message)
+        buf = StringIO.new(message)
+        magic = buf.read(4)
+        raise ArgumentError, 'Invalid magic.' unless magic == Bitcoin.chain_params.magic_head.htb
+        command = buf.read(12).delete("\x00")
+        length = buf.read(4).unpack1('V')
+        checksum = buf.read(4)
+        payload = buf.read(length)
+        raise ArgumentError, 'Checksum do not match.' unless checksum == Bitcoin.double_sha256(payload)[0...4]
+        Bitcoin::Message.decode(command, payload&.bth)
+      end
+
     end
 
   end
