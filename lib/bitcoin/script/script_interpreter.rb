@@ -3,6 +3,7 @@ module Bitcoin
   class ScriptInterpreter
 
     include Bitcoin::Opcodes
+    using Bitcoin::Ext::ArrayExt
 
     attr_reader :stack
     attr_reader :debug
@@ -55,6 +56,8 @@ module Bitcoin
         version, program = script_pubkey.witness_data
         stack_copy = stack.dup
         return false unless verify_witness_program(witness, version, program, false)
+        # Bypass the cleanstack check at the end. The actual stack is obviously not clean for witness programs.
+        stack.resize!(1, Script.encode_number(0))
       end
 
       # Additional validation for spend-to-script-hash transactions

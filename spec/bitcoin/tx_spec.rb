@@ -107,7 +107,7 @@ describe Bitcoin::Tx, use_secp256k1: true do
         tx.inputs.each_with_index do |i, index|
           amount = prevout_script_values[i.out_point.to_payload]
           amount |= 0
-          flags = json[2].split(',').map{|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}.inject(Bitcoin::SCRIPT_VERIFY_NONE){|flags, f| flags |= f}
+          flags = ~(json[2].split(',').map{|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}.inject(Bitcoin::SCRIPT_VERIFY_NONE){|flags, f| flags |= f})
           witness = i.script_witness
           checker = Bitcoin::TxChecker.new(tx: tx, input_index: index, amount: amount)
           script_pubkey = prevout_script_pubkeys[i.out_point.to_payload]
