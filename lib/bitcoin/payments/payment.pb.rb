@@ -17,7 +17,7 @@ module Bitcoin
       end
 
       def transactions
-        @values[:transactions].map{|raw_tx|Bitcoin::Tx.parse_from_payload(raw_tx)}
+        @values[:transactions].map{|raw_tx|Bitcoin::Tx.parse_from_payload(raw_tx, strict: true)}
       end
 
     end

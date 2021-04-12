@@ -44,7 +44,7 @@ module Bitcoin
           when PSBT_IN_TYPES[:non_witness_utxo]
             raise ArgumentError, 'Invalid non-witness utxo typed key.' unless key_len == 1
             raise ArgumentError, 'Duplicate Key, input non-witness utxo already provided.' if input.non_witness_utxo
-            input.non_witness_utxo = Bitcoin::Tx.parse_from_payload(value)
+            input.non_witness_utxo = Bitcoin::Tx.parse_from_payload(value, strict: true)
           when PSBT_IN_TYPES[:witness_utxo]
             raise ArgumentError, 'Invalid input witness utxo typed key.' unless key_len == 1
             raise ArgumentError, 'Duplicate Key, input witness utxo already provided.' if input.witness_utxo

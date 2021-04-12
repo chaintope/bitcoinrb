@@ -16,7 +16,7 @@ module Bitcoin
       end
 
       def self.parse_from_payload(payload)
-        tx = Bitcoin::Tx.parse_from_payload(payload)
+        tx = Bitcoin::Tx.parse_from_payload(payload, strict: true)
         new(tx, tx.witness?)
       end
 

@@ -75,7 +75,7 @@ module Bitcoin
 
       # broadcast transaction
       def sendrawtransaction(hex_tx)
-        tx = Bitcoin::Tx.parse_from_payload(hex_tx.htb)
+        tx = Bitcoin::Tx.parse_from_payload(hex_tx.htb, strict: true)
         # TODO check wether tx is valid
         node.broadcast(tx)
         tx.txid
@@ -84,7 +84,7 @@ module Bitcoin
       # decode tx data.
       def decoderawtransaction(hex_tx)
         begin
-          Bitcoin::Tx.parse_from_payload(hex_tx.htb).to_h
+          Bitcoin::Tx.parse_from_payload(hex_tx.htb, strict: true ).to_h
         rescue Exception
           raise ArgumentError.new('TX decode failed')
         end

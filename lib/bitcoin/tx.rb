@@ -33,13 +33,13 @@ module Bitcoin
     alias_method :in, :inputs
     alias_method :out, :outputs
 
-    def self.parse_from_payload(payload, non_witness: false)
+    def self.parse_from_payload(payload, non_witness: false, strict: false)
       buf = payload.is_a?(String) ? StringIO.new(payload) : payload
       tx = new
       tx.version = buf.read(4).unpack1('V')
 
       in_count = Bitcoin.unpack_var_int_from_io(buf)
-      witness = false
+      has_witness = false
       if in_count.zero? && !non_witness
         tx.marker = 0
         tx.flag = buf.read(1).unpack1('c')
@@ -47,7 +47,7 @@ module Bitcoin
           buf.pos -= 1
         else
           in_count = Bitcoin.unpack_var_int_from_io(buf)
-          witness = true
+          has_witness = true
         end
       end
 
@@ -60,14 +60,14 @@ module Bitcoin
         tx.outputs << TxOut.parse_from_payload(buf)
       end
 
-      if witness
+      if has_witness
         in_count.times do |i|
           tx.inputs[i].script_witness = Bitcoin::ScriptWitness.parse_from_payload(buf)
         end
       end
 
+      raise ArgumentError, 'Transaction has unexpected data.' if strict &&  (buf.pos + 4) != buf.length
       tx.lock_time = buf.read(4).unpack1('V')
-
       tx
     end
 
