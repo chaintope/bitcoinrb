@@ -16,13 +16,12 @@ describe Bitcoin::Base58 do
     valid_json = fixture_file('key_io_valid.json')
     valid_json.each do |base58_str, payload, metadata|
       it "should be valid #{base58_str}, #{payload}, #{metadata}" do
-        if metadata['chain'] == 'main'
-          Bitcoin.chain_params = :mainnet
-        elsif metadata['chain'] == 'test'
-          Bitcoin.chain_params = :testnet
-        else
-          Bitcoin.chain_params = :regtest
-        end
+        Bitcoin.chain_params = case metadata['chain']
+                               when 'main' then :mainnet
+                               when 'test' then :testnet
+                               when 'signet' then :signet
+                               else :regtest
+                               end
         compressed = metadata['isCompressed'] ? metadata['isCompressed'] : false
         is_privkey = metadata['isPrivkey']
         if is_privkey
