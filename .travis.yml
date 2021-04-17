@@ -11,4 +11,4 @@ addons:
     packages:
       - libleveldb-dev
 script:
-  - bundle exec rake parallel:spec
+  - travis_wait 40 bundle exec rake parallel:spec
