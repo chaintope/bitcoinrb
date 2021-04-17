@@ -11,4 +11,4 @@ addons:
     packages:
       - libleveldb-dev
 script:
-  - bundle exec parallel_test spec/ -n 6 --type rspec
+  - bundle exec rake parallel:spec
