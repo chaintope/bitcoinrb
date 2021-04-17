@@ -229,4 +229,36 @@ describe Bitcoin::Key do
     end
   end
 
+  describe 'key_io_valid test vector' do
+    valid_json = fixture_file('key_io_valid.json')
+    valid_json.each do |base58_str, payload, metadata|
+      it "should be valid #{base58_str}, #{payload}, #{metadata}" do
+        Bitcoin.chain_params = case metadata['chain']
+                               when 'main' then :mainnet
+                               when 'test' then :testnet
+                               when 'signet' then :signet
+                               else :regtest
+                               end
+        compressed = metadata['isCompressed'] ? metadata['isCompressed'] : false
+        is_privkey = metadata['isPrivkey']
+        if is_privkey
+          key = Bitcoin::Key.from_wif(base58_str)
+          expect(key.priv_key).to eq(payload)
+          expect(key.compressed?).to eq(compressed)
+        else
+          script = Bitcoin::Script.parse_from_payload(payload.htb)
+          expect(script.to_addr).to eq(base58_str)
+        end
+      end
+    end
+  end
+
+  describe 'key_io_invalid test vector' do
+    invalid_json = fixture_file('key_io_invalid.json')
+    invalid_json.each do |json|
+      it "should be invalid. #{json}" do
+        expect{Bitcoin::Script.parse_from_addr(json[0])}.to raise_error(ArgumentError)
+      end
+    end
+  end
 end
