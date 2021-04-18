@@ -83,10 +83,6 @@ def create_test_utxo_db()
   Bitcoin::Store::UtxoDB.new(TEST_UTXO_DB_PATH)
 end
 
-def parse_flags(flags)
-  flags.split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}.inject(Bitcoin::SCRIPT_VERIFY_NONE){|flags, f| flags |= f}
-end
-
 module Bitcoin
   autoload :TestScriptParser, 'bitcoin/script/test_script_parser'
 end
