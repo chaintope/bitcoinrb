@@ -1,4 +1,4 @@
-# Bitcoinrb [![Build Status](https://travis-ci.org/chaintope/bitcoinrb.svg?branch=master)](https://travis-ci.org/chaintope/bitcoinrb) [![Gem Version](https://badge.fury.io/rb/bitcoinrb.svg)](https://badge.fury.io/rb/bitcoinrb) [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE) <img src="http://segwit.co/static/public/images/logo.png" width="100">
+# Bitcoinrb [![Build Status](https://github.com/chaintope/bitcoinrb/actions/workflows/ruby.yml/badge.svg?branch=master)](https://github.com/chaintope/bitcoinrb/actions/workflows/ruby.yml) [![Gem Version](https://badge.fury.io/rb/bitcoinrb.svg)](https://badge.fury.io/rb/bitcoinrb) [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE) <img src="http://segwit.co/static/public/images/logo.png" width="100">
 
 
 Bitcoinrb is a Ruby implementation of Bitcoin Protocol.
