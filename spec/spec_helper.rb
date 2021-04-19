@@ -3,6 +3,7 @@ require 'bitcoin'
 require 'logger'
 require 'timecop'
 require 'webmock/rspec'
+require 'parallel'
 
 RSpec.configure do |config|
   config.before(:each) do |example|

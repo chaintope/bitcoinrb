@@ -57,12 +57,13 @@ describe Bitcoin::ScriptInterpreter, use_secp256k1: true do
   # 5. copy script_assets_test.json into this spec/fixtures/ dir.
   describe 'script assets test' do
     it 'should be passed.' do
-      File.open(fixture_path('script_assets_test.json')).each_line.with_index do |row, done|
+      Parallel.each(File.open(fixture_path('script_assets_test.json')).each_line.with_index) do |row, done|
         row.chomp!
         v = JSON.parse(row[-1] == ',' ? row[0...-1] : row)
         tx = Bitcoin::Tx.parse_from_payload(v['tx'].htb)
         prevouts = v['prevouts'].map{|o|Bitcoin::TxOut.parse_from_payload(o.htb)}
         expect(tx.in.size).to eq(prevouts.size)
+
         index = v['index']
         test_flags = parse_flags(v['flags'])
         checker = Bitcoin::TxChecker.new(tx: tx, input_index: index, prevouts: prevouts)
