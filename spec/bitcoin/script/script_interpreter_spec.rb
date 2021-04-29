@@ -75,6 +75,9 @@ describe Bitcoin::ScriptInterpreter, use_secp256k1: true do
           v['success']['witness'].each {|w|tx.in[index].script_witness.stack << w.htb}
           result = i.verify_script(tx.in[index].script_sig, prevouts[index].script_pubkey, tx.in[index].script_witness)
           expect(result).to be true
+          result = tx.verify_input_sig(index, prevouts[index].script_pubkey, amount: prevouts[index].value, flags: test_flags, prevouts: prevouts)
+          puts v unless result
+          expect(result).to be true
         end
         if v.key?('failure')
           i = Bitcoin::ScriptInterpreter.new(flags: test_flags, checker: checker)
@@ -82,6 +85,8 @@ describe Bitcoin::ScriptInterpreter, use_secp256k1: true do
           tx.in[index].script_sig = Bitcoin::Script.parse_from_payload(v['failure']['scriptSig'].htb)
           v['failure']['witness'].each {|w|tx.in[index].script_witness.stack << w.htb}
           result = i.verify_script(tx.in[index].script_sig, prevouts[index].script_pubkey, tx.in[index].script_witness)
+          expect(result).to be false
+          result = tx.verify_input_sig(index, prevouts[index].script_pubkey, amount: prevouts[index].value, flags: test_flags, prevouts: prevouts)
           expect(result).to be false
         end
         puts "#{done} tests done" if done > 0 && done % 200 == 0

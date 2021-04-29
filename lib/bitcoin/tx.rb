@@ -192,8 +192,10 @@ module Bitcoin
     # @param [Integer] amount bitcoin amount locked in input. required for witness input only.
     # @param [Integer] skip_separator_index If output_script is P2WSH and output_script contains any OP_CODESEPARATOR,
     # the script code needs  is the witnessScript but removing everything up to and including the last executed OP_CODESEPARATOR before the signature checking opcode being executed.
+    # @param [Array[Bitcoin::TxOut] prevouts Previous outputs referenced by all Tx inputs, required for taproot.
+    # @return [String] signature hash with binary format.
     def sighash_for_input(input_index, output_script = nil, opts: {}, hash_type: SIGHASH_TYPE[:all],
-                          sig_version: :base, amount: nil, skip_separator_index: 0)
+                          sig_version: :base, amount: nil, skip_separator_index: 0, prevouts: [])
       raise ArgumentError, 'input_index must be specified.' unless input_index
       raise ArgumentError, 'does not exist input corresponding to input_index.' if input_index >= inputs.size
       raise ArgumentError, 'script_pubkey must be specified.' if [:base, :witness_v0].include?(sig_version) && output_script.nil?
@@ -202,6 +204,7 @@ module Bitcoin
       opts[:skip_separator_index] = skip_separator_index
       opts[:sig_version] = sig_version
       opts[:script_code] = output_script
+      opts[:prevouts] = prevouts
       sig_hash_gen = SigHashGenerator.load(sig_version)
       sig_hash_gen.generate(self, input_index, hash_type, opts)
     end
@@ -211,7 +214,9 @@ module Bitcoin
     # @param [Bitcoin::Script] script_pubkey the script pubkey for target input.
     # @param [Integer] amount the amount of bitcoin, require for witness program only.
     # @param [Array] flags the flags used when execute script interpreter.
-    def verify_input_sig(input_index, script_pubkey, amount: nil, flags: STANDARD_SCRIPT_VERIFY_FLAGS)
+    # @param [Array[Bitcoin::TxOut]] prevouts Previous outputs referenced by all Tx inputs, required for taproot.
+    # @return [Boolean] result
+    def verify_input_sig(input_index, script_pubkey, amount: nil, flags: STANDARD_SCRIPT_VERIFY_FLAGS, prevouts: [])
       script_sig = inputs[input_index].script_sig
       has_witness = inputs[input_index].has_witness?
 
@@ -222,7 +227,7 @@ module Bitcoin
       end
 
       if has_witness
-        verify_input_sig_for_witness(input_index, script_pubkey, amount, flags)
+        verify_input_sig_for_witness(input_index, script_pubkey, amount, flags, prevouts)
       else
         verify_input_sig_for_legacy(input_index, script_pubkey, flags)
       end
@@ -255,10 +260,8 @@ module Bitcoin
     end
 
     # verify input signature for witness tx.
-    def verify_input_sig_for_witness(input_index, script_pubkey, amount, flags)
-      flags |= SCRIPT_VERIFY_WITNESS
-      flags |= SCRIPT_VERIFY_WITNESS_PUBKEYTYPE
-      checker = Bitcoin::TxChecker.new(tx: self, input_index: input_index, amount: amount)
+    def verify_input_sig_for_witness(input_index, script_pubkey, amount, flags, prevouts)
+      checker = Bitcoin::TxChecker.new(tx: self, input_index: input_index, amount: amount, prevouts: prevouts)
       interpreter = Bitcoin::ScriptInterpreter.new(checker: checker, flags: flags)
       i = inputs[input_index]
       interpreter.verify_script(i.script_sig, script_pubkey, i.script_witness)
