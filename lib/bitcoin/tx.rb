@@ -261,10 +261,7 @@ module Bitcoin
       checker = Bitcoin::TxChecker.new(tx: self, input_index: input_index, amount: amount)
       interpreter = Bitcoin::ScriptInterpreter.new(checker: checker, flags: flags)
       i = inputs[input_index]
-
-      script_sig = i.script_sig
-      witness = i.script_witness
-      interpreter.verify_script(script_sig, script_pubkey, witness)
+      interpreter.verify_script(i.script_sig, script_pubkey, i.script_witness)
     end
 
   end
