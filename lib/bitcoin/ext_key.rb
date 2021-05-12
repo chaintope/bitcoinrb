@@ -280,7 +280,7 @@ module Bitcoin
       l = Bitcoin.hmac_sha512(chain_code, data)
       left = l[0..31].bth.to_i(16)
       raise 'invalid key' if left >= CURVE_ORDER
-      p1 = Bitcoin::Secp256k1::GROUP.generator.multiply_by_scalar(left)
+      p1 = Bitcoin::Key.new(priv_key: left.to_s(16), key_type: Bitcoin::Key::TYPES[:uncompressed]).to_point
       p2 = Bitcoin::Key.new(pubkey: pubkey, key_type: key_type).to_point
       new_key.pubkey = (p1 + p2).to_hex
       new_key.chain_code = l[32..-1]
