@@ -103,27 +103,11 @@ describe Bitcoin::Tx, use_secp256k1: true do
         tx = Bitcoin::Tx.parse_from_payload(json[1].htb)
 
         expect(tx.valid?).to be true
+        verify_flags = parse_script_flags(json[2])
+        # Check that the test gives a valid combination of flags (otherwise VerifyScript will throw). Don't edit the flags.
+        expect(~verify_flags).to eq(fill_flags(~verify_flags))
 
-        tx.inputs.each_with_index do |i, index|
-          amount = prevout_script_values[i.out_point.to_payload]
-          amount |= 0
-          flags = ~(json[2].split(',').map{|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}.inject(Bitcoin::SCRIPT_VERIFY_NONE){|flags, f| flags |= f})
-          witness = i.script_witness
-          checker = Bitcoin::TxChecker.new(tx: tx, input_index: index, amount: amount)
-          script_pubkey = prevout_script_pubkeys[i.out_point.to_payload]
-
-          use_ecdsa_gem
-          interpreter = Bitcoin::ScriptInterpreter.new(flags: flags, checker: checker)
-          result = interpreter.verify_script(i.script_sig, script_pubkey, witness)
-          expect(result).to be true
-          expect(interpreter.error.code).to eq(Bitcoin::SCRIPT_ERR_OK)
-
-          use_secp256k1
-          interpreter = Bitcoin::ScriptInterpreter.new(flags: flags, checker: checker)
-          result = interpreter.verify_script(i.script_sig, script_pubkey, witness)
-          expect(result).to be true
-          expect(interpreter.error.code).to eq(Bitcoin::SCRIPT_ERR_OK)
-        end
+        check_script(tx, prevout_script_values, prevout_script_pubkeys, ~verify_flags, true)
       end
     end
   end
@@ -143,23 +127,15 @@ describe Bitcoin::Tx, use_secp256k1: true do
         end
 
         tx = Bitcoin::Tx.parse_from_payload(json[1].htb)
-        valid = tx.valid?
-
-        if valid
-          tx.inputs.each_with_index do |i, index|
-            amount = prevout_script_values[i.out_point.to_payload]
-            amount |= 0
-            flags = json[2].split(',').map {|s| Bitcoin.const_get("SCRIPT_VERIFY_#{s}")}.inject(Bitcoin::SCRIPT_VERIFY_NONE){|flags, f| flags |= f}
-            witness = i.script_witness
-            checker = Bitcoin::TxChecker.new(tx: tx, input_index: index, amount: amount)
-            interpreter = Bitcoin::ScriptInterpreter.new(flags: flags, checker: checker)
-            script_pubkey = prevout_script_pubkeys[i.out_point.to_payload]
-            valid = interpreter.verify_script(i.script_sig, script_pubkey, witness)
-            break unless valid
-          end
+        unless tx.valid?
+          expect(json[2]).to eq('BADTX')
+          next
         end
 
-        expect(valid).to be false
+        verify_flags = parse_script_flags(json[2])
+        expect(verify_flags).to eq(fill_flags(verify_flags))
+
+        check_script(tx, prevout_script_values, prevout_script_pubkeys, verify_flags, false)
       end
     end
   end
@@ -270,4 +246,102 @@ describe Bitcoin::Tx, use_secp256k1: true do
     end
   end
 
+  MAP_FLAG_NAMES = {
+    "P2SH": Bitcoin::SCRIPT_VERIFY_P2SH,
+    "STRICTENC": Bitcoin::SCRIPT_VERIFY_STRICTENC,
+    "DERSIG": Bitcoin::SCRIPT_VERIFY_DERSIG,
+    "LOW_S": Bitcoin::SCRIPT_VERIFY_LOW_S,
+    "SIGPUSHONLY": Bitcoin::SCRIPT_VERIFY_SIGPUSHONLY,
+    "MINIMALDATA": Bitcoin::SCRIPT_VERIFY_MINIMALDATA,
+    "NULLDUMMY": Bitcoin::SCRIPT_VERIFY_NULLDUMMY,
+    "DISCOURAGE_UPGRADABLE_NOPS": Bitcoin::SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS,
+    "CLEANSTACK": Bitcoin::SCRIPT_VERIFY_CLEANSTACK,
+    "MINIMALIF": Bitcoin::SCRIPT_VERIFY_MINIMALIF,
+    "NULLFAIL": Bitcoin::SCRIPT_VERIFY_NULLFAIL,
+    "CHECKLOCKTIMEVERIFY": Bitcoin::SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY,
+    "CHECKSEQUENCEVERIFY": Bitcoin::SCRIPT_VERIFY_CHECKSEQUENCEVERIFY,
+    "WITNESS": Bitcoin::SCRIPT_VERIFY_WITNESS,
+    "DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM": Bitcoin::SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM,
+    "WITNESS_PUBKEYTYPE": Bitcoin::SCRIPT_VERIFY_WITNESS_PUBKEYTYPE,
+    "CONST_SCRIPTCODE": Bitcoin::SCRIPT_VERIFY_CONST_SCRIPTCODE,
+    "TAPROOT": Bitcoin::SCRIPT_VERIFY_TAPROOT,
+    "DISCOURAGE_UPGRADABLE_PUBKEYTYPE": Bitcoin::SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_PUBKEYTYPE,
+    "DISCOURAGE_OP_SUCCESS": Bitcoin::SCRIPT_VERIFY_DISCOURAGE_OP_SUCCESS,
+    "DISCOURAGE_UPGRADABLE_TAPROOT_VERSION": Bitcoin::SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION
+  }.freeze
+
+  describe 'all flags in STANDARD_SCRIPT_VERIFY_FLAGS' do
+    it 'present in map_flag_names' do
+      standard_flags_missing = Bitcoin::STANDARD_SCRIPT_VERIFY_FLAGS
+      MAP_FLAG_NAMES.values.each do |f|
+        standard_flags_missing &= f
+      end
+      expect(standard_flags_missing).to eq(0)
+    end
+  end
+
+  def parse_script_flags(str_flags)
+    return 0 if str_flags.empty? || str_flags == 'NONE'
+    words = str_flags.split(',')
+    flags = 0
+    words.each do |w|
+      raise "unknown verification flag: #{w}" unless MAP_FLAG_NAMES.has_key?(w.to_sym)
+      flags |= MAP_FLAG_NAMES[w.to_sym]
+    end
+    flags
+  end
+
+  def valid_flag_combination?(flags)
+    return false if (flags & Bitcoin::SCRIPT_VERIFY_CLEANSTACK) != 0 && (~flags & (Bitcoin::SCRIPT_VERIFY_P2SH | Bitcoin::SCRIPT_VERIFY_WITNESS) != 0)
+    return false if (flags & Bitcoin::SCRIPT_VERIFY_WITNESS) != 0 && (~flags & Bitcoin::SCRIPT_VERIFY_P2SH) != 0
+    true
+  end
+
+  def trim_flags(flags)
+    flags &= ~Bitcoin::SCRIPT_VERIFY_WITNESS if (flags & Bitcoin::SCRIPT_VERIFY_P2SH) == 0
+    flags &= ~Bitcoin::SCRIPT_VERIFY_CLEANSTACK if (flags & Bitcoin::SCRIPT_VERIFY_WITNESS) == 0
+    raise 'Invalid flag combination.' unless valid_flag_combination?(flags)
+    flags
+  end
+
+  def fill_flags(flags)
+    flags |= Bitcoin::SCRIPT_VERIFY_WITNESS if (flags & Bitcoin::SCRIPT_VERIFY_CLEANSTACK) != 0
+    flags |= Bitcoin::SCRIPT_VERIFY_P2SH if (flags & Bitcoin::SCRIPT_VERIFY_WITNESS) != 0
+    raise 'Invalid flag combination.' unless valid_flag_combination?(flags)
+    flags
+  end
+
+  def check_script(tx, prevout_script_values, prevout_script_pubkeys, flags, expected)
+    result = true
+    err = expected ? Bitcoin::SCRIPT_ERR_OK : Bitcoin::SCRIPT_ERR_UNKNOWN_ERROR
+    tx.inputs.each_with_index do |i, index|
+      break unless result
+      amount = prevout_script_values[i.out_point.to_payload]
+      amount |= 0
+      witness = i.script_witness
+      checker = Bitcoin::TxChecker.new(tx: tx, input_index: index, amount: amount)
+      script_pubkey = prevout_script_pubkeys[i.out_point.to_payload]
+
+      use_ecdsa_gem
+      interpreter = Bitcoin::ScriptInterpreter.new(flags: flags, checker: checker)
+      result = interpreter.verify_script(i.script_sig, script_pubkey, witness)
+      err = interpreter.error
+      if expected
+        expect(result).to be expected
+        expect(interpreter.error.code).to eq(Bitcoin::SCRIPT_ERR_OK)
+      end
+
+      use_secp256k1
+      interpreter = Bitcoin::ScriptInterpreter.new(flags: flags, checker: checker)
+      result = interpreter.verify_script(i.script_sig, script_pubkey, witness)
+      if expected
+        expect(result).to be expected
+        expect(interpreter.error.code).to eq(Bitcoin::SCRIPT_ERR_OK)
+      end
+    end
+    unless expected
+      expect(result).to be false
+      expect(err.code).not_to eq(Bitcoin::SCRIPT_ERR_OK)
+    end
+  end
 end
