@@ -52,7 +52,7 @@ module Bitcoin
     end
 
     # generate m of n multisig script
-    # @param [String] m the number of signatures required for multisig
+    # @param [Integer] m the number of signatures required for multisig
     # @param [Array] pubkeys array of public keys that compose multisig
     # @return [Script] multisig script.
     def self.to_multisig_script(m, pubkeys, sort: false)
