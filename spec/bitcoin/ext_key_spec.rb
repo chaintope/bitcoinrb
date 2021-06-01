@@ -341,6 +341,38 @@ describe Bitcoin::ExtKey, network: :mainnet do
     expect(child.to_base58).to eq('xprv9uPDJpEQgRQfDcW7BkF7eTya6RPxXeJCqCJGHuCJ4GiRVLzkTXBAJMu2qaMWPrS7AANYqdq6vcBcBUdJCVVFceUvJFjaPdGZ2y9WACViL4L')
   end
 
+  # https://github.com/bitcoin/bips/pull/1030/
+  describe 'Modified test vectors for hardened derivation with leading zeros' do
+    context 'ruby' do
+      subject {
+        Bitcoin::ExtKey.generate_master('3ddd5602285899a946114506157c7997e5444528f3003f6134712147db19b678')
+      }
+      it 'should retain leading zeros' do
+        hardened_derive_leading_zeros
+      end
+    end
+
+    context 'native', use_secp256k1: true do
+      subject {
+        Bitcoin::ExtKey.generate_master('3ddd5602285899a946114506157c7997e5444528f3003f6134712147db19b678')
+      }
+      it 'should retain leading zeros' do
+        hardened_derive_leading_zeros
+      end
+    end
+  end
+
+  def hardened_derive_leading_zeros
+    expect(subject.to_base58).to eq('xprv9s21ZrQH143K48vGoLGRPxgo2JNkJ3J3fqkirQC2zVdk5Dgd5w14S7fRDyHH4dWNHUgkvsvNDCkvAwcSHNAQwhwgNMgZhLtQC63zxwhQmRv')
+    expect(subject.ext_pubkey.to_base58).to eq('xpub661MyMwAqRbcGczjuMoRm6dXaLDEhW1u34gKenbeYqAix21mdUKJyuyu5F1rzYGVxyL6tmgBUAEPrEz92mBXjByMRiJdba9wpnN37RLLAXa')
+    child = subject.derive(0, true)
+    expect(child.to_base58).to eq('xprv9vB7xEWwNp9kh1wQRfCCQMnZUEG21LpbR9NPCNN1dwhiZkjjeGRnaALmPXCX7SgjFTiCTT6bXes17boXtjq3xLpcDjzEuGLQBM5ohqkao9G')
+    expect(child.ext_pubkey.to_base58).to eq('xpub69AUMk3qDBi3uW1sXgjCmVjJ2G6WQoYSnNHyzkmdCHEhSZ4tBok37xfFEqHd2AddP56Tqp4o56AePAgCjYdvpW2PU2jbUPFKsav5ut6Ch1m')
+    child = child.derive(1, true)
+    expect(child.to_base58).to eq('xprv9xJocDuwtYCMNAo3Zw76WENQeAS6WGXQ55RCy7tDJ8oALr4FWkuVoHJeHVAcAqiZLE7Je3vZJHxspZdFHfnBEjHqU5hG1Jaj32dVoS6XLT1')
+    expect(child.ext_pubkey.to_base58).to eq('xpub6BJA1jSqiukeaesWfxe6sNK9CCGaujFFSJLomWHprUL9DePQ4JDkM5d88n49sMGJxrhpjazuXYWdMf17C9T5XnxkopaeS7jGk1GyyVziaMt')
+  end
+
   describe 'Test Vector 4' do
     context 'ruby' do
       it 'should raise error.' do
