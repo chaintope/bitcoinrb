@@ -149,7 +149,7 @@ module Bitcoin
     end
 
     # Output script payload.
-    # @param [Boolean] length_prefixed Flag whether the length of the pyrode should be given at the beginning.(default: false)
+    # @param [Boolean] length_prefixed Flag whether the length of the payload should be given at the beginning.(default: false)
     # @return [String] payload
     def to_payload(length_prefixed = false)
       p = chunks.join
