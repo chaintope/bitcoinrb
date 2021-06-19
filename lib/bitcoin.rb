@@ -60,6 +60,7 @@ module Bitcoin
   autoload :BIP85Entropy, 'bitcoin/bip85_entropy'
   autoload :Errors, 'bitcoin/errors'
   autoload :SigHashGenerator, 'bitcoin/sighash_generator'
+  autoload :MessageSign, 'bitcoin/message_sign'
 
   require_relative 'bitcoin/constants'
   require_relative 'bitcoin/ext/ecdsa'

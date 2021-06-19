@@ -43,7 +43,7 @@ module Bitcoin
 
       # sign data.
       # @param [String] data a data to be signed with binary format
-      # @param [String] privkey a private key using sign
+      # @param [String] privkey a private key using sign with hex format
       # @param [String] extra_entropy a extra entropy with binary format for rfc6979
       # @param [Symbol] algo signature algorithm. ecdsa(default) or schnorr.
       # @return [String] signature data with binary format
@@ -55,6 +55,31 @@ module Bitcoin
           sign_schnorr(data, privkey, extra_entropy)
         else
           nil
+        end
+      end
+
+      # Sign data with compact format.
+      # @param [String] data a data to be signed with binary format
+      # @param [String] privkey a private key using sign with hex format
+      # @return [Array[signature, recovery id]]
+      def sign_compact(data, privkey)
+        sign_ecdsa(data, privkey, nil)
+      end
+
+      # Recover public key from compact signature.
+      # @param [String] data message digest using signature.
+      # @param [String] signature signature with binary format.
+      # @param [Integer] rec recovery id.
+      # @param [Boolean] compressed whether compressed public key or not.
+      # @return [Bitcoin::Key] Recovered public key.
+      def recover_compact(data, signature, rec, compressed)
+        r = ECDSA::Format::IntegerOctetString.decode(signature[1...33])
+        s = ECDSA::Format::IntegerOctetString.decode(signature[33..-1])
+        ECDSA.recover_public_key(Bitcoin::Secp256k1::GROUP, data, ECDSA::Signature.new(r, s)).each do |p|
+          if p.y & 1 == rec
+            pubkey = ECDSA::Format::PointOctetString.encode(p, compression: compressed).bth
+            return Bitcoin::Key.new(pubkey: pubkey, compressed: compressed)
+          end
         end
       end
 
@@ -113,11 +138,14 @@ module Bitcoin
         r = point_field.mod(r_point.x)
         return nil if r.zero?
 
+        rec = r_point.y & 1
+
         e = ECDSA.normalize_digest(data, GROUP.bit_length)
         s = point_field.mod(point_field.inverse(nonce) * (e + r * private_key))
 
         if s > (GROUP.order / 2) # convert low-s
           s = GROUP.order - s
+          rec ^= 1
         end
 
         return nil if s.zero?
@@ -125,7 +153,7 @@ module Bitcoin
         signature = ECDSA::Signature.new(r, s).to_der
         public_key = Bitcoin::Key.new(priv_key: privkey.bth).pubkey
         raise 'Creation of signature failed.' unless Bitcoin::Secp256k1::Ruby.verify_sig(data, signature, public_key)
-        signature
+        [signature, rec]
       end
 
       def sign_schnorr(data, privkey, aux_rand)

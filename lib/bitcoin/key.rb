@@ -10,6 +10,7 @@ module Bitcoin
     COMPRESSED_PUBLIC_KEY_SIZE = 33
     SIGNATURE_SIZE = 72
     COMPACT_SIGNATURE_SIZE = 65
+    COMPACT_SIG_HEADER_BYTE = 0x1b
 
     attr_accessor :priv_key
     attr_accessor :pubkey
@@ -110,6 +111,30 @@ module Bitcoin
       else
         raise ArgumentError "Unsupported algo specified: #{algo}"
       end
+    end
+
+    # Sign compact signature.
+    # @param [String] data message digest to be signed.
+    # @return [String] compact signature with binary format.
+    def sign_compact(data)
+      sig, rec = secp256k1_module.sign_data(data, priv_key, nil)
+      signature = ECDSA::Format::SignatureDerString.decode(sig)
+      rec = Bitcoin::Key::COMPACT_SIG_HEADER_BYTE + rec + (compressed? ? 4 : 0)
+      [rec].pack('C') + ECDSA::Format::IntegerOctetString.encode(signature.r, 32) +
+        ECDSA::Format::IntegerOctetString.encode(signature.s, 32)
+    end
+
+    # Recover public key from compact signature.
+    # @param [String] data message digest using signature.
+    # @param [String] signature signature with binary format.
+    # @return [Bitcoin::Key] Recovered public key.
+    def self.recover_compact(data, signature)
+      rec_id = signature.unpack1('C')
+      rec = rec_id - Bitcoin::Key::COMPACT_SIG_HEADER_BYTE
+      raise ArgumentError, 'Invalid signature parameter' if rec < 0 || rec > 15
+      rec = rec & 3
+      compressed = (rec_id - Bitcoin::Key::COMPACT_SIG_HEADER_BYTE) & 4 != 0
+      Bitcoin.secp_impl.recover_compact(data, signature, rec, compressed)
     end
 
     # verify signature using public key
