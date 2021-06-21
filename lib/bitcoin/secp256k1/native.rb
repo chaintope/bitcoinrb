@@ -4,8 +4,8 @@
 module Bitcoin
   module Secp256k1
 
-    # binding for secp256k1 (https://github.com/bitcoin/bitcoin/tree/v0.14.2/src/secp256k1)
-    # tag: v0.14.2
+    # binding for secp256k1 (https://github.com/bitcoin-core/secp256k1/)
+    # commit: efad3506a8937162e8010f5839fdf3771dfcf516
     # this is not included by default, to enable set shared object path to ENV['SECP256K1_LIB_PATH']
     # for linux, ENV['SECP256K1_LIB_PATH'] = '/usr/local/lib/libsecp256k1.so'
     # for mac,
@@ -54,6 +54,10 @@ module Bitcoin
         attach_function(:secp256k1_schnorrsig_verify, [:pointer, :pointer, :pointer, :pointer], :int)
         attach_function(:secp256k1_keypair_create, [:pointer, :pointer, :pointer], :int)
         attach_function(:secp256k1_xonly_pubkey_parse, [:pointer, :pointer, :pointer], :int)
+        attach_function(:secp256k1_ecdsa_sign_recoverable, [:pointer, :pointer, :pointer, :pointer, :pointer, :pointer], :int)
+        attach_function(:secp256k1_ecdsa_recoverable_signature_serialize_compact, [:pointer, :pointer, :pointer, :pointer], :int)
+        attach_function(:secp256k1_ecdsa_recover, [:pointer, :pointer, :pointer, :pointer], :int)
+        attach_function(:secp256k1_ecdsa_recoverable_signature_parse_compact, [:pointer, :pointer, :pointer, :int], :int)
       end
 
       def with_context(flags: (SECP256K1_CONTEXT_VERIFY | SECP256K1_CONTEXT_SIGN))
@@ -113,6 +117,52 @@ module Bitcoin
           sign_schnorr(data, privkey, extra_entropy)
         else
           nil
+        end
+      end
+
+      # Sign data with compact format.
+      # @param [String] data a data to be signed with binary format
+      # @param [String] privkey a private key using sign with hex format
+      # @return [Array[signature, recovery id]]
+      def sign_compact(data, privkey)
+        with_context do |context|
+          sig = FFI::MemoryPointer.new(:uchar, 65)
+          hash =FFI::MemoryPointer.new(:uchar, data.bytesize).put_bytes(0, data)
+          priv_key = privkey.htb
+          sec_key = FFI::MemoryPointer.new(:uchar, priv_key.bytesize).put_bytes(0, priv_key)
+          result = secp256k1_ecdsa_sign_recoverable(context, sig, hash, sec_key, nil, nil)
+          raise 'secp256k1_ecdsa_sign_recoverable failed.' if result == 0
+
+          output = FFI::MemoryPointer.new(:uchar, 64)
+          rec = FFI::MemoryPointer.new(:uint64)
+          result = secp256k1_ecdsa_recoverable_signature_serialize_compact(context, output, rec, sig)
+          raise 'secp256k1_ecdsa_recoverable_signature_serialize_compact failed.' unless result == 1
+
+          raw_sig = output.read_string(64)
+          [ECDSA::Signature.new(raw_sig[0...32].bti, raw_sig[32..-1].bti), rec.read(:int)]
+        end
+      end
+
+      # Recover public key from compact signature.
+      # @param [String] data message digest using signature.
+      # @param [String] signature signature with binary format.
+      # @param [Integer] rec recovery id.
+      # @param [Boolean] compressed whether compressed public key or not.
+      # @return [Bitcoin::Key] Recovered public key.
+      def recover_compact(data, signature, rec, compressed)
+        with_context do |context|
+          sig = FFI::MemoryPointer.new(:uchar, 65)
+          input = FFI::MemoryPointer.new(:uchar, 64).put_bytes(0, signature[1..-1])
+          result = secp256k1_ecdsa_recoverable_signature_parse_compact(context, sig, input, rec)
+          raise 'secp256k1_ecdsa_recoverable_signature_parse_compact failed.' unless result == 1
+
+          pubkey = FFI::MemoryPointer.new(:uchar, 64)
+          msg = FFI::MemoryPointer.new(:uchar, data.bytesize).put_bytes(0, data)
+          result = secp256k1_ecdsa_recover(context, pubkey, sig, msg)
+          raise 'secp256k1_ecdsa_recover failed.' unless result == 1
+
+          pubkey = serialize_pubkey_internal(context, pubkey.read_string(64), compressed)
+          Bitcoin::Key.new(pubkey: pubkey, compressed: compressed)
         end
       end
 
@@ -194,18 +244,7 @@ module Bitcoin
         internal_pubkey = FFI::MemoryPointer.new(:uchar, 64)
         result = secp256k1_ec_pubkey_create(context, internal_pubkey, privkey.htb)
         raise 'error creating pubkey' unless result
-
-        pubkey = FFI::MemoryPointer.new(:uchar, 65)
-        pubkey_len = FFI::MemoryPointer.new(:uint64)
-        result = if compressed
-                   pubkey_len.put_uint64(0, 33)
-                   secp256k1_ec_pubkey_serialize(context, pubkey, pubkey_len, internal_pubkey, SECP256K1_EC_COMPRESSED)
-                 else
-                   pubkey_len.put_uint64(0, 65)
-                   secp256k1_ec_pubkey_serialize(context, pubkey, pubkey_len, internal_pubkey, SECP256K1_EC_UNCOMPRESSED)
-                 end
-        raise 'error serialize pubkey' unless result || pubkey_len.read_uint64 > 0
-        pubkey.read_string(pubkey_len.read_uint64).bth
+        serialize_pubkey_internal(context, internal_pubkey, compressed)
       end
 
       def sign_ecdsa(data, privkey, extra_entropy)
@@ -280,6 +319,21 @@ module Bitcoin
           result = secp256k1_schnorrsig_verify(context, signature, msg32, xonly_pubkey)
           result == 1
         end
+      end
+
+      # Serialize public key.
+      def serialize_pubkey_internal(context, pubkey_input, compressed)
+        pubkey = FFI::MemoryPointer.new(:uchar, 65)
+        pubkey_len = FFI::MemoryPointer.new(:uint64)
+        result = if compressed
+                   pubkey_len.put_uint64(0, 33)
+                   secp256k1_ec_pubkey_serialize(context, pubkey, pubkey_len, pubkey_input, SECP256K1_EC_COMPRESSED)
+                 else
+                   pubkey_len.put_uint64(0, 65)
+                   secp256k1_ec_pubkey_serialize(context, pubkey, pubkey_len, pubkey_input, SECP256K1_EC_UNCOMPRESSED)
+                 end
+        raise 'error serialize pubkey' unless result || pubkey_len.read_uint64 > 0
+        pubkey.read_string(pubkey_len.read_uint64).bth
       end
 
     end

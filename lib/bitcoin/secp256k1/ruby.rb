@@ -63,7 +63,8 @@ module Bitcoin
       # @param [String] privkey a private key using sign with hex format
       # @return [Array[signature, recovery id]]
       def sign_compact(data, privkey)
-        sign_ecdsa(data, privkey, nil)
+        sig, rec = sign_ecdsa(data, privkey, nil)
+        [ECDSA::Format::SignatureDerString.decode(sig), rec]
       end
 
       # Recover public key from compact signature.
