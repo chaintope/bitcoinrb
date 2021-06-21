@@ -50,7 +50,7 @@ module Bitcoin
       def sign_data(data, privkey, extra_entropy = nil, algo: :ecdsa)
         case algo
         when :ecdsa
-          sign_ecdsa(data, privkey, extra_entropy)
+          sign_ecdsa(data, privkey, extra_entropy)&.first
         when :schnorr
           sign_schnorr(data, privkey, extra_entropy)
         else

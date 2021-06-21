@@ -117,7 +117,7 @@ module Bitcoin
     # @param [String] data message digest to be signed.
     # @return [String] compact signature with binary format.
     def sign_compact(data)
-      sig, rec = secp256k1_module.sign_data(data, priv_key, nil)
+      sig, rec = secp256k1_module.sign_compact(data, priv_key)
       signature = ECDSA::Format::SignatureDerString.decode(sig)
       rec = Bitcoin::Key::COMPACT_SIG_HEADER_BYTE + rec + (compressed? ? 4 : 0)
       [rec].pack('C') + ECDSA::Format::IntegerOctetString.encode(signature.r, 32) +
