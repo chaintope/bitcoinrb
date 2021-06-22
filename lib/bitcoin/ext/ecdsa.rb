@@ -3,6 +3,11 @@ class ::ECDSA::Signature
   def to_der
     ECDSA::Format::SignatureDerString.encode(self)
   end
+
+  def ==(other)
+    return false unless other.is_a?(ECDSA::Signature)
+    r == other.r && s == other.s
+  end
 end
 
 class ::ECDSA::Point

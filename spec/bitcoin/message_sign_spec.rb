@@ -46,6 +46,19 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
     end
   end
 
+  describe 'Random data' do
+    it 'generate same signature between ruby and libsecp256k1', use_secp256k1: true do
+      Parallel.each(1..100) do
+        key = Bitcoin::Secp256k1::Native.generate_key
+        digest = SecureRandom.random_bytes(32)
+        sig1, rec1 = Bitcoin::Secp256k1::Native.sign_compact(digest, key.priv_key)
+        sig2, rec2 = Bitcoin::Secp256k1::Ruby.sign_compact(digest, key.priv_key)
+        expect(sig1).to eq(sig2)
+        expect(rec1).to eq(rec2)
+      end
+    end
+  end
+
   def prefix(network)
     fixtures['networks'][network]
   end
