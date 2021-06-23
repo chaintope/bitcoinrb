@@ -22,10 +22,10 @@ module Bitcoin
     # @param [String] message The message that was signed.
     # @return [Boolean] Verification result.
     def verify_message(address, signature, message, prefix: Bitcoin.chain_params.message_magic)
+      validate_address!(address)
       sig = Base64.decode64(signature)
       raise ArgumentError, 'Invalid signature length' unless sig.bytesize == Bitcoin::Key::COMPACT_SIGNATURE_SIZE
       digest = message_hash(message, prefix: prefix)
-      return false unless Bitcoin.valid_address?(address)
       pubkey = Bitcoin::Key.recover_compact(digest, sig)
       return false unless pubkey
       pubkey.to_p2pkh == address
@@ -36,5 +36,12 @@ module Bitcoin
       Bitcoin.double_sha256(Bitcoin.pack_var_string(prefix) << Bitcoin.pack_var_string(message))
     end
 
+    def validate_address!(address)
+      raise ArgumentError, 'Invalid address' unless Bitcoin.valid_address?(address)
+      script = Bitcoin::Script.parse_from_addr(address)
+      raise ArgumentError, 'Address has no key' unless script.p2pkh?
+    end
+
+    private_class_method :validate_address!
   end
 end

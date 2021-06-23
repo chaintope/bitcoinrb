@@ -101,5 +101,27 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
     signature = Bitcoin::MessageSign.sign_message(key, message)
     expect(signature).to eq('IPojfrX2dfPnH26UegfbGQQLrdK844DlHq5157/P6h57WyuS/Qsl+h/WSVGDF4MUi4rWSswW38oimDYfNNUBUOk=')
     expect(Bitcoin::MessageSign.verify_message(key.to_p2pkh, signature, message)).to be true
+
+    expect{Bitcoin::MessageSign.verify_message("invalid address",
+                                               "signature should be irrelevant",
+                                               "message too")}.to raise_error(ArgumentError, 'Invalid address')
+    expect{Bitcoin::MessageSign.verify_message("3B5fQsEXEaV8v6U3ejYc8XaKXAkyQj2MjV",
+                                               "signature should be irrelevant",
+                                               "message too")}.to raise_error(ArgumentError, 'Address has no key')
+    expect{Bitcoin::MessageSign.verify_message("1KqbBpLy5FARmTPD4VZnDDpYjkUvkr82Pm",
+                                               "invalid signature, not in base64 encoding",
+                                               "message should be irrelevant")}.to raise_error(ArgumentError, 'Invalid signature length')
+    expect{Bitcoin::MessageSign.verify_message("1KqbBpLy5FARmTPD4VZnDDpYjkUvkr82Pm",
+                                               "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+                                               "message should be irrelevant")}.to raise_error(ArgumentError, 'Invalid signature parameter')
+    expect(Bitcoin::MessageSign.verify_message("15CRxFdyRpGZLW9w8HnHvVduizdL5jKNbs",
+                                               "IPojfrX2dfPnH26UegfbGQQLrdK844DlHq5157/P6h57WyuS/Qsl+h/WSVGDF4MUi4rWSswW38oimDYfNNUBUOk=",
+                                               "I never signed this")).to be false
+    expect(Bitcoin::MessageSign.verify_message("15CRxFdyRpGZLW9w8HnHvVduizdL5jKNbs",
+                                               "IPojfrX2dfPnH26UegfbGQQLrdK844DlHq5157/P6h57WyuS/Qsl+h/WSVGDF4MUi4rWSswW38oimDYfNNUBUOk=",
+                                               "Trust no one")).to be true
+    expect(Bitcoin::MessageSign.verify_message("11canuhp9X2NocwCq7xNrQYTmUgZAnLK3",
+                                               "IIcaIENoYW5jZWxsb3Igb24gYnJpbmsgb2Ygc2Vjb25kIGJhaWxvdXQgZm9yIGJhbmtzIAaHRtbCeDZINyavx14=",
+                                               "Trust me")).to be true
   end
 end
