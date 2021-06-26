@@ -21,7 +21,7 @@ module Bitcoin
 
     # generate P2WPKH script
     def self.to_p2wpkh(pubkey_hash)
-      new << WITNESS_VERSION << pubkey_hash
+      new << WITNESS_VERSION_V0 << pubkey_hash
     end
 
     # generate m of n multisig p2sh script
@@ -64,7 +64,7 @@ module Bitcoin
     # @param [Script] redeem_script target redeem script
     # @param [Script] p2wsh script
     def self.to_p2wsh(redeem_script)
-      new << WITNESS_VERSION << redeem_script.to_sha256
+      new << WITNESS_VERSION_V0 << redeem_script.to_sha256
     end
 
     # generate script from string.
@@ -181,27 +181,40 @@ module Bitcoin
 
     # check whether standard script.
     def standard?
-      p2pkh? | p2sh? | p2wpkh? | p2wsh? | multisig? | standard_op_return?
+      p2pkh? | p2sh? | p2wpkh? | p2wsh? | p2tr? | multisig? | standard_op_return?
     end
 
-    # whether this script is a P2PKH format script.
+    # Check whether this script is a P2PKH format script.
+    # @return [Boolean] if P2PKH return true, otherwise false
     def p2pkh?
       return false unless chunks.size == 5
       [OP_DUP, OP_HASH160, OP_EQUALVERIFY, OP_CHECKSIG] ==
           (chunks[0..1]+ chunks[3..4]).map(&:ord) && chunks[2].bytesize == 21
     end
 
-    # whether this script is a P2WPKH format script.
+    # Check whether this script is a P2WPKH format script.
+    # @return [Boolean] if P2WPKH return true, otherwise false
     def p2wpkh?
       return false unless chunks.size == 2
-      chunks[0].ord == WITNESS_VERSION && chunks[1].bytesize == 21
+      chunks[0].ord == WITNESS_VERSION_V0 && chunks[1].bytesize == 21
     end
 
+    # Check whether this script is a P2WPSH format script.
+    # @return [Boolean] if P2WPSH return true, otherwise false
     def p2wsh?
       return false unless chunks.size == 2
-      chunks[0].ord == WITNESS_VERSION && chunks[1].bytesize == 33
+      chunks[0].ord == WITNESS_VERSION_V0 && chunks[1].bytesize == 33
     end
 
+    # Check whether this script is a P2TR format script.
+    # @return [Boolean] if P2TR return true, otherwise false
+    def p2tr?
+      return false unless chunks.size == 2
+      chunks[0].ord == WITNESS_VERSION_V1 && chunks[1].bytesize == 33
+    end
+
+    # Check whether this script is a P2SH format script.
+    # @return [Boolean] if P2SH return true, otherwise false
     def p2sh?
       return false unless chunks.size == 3
       OP_HASH160 == chunks[0].ord && OP_EQUAL == chunks[2].ord && chunks[1].bytesize == 21

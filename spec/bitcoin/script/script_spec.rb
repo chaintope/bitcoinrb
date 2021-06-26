@@ -58,6 +58,7 @@ describe Bitcoin::Script do
         expect(subject.p2sh?).to be false
         expect(subject.p2wpkh?).to be false
         expect(subject.p2wsh?).to be false
+        expect(subject.p2tr?).to be false
         expect(subject.multisig?).to be false
         expect(subject.op_return?).to be false
         expect(subject.standard?).to be true
@@ -85,6 +86,7 @@ describe Bitcoin::Script do
         expect(subject.p2sh?).to be false
         expect(subject.p2wpkh?).to be true
         expect(subject.p2wsh?).to be false
+        expect(subject.p2tr?).to be false
         expect(subject.multisig?).to be false
         expect(subject.op_return?).to be false
         expect(subject.standard?).to be true
@@ -116,6 +118,7 @@ describe Bitcoin::Script do
         expect(subject[0].p2sh?).to be true
         expect(subject[0].p2wpkh?).to be false
         expect(subject[0].p2wsh?).to be false
+        expect(subject[0].p2tr?).to be false
         expect(subject[0].multisig?).to be false
         expect(subject[0].op_return?).to be false
         expect(subject[0].standard?).to be true
@@ -151,6 +154,7 @@ describe Bitcoin::Script do
         expect(subject.p2sh?).to be false
         expect(subject.p2wpkh?).to be false
         expect(subject.p2wsh?).to be true
+        expect(subject.p2tr?).to be false
         expect(subject.multisig?).to be false
         expect(subject.op_return?).to be false
         expect(subject.standard?).to be true
@@ -166,6 +170,21 @@ describe Bitcoin::Script do
     end
   end
 
+  describe 'P2TR script' do
+    subject { Bitcoin::Script.parse_from_payload('5120a0d0c06640b95b78f965416ad6971b3b1609c3cd9b512aaa39439088211868b7'.htb)}
+    it 'should be p2tr', network: :mainnet do
+      expect(subject.p2pkh?).to be false
+      expect(subject.p2sh?).to be false
+      expect(subject.p2wpkh?).to be false
+      expect(subject.p2wsh?).to be false
+      expect(subject.p2tr?).to be true
+      expect(subject.multisig?).to be false
+      expect(subject.op_return?).to be false
+      expect(subject.standard?).to be true
+      expect(subject.to_addr).to eq('bc1p5rgvqejqh9dh37t9g94dd9cm8vtqns7dndgj423egwggsggcdzmsspvr7j')
+    end
+  end
+
   describe 'multisig script' do
     subject {
       k1 = '021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9'
@@ -177,6 +196,7 @@ describe Bitcoin::Script do
       expect(subject.p2sh?).to be false
       expect(subject.p2wpkh?).to be false
       expect(subject.p2wsh?).to be false
+      expect(subject.p2tr?).to be false
       expect(subject.multisig?).to be true
       expect(subject.op_return?).to be false
       expect(subject.standard?).to be true
@@ -195,6 +215,7 @@ describe Bitcoin::Script do
         expect(subject.p2sh?).to be false
         expect(subject.p2wpkh?).to be false
         expect(subject.p2wsh?).to be false
+        expect(subject.p2tr?).to be false
         expect(subject.multisig?).to be false
         expect(subject.op_return?).to be true
         expect(subject.standard?).to be true

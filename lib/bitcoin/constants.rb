@@ -73,7 +73,8 @@ module Bitcoin
   # for script
 
   # witness version
-  WITNESS_VERSION = 0x00
+  WITNESS_VERSION_V0 = 0x00
+  WITNESS_VERSION_V1 = Bitcoin::Opcodes::OP_1
 
   # Maximum script length in bytes
   MAX_SCRIPT_SIZE = 10000
