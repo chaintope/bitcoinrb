@@ -58,7 +58,7 @@ module Bitcoin
 
       begin
         sighash = tx.sighash_for_input(input_index, opts: opts, hash_type: hash_type, sig_version: sig_version, prevouts: prevouts)
-        key = Key.new(pubkey: "02#{pubkey}", key_type: Key::TYPES[:compressed])
+        key = Key.from_xonly_pubkey(pubkey)
         key.verify(sig, sighash, algo: :schnorr)
       rescue ArgumentError
         return set_error(SCRIPT_ERR_SCHNORR_SIG_HASHTYPE)

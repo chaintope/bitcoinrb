@@ -700,7 +700,7 @@ module Bitcoin
       begin
         path_len = (control.bytesize - TAPROOT_CONTROL_BASE_SIZE) / TAPROOT_CONTROL_NODE_SIZE
         xonly_pubkey = control[1...TAPROOT_CONTROL_BASE_SIZE]
-        p = Bitcoin::Key.new(pubkey: "02#{xonly_pubkey.bth}", key_type: Key::TYPES[:compressed])
+        p = Bitcoin::Key.from_xonly_pubkey(xonly_pubkey.bth)
         k = leaf_hash
         path_len.times do |i|
           pos = (TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * i)

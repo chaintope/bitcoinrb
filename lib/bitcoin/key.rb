@@ -78,6 +78,14 @@ module Bitcoin
       new(priv_key: data.bth, key_type: key_type)
     end
 
+    # Generate from xonly public key.
+    # @param [String] xonly_pubkey xonly public key with hex format.
+    # @return [Bitcoin::Key] key object has public key.
+    def self.from_xonly_pubkey(xonly_pubkey)
+      raise ArgumentError, 'xonly_pubkey must be 32 bytes' unless xonly_pubkey.htb.bytesize == 32
+      Bitcoin::Key.new(pubkey: "02#{xonly_pubkey}", key_type: TYPES[:compressed])
+    end
+
     # export private key with wif format
     def to_wif
       version = Bitcoin.chain_params.privkey_version

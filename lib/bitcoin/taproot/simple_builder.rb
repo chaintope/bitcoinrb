@@ -39,7 +39,7 @@ module Bitcoin
           parents = parents.each_slice(2).map { |pair| combine_hash(pair) }
           break if parents.size == 1
         end
-        p = Bitcoin::Key.new(pubkey: "02#{internal_key}", key_type: Key::TYPES[:compressed])
+        p = Bitcoin::Key.from_xonly_pubkey(internal_key)
         t = Bitcoin.tagged_hash('TapTweak', internal_key.htb + parents.first)
         key = Bitcoin::Key.new(priv_key: t.bth, key_type: Key::TYPES[:compressed])
         q = key.to_point + p.to_point
