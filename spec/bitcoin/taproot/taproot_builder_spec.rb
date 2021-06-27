@@ -13,4 +13,15 @@ RSpec.describe Bitcoin::Taproot::Builder do
     end
   end
 
+  describe 'add condition' do
+    it 'should add condition' do
+      key = Bitcoin::Key.new(priv_key: 'bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866')
+      builder = Bitcoin::Taproot::Builder.new(key.xonly_pubkey)
+      expect(builder.scripts.size).to eq(0)
+      builder << Bitcoin::Script.to_p2pkh(key.hash160)
+      expect(builder.scripts.size).to eq(1)
+      expect{builder << key}.to raise_error(Bitcoin::Taproot::BuildError, 'script must be Bitcoin::Script object')
+    end
+  end
+
 end
