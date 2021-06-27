@@ -1,5 +1,9 @@
 module Bitcoin
   module Taproot
-    autoload :Builder, 'bitcoin/taproot/builder'
+
+    class Error < StandardError; end
+
+    autoload :LeafNode, 'bitcoin/taproot/leaf_node'
+    autoload :SimpleBuilder, 'bitcoin/taproot/simple_builder'
   end
 end
