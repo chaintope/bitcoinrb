@@ -515,7 +515,7 @@ module Bitcoin
     end
 
     def ==(other)
-      return false unless other
+      return false unless other.is_a?(Script)
       chunks == other.chunks
     end
 
