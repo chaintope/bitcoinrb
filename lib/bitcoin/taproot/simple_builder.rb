@@ -35,9 +35,10 @@ module Bitcoin
       # @return [Bitcoin::Script] P2TR script.
       def build
         parents = leaves
-        loop do
-          parents = parents.each_slice(2).map { |pair| combine_hash(pair) }
-          break if parents.size == 1
+        if parents.empty?
+          parents = ['']
+        else
+          parents = parents.each_slice(2).map { |pair| combine_hash(pair) } until parents.size == 1
         end
         p = Bitcoin::Key.from_xonly_pubkey(internal_key)
         t = Bitcoin.tagged_hash('TapTweak', internal_key.htb + parents.first)
