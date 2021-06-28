@@ -197,7 +197,7 @@ module Bitcoin
     # @return [ECDSA::Point]
     def to_point
       p = pubkey
-      p ||= generate_pubkey(priv_key, compressed: compressed)
+      p ||= generate_pubkey(priv_key, compressed: compressed?)
       ECDSA::Format::PointOctetString.decode(p.htb, Bitcoin::Secp256k1::GROUP)
     end
 
