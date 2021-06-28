@@ -34,17 +34,22 @@ module Bitcoin
       # Build P2TR script.
       # @return [Bitcoin::Script] P2TR script.
       def build
+        p = Bitcoin::Key.from_xonly_pubkey(internal_key)
+        key = Bitcoin::Key.new(priv_key: tweak.bth, key_type: Key::TYPES[:compressed])
+        q = key.to_point + p.to_point
+        Bitcoin::Script.new << OP_1 << ECDSA::Format::FieldElementOctetString.encode(q.x, q.group.field)
+      end
+
+      # Calculate tweak from script tree.
+      # @return [String] tweak with binary format.
+      def tweak
         parents = leaves
         if parents.empty?
           parents = ['']
         else
           parents = parents.each_slice(2).map { |pair| combine_hash(pair) } until parents.size == 1
         end
-        p = Bitcoin::Key.from_xonly_pubkey(internal_key)
-        t = Bitcoin.tagged_hash('TapTweak', internal_key.htb + parents.first)
-        key = Bitcoin::Key.new(priv_key: t.bth, key_type: Key::TYPES[:compressed])
-        q = key.to_point + p.to_point
-        Bitcoin::Script.new << OP_1 << ECDSA::Format::FieldElementOctetString.encode(q.x, q.group.field)
+        Bitcoin.tagged_hash('TapTweak', internal_key.htb + parents.first)
       end
 
       private
