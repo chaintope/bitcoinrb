@@ -78,8 +78,7 @@ module Bitcoin
         s = ECDSA::Format::IntegerOctetString.decode(signature[33..-1])
         ECDSA.recover_public_key(Bitcoin::Secp256k1::GROUP, data, ECDSA::Signature.new(r, s)).each do |p|
           if p.y & 1 == rec
-            pubkey = ECDSA::Format::PointOctetString.encode(p, compression: compressed).bth
-            return Bitcoin::Key.new(pubkey: pubkey, compressed: compressed)
+            return Bitcoin::Key.from_point(p, compressed: compressed)
           end
         end
       end

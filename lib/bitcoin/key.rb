@@ -86,6 +86,15 @@ module Bitcoin
       Bitcoin::Key.new(pubkey: "02#{xonly_pubkey}", key_type: TYPES[:compressed])
     end
 
+    # Generate from public key point.
+    # @param [ECDSA::Point] point Public key point.
+    # @param [Boolean] compressed whether compressed or not.
+    # @return [Bitcoin::Key]
+    def self.from_point(point, compressed: true)
+      pubkey = ECDSA::Format::PointOctetString.encode(point, compression: compressed).bth
+      Bitcoin::Key.new(pubkey: pubkey, key_type: TYPES[:compressed])
+    end
+
     # export private key with wif format
     def to_wif
       version = Bitcoin.chain_params.privkey_version
