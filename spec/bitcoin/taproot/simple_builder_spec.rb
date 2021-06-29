@@ -6,7 +6,7 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet do
 
   describe '#initialize' do
     it 'should generate object' do
-      key = Bitcoin::Key.new(priv_key: 'bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866')
+      key = Bitcoin::Key.new(priv_key: '98d2f0b8dfcaa7b29933bc78e8d82cd9d7c7a18ddc128ce2bc9dd143804f36f4')
       expect{Bitcoin::Taproot::SimpleBuilder.new('')}.to raise_error(Bitcoin::Taproot::Error, 'Internal public key must be 32 bytes')
       expect{Bitcoin::Taproot::SimpleBuilder.new(key.pubkey)}.to raise_error(Bitcoin::Taproot::Error, 'Internal public key must be 32 bytes')
       expect{Bitcoin::Taproot::SimpleBuilder.new(key.xonly_pubkey)}.not_to raise_error
@@ -17,7 +17,7 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet do
 
   describe 'add condition' do
     it 'should add condition' do
-      key = Bitcoin::Key.new(priv_key: 'bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866')
+      key = Bitcoin::Key.new(priv_key: '98d2f0b8dfcaa7b29933bc78e8d82cd9d7c7a18ddc128ce2bc9dd143804f36f4')
       builder = Bitcoin::Taproot::SimpleBuilder.new(key.xonly_pubkey)
       expect(builder.leaves.size).to eq(0)
       builder << Bitcoin::Script.to_p2pkh(key.hash160)
@@ -89,6 +89,50 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet do
         builder << script6
         expect(builder.build.to_addr).to eq('bc1peyxqpa4c4uzg9jzt7q92c94sk7kmj2uzhh2phuv8q8tkjrw6y67qf0u6mu')
       end
+    end
+  end
+
+  describe "Support for using P2TR", network: :signet, use_secp256k1: true do
+    it 'should complete tx' do
+      internal_key = Bitcoin::Key.new(priv_key: '98d2f0b8dfcaa7b29933bc78e8d82cd9d7c7a18ddc128ce2bc9dd143804f36f4')
+      key1 = Bitcoin::Key.new(priv_key: 'fd0137b05e26f40f8900697b690e11b2eba8abbd0f53c421148a22646b15f96f')
+      key2 = Bitcoin::Key.new(priv_key: '3b0ce9ef75031f5a1d6679f017fdd8d77460ecdcac1a24d482e1465e1768e22c')
+      key3 = Bitcoin::Key.new(priv_key: 'df94bce0533b3ff0c6b8ca16d6d2ce08b01350792cb350146cfaba056d5e4bfa')
+      script1 = Bitcoin::Script.new << key1.xonly_pubkey << OP_CHECKSIG
+      script2 = Bitcoin::Script.new << key2.xonly_pubkey << OP_CHECKSIG
+      script3 = Bitcoin::Script.new << key3.xonly_pubkey << OP_CHECKSIG
+      builder = Bitcoin::Taproot::SimpleBuilder.new(internal_key.xonly_pubkey, script1, script2, script3)
+      flags = Bitcoin::STANDARD_SCRIPT_VERIFY_FLAGS | Bitcoin::SCRIPT_VERIFY_TAPROOT
+      script_pubkey = builder.build
+
+      # Key-Path
+      tx = Bitcoin::Tx.new
+      tx.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.from_txid('9b5dbbe79a8938b9527b0a5f12c9be695ca1dac4e4267529a228c380c0b232bd', 1))
+      tx.out << Bitcoin::TxOut.new(value: 90_000, script_pubkey: script_pubkey)
+      key = builder.tweak_private_key(internal_key) # derive private key for sign
+      prevouts = [Bitcoin::TxOut.new(value: 100_000, script_pubkey: script_pubkey)]
+      sighash = tx.sighash_for_input(0, sig_version: :taproot, prevouts: prevouts, hash_type: Bitcoin::SIGHASH_TYPE[:default])
+      sig = key.sign(sighash, algo: :schnorr)
+      expect(sig).to eq(Bitcoin::Secp256k1::Ruby.sign_data(sighash, key.priv_key, algo: :schnorr))
+
+      tx.in[0].script_witness.stack << sig
+      expect(tx.to_hex).to eq('01000000000101bd32b2c080c328a2297526e4c4daa15c69bec9125f0a7b52b938899ae7bb5d9b0100000000ffffffff01905f0100000000002251202f1943ee0bafaef1944d3ff65bcbeb5e216055d369938cdcfb95a6d2ab7b4fc50140cb6554f93b3d4ad0f8c940d317a29cda93bdd8cde62de32a3fe64f2f6ef2d8c56469ec1f5d24e28f98b8dbf871b7fbc8dc3e72d80ac69b694ae87489053a19c700000000')
+      expect(tx.verify_input_sig(0, prevouts[0].script_pubkey, amount: prevouts[0].value, prevouts: prevouts, flags: flags)).to be true
+
+      # Script-Path
+      tx = Bitcoin::Tx.new
+      tx.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.from_txid('3cad3075b2cd448fdae11a9d3bb60d9b71acf6a279df7933dd6c966f29e0469d', 1))
+      tx.out << Bitcoin::TxOut.new(value: 90_000, script_pubkey: script_pubkey)
+      prevouts = [Bitcoin::TxOut.new(value: 100_000, script_pubkey: script_pubkey)]
+      opts = {leaf_hash: builder.leaf_hash(script2)} # script pathではleaf hashにもコミットするためオプションで渡す
+      sighash = tx.sighash_for_input(0, sig_version: :tapscript, prevouts: prevouts, hash_type: Bitcoin::SIGHASH_TYPE[:default], opts: opts)
+      sig = key2.sign(sighash, algo: :schnorr)
+      expect(sig).to eq(Bitcoin::Secp256k1::Ruby.sign_data(sighash, key2.priv_key, algo: :schnorr))
+      tx.in[0].script_witness.stack << sig # sig for script2
+      tx.in[0].script_witness.stack << script2.to_payload
+      tx.in[0].script_witness.stack << builder.control_block(script2) # path
+      expect(tx.to_hex).to eq('010000000001019d46e0296f966cdd3379df79a2f6ac719b0db63b9d1ae1da8f44cdb27530ad3c0100000000ffffffff01905f0100000000002251202f1943ee0bafaef1944d3ff65bcbeb5e216055d369938cdcfb95a6d2ab7b4fc50340de9ce84530a4876f9d44b74536cbb473a517d16504e4bdaad84c18735eb210e1ee12ef3a1c06dd8a6fe8f51cb70e7c659bb7a82db4216a952641af5f38cc5cdc22204582dc979ec028044d80e911fb992d37801163cec6082b9807746d450b8ef773ac61c09b1e61ad40f333999250340eebb2257c0214e69ab3125022c1df50f6f5d0ebe3e13ebd0cd00421ea7d47f0b9270bf5c0677545a749189b7bbc2eb41faeb23145e2884fd612cee77b7f30b9bfaba55a48fa5ee74534b6e37326e7684cd54911cf00000000')
+      expect(tx.verify_input_sig(0, prevouts[0].script_pubkey, amount: prevouts[0].value, prevouts: prevouts, flags: flags)).to be true
     end
   end
 

@@ -205,6 +205,7 @@ module Bitcoin
       opts[:sig_version] = sig_version
       opts[:script_code] = output_script
       opts[:prevouts] = prevouts
+      opts[:last_code_separator_pos] ||= 0xffffffff
       sig_hash_gen = SigHashGenerator.load(sig_version)
       sig_hash_gen.generate(self, input_index, hash_type, opts)
     end
