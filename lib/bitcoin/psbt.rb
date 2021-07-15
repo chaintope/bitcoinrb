@@ -31,6 +31,14 @@ module Bitcoin
       s << Bitcoin.pack_var_int(value.bytesize) << value
       s
     end
+
+    # Load PSBT from file.
+    # @param [String] path File path of PSBT.
+    # @return [Bitcoin::PSBT::Tx] PSBT object.
+    def load_from_file(path)
+      raise ArgumentError, 'File not found' unless File.exist?(path)
+      Bitcoin::PSBT::Tx.parse_from_payload(File.read(path))
+    end
   end
 
 end
