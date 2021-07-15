@@ -162,6 +162,15 @@ module Bitcoin
         Base64.strict_encode64(to_payload)
       end
 
+      # Store the PSBT to a file.
+      # @param [String] path File path to store.
+      def to_file(path)
+        raise ArgumentError, 'The file already exists' if File.exist?(path)
+        File.open(path, 'w') do |f|
+          f.write(to_payload)
+        end
+      end
+
       # update input key-value maps.
       # @param [Bitcoin::Tx] prev_tx previous tx reference by input.
       # @param [Bitcoin::Script] redeem_script redeem script to set input.
