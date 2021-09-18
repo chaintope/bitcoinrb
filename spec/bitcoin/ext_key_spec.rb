@@ -341,14 +341,14 @@ describe Bitcoin::ExtKey, network: :mainnet do
     expect(child.to_base58).to eq('xprv9uPDJpEQgRQfDcW7BkF7eTya6RPxXeJCqCJGHuCJ4GiRVLzkTXBAJMu2qaMWPrS7AANYqdq6vcBcBUdJCVVFceUvJFjaPdGZ2y9WACViL4L')
   end
 
-  # https://github.com/bitcoin/bips/pull/1030/
-  describe 'Modified test vectors for hardened derivation with leading zeros' do
+  # https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#test-vector-4
+  describe 'Test Vector 4' do
     context 'ruby' do
       subject {
         Bitcoin::ExtKey.generate_master('3ddd5602285899a946114506157c7997e5444528f3003f6134712147db19b678')
       }
       it 'should retain leading zeros' do
-        hardened_derive_leading_zeros
+        test_vector4
       end
     end
 
@@ -357,12 +357,12 @@ describe Bitcoin::ExtKey, network: :mainnet do
         Bitcoin::ExtKey.generate_master('3ddd5602285899a946114506157c7997e5444528f3003f6134712147db19b678')
       }
       it 'should retain leading zeros' do
-        hardened_derive_leading_zeros
+        test_vector4
       end
     end
   end
 
-  def hardened_derive_leading_zeros
+  def test_vector4
     expect(subject.to_base58).to eq('xprv9s21ZrQH143K48vGoLGRPxgo2JNkJ3J3fqkirQC2zVdk5Dgd5w14S7fRDyHH4dWNHUgkvsvNDCkvAwcSHNAQwhwgNMgZhLtQC63zxwhQmRv')
     expect(subject.ext_pubkey.to_base58).to eq('xpub661MyMwAqRbcGczjuMoRm6dXaLDEhW1u34gKenbeYqAix21mdUKJyuyu5F1rzYGVxyL6tmgBUAEPrEz92mBXjByMRiJdba9wpnN37RLLAXa')
     child = subject.derive(0, true)
@@ -373,21 +373,22 @@ describe Bitcoin::ExtKey, network: :mainnet do
     expect(child.ext_pubkey.to_base58).to eq('xpub6BJA1jSqiukeaesWfxe6sNK9CCGaujFFSJLomWHprUL9DePQ4JDkM5d88n49sMGJxrhpjazuXYWdMf17C9T5XnxkopaeS7jGk1GyyVziaMt')
   end
 
-  describe 'Test Vector 4' do
+  # https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#test-vector-5
+  describe 'Test Vector 5' do
     context 'ruby' do
       it 'should raise error.' do
-        test_vector4
+        test_vector5
       end
     end
 
     context 'native', use_secp256k1: true do
       it 'should raise error.' do
-        test_vector4
+        test_vector5
       end
     end
   end
 
-  def test_vector4
+  def test_vector5
     # pubkey version / prvkey mismatch
     expect{Bitcoin::ExtPubkey.from_base58('xpub661MyMwAqRbcEYS8w7XLSVeEsBXy79zSzH1J8vCdxAZningWLdN3zgtU6LBpB85b3D2yc8sfvZU521AAwdZafEz7mnzBBsz4wKY5fTtTQBm')}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_PUBLIC_KEY)
     # prvkey version / pubkey mismatch
