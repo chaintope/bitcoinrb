@@ -62,6 +62,7 @@ module Bitcoin
 
       def generate(tx, input_index, hash_type, opts)
         amount = opts[:amount]
+        raise ArgumentError, 'segwit sighash requires amount.' unless amount
         output_script = opts[:script_code]
         skip_separator_index = opts[:skip_separator_index]
         hash_prevouts = Bitcoin.double_sha256(tx.inputs.map{|i|i.out_point.to_payload}.join)
