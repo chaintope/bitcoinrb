@@ -12,13 +12,14 @@ module Bitcoin
 
       # Initialize builder.
       # @param [String] internal_key Internal public key with hex format.
-      # @param [Array[Bitcoin::Script]] scripts Scripts for each lock condition.
-      # @param [Integer] leaf_ver (Optional) The leaf version of tapscript.
-      # @raise [Bitcoin::Taproot::Builder] +internal_pubkey+ dose not xonly public key or script in +scripts+ does not instance of Bitcoin::Script.
+      # @param [Array[Bitcoin::Taproot::LeafNode]] leaves Array of leaf nodes for each lock condition.
+      # @raise [Bitcoin::Taproot::Builder] +internal_pubkey+ dose not xonly public key or leaf in +leaves+ does not instance of Bitcoin::Taproot::LeafNode.
       # @return [Bitcoin::Taproot::SimpleBuilder]
-      def initialize(internal_key, *scripts, leaf_ver: Bitcoin::TAPROOT_LEAF_TAPSCRIPT)
+      def initialize(internal_key, *leaves)
         raise Error, 'Internal public key must be 32 bytes' unless internal_key.htb.bytesize == 32
-        @leaves = scripts.map { |script| LeafNode.new(script, leaf_ver) }
+        raise Error, 'leaf must be Bitcoin::Taproot::LeafNode object' if leaves.find{ |leaf| !leaf.is_a?(Bitcoin::Taproot::LeafNode)}
+
+        @leaves = leaves
         @internal_key = internal_key
       end
 
@@ -57,22 +58,20 @@ module Bitcoin
       end
 
       # Generate control block needed to unlock with script-path.
-      # @param [Bitcoin::Script] script Script to use for unlocking.
-      # @param [Integer] leaf_ver leaf version of script.
+      # @param [Bitcoin::Taproot::LeafNode] leaf Leaf to use for unlocking.
       # @return [String] control block with binary format.
-      def control_block(script, leaf_ver: Bitcoin::TAPROOT_LEAF_TAPSCRIPT)
-        path = inclusion_proof(script, leaf_ver: leaf_ver)
+      def control_block(leaf)
+        path = inclusion_proof(leaf)
         parity = tweak_public_key.to_point.has_even_y? ? 0 : 1
-        [parity + leaf_ver].pack("C") + internal_key.htb + path.join
+        [parity + leaf.leaf_ver].pack("C") + internal_key.htb + path.join
       end
 
-      # Generate inclusion proof for +script+.
-      # @param [Bitcoin::Script] script The script in script tree.
-      # @param [Integer] leaf_ver (Optional) The leaf version of tapscript.
+      # Generate inclusion proof for +leaf+.
+      # @param [Bitcoin::Taproot::LeafNode] leaf The leaf node in script tree.
       # @return [Array[String]] Inclusion proof.
-      def inclusion_proof(script, leaf_ver: Bitcoin::TAPROOT_LEAF_TAPSCRIPT)
+      def inclusion_proof(leaf)
         parents = leaves
-        parent_hash = leaf_hash(script, leaf_ver: leaf_ver)
+        parent_hash = leaf.leaf_hash
         proofs = []
         until parents.size == 1
           parents = parents.each_slice(2).map do |pair|
@@ -90,15 +89,6 @@ module Bitcoin
           end
         end
         proofs
-      end
-
-      # Computes leaf hash
-      # @param [Bitcoin::Script] script
-      # @param [Integer] leaf_ver leaf version
-      # @@return [String] leaf hash with binary format.
-      def leaf_hash(script, leaf_ver: Bitcoin::TAPROOT_LEAF_TAPSCRIPT)
-        raise Error, 'script does not exist' unless leaves.find{ |leaf| leaf.script == script}
-        LeafNode.new(script, leaf_ver).leaf_hash
       end
 
       private

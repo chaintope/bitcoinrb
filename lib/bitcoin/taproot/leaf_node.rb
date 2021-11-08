@@ -7,7 +7,7 @@ module Bitcoin
       # Initialize
       # @param [Bitcoin::Script] script Locking script
       # @param [Integer] leaf_ver The leaf version of this script.
-      def initialize(script, leaf_ver)
+      def initialize(script, leaf_ver = Bitcoin::TAPROOT_LEAF_TAPSCRIPT)
         raise Taproot::Error, 'script must be Bitcoin::Script object' unless script.is_a?(Bitcoin::Script)
         @script = script
         @leaf_ver = leaf_ver

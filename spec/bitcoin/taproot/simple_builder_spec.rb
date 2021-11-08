@@ -10,8 +10,8 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet do
       expect{Bitcoin::Taproot::SimpleBuilder.new('')}.to raise_error(Bitcoin::Taproot::Error, 'Internal public key must be 32 bytes')
       expect{Bitcoin::Taproot::SimpleBuilder.new(key.pubkey)}.to raise_error(Bitcoin::Taproot::Error, 'Internal public key must be 32 bytes')
       expect{Bitcoin::Taproot::SimpleBuilder.new(key.xonly_pubkey)}.not_to raise_error
-      expect{Bitcoin::Taproot::SimpleBuilder.new(key.xonly_pubkey, [key.xonly_pubkey])}.to raise_error(Bitcoin::Taproot::Error, 'script must be Bitcoin::Script object')
-      expect{Bitcoin::Taproot::SimpleBuilder.new(key.xonly_pubkey, Bitcoin::Script.to_p2pkh(key.hash160))}.not_to raise_error
+      expect{Bitcoin::Taproot::SimpleBuilder.new(key.xonly_pubkey, [key.xonly_pubkey])}.to raise_error(Bitcoin::Taproot::Error, 'leaf must be Bitcoin::Taproot::LeafNode object')
+      expect{Bitcoin::Taproot::SimpleBuilder.new(key.xonly_pubkey, Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.to_p2pkh(key.hash160)))}.not_to raise_error
     end
   end
 
@@ -46,9 +46,9 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet do
         key1 = 'c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5'
         key2 = 'f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9'
         key3 = '31fe7061656bea2a36aa60a2f7ef940578049273746935d296426dc0afd86b68'
-        script1 = Bitcoin::Script.new << key1 << OP_CHECKSIG
-        script2 = Bitcoin::Script.new << key2 << OP_CHECKSIG
-        script3 = Bitcoin::Script.new << key3 << OP_CHECKSIG
+        script1 = Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.new << key1 << OP_CHECKSIG)
+        script2 = Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.new << key2 << OP_CHECKSIG)
+        script3 = Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.new << key3 << OP_CHECKSIG)
         builder = Bitcoin::Taproot::SimpleBuilder.new(internal_key,script1, script2, script3)
         expect(builder.build.to_addr).to eq('bc1pkysykpr4e9alyu7wthrtmp2km6sylrjlz83qzrsjkxhdaazyfrusyk2pwg')
 
@@ -98,10 +98,10 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet do
       key1 = Bitcoin::Key.new(priv_key: 'fd0137b05e26f40f8900697b690e11b2eba8abbd0f53c421148a22646b15f96f')
       key2 = Bitcoin::Key.new(priv_key: '3b0ce9ef75031f5a1d6679f017fdd8d77460ecdcac1a24d482e1465e1768e22c')
       key3 = Bitcoin::Key.new(priv_key: 'df94bce0533b3ff0c6b8ca16d6d2ce08b01350792cb350146cfaba056d5e4bfa')
-      script1 = Bitcoin::Script.new << key1.xonly_pubkey << OP_CHECKSIG
-      script2 = Bitcoin::Script.new << key2.xonly_pubkey << OP_CHECKSIG
-      script3 = Bitcoin::Script.new << key3.xonly_pubkey << OP_CHECKSIG
-      builder = Bitcoin::Taproot::SimpleBuilder.new(internal_key.xonly_pubkey, script1, script2, script3)
+      leaf1 = Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.new << key1.xonly_pubkey << OP_CHECKSIG)
+      leaf2 = Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.new << key2.xonly_pubkey << OP_CHECKSIG)
+      leaf3 = Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.new << key3.xonly_pubkey << OP_CHECKSIG)
+      builder = Bitcoin::Taproot::SimpleBuilder.new(internal_key.xonly_pubkey, leaf1, leaf2, leaf3)
       flags = Bitcoin::STANDARD_SCRIPT_VERIFY_FLAGS | Bitcoin::SCRIPT_VERIFY_TAPROOT
       script_pubkey = builder.build
 
@@ -124,13 +124,13 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet do
       tx.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.from_txid('3cad3075b2cd448fdae11a9d3bb60d9b71acf6a279df7933dd6c966f29e0469d', 1))
       tx.out << Bitcoin::TxOut.new(value: 90_000, script_pubkey: script_pubkey)
       prevouts = [Bitcoin::TxOut.new(value: 100_000, script_pubkey: script_pubkey)]
-      opts = {leaf_hash: builder.leaf_hash(script2)} # script pathではleaf hashにもコミットするためオプションで渡す
+      opts = {leaf_hash: leaf2.leaf_hash} # script pathではleaf hashにもコミットするためオプションで渡す
       sighash = tx.sighash_for_input(0, sig_version: :tapscript, prevouts: prevouts, hash_type: Bitcoin::SIGHASH_TYPE[:default], opts: opts)
       sig = key2.sign(sighash, algo: :schnorr)
       expect(sig).to eq(Bitcoin::Secp256k1::Ruby.sign_data(sighash, key2.priv_key, algo: :schnorr))
       tx.in[0].script_witness.stack << sig # sig for script2
-      tx.in[0].script_witness.stack << script2.to_payload
-      tx.in[0].script_witness.stack << builder.control_block(script2) # path
+      tx.in[0].script_witness.stack << leaf2.script.to_payload
+      tx.in[0].script_witness.stack << builder.control_block(leaf2) # path
       expect(tx.to_hex).to eq('010000000001019d46e0296f966cdd3379df79a2f6ac719b0db63b9d1ae1da8f44cdb27530ad3c0100000000ffffffff01905f0100000000002251202f1943ee0bafaef1944d3ff65bcbeb5e216055d369938cdcfb95a6d2ab7b4fc50340de9ce84530a4876f9d44b74536cbb473a517d16504e4bdaad84c18735eb210e1ee12ef3a1c06dd8a6fe8f51cb70e7c659bb7a82db4216a952641af5f38cc5cdc22204582dc979ec028044d80e911fb992d37801163cec6082b9807746d450b8ef773ac61c09b1e61ad40f333999250340eebb2257c0214e69ab3125022c1df50f6f5d0ebe3e13ebd0cd00421ea7d47f0b9270bf5c0677545a749189b7bbc2eb41faeb23145e2884fd612cee77b7f30b9bfaba55a48fa5ee74534b6e37326e7684cd54911cf00000000')
       expect(tx.verify_input_sig(0, prevouts[0].script_pubkey, amount: prevouts[0].value, prevouts: prevouts, flags: flags)).to be true
     end
