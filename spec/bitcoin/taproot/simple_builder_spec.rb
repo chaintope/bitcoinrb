@@ -11,7 +11,7 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet do
       expect{Bitcoin::Taproot::SimpleBuilder.new(key.pubkey)}.to raise_error(Bitcoin::Taproot::Error, 'Internal public key must be 32 bytes')
       expect{Bitcoin::Taproot::SimpleBuilder.new(key.xonly_pubkey)}.not_to raise_error
       expect{Bitcoin::Taproot::SimpleBuilder.new(key.xonly_pubkey, [key.xonly_pubkey])}.to raise_error(Bitcoin::Taproot::Error, 'leaf must be Bitcoin::Taproot::LeafNode object')
-      expect{Bitcoin::Taproot::SimpleBuilder.new(key.xonly_pubkey, Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.to_p2pkh(key.hash160)))}.not_to raise_error
+      expect{Bitcoin::Taproot::SimpleBuilder.new(key.xonly_pubkey, [Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.to_p2pkh(key.hash160))])}.not_to raise_error
     end
   end
 
@@ -49,7 +49,7 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet do
         script1 = Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.new << key1 << OP_CHECKSIG)
         script2 = Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.new << key2 << OP_CHECKSIG)
         script3 = Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.new << key3 << OP_CHECKSIG)
-        builder = Bitcoin::Taproot::SimpleBuilder.new(internal_key,script1, script2, script3)
+        builder = Bitcoin::Taproot::SimpleBuilder.new(internal_key, [script1, script2, script3])
         expect(builder.build.to_addr).to eq('bc1pkysykpr4e9alyu7wthrtmp2km6sylrjlz83qzrsjkxhdaazyfrusyk2pwg')
 
         # four leaves tree.
@@ -101,7 +101,7 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet do
       leaf1 = Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.new << key1.xonly_pubkey << OP_CHECKSIG)
       leaf2 = Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.new << key2.xonly_pubkey << OP_CHECKSIG)
       leaf3 = Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.new << key3.xonly_pubkey << OP_CHECKSIG)
-      builder = Bitcoin::Taproot::SimpleBuilder.new(internal_key.xonly_pubkey, leaf1, leaf2, leaf3)
+      builder = Bitcoin::Taproot::SimpleBuilder.new(internal_key.xonly_pubkey, [leaf1, leaf2, leaf3])
       flags = Bitcoin::STANDARD_SCRIPT_VERIFY_FLAGS | Bitcoin::SCRIPT_VERIFY_TAPROOT
       script_pubkey = builder.build
 

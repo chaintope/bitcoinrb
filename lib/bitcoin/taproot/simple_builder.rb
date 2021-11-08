@@ -15,7 +15,7 @@ module Bitcoin
       # @param [Array[Bitcoin::Taproot::LeafNode]] leaves Array of leaf nodes for each lock condition.
       # @raise [Bitcoin::Taproot::Builder] +internal_pubkey+ dose not xonly public key or leaf in +leaves+ does not instance of Bitcoin::Taproot::LeafNode.
       # @return [Bitcoin::Taproot::SimpleBuilder]
-      def initialize(internal_key, *leaves)
+      def initialize(internal_key, leaves = [])
         raise Error, 'Internal public key must be 32 bytes' unless internal_key.htb.bytesize == 32
         raise Error, 'leaf must be Bitcoin::Taproot::LeafNode object' if leaves.find{ |leaf| !leaf.is_a?(Bitcoin::Taproot::LeafNode)}
 
