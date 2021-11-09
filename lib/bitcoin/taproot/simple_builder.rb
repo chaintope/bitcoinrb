@@ -99,6 +99,8 @@ module Bitcoin
         parents = leaves
         if parents.empty?
           parents = ['']
+        elsif parents.size == 1
+          parents = [combine_hash(parents)]
         else
           parents = parents.each_slice(2).map { |pair| combine_hash(pair) } until parents.size == 1
         end
