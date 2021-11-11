@@ -213,7 +213,6 @@ module Bitcoin
     # get xonly public key (32 bytes).
     # @return [String] xonly public key with hex format
     def xonly_pubkey
-      puts "Derive a public key whose y-coordinate is different from this public key." if compressed? && pubkey[0...2] != '02'
       pubkey[2..65]
     end
 
