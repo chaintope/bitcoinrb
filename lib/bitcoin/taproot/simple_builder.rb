@@ -8,11 +8,11 @@ module Bitcoin
       include Bitcoin::Opcodes
 
       attr_reader :internal_key # String with hex format
-      attr_reader :leaves # Array[LeafNode]
+      attr_reader :branches # List of branch that has two child leaves
 
       # Initialize builder.
       # @param [String] internal_key Internal public key with hex format.
-      # @param [Array[Bitcoin::Taproot::LeafNode]] leaves Array of leaf nodes for each lock condition.
+      # @param [Array[Bitcoin::Taproot::LeafNode]] leaves (Optional) Array of leaf nodes for each lock condition.
       # @raise [Bitcoin::Taproot::Builder] +internal_pubkey+ dose not xonly public key or leaf in +leaves+ does not instance of Bitcoin::Taproot::LeafNode.
       # @return [Bitcoin::Taproot::SimpleBuilder]
       def initialize(internal_key, leaves = [])
@@ -20,16 +20,31 @@ module Bitcoin
         raise Error, 'leaf must be Bitcoin::Taproot::LeafNode object' if leaves.find{ |leaf| !leaf.is_a?(Bitcoin::Taproot::LeafNode)}
 
         @leaves = leaves
+        @branches = leaves.each_slice(2).map.to_a
         @internal_key = internal_key
       end
 
-      # Add lock script to leaf node.
-      # @param [Bitcoin::Script] script lock script.
-      # @param [Integer] leaf_ver (Optional) The leaf version of tapscript.
-      # @raise [Bitcoin::Taproot::Builder] If +script+ does not instance of Bitcoin::Script.
-      # @return [Bitcoin::Taproot::SimpleBuilder] self
-      def <<(script, leaf_ver: Bitcoin::TAPROOT_LEAF_TAPSCRIPT)
-        leaves << LeafNode.new(script, leaf_ver)
+      # Add a leaf node to the end of the current branch.
+      # @param [Bitcoin::Taproot::LeafNode] leaf Leaf node to be added.
+      def add_leaf(leaf)
+        raise Error, 'leaf must be Bitcoin::Taproot::LeafNode object' unless leaf.is_a?(Bitcoin::Taproot::LeafNode)
+
+        if branches.last&.size == 1
+          branches.last << leaf
+        else
+          branches << [leaf]
+        end
+        self
+      end
+
+      # Add a pair of leaf nodes as a branch. If there is only one, add a branch with only one child.
+      # @param [Bitcoin::Taproot::LeafNode] leaf1 Leaf node to be added.
+      # @param [Bitcoin::Taproot::LeafNode] leaf2 Leaf node to be added.
+      def add_branch(leaf1, leaf2 = nil)
+        raise Error, 'leaf1 must be Bitcoin::Taproot::LeafNode object' unless leaf1.is_a?(Bitcoin::Taproot::LeafNode)
+        raise Error, 'leaf2 must be Bitcoin::Taproot::LeafNode object' if leaf2 && !leaf2.is_a?(Bitcoin::Taproot::LeafNode)
+
+        branches << (leaf2.nil? ? [leaf1] : [leaf1, leaf2])
         self
       end
 
@@ -69,10 +84,17 @@ module Bitcoin
       # Generate inclusion proof for +leaf+.
       # @param [Bitcoin::Taproot::LeafNode] leaf The leaf node in script tree.
       # @return [Array[String]] Inclusion proof.
+      # @raise [Bitcoin::Taproot::Error] If the specified +leaf+ does not exist
       def inclusion_proof(leaf)
-        parents = leaves
-        parent_hash = leaf.leaf_hash
         proofs = []
+        target_branch = branches.find{|b| b.include?(leaf)}
+        raise Error 'Specified leaf does not exist' unless target_branch
+
+        # flatten each branch
+        proofs << hash_value(target_branch.find{|b| b != leaf}) if target_branch.size == 2
+        parent_hash = combine_hash(target_branch)
+        parents = branches.map {|pair| combine_hash(pair)}
+
         until parents.size == 1
           parents = parents.each_slice(2).map do |pair|
             combined = combine_hash(pair)
@@ -96,7 +118,7 @@ module Bitcoin
       # Compute tweak from script tree.
       # @return [String] tweak with binary format.
       def tweak
-        parents = leaves
+        parents = branches.map {|pair| combine_hash(pair)}
         if parents.empty?
           parents = ['']
         elsif parents.size == 1
