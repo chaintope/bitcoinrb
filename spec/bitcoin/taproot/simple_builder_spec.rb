@@ -2,7 +2,7 @@ require 'spec_helper'
 
 include Bitcoin::Opcodes
 
-RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet do
+RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet, use_secp256k1: true do
 
   describe '#initialize' do
     it 'should generate object' do
@@ -139,10 +139,10 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet do
   end
 
   describe 'bip341_wallet_test_vectors.json' do
-    it 'should be passed.' do
-      json = fixture_file('taproot/bip341_wallet_test_vectors.json')
+    it 'should calculate correct script pubkey.' do
+      fixtures = fixture_file('taproot/bip341_wallet_test_vectors.json')
       # scriptPubkey
-      json['scriptPubKey'].each do |data|
+      fixtures['scriptPubKey'].each do |data|
         internal_pubkey = data['given']['internalPubkey']
         next if internal_pubkey == 'e0dfe2300b0dd746a3f8674dfd4525623639042569d829c7f0eed9602d263e6f'
         script_tree = data['given']['scriptTree']
@@ -177,6 +177,34 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet do
           builder.branches.flatten.each_with_index do |leaf, index|
             expect(builder.control_block(leaf).bth).to eq(expected['scriptPathControlBlocks'][index])
           end
+        end
+      end
+
+      # keyPathSpending
+      fixtures['keyPathSpending'].each do |data|
+        tx = Bitcoin::Tx.parse_from_payload(data['given']['rawUnsignedTx'].htb)
+        prevouts = data['given']['utxosSpent'].map do |utxo|
+          script_pubkey = Bitcoin::Script.parse_from_payload(utxo['scriptPubKey'].htb)
+          Bitcoin::TxOut.new(script_pubkey: script_pubkey, value: utxo['amountSats'])
+        end
+        data['inputSpending'].each do |spending|
+          index = spending['given']['txinIndex']
+          hash_type = spending['given']['hashType']
+
+          internal_private_key = Bitcoin::Key.new(priv_key: spending['given']['internalPrivkey'])
+          expect(internal_private_key.xonly_pubkey).to eq(spending['intermediary']['internalPubkey'])
+          merkle_root = spending['given']['merkleRoot']
+          expect(Bitcoin::Taproot.tweak(internal_private_key, merkle_root).bth).to eq(spending['intermediary']['tweak'])
+          tweaked_key = Bitcoin::Taproot.tweak_private_key(internal_private_key, merkle_root)
+          expect(tweaked_key.priv_key).to eq(spending['intermediary']['tweakedPrivkey'])
+
+          # Calculate sighash
+          sighash = tx.sighash_for_input(index, sig_version: :taproot, prevouts: prevouts, hash_type: hash_type)
+          expect(sighash.bth).to eq(spending['intermediary']['sigHash'])
+          # Generate signature (The test vector signature is created by setting aux_rand to 32-byte 0.)
+          signature = tweaked_key.sign(sighash, true, ('00' * 32).htb, algo: :schnorr)
+          signature += [hash_type].pack('C') unless hash_type == Bitcoin::SIGHASH_TYPE[:default]
+          expect([signature.bth]).to eq(spending['expected']['witness'])
         end
       end
     end
