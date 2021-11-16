@@ -163,9 +163,9 @@ module Bitcoin
             end
             return set_error(SCRIPT_ERR_STACK_SIZE) if stack.size > MAX_STACK_SIZE
             need_evaluate = true
+          elsif flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION)
+            return set_error(SCRIPT_ERR_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION)
           end
-
-          return set_error(SCRIPT_ERR_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION) if flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION)
           return true unless need_evaluate
         end
       elsif flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM)
