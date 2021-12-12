@@ -71,7 +71,9 @@ module Bitcoin
         amount = [amount].pack('Q')
         nsequence = [tx.inputs[input_index].sequence].pack('V')
         hash_outputs = Bitcoin.double_sha256(tx.outputs.map{|o|o.to_payload}.join)
-
+        if output_script.p2wsh?
+          warn('The output_script must be a witness script, not the P2WSH itself.')
+        end
         script_code = output_script.to_script_code(skip_separator_index)
 
         case (hash_type & 0x1f)
