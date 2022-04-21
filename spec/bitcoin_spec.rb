@@ -3,6 +3,8 @@ include Bitcoin::Opcodes
 
 describe Bitcoin do
 
+  using Bitcoin::Ext::ObjectExt
+
   it 'has a version number' do
     expect(Bitcoin::VERSION).not_to be nil
   end

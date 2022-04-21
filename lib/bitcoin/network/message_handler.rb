@@ -4,6 +4,8 @@ module Bitcoin
     # P2P message handler used by peer connection class.
     module MessageHandler
 
+      using Bitcoin::Ext::ObjectExt
+
       # handle p2p message.
       def handle(message)
         peer.last_recv = Time.now.to_i
