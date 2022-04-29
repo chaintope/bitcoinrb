@@ -143,7 +143,6 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet, use_secp256k1
       # scriptPubkey
       fixtures['scriptPubKey'].each do |data|
         internal_pubkey = data['given']['internalPubkey']
-        next if internal_pubkey == 'e0dfe2300b0dd746a3f8674dfd4525623639042569d829c7f0eed9602d263e6f'
         script_tree = data['given']['scriptTree']
         builder = Bitcoin::Taproot::SimpleBuilder.new(internal_pubkey)
         if script_tree
