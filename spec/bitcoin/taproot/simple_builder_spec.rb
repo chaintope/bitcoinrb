@@ -137,9 +137,9 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet, use_secp256k1
     end
   end
 
-  describe 'bip341_wallet_test_vectors.json' do
+  describe 'bip341_wallet_vectors.json' do
     it 'should calculate correct script pubkey.' do
-      fixtures = fixture_file('taproot/bip341_wallet_test_vectors.json')
+      fixtures = fixture_file('bip341_wallet_vectors.json')
       # scriptPubkey
       fixtures['scriptPubKey'].each do |data|
         internal_pubkey = data['given']['internalPubkey']
