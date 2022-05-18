@@ -59,7 +59,7 @@ module Bitcoin
             input.partial_sigs[pubkey.pubkey] = value
           when PSBT_IN_TYPES[:sighash]
             raise ArgumentError, 'Invalid input sighash type typed key.' unless key_len == 1
-            raise ArgumentError 'Duplicate Key, input sighash type already provided.' if input.sighash_type
+            raise ArgumentError, 'Duplicate Key, input sighash type already provided.' if input.sighash_type
             input.sighash_type = value.unpack1('I')
           when PSBT_IN_TYPES[:redeem_script]
             raise ArgumentError, 'Invalid redeemscript typed key.' unless key_len == 1
