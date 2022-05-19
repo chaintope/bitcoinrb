@@ -7,10 +7,12 @@ module Bitcoin
       attr_accessor :redeem_script
       attr_accessor :witness_script
       attr_accessor :hd_key_paths
+      attr_accessor :proprietaries
       attr_accessor :unknowns
 
       def initialize
         @hd_key_paths = {}
+        @proprietaries = []
         @unknowns = {}
       end
 
@@ -41,6 +43,9 @@ module Bitcoin
           when PSBT_OUT_TYPES[:bip32_derivation]
             raise ArgumentError, 'Duplicate Key, pubkey derivation path already provided' if output.hd_key_paths[key.bth]
             output.hd_key_paths[key.bth] = Bitcoin::PSBT::HDKeyPath.new(key, Bitcoin::PSBT::KeyOriginInfo.parse_from_payload(value))
+          when PSBT_OUT_TYPES[:proprietary]
+            raise ArgumentError, 'Duplicate Key, key for proprietary value already provided.' if output.proprietaries.any?{|p| p.key == key}
+            output.proprietaries << Proprietary.new(key, value)
           else
             unknown_key = ([key_type].pack('C') + key).bth
             raise ArgumentError, 'Duplicate Key, key for unknown value already provided' if output.unknowns[unknown_key]
@@ -56,6 +61,7 @@ module Bitcoin
         payload << PSBT.serialize_to_vector(PSBT_OUT_TYPES[:redeem_script], value: redeem_script) if redeem_script
         payload << PSBT.serialize_to_vector(PSBT_OUT_TYPES[:witness_script], value: witness_script) if witness_script
         payload << hd_key_paths.values.map{|v|v.to_payload(PSBT_OUT_TYPES[:bip32_derivation])}.join
+        payload << proprietaries.map(&:to_payload).join
         payload << unknowns.map {|k,v|Bitcoin.pack_var_int(k.htb.bytesize) << k.htb << Bitcoin.pack_var_int(v.bytesize) << v}.join
         payload << PSBT_SEPARATOR.itb
         payload

@@ -14,6 +14,7 @@ module Bitcoin
       attr_accessor :hd_key_paths
       attr_accessor :partial_sigs
       attr_accessor :sighash_type
+      attr_accessor :proprietaries
       attr_accessor :unknowns
 
       def initialize(non_witness_utxo: nil, witness_utxo: nil)
@@ -21,6 +22,7 @@ module Bitcoin
         @witness_utxo = witness_utxo
         @partial_sigs = {}
         @hd_key_paths = {}
+        @proprietaries = []
         @unknowns = {}
       end
 
@@ -81,6 +83,9 @@ module Bitcoin
             raise ArgumentError, 'Invalid final script witness typed key.' unless key_len == 1
             raise ArgumentError, 'Duplicate Key, input final scriptWitness already provided.' if input.final_script_witness
             input.final_script_witness = Bitcoin::ScriptWitness.parse_from_payload(value)
+          when PSBT_IN_TYPES[:proprietary]
+            raise ArgumentError, 'Duplicate Key, key for proprietary value already provided.' if input.proprietaries.any?{|p| p.key == key}
+            input.proprietaries << Proprietary.new(key, value)
           else
             unknown_key = ([key_type].pack('C') + key).bth
             raise ArgumentError, 'Duplicate Key, key for unknown value already provided.' if input.unknowns[unknown_key]
@@ -105,6 +110,7 @@ module Bitcoin
         end
         payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:script_sig], value: final_script_sig.to_payload) if final_script_sig
         payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:script_witness], value: final_script_witness.to_payload) if final_script_witness
+        payload << proprietaries.map(&:to_payload).join
         payload << unknowns.map {|k,v|Bitcoin.pack_var_int(k.htb.bytesize) << k.htb << Bitcoin.pack_var_int(v.bytesize) << v}.join
         payload << PSBT_SEPARATOR.itb
         payload

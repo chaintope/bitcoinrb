@@ -341,4 +341,34 @@ describe Bitcoin::PSBT do
     end
   end
 
+  describe 'psbt has proprietary' do
+    it 'parsed proprietary data' do
+      base64 = 'cHNidP8BAHUCAAAAASaBcTce3/KF6Tet7qSze3gADAVmy7OtZGQXE8pCFxv2AAAAAAD+////AtPf9QUAAAAAGXapFNDFmQPFusKGh2DpD9UhpGZap2UgiKwA4fUFAAAAABepFDVF5uM7gyxHBQ8k0+65PJwDlIvHh7MuEwAD/AAAAaoF/AKqqgABqgABAP2lAQEAAAAAAQKJo8ceq00g4Dcbu6TMaY+ilclGOvouOX+FM8y2L5Vn5QEAAAAXFgAUvhjRUqmwEgOdrz2n3k9TNJ7suYX/////hviqQ6cd/xRIiTpTCnI372tGCLuy3S0BceY67GpIkLQBAAAAFxYAFP4+nvGnRel02QLENVlDq8s0vVNT/////wIAwusLAAAAABl2qRSFz/EJf9ngCLs0r3CcYhl7OJeKSIiscv74TiwAAAAXqRQzlyW6Ie/WKsdTqbzQZ9bHpqOdBYcCRzBEAiAnEr4i4CcPOU9WgxHcfKmmiXC4Al/dOyQCKfB/il86JAIgAYs419zTFOc0ySdr1vtA9nMyW8S6oUTIANLy8C2ydlwBIQPS4VZ0lButSpljcsuH4YVtNlJgbZhWL+OcXp5+QT8hBQJIMEUCIQDRK4UthdzZYdL19KtmBlTfbu3MeUwMM85cwwn/tfzljQIgZzOKjg4XJcGX+xqIr1n1HkTkJVsgFnyGhAMcBdHyWSoBIQIjtyvu8JZdEL4HeO/s1h/KxveaTqFpOTOAc0Rk+E8qswAAAAAF/AKqqgEBqwAABfwCqqoCAawA'
+      puts Base64.decode64(base64).bth
+      psbt = Bitcoin::PSBT::Tx.parse_from_base64(base64)
+      expect(psbt.proprietaries.size).to eq(2)
+      expect(psbt.proprietaries[0].identifier).to eq('')
+      expect(psbt.proprietaries[0].sub_type).to eq(0)
+      expect(psbt.proprietaries[0].key.bth).to eq('fc0000')
+      expect(psbt.proprietaries[0].value.bth).to eq('aa')
+      expect(psbt.proprietaries[1].identifier.bth).to eq('aaaa')
+      expect(psbt.proprietaries[1].sub_type).to eq(0)
+      expect(psbt.proprietaries[1].key.bth).to eq('fc02aaaa00')
+      expect(psbt.proprietaries[1].value.bth).to eq('aa')
+      expect(psbt.inputs.size).to eq(1)
+      expect(psbt.inputs[0].proprietaries.size).to eq(1)
+      expect(psbt.inputs[0].proprietaries[0].identifier.bth).to eq('aaaa')
+      expect(psbt.inputs[0].proprietaries[0].sub_type).to eq(1)
+      expect(psbt.inputs[0].proprietaries[0].key.bth).to eq('fc02aaaa01')
+      expect(psbt.inputs[0].proprietaries[0].value.bth).to eq('ab')
+      expect(psbt.outputs.size).to eq(2)
+      expect(psbt.outputs[1].proprietaries.size).to eq(1)
+      expect(psbt.outputs[1].proprietaries[0].identifier.bth).to eq('aaaa')
+      expect(psbt.outputs[1].proprietaries[0].sub_type).to eq(2)
+      expect(psbt.outputs[1].proprietaries[0].key.bth).to eq('fc02aaaa02')
+      expect(psbt.outputs[1].proprietaries[0].value.bth).to eq('ac')
+      expect(psbt.to_base64).to eq(base64)
+    end
+  end
+
 end

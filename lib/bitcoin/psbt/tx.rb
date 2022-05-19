@@ -32,6 +32,7 @@ module Bitcoin
       attr_accessor :xpubs
       attr_reader :inputs
       attr_reader :outputs
+      attr_accessor :proprietaries
       attr_accessor :unknowns
       attr_accessor :version_number
 
@@ -40,6 +41,7 @@ module Bitcoin
         @xpubs = []
         @inputs = tx ? tx.in.map{Input.new}: []
         @outputs = tx ? tx.out.map{Output.new}: []
+        @proprietaries = []
         @unknowns = {}
       end
 
@@ -66,7 +68,7 @@ module Bitcoin
             found_sep = true
             break
           end
-          key_type = buf.read(1).unpack1('C')
+          key_type = Bitcoin.unpack_var_int_from_io(buf)
           key = buf.read(key_len - 1)
           value = buf.read(Bitcoin.unpack_var_int_from_io(buf))
 
@@ -89,6 +91,9 @@ module Bitcoin
           when PSBT_GLOBAL_TYPES[:ver]
             partial_tx.version_number = value.unpack1('V')
             raise ArgumentError, "An unsupported version was detected." if SUPPORT_VERSION < partial_tx.version_number
+          when PSBT_GLOBAL_TYPES[:proprietary]
+            raise ArgumentError, 'Duplicate Key, key for proprietary value already provided.' if partial_tx.proprietaries.any?{|p| p.key == key}
+            partial_tx.proprietaries << Proprietary.new(key, value)
           else
             raise ArgumentError, 'Duplicate Key, key for unknown value already provided.' if partial_tx.unknowns[key]
             partial_tx.unknowns[([key_type].pack('C') + key).bth] = value
@@ -148,6 +153,7 @@ module Bitcoin
         payload << PSBT.serialize_to_vector(PSBT_GLOBAL_TYPES[:unsigned_tx], value: tx.to_payload)
         payload << xpubs.map(&:to_payload).join
         payload << PSBT.serialize_to_vector(PSBT_GLOBAL_TYPES[:ver], value: [version_number].pack('V')) if version_number
+        payload << proprietaries.map(&:to_payload).join
         payload << unknowns.map {|k,v|Bitcoin.pack_var_int(k.htb.bytesize) << k.htb << Bitcoin.pack_var_int(v.bytesize) << v}.join
 
         payload << PSBT_SEPARATOR.itb
