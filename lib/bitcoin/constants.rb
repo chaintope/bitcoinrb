@@ -5,6 +5,8 @@ module Bitcoin
 
   # Byte size of the ripemd160 hash
   RIPEMD160_SIZE = 20
+  # Byte size of the SHA256 hash
+  SHA256_SIZE = 32
 
   # The maximum allowed size for a serialized block, in bytes (only for buffer size limits)
   MAX_BLOCK_SERIALIZED_SIZE = 4_000_000

@@ -15,6 +15,7 @@ module Bitcoin
       attr_accessor :partial_sigs
       attr_accessor :sighash_type
       attr_accessor :ripemd160_preimages
+      attr_accessor :sha256_preimages
       attr_accessor :proprietaries
       attr_accessor :unknowns
 
@@ -24,6 +25,7 @@ module Bitcoin
         @partial_sigs = {}
         @hd_key_paths = {}
         @ripemd160_preimages = {}
+        @sha256_preimages = {}
         @proprietaries = []
         @unknowns = {}
       end
@@ -89,6 +91,10 @@ module Bitcoin
             raise ArgumentError, 'Size of key was not the expected size for the type ripemd160 preimage' unless key.bytesize == RIPEMD160_SIZE
             raise ArgumentError, 'Duplicate Key, input ripemd160 preimage already provided' if input.ripemd160_preimages[key.bth]
             input.ripemd160_preimages[key.bth] = value.bth
+          when PSBT_IN_TYPES[:sha256]
+            raise ArgumentError, 'Size of key was not the expected size for the type sha256 preimage' unless key.bytesize == SHA256_SIZE
+            raise ArgumentError, 'Duplicate Key, input sha256 preimage already provided' if input.sha256_preimages[key.bth]
+            input.sha256_preimages[key.bth] = value.bth
           when PSBT_IN_TYPES[:proprietary]
             raise ArgumentError, 'Duplicate Key, key for proprietary value already provided.' if input.proprietaries.any?{|p| p.key == key}
             input.proprietaries << Proprietary.new(key, value)
@@ -114,6 +120,7 @@ module Bitcoin
           payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:witness_script], value: witness_script.to_payload) if witness_script
           payload << hd_key_paths.values.map(&:to_payload).join
           payload << ripemd160_preimages.map{|k, v|PSBT.serialize_to_vector(PSBT_IN_TYPES[:ripemd160], key: k.htb, value: v.htb)}.join
+          payload << sha256_preimages.map{|k, v|PSBT.serialize_to_vector(PSBT_IN_TYPES[:sha256], key: k.htb, value: v.htb)}.join
         end
         payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:script_sig], value: final_script_sig.to_payload) if final_script_sig
         payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:script_witness], value: final_script_witness.to_payload) if final_script_witness
