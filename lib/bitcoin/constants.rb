@@ -9,6 +9,8 @@ module Bitcoin
   SHA256_SIZE = 32
   # Byte size of the HASH160 hash
   HASH160_SIZE = 20
+  # Byte size of the HASH256 hash
+  HASH256_SIZE = 32
 
   # The maximum allowed size for a serialized block, in bytes (only for buffer size limits)
   MAX_BLOCK_SERIALIZED_SIZE = 4_000_000
