@@ -551,7 +551,7 @@ module Bitcoin
     def p2pkh_addr
       return nil unless p2pkh?
       hash160 = chunks[2].pushed_data.bth
-      return nil unless hash160.htb.bytesize == 20
+      return nil unless hash160.htb.bytesize == RIPEMD160_SIZE
       Bitcoin.encode_base58_address(hash160, Bitcoin.chain_params.address_version)
     end
 
@@ -564,7 +564,7 @@ module Bitcoin
     def p2sh_addr
       return nil unless p2sh?
       hash160 = chunks[1].pushed_data.bth
-      return nil unless hash160.htb.bytesize == 20
+      return nil unless hash160.htb.bytesize == RIPEMD160_SIZE
       Bitcoin.encode_base58_address(hash160, Bitcoin.chain_params.p2sh_version)
     end
 

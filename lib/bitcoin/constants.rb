@@ -3,6 +3,9 @@ module Bitcoin
   COIN = 100_000_000
   MAX_MONEY = 21_000_000 * COIN
 
+  # Byte size of the ripemd160 hash
+  RIPEMD160_SIZE = 20
+
   # The maximum allowed size for a serialized block, in bytes (only for buffer size limits)
   MAX_BLOCK_SERIALIZED_SIZE = 4_000_000
   # The maximum allowed weight for a block, see BIP 141 (network rule)
