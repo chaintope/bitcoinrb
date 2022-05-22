@@ -80,9 +80,8 @@ module Bitcoin
     end
 
     def self.init(name)
-      i = YAML.respond_to?(:unsafe_load) ?
-            YAML.unsafe_load(File.open("#{__dir__}/chainparams/#{name}.yml")) :
-            YAML.load(File.open("#{__dir__}/chainparams/#{name}.yml"))
+      yaml = File.open("#{__dir__}/chainparams/#{name}.yml")
+      i = YAML.respond_to?(:unsafe_load) ? YAML.unsafe_load(yaml) : YAML.load(yaml)
       i.dust_relay_fee ||= Bitcoin::DUST_RELAY_TX_FEE
       i
     end
