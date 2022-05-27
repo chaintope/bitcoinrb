@@ -19,6 +19,12 @@ module Bitcoin
       attr_accessor :hash160_preimages
       attr_accessor :hash256_preimages
       attr_accessor :proprietaries
+      attr_accessor :tap_key_sig
+      attr_accessor :tap_script_sigs
+      attr_accessor :tap_leaf_scripts
+      attr_accessor :tap_bip32_derivations
+      attr_accessor :tap_internal_key
+      attr_accessor :tap_merkle_root
       attr_accessor :unknowns
 
       def initialize(non_witness_utxo: nil, witness_utxo: nil)
@@ -31,6 +37,9 @@ module Bitcoin
         @hash160_preimages = {}
         @hash256_preimages = {}
         @proprietaries = []
+        @tap_script_sigs = {}
+        @tap_leaf_scripts = {}
+        @tap_bip32_derivations = {}
         @unknowns = {}
       end
 
@@ -110,6 +119,35 @@ module Bitcoin
           when PSBT_IN_TYPES[:proprietary]
             raise ArgumentError, 'Duplicate Key, key for proprietary value already provided.' if input.proprietaries.any?{|p| p.key == key}
             input.proprietaries << Proprietary.new(key, value)
+          when PSBT_IN_TYPES[:tap_key_sig]
+            raise ArgumentError, 'Size of key was not the expected size for the type tap key sig' unless key_len == 1
+            raise ArgumentError, 'Invalid schnorr signature size for the type tap key sig' unless [64, 65].include?(value.bytesize)
+            input.tap_key_sig = value.bth
+          when PSBT_IN_TYPES[:tap_script_sig]
+            raise ArgumentError, 'Duplicate Key, key for tap script sig value already provided.' if input.tap_script_sigs[key.bth]
+            raise ArgumentError, 'Size of key was not the expected size for the type tap script sig' unless key.bytesize == (X_ONLY_PUBKEY_SIZE + 32)
+            raise ArgumentError, 'Invalid schnorr signature size for the type tap script sig' unless [64, 65].include?(value.bytesize)
+            input.tap_script_sigs[key.bth] = value.bth
+          when PSBT_IN_TYPES[:tap_leaf_script]
+            begin
+              cb = Bitcoin::Taproot::ControlBlock.parse_from_payload(key)
+              raise ArgumentError, 'Duplicate Key, key for tap leaf script value already provided.' if input.tap_leaf_scripts[cb]
+              input.tap_leaf_scripts[cb] = value.bth
+            rescue Bitcoin::Taproot::Error => e
+              raise ArgumentError, e.message
+            end
+          when PSBT_IN_TYPES[:tap_bip32_derivation]
+            raise ArgumentError, 'Duplicate Key, key for tap bip32 derivation value already provided.' if input.tap_bip32_derivations[key.bth]
+            raise ArgumentError, 'Size of key was not the expected size for the type tap bip32 derivation' unless key.bytesize == X_ONLY_PUBKEY_SIZE
+            input.tap_bip32_derivations[key.bth] = value.bth
+          when PSBT_IN_TYPES[:tap_internal_key]
+            raise ArgumentError, 'Size of key was not the expected size for the type tap internal key' unless key_len == 1
+            raise ArgumentError, 'Invalid x-only public key size for the type tap internal key' unless value.bytesize == X_ONLY_PUBKEY_SIZE
+            input.tap_internal_key = value.bth
+          when PSBT_IN_TYPES[:tap_merkle_root]
+            raise ArgumentError, 'Size of key was not the expected size for the type tap merkle root' unless key_len == 1
+            raise ArgumentError, 'Invalid merkle root hash size for the type tap merkle root' unless value.bytesize == 32
+            input.tap_merkle_root = value.bth
           else
             unknown_key = ([key_type].pack('C') + key).bth
             raise ArgumentError, 'Duplicate Key, key for unknown value already provided.' if input.unknowns[unknown_key]
@@ -135,6 +173,12 @@ module Bitcoin
           payload << sha256_preimages.map{|k, v|PSBT.serialize_to_vector(PSBT_IN_TYPES[:sha256], key: k.htb, value: v.htb)}.join
           payload << hash160_preimages.map{|k, v|PSBT.serialize_to_vector(PSBT_IN_TYPES[:hash160], key: k.htb, value: v.htb)}.join
           payload << hash256_preimages.map{|k, v|PSBT.serialize_to_vector(PSBT_IN_TYPES[:hash256], key: k.htb, value: v.htb)}.join
+          payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_key_sig], value: tap_key_sig.htb) if tap_key_sig
+          payload << tap_script_sigs.map{|k, v| PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_script_sig], key: k.htb, value: v.htb)}.join
+          payload << tap_leaf_scripts.map{|k, v| PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_leaf_script], key: k.to_payload, value: v.htb)}.join
+          payload << tap_bip32_derivations.map{|k, v| PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_bip32_derivation], key: k.htb, value: v.htb)}.join
+          payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_internal_key], value: tap_internal_key.htb) if tap_internal_key
+          payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_merkle_root], value: tap_merkle_root.htb) if tap_merkle_root
         end
         payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:script_sig], value: final_script_sig.to_payload) if final_script_sig
         payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:script_witness], value: final_script_witness.to_payload) if final_script_witness

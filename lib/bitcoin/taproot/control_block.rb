@@ -36,6 +36,10 @@ module Bitcoin
       def to_payload
         [parity + leaf_ver].pack("C") + internal_key.htb + paths.map(&:htb).join
       end
+
+      def ==(other)
+        to_payload == other.to_payload
+      end
     end
   end
 end

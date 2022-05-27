@@ -33,12 +33,21 @@ module Bitcoin
       sha256: 0x0b,
       hash160: 0x0c,
       hash256: 0x0d,
+      tap_key_sig: 0x13,
+      tap_script_sig: 0x14,
+      tap_leaf_script: 0x15,
+      tap_bip32_derivation: 0x16,
+      tap_internal_key: 0x17,
+      tap_merkle_root: 0x18,
       proprietary: 0xfc
     }
     PSBT_OUT_TYPES = {
       redeem_script: 0x00,
       witness_script: 0x01,
       bip32_derivation: 0x02,
+      tap_internal_key: 0x05,
+      tap_tree: 0x06,
+      tap_bip32_derivation: 0x07,
       proprietary: 0xfc
     }
     PSBT_SEPARATOR = 0x00

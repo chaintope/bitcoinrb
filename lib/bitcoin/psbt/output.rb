@@ -8,11 +8,15 @@ module Bitcoin
       attr_accessor :witness_script
       attr_accessor :hd_key_paths
       attr_accessor :proprietaries
+      attr_accessor :tap_internal_key
+      attr_accessor :tap_tree
+      attr_accessor :tap_bip32_derivations
       attr_accessor :unknowns
 
       def initialize
         @hd_key_paths = {}
         @proprietaries = []
+        @tap_bip32_derivations = {}
         @unknowns = {}
       end
 
@@ -46,6 +50,17 @@ module Bitcoin
           when PSBT_OUT_TYPES[:proprietary]
             raise ArgumentError, 'Duplicate Key, key for proprietary value already provided.' if output.proprietaries.any?{|p| p.key == key}
             output.proprietaries << Proprietary.new(key, value)
+          when PSBT_OUT_TYPES[:tap_internal_key]
+            raise ArgumentError, 'Invalid output tap internal key typed key.' unless key_len == 1
+            raise ArgumentError, 'Invalid x-only public key size for the type tap internal key' unless value.bytesize == X_ONLY_PUBKEY_SIZE
+            output.tap_internal_key = value.bth
+          when PSBT_OUT_TYPES[:tap_tree]
+            raise ArgumentError, 'Invalid output tap tree typed key.' unless key_len == 1
+            output.tap_tree = value.bth # TODO implement builder.
+          when PSBT_OUT_TYPES[:tap_bip32_derivation]
+            raise ArgumentError, 'Duplicate Key, key for tap bip32 derivation value already provided.' if output.tap_bip32_derivations[key.bth]
+            raise ArgumentError, 'Size of key was not the expected size for the type tap bip32 derivation' unless key.bytesize == X_ONLY_PUBKEY_SIZE
+            output.tap_bip32_derivations[key.bth] = value.bth
           else
             unknown_key = ([key_type].pack('C') + key).bth
             raise ArgumentError, 'Duplicate Key, key for unknown value already provided' if output.unknowns[unknown_key]
@@ -62,6 +77,9 @@ module Bitcoin
         payload << PSBT.serialize_to_vector(PSBT_OUT_TYPES[:witness_script], value: witness_script) if witness_script
         payload << hd_key_paths.values.map{|v|v.to_payload(PSBT_OUT_TYPES[:bip32_derivation])}.join
         payload << proprietaries.map(&:to_payload).join
+        payload << PSBT.serialize_to_vector(PSBT_OUT_TYPES[:tap_internal_key], value: tap_internal_key.htb) if tap_internal_key
+        payload << PSBT.serialize_to_vector(PSBT_OUT_TYPES[:tap_tree], value: tap_tree.htb) if tap_tree
+        payload << tap_bip32_derivations.map{|k, v|PSBT.serialize_to_vector(PSBT_OUT_TYPES[:tap_bip32_derivation], key: k.htb, value: v.htb)}.join
         payload << unknowns.map {|k,v|Bitcoin.pack_var_int(k.htb.bytesize) << k.htb << Bitcoin.pack_var_int(v.bytesize) << v}.join
         payload << PSBT_SEPARATOR.itb
         payload
