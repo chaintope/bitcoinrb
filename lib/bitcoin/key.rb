@@ -81,7 +81,7 @@ module Bitcoin
     # @param [String] xonly_pubkey xonly public key with hex format.
     # @return [Bitcoin::Key] key object has public key.
     def self.from_xonly_pubkey(xonly_pubkey)
-      raise ArgumentError, 'xonly_pubkey must be 32 bytes' unless xonly_pubkey.htb.bytesize == 32
+      raise ArgumentError, "xonly_pubkey must be #{X_ONLY_PUBKEY_SIZE} bytes" unless xonly_pubkey.htb.bytesize == X_ONLY_PUBKEY_SIZE
       Bitcoin::Key.new(pubkey: "02#{xonly_pubkey}", key_type: TYPES[:compressed])
     end
 

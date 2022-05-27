@@ -232,7 +232,7 @@ module Bitcoin
       def full_pubkey_from_xonly_pubkey(pub_key)
         with_context do |context|
           pubkey = pub_key.htb
-          raise ArgumentError, 'Pubkey size must be 32 bytes.' unless pubkey.bytesize == 32
+          raise ArgumentError, "Pubkey size must be #{X_ONLY_PUBKEY_SIZE} bytes." unless pubkey.bytesize == X_ONLY_PUBKEY_SIZE
           xonly_pubkey = FFI::MemoryPointer.new(:uchar, pubkey.bytesize).put_bytes(0, pubkey)
           full_pubkey = FFI::MemoryPointer.new(:uchar, 64)
           raise ArgumentError, 'An invalid public key was specified.' unless secp256k1_xonly_pubkey_parse(context, full_pubkey, xonly_pubkey) == 1

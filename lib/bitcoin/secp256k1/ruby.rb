@@ -32,7 +32,7 @@ module Bitcoin
       # @return [Boolean] result.
       def valid_xonly_pubkey?(pub_key)
         pubkey = pub_key.htb
-        return false unless pubkey.bytesize == 32
+        return false unless pubkey.bytesize == X_ONLY_PUBKEY_SIZE
         begin
           ECDSA::Format::PointOctetString.decode(pubkey, ECDSA::Group::Secp256k1)
         rescue Exception
