@@ -130,10 +130,10 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet, use_secp256k1
       expect(sig).to eq(Bitcoin::Secp256k1::Ruby.sign_data(sighash, key2.priv_key, algo: :schnorr))
       tx.in[0].script_witness.stack << sig # sig for script2
       tx.in[0].script_witness.stack << leaf2.script.to_payload
-      tx.in[0].script_witness.stack << builder.control_block(leaf2) # path
+      tx.in[0].script_witness.stack << builder.control_block(leaf2).to_payload # path
       expect(tx.to_hex).to eq('010000000001019d46e0296f966cdd3379df79a2f6ac719b0db63b9d1ae1da8f44cdb27530ad3c0100000000ffffffff01905f0100000000002251202f1943ee0bafaef1944d3ff65bcbeb5e216055d369938cdcfb95a6d2ab7b4fc50340de9ce84530a4876f9d44b74536cbb473a517d16504e4bdaad84c18735eb210e1ee12ef3a1c06dd8a6fe8f51cb70e7c659bb7a82db4216a952641af5f38cc5cdc22204582dc979ec028044d80e911fb992d37801163cec6082b9807746d450b8ef773ac61c09b1e61ad40f333999250340eebb2257c0214e69ab3125022c1df50f6f5d0ebe3e13ebd0cd00421ea7d47f0b9270bf5c0677545a749189b7bbc2eb41faeb23145e2884fd612cee77b7f30b9bfaba55a48fa5ee74534b6e37326e7684cd54911cf00000000')
       expect(tx.verify_input_sig(0, prevouts[0].script_pubkey, amount: prevouts[0].value, prevouts: prevouts)).to be true
-      expect(builder.control_block(leaf3).bth).to eq('c09b1e61ad40f333999250340eebb2257c0214e69ab3125022c1df50f6f5d0ebe383b6bc9d4cf55443a73437982fb6f274bf10c1d9666e4a0ef98688799ebf0dcb')
+      expect(builder.control_block(leaf3).to_hex).to eq('c09b1e61ad40f333999250340eebb2257c0214e69ab3125022c1df50f6f5d0ebe383b6bc9d4cf55443a73437982fb6f274bf10c1d9666e4a0ef98688799ebf0dcb')
     end
   end
 
@@ -173,7 +173,7 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet, use_secp256k1
         expect(script_pubkey.to_addr).to eq(expected['bip350Address'])
         if expected['scriptPathControlBlocks']
           builder.branches.flatten.each_with_index do |leaf, index|
-            expect(builder.control_block(leaf).bth).to eq(expected['scriptPathControlBlocks'][index])
+            expect(builder.control_block(leaf).to_hex).to eq(expected['scriptPathControlBlocks'][index])
           end
         end
       end

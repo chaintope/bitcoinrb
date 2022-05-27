@@ -72,11 +72,11 @@ module Bitcoin
 
       # Generate control block needed to unlock with script-path.
       # @param [Bitcoin::Taproot::LeafNode] leaf Leaf to use for unlocking.
-      # @return [String] control block with binary format.
+      # @return [Bitcoin::Taproot::ControlBlock] control block.
       def control_block(leaf)
         path = inclusion_proof(leaf)
         parity = tweak_public_key.to_point.has_even_y? ? 0 : 1
-        [parity + leaf.leaf_ver].pack("C") + internal_key.htb + path.join
+        ControlBlock.new(parity, leaf.leaf_ver, internal_key, path.map(&:bth))
       end
 
       # Generate inclusion proof for +leaf+.
