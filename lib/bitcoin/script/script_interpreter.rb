@@ -136,16 +136,15 @@ module Bitcoin
         else
           sig_version = :tapscript
           # Script path spending (stack size is >1 after removing optional annex)
-          control = stack.pop.htb
-          script_payload = stack.pop.htb
-          if control.bytesize < TAPROOT_CONTROL_BASE_SIZE || control.bytesize > TAPROOT_CONTROL_MAX_SIZE ||
-              (control.bytesize - TAPROOT_CONTROL_BASE_SIZE) % TAPROOT_CONTROL_NODE_SIZE != 0
+          begin
+          control = Bitcoin::Taproot::ControlBlock.parse_from_payload(stack.pop.htb)
+          rescue Bitcoin::Taproot::Error
             return set_error(SCRIPT_ERR_TAPROOT_WRONG_CONTROL_SIZE)
           end
-          leaf_ver = control[0].bti & TAPROOT_LEAF_MASK
-          opts[:leaf_hash] = Bitcoin.tagged_hash('TapLeaf', [leaf_ver].pack('C') + Bitcoin.pack_var_string(script_payload))
+          script_payload = stack.pop.htb
+          opts[:leaf_hash] = Bitcoin.tagged_hash('TapLeaf', [control.leaf_ver].pack('C') + Bitcoin.pack_var_string(script_payload))
           return set_error(SCRIPT_ERR_WITNESS_PROGRAM_MISMATCH) unless valid_taproot_commitment?(control, program, opts[:leaf_hash])
-          if (control[0].bti & TAPROOT_LEAF_MASK) == TAPROOT_LEAF_TAPSCRIPT
+          if control.leaf_ver == TAPROOT_LEAF_TAPSCRIPT
             opts[:weight_left] = witness.to_payload.bytesize + VALIDATION_WEIGHT_OFFSET
             script_pubkey = Bitcoin::Script.parse_from_payload(script_payload)
             script_pubkey.chunks.each do |c|
@@ -698,19 +697,14 @@ module Bitcoin
     # check whether valid taproot commitment.
     def valid_taproot_commitment?(control, program, leaf_hash)
       begin
-        path_len = (control.bytesize - TAPROOT_CONTROL_BASE_SIZE) / TAPROOT_CONTROL_NODE_SIZE
-        xonly_pubkey = control[1...TAPROOT_CONTROL_BASE_SIZE]
-        p = Bitcoin::Key.from_xonly_pubkey(xonly_pubkey.bth)
+        xonly_pubkey = control.internal_key
+        p = Bitcoin::Key.from_xonly_pubkey(xonly_pubkey)
         k = leaf_hash
-        path_len.times do |i|
-          pos = (TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * i)
-          e = control[pos...(pos + TAPROOT_CONTROL_NODE_SIZE)]
-          k = Bitcoin.tagged_hash('TapBranch', k.bth < e.bth ? k + e : e + k)
-        end
-        t = Bitcoin.tagged_hash('TapTweak', xonly_pubkey + k)
+        control.paths.each { |e| k = Bitcoin.tagged_hash('TapBranch', k.bth < e ? k + e.htb : e.htb + k) }
+        t = Bitcoin.tagged_hash('TapTweak', xonly_pubkey.htb + k)
         key = Bitcoin::Key.new(priv_key: t.bth, key_type: Key::TYPES[:compressed])
         q = key.to_point + p.to_point
-        return q.x == program.bti && (control[0].bti & 1) == (q.y % 2)
+        return q.x == program.bti && control.parity == (q.y % 2)
       rescue ArgumentError
         return false
       end

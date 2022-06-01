@@ -19,10 +19,12 @@ module Bitcoin
         @paths = paths
       end
 
+      # parse control block from payload.
       # @raise [Bitcoin::Taproot::Error]
       # @return [Bitcoin::Taproot::ControlBlock]
       def self.parse_from_payload(payload)
-        raise Bitcoin::Taproot::Error, 'Invalid data length for path in Control Block' unless (payload.bytesize - 33) % 32 == 0
+        raise Bitcoin::Taproot::Error, 'Invalid data length for Control Block' if payload.bytesize > TAPROOT_CONTROL_MAX_SIZE
+        raise Bitcoin::Taproot::Error, 'Invalid data length for path in Control Block' unless (payload.bytesize - TAPROOT_CONTROL_BASE_SIZE) % TAPROOT_CONTROL_NODE_SIZE == 0
         control, internal_key, paths = payload.unpack('Ca32a*')
         parity = control & 1
         leaf_ver = control - parity
