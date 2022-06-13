@@ -229,6 +229,35 @@ describe Bitcoin::Key do
     end
   end
 
+  describe '#to_addr' do
+    it 'return address corresponding to key_type' do
+      p2pkh = 'mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1'
+      k = Bitcoin::Key.new(pubkey: '0292ee82d9add0512294723f2c363aee24efdeb3f258cdaf5118a4fcf5263e92c9')
+      expect(k.to_addr).to eq(p2pkh)
+      expect(k.p2pkh?).to be true
+      expect(k.compressed?).to be true
+      k = Bitcoin::Key.new(pubkey: '0292ee82d9add0512294723f2c363aee24efdeb3f258cdaf5118a4fcf5263e92c9', key_type: Bitcoin::Key::TYPES[:p2pkh])
+      expect(k.to_addr).to eq(p2pkh)
+      expect(k.p2pkh?).to be true
+      expect(k.compressed?).to be true
+      # P2WPKH
+      k = Bitcoin::Key.new(pubkey: '0292ee82d9add0512294723f2c363aee24efdeb3f258cdaf5118a4fcf5263e92c9', key_type: Bitcoin::Key::TYPES[:p2wpkh])
+      expect(k.to_addr).to eq('tb1qgmp0h7lvexdxx9y05pmdukx09xcteu9sx2h4ya')
+      expect(k.p2wpkh?).to be true
+      expect(k.compressed?).to be true
+      # nested P2WPKH
+      k = Bitcoin::Key.new(pubkey: '0292ee82d9add0512294723f2c363aee24efdeb3f258cdaf5118a4fcf5263e92c9', key_type: Bitcoin::Key::TYPES[:p2wpkh_p2sh])
+      expect(k.to_addr).to eq('2N3wh1eYqMeqoLxuKFv8PBsYR4f8gYn8dHm')
+      expect(k.nested_p2wpkh?).to be true
+      expect(k.compressed?).to be true
+      # P2TR
+      k = Bitcoin::Key.new(pubkey: '0292ee82d9add0512294723f2c363aee24efdeb3f258cdaf5118a4fcf5263e92c9', key_type: Bitcoin::Key::TYPES[:p2tr])
+      expect(k.to_addr).to eq('tb1pjthg9kdd6pgj99rj8ukrvwhwynhaavljtrx675gc5n702f37jtysxhhedd')
+      expect(k.p2tr?).to be true
+      expect(k.compressed?).to be true
+    end
+  end
+
   describe 'key_io_valid test vector' do
     valid_json = fixture_file('key_io_valid.json')
     valid_json.each do |base58_str, payload, metadata|

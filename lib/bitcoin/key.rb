@@ -17,7 +17,7 @@ module Bitcoin
     attr_accessor :key_type
     attr_reader :secp256k1_module
 
-    TYPES = {uncompressed: 0x00, compressed: 0x01, p2pkh: 0x10, p2wpkh: 0x11, p2wpkh_p2sh: 0x12}
+    TYPES = {uncompressed: 0x00, compressed: 0x01, p2pkh: 0x10, p2wpkh: 0x11, p2wpkh_p2sh: 0x12, p2tr: 0x13}
 
     MIN_PRIV_KEY_MOD_ORDER = 0x01
     # Order of secp256k1's generator minus 1.
@@ -180,21 +180,66 @@ module Bitcoin
     end
 
     # get pay to pubkey hash address
-    # @deprecated
+    # @return [String] address
     def to_p2pkh
       Bitcoin::Script.to_p2pkh(hash160).to_addr
     end
 
     # get pay to witness pubkey hash address
-    # @deprecated
+    # @return [String] address
     def to_p2wpkh
       Bitcoin::Script.to_p2wpkh(hash160).to_addr
+    end
+
+    # Get pay to taproot address
+    # @return [String] address
+    def to_p2tr
+      Bitcoin::Script.to_p2tr(self).to_addr
     end
 
     # get p2wpkh address nested in p2sh.
     # @deprecated
     def to_nested_p2wpkh
       Bitcoin::Script.to_p2wpkh(hash160).to_p2sh.to_addr
+    end
+
+    # Determine if it is a P2PKH from key_type.
+    # @return [Boolean]
+    def p2pkh?
+      [TYPES[:uncompressed], TYPES[:compressed], TYPES[:p2pkh]].include?(key_type)
+    end
+
+    # Determine if it is a P2WPKH from key_type.
+    # @return [Boolean]
+    def p2wpkh?
+      key_type == TYPES[:p2wpkh]
+    end
+
+    # Determine if it is a nested P2WPKH from key_type.
+    # @return [Boolean]
+    def nested_p2wpkh?
+      key_type == TYPES[:p2wpkh_p2sh]
+    end
+
+    # Determine if it is a nested P2TR from key_type.
+    # @return [Boolean]
+    def p2tr?
+      key_type == TYPES[:p2tr]
+    end
+
+    # Returns the address corresponding to key_type.
+    # @return [String] address
+    def to_addr
+      case key_type
+      when TYPES[:uncompressed], TYPES[:compressed], TYPES[:p2pkh]
+        to_p2pkh
+      when TYPES[:p2wpkh]
+        to_p2wpkh
+      when TYPES[:p2wpkh_p2sh]
+        to_nested_p2wpkh
+      when TYPES[:p2tr]
+        to_p2tr
+      end
     end
 
     def compressed?
