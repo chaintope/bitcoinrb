@@ -15,13 +15,26 @@ module Bitcoin
     end
 
     # generate P2PKH script
+    # @param [String] pubkey_hash public key hash with hex format
     def self.to_p2pkh(pubkey_hash)
       new << OP_DUP << OP_HASH160 << pubkey_hash << OP_EQUALVERIFY << OP_CHECKSIG
     end
 
     # generate P2WPKH script
+    # @param [String] pubkey_hash public key hash with hex format
+    # @return [Bitcoin::Script]
     def self.to_p2wpkh(pubkey_hash)
       new << WITNESS_VERSION_V0 << pubkey_hash
+    end
+
+    # Generate P2TR script
+    # @param [String or Bitcoin::Key] xonly_pubkey public key with hex format or Bitcoin::Key
+    # @return [Bitcoin::Script]
+    # @raise ArgumentError
+    def self.to_p2tr(xonly_pubkey)
+      xonly_pubkey = xonly_pubkey.xonly_pubkey if xonly_pubkey.is_a?(Bitcoin::Key)
+      raise ArgumentError, 'Invalid public key size' unless xonly_pubkey.htb.bytesize == Bitcoin::WITNESS_V1_TAPROOT_SIZE
+      new << OP_1 << xonly_pubkey
     end
 
     # generate m of n multisig p2sh script

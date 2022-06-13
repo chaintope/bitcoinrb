@@ -171,7 +171,7 @@ describe Bitcoin::Script do
   end
 
   describe 'P2TR script' do
-    subject { Bitcoin::Script.parse_from_payload('5120a0d0c06640b95b78f965416ad6971b3b1609c3cd9b512aaa39439088211868b7'.htb)}
+    subject { Bitcoin::Script.to_p2tr('a0d0c06640b95b78f965416ad6971b3b1609c3cd9b512aaa39439088211868b7')}
     it 'should be p2tr', network: :mainnet do
       expect(subject.p2pkh?).to be false
       expect(subject.p2sh?).to be false
@@ -182,6 +182,12 @@ describe Bitcoin::Script do
       expect(subject.op_return?).to be false
       expect(subject.standard?).to be true
       expect(subject.to_addr).to eq('bc1p5rgvqejqh9dh37t9g94dd9cm8vtqns7dndgj423egwggsggcdzmsspvr7j')
+    end
+
+    context 'invalid P2TR' do
+      it 'raise ArgumentError' do
+        expect{Bitcoin::Script.to_p2tr('03a0d0c06640b95b78f965416ad6971b3b1609c3cd9b512aaa39439088211868b7')}.to raise_error(ArgumentError, 'Invalid public key size')
+      end
     end
   end
 
