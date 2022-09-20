@@ -697,13 +697,10 @@ module Bitcoin
     # check whether valid taproot commitment.
     def valid_taproot_commitment?(control, program, leaf_hash)
       begin
-        xonly_pubkey = control.internal_key
-        p = Bitcoin::Key.from_xonly_pubkey(xonly_pubkey)
+        p = Bitcoin::Key.from_xonly_pubkey(control.internal_key)
         k = leaf_hash
         control.paths.each { |e| k = Bitcoin.tagged_hash('TapBranch', k.bth < e ? k + e.htb : e.htb + k) }
-        t = Bitcoin.tagged_hash('TapTweak', xonly_pubkey.htb + k)
-        key = Bitcoin::Key.new(priv_key: t.bth, key_type: Key::TYPES[:compressed])
-        q = key.to_point + p.to_point
+        q = Bitcoin::Taproot.tweak_public_key(p, k.bth).to_point
         return q.x == program.bti && control.parity == (q.y % 2)
       rescue ArgumentError
         return false
