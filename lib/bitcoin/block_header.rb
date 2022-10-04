@@ -21,8 +21,12 @@ module Bitcoin
       @nonce = nonce
     end
 
+    # Parse block header from payload.
+    # @param [String|StringIO] payload block header paylaod
+    # @return [Bitcoin::BlockHeader]
     def self.parse_from_payload(payload)
-      version, prev_hash, merkle_root, time, bits, nonce = payload.unpack('Va32a32VVV')
+      buf = payload.is_a?(String) ? StringIO.new(payload) : payload
+      version, prev_hash, merkle_root, time, bits, nonce = buf.read(80).unpack('Va32a32VVV')
       new(version, prev_hash.bth, merkle_root.bth, time, bits, nonce)
     end
 
