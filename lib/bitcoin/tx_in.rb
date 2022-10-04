@@ -34,8 +34,7 @@ module Bitcoin
     def self.parse_from_payload(payload)
       buf = payload.is_a?(String) ? StringIO.new(payload) : payload
       i = new
-      hash, index = buf.read(36).unpack('a32V')
-      i.out_point = OutPoint.new(hash.bth, index)
+      i.out_point = OutPoint.parse_from_payload(buf)
       sig_length = Bitcoin.unpack_var_int_from_io(buf)
       if sig_length == 0
         i.script_sig = Bitcoin::Script.new
