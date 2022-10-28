@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'ecdsa'
   spec.add_runtime_dependency 'eventmachine'
   spec.add_runtime_dependency 'murmurhash3'
-  spec.add_runtime_dependency 'bech32', '~> 1.1.0'
+  spec.add_runtime_dependency 'bech32', '>= 1.3.0'
   spec.add_runtime_dependency 'daemon-spawn'
   spec.add_runtime_dependency 'thor'
   spec.add_runtime_dependency 'ffi'
