@@ -57,9 +57,8 @@ module Bitcoin
   SCRIPT_VERIFY_CONST_SCRIPTCODE = (1 << 16) # Making OP_CODESEPARATOR and FindAndDelete fail any non-segwit scripts
   SCRIPT_VERIFY_TAPROOT = (1 << 17) # Taproot/Tapscript validation (BIPs 341 & 342)
   SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION = (1 << 18) # Making unknown Taproot leaf versions non-standard
-  SCRIPT_VERIFY_DISCOURAGE_UNKNOWN_ANNEX = (1 << 19) # Making the use of (unknown) annexes non-standard (currently no annexes are known)
-  SCRIPT_VERIFY_DISCOURAGE_OP_SUCCESS = (1 << 20) # Making unknown OP_SUCCESS non-standard
-  SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_PUBKEYTYPE = (1 << 21) # Making unknown public key versions (in BIP 342 scripts) non-standard
+  SCRIPT_VERIFY_DISCOURAGE_OP_SUCCESS = (1 << 19) # Making unknown OP_SUCCESS non-standard
+  SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_PUBKEYTYPE = (1 << 20) # Making unknown public key versions (in BIP 342 scripts) non-standard
 
   MANDATORY_SCRIPT_VERIFY_FLAGS = SCRIPT_VERIFY_P2SH
 
