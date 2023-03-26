@@ -9,6 +9,12 @@ module Bitcoin
 
       class_option :network, aliases: '-n', default: :mainnet
 
+      desc 'decodepsbt <base64 psbt string>', "Return a JSON object representing the serialized, base64-encoded partially signed Bitcoin transaction."
+      def decodepsbt(base64)
+        psbt = Bitcoin::PSBT::Tx.parse_from_base64(base64)
+        puts JSON.pretty_generate(psbt.to_h)
+      end
+
       desc 'getblockchaininfo', 'Returns an object containing various state info regarding blockchain processing.'
       def getblockchaininfo
         request('getblockchaininfo')
