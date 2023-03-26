@@ -177,6 +177,18 @@ module Bitcoin
         end
       end
 
+      def to_h
+        {
+          tx: tx.to_h,
+          global_xpubs: xpubs.map(&:to_h),
+          psbt_version: version,
+          proprietary: proprietaries.map(&:to_h),
+          unknown: unknowns.map {|k, v| {"#{k}": v}},
+          inputs: inputs.map(&:to_h),
+          outputs: outputs.map(&:to_h)
+        }
+      end
+
       # update input key-value maps.
       # @param [Bitcoin::Tx] prev_tx previous tx reference by input.
       # @param [Bitcoin::Script] redeem_script redeem script to set input.

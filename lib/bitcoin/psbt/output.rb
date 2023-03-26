@@ -100,7 +100,18 @@ module Bitcoin
         combined
       end
 
+      def to_h
+        h = {}
+        h[:redeem_script] = redeem_script.bth if redeem_script
+        h[:witness_script] = witness_script.bth if witness_script
+        h[:bip32_derivs] = hd_key_paths.values.map(&:to_h) unless hd_key_paths.empty?
+        h[:proprietary] = proprietaries.map(&:to_h) unless proprietaries.empty?
+        h[:tap_internal_key] = tap_internal_key if tap_internal_key
+        h[:tap_tree] = tap_tree if tap_tree
+        h[:tap_bip32_derivs] = tap_bip32_derivations.map{|k, v| {"#{k}": v}} unless tap_bip32_derivations.empty?
+        h[:unknown] = unknowns.map {|k, v| {"#{k}": v.bth}} unless unknowns.empty?
+        h
+      end
     end
-
   end
 end

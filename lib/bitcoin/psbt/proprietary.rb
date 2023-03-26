@@ -39,6 +39,10 @@ module Bitcoin
         k = key
         Bitcoin.pack_var_int(k.bytesize) + k + Bitcoin.pack_var_int(value.bytesize) + value
       end
+
+      def to_h
+        {identifier: identifier.bth, sub_type: sub_type, value: value.bth}
+      end
     end
   end
 end

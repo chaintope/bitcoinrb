@@ -543,11 +543,8 @@ module Bitcoin
 
     def to_h
       h = {asm: to_s, hex: to_hex, type: type}
-      addrs = addresses
-      unless addrs.empty?
-        h[:req_sigs] = multisig? ? Bitcoin::Opcodes.opcode_to_small_int(chunks[0].bth.to_i(16)) :addrs.size
-        h[:addresses] = addrs
-      end
+      addr = to_addr
+      h[:address] = addr if addr
       h
     end
 

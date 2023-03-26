@@ -283,6 +283,32 @@ module Bitcoin
         self
       end
 
+      def to_h
+        h = {}
+        h[:non_witness_utxo] = non_witness_utxo.to_h if non_witness_utxo
+        h[:witness_utxo] = witness_utxo.to_h if witness_utxo
+        h[:redeem_script] = redeem_script.to_h if redeem_script
+        h[:witness_script] = witness_script.to_h if redeem_script
+        h[:final_script_sig] = final_script_sig.to_h if final_script_sig
+        h[:final_script_witness] = final_script_witness.to_h if final_script_witness
+        h[:bip32_derivs] = hd_key_paths.values.map(&:to_h) unless hd_key_paths.empty?
+        h[:partial_signatures] = partial_sigs.map {|k, v| {"#{k}": v.bth}} unless partial_sigs.empty?
+        h[:sighash_type] = sighash_type if sighash_type
+        h[:ripemd160_preimages] = ripemd160_preimages.map {|k, v| {"#{k}": v}} unless ripemd160_preimages.empty?
+        h[:sha256_preimages] = sha256_preimages.map {|k, v| {"#{k}": v}} unless sha256_preimages.empty?
+        h[:hash160_preimages] = hash160_preimages.map {|k, v| {"#{k}": v}} unless hash160_preimages.empty?
+        h[:hash256_preimages] = hash256_preimages.map {|k, v| {"#{k}": v}} unless hash256_preimages.empty?
+        h[:proprietary] = proprietaries.map(&:to_h) unless proprietaries.empty?
+        h[:tap_key_sig] = tap_key_sig if tap_key_sig
+        h[:tap_script_sig] = tap_script_sigs.map {|k, v| {"#{k}": v}} unless tap_script_sigs.empty?
+        h[:tap_leaf_script] = tap_leaf_scripts.map {|k, v| {"#{k}": v}} unless tap_leaf_scripts.empty?
+        h[:tap_bip32_derivs] = tap_bip32_derivations.map{|k, v| {"#{k}": v}} unless tap_bip32_derivations.empty?
+        h[:tap_internal_key] = tap_internal_key if tap_internal_key
+        h[:tap_merkle_root] = tap_merkle_root if tap_merkle_root
+        h[:unknown] = unknowns.map {|k, v| {"#{k}": v.bth}} unless unknowns.empty?
+        h
+      end
+
     end
 
   end
