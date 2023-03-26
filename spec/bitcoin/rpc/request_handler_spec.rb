@@ -116,8 +116,8 @@ describe Bitcoin::RPC::RequestHandler do
                             script_pubkey: {
                                 asm: 'OP_HASH160 54080827c0212bce22f827d1728d8480975de933 OP_EQUAL',
                                 hex: 'a91454080827c0212bce22f827d1728d8480975de93387',
-                                req_sigs: 1, type: 'scripthash',
-                                addresses: ['2MzuYNTgfcezpymFsHLGjsNPchnKXwNP7SK']
+                                type: 'scripthash',
+                                address: '2MzuYNTgfcezpymFsHLGjsNPchnKXwNP7SK'
                             }}]
                     )
       # for segwit tx
@@ -143,17 +143,17 @@ describe Bitcoin::RPC::RequestHandler do
       it 'should return p2pkh script and addr.' do
         h = subject.decodescript('76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac')
         expect(h).to include(asm: 'OP_DUP OP_HASH160 46c2fbfbecc99a63148fa076de58cf29b0bcf0b0 OP_EQUALVERIFY OP_CHECKSIG',
-                             type: 'pubkeyhash', req_sigs: 1,
+                             type: 'pubkeyhash',
                              p2sh: '2MztYDkQ6pdm8o26Eur1QcYRX8D8VP7v3yX',
-                             addresses: ['mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1'])
+                             address: 'mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1')
       end
     end
     context 'p2sh' do
       it 'should return p2sh script and addr.' do
         h = subject.decodescript('a9147620a79e8657d066cff10e21228bf983cf546ac687')
         expect(h).to include(asm: 'OP_HASH160 7620a79e8657d066cff10e21228bf983cf546ac6 OP_EQUAL',
-                             type: 'scripthash', req_sigs: 1,
-                             addresses: ['2N41pqp5vuafHQf39KraznDLEqsSKaKmrij'])
+                             type: 'scripthash',
+                             address: '2N41pqp5vuafHQf39KraznDLEqsSKaKmrij')
       end
     end
     context 'p2wpkh' do
@@ -162,25 +162,23 @@ describe Bitcoin::RPC::RequestHandler do
         expect(h).to include(asm: '0 46c2fbfbecc99a63148fa076de58cf29b0bcf0b0',
                              type: 'witness_v0_keyhash',
                              p2sh: '2N3wh1eYqMeqoLxuKFv8PBsYR4f8gYn8dHm',
-                             req_sigs: 1,
-                             addresses: ['tb1qgmp0h7lvexdxx9y05pmdukx09xcteu9sx2h4ya'])
+                             address: 'tb1qgmp0h7lvexdxx9y05pmdukx09xcteu9sx2h4ya')
       end
     end
     context 'p2wsh' do
       it 'should return p2wsh script and addr.' do
         h = subject.decodescript('00203ce1c71303e564430e0c5721727739290046302a9674f1d67a249cfd2ce7d3fd')
         expect(h).to include(asm: '0 3ce1c71303e564430e0c5721727739290046302a9674f1d67a249cfd2ce7d3fd',
-                             type: 'witness_v0_scripthash', req_sigs: 1,
+                             type: 'witness_v0_scripthash',
                              p2sh: '2MtdzMmaUTSjL72ziauNhZygLNuNc8LNSxg',
-                             addresses: ['tb1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607sajrpy8'])
+                             address: 'tb1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607sajrpy8')
       end
     end
     context 'multisig' do
       it 'should return multisig script and addrs.' do
         h = subject.decodescript('522102b3c35b692667fe940033aa50ea2f000ef0a67afb4f09f189695f627e55efa4972102d79e3fb71193b0269fe3822ea0fdaec210bd42f7a73679401787aa6932202f642103b0f671f3dda9b42442a82dcdd8d03ad8690c9b55dae6d46e30af3dbf2dd7283553ae')
         expect(h).to include(asm: '2 02b3c35b692667fe940033aa50ea2f000ef0a67afb4f09f189695f627e55efa497 02d79e3fb71193b0269fe3822ea0fdaec210bd42f7a73679401787aa6932202f64 03b0f671f3dda9b42442a82dcdd8d03ad8690c9b55dae6d46e30af3dbf2dd72835 3 OP_CHECKMULTISIG',
-                             type: 'multisig', req_sigs: 2, p2sh: '2NBqJTuQRr8848Y9JdrEr7eudmWMTux5uR8',
-                             addresses: ['myYTwRGG7s4zHHwn2UAKjY1oNLv9e3ucX9', 'mz4LtFxEHaQE5psvdq5dBJLv6UjqsFTUMr','mwRBqUC2HqeoRUVxoqaAR1eC3fC8Wig1T4'])
+                             type: 'multisig', p2sh: '2NBqJTuQRr8848Y9JdrEr7eudmWMTux5uR8')
       end
     end
     context 'contract' do
