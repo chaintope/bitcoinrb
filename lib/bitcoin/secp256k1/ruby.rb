@@ -1,3 +1,6 @@
+require 'ecdsa_ext'
+require 'ecdsa/ext/sign_verify'
+
 module Bitcoin
   module Secp256k1
 
@@ -10,9 +13,9 @@ module Bitcoin
       # generate ec private key and public key
       def generate_key_pair(compressed: true)
         private_key = 1 + SecureRandom.random_number(GROUP.order - 1)
-        public_key = GROUP.generator.multiply_by_scalar(private_key)
+        public_key = GROUP.generator.to_jacobian * private_key
         privkey = ECDSA::Format::IntegerOctetString.encode(private_key, 32)
-        pubkey = public_key.to_hex(compressed)
+        pubkey = public_key.to_affine.to_hex(compressed)
         [privkey.bth, pubkey]
       end
 
@@ -23,8 +26,8 @@ module Bitcoin
       end
 
       def generate_pubkey(privkey, compressed: true)
-        public_key = ECDSA::Group::Secp256k1.generator.multiply_by_scalar(privkey.to_i(16))
-        public_key.to_hex(compressed)
+        public_key = GROUP.generator.to_jacobian * privkey.to_i(16)
+        public_key.to_affine.to_hex(compressed)
       end
 
       # Check whether valid x-only public key or not.
@@ -132,7 +135,7 @@ module Bitcoin
         nonce = RFC6979.generate_rfc6979_nonce(privkey + data, extra_entropy)
 
         # port form ecdsa gem.
-        r_point = GROUP.new_point(nonce)
+        r_point = (GROUP.generator.to_jacobian * nonce).to_affine
 
         point_field = ECDSA::PrimeField.new(GROUP.order)
         r = point_field.mod(r_point.x)
