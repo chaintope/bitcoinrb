@@ -2,6 +2,13 @@ require 'spec_helper'
 
 describe Bitcoin::Key do
 
+  describe "initialize" do
+    it do
+      expect{described_class.new(priv_key: '6f3acb5b7ac66dacf87910bb0b04bed78284b9b50c0d061705a44447a947ff')}.
+        to raise_error(ArgumentError, 'Private key must be 32 bytes.')
+    end
+  end
+
   describe '#from_wif' do
     context 'mainnet', network: :mainnet do
       subject { Bitcoin::Key.from_wif('KxJkzWsRQmr2bdU9TdWDFhXxg9nsELSEQojEQFZMFqJsHTBSXpP9') }
@@ -132,7 +139,6 @@ describe Bitcoin::Key do
   describe 'private key range check' do
     context 'on curve' do
       it 'not raise error' do
-        expect{Bitcoin::Key.new(priv_key: '01')}.not_to raise_error
         expect{Bitcoin::Key.new(priv_key: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140')}.not_to raise_error
         expect(Bitcoin::Key.new(priv_key: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140').fully_valid_pubkey?).to be true
       end

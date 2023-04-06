@@ -39,6 +39,7 @@ module Bitcoin
       @secp256k1_module =  Bitcoin.secp_impl
       @priv_key = priv_key
       if @priv_key
+        raise ArgumentError, 'Private key must be 32 bytes.' unless priv_key.htb.bytesize == 32
         raise ArgumentError, Errors::Messages::INVALID_PRIV_KEY unless validate_private_key_range(@priv_key)
       end
       if pubkey
