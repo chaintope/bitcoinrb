@@ -40,7 +40,9 @@ module Bitcoin
       private_key = p.has_even_y? ? internal_private_key.priv_key.to_i(16) :
                       ECDSA::Group::Secp256k1.order - internal_private_key.priv_key.to_i(16)
       t = tweak(internal_private_key, merkle_root)
-      Bitcoin::Key.new(priv_key: ((t.bti + private_key) % ECDSA::Group::Secp256k1.order).to_even_length_hex)
+      private_key = ECDSA::Format::IntegerOctetString.encode(
+        (t.bti + private_key) % ECDSA::Group::Secp256k1.order, 32)
+      Bitcoin::Key.new(priv_key: private_key.bth)
     end
   end
 end
