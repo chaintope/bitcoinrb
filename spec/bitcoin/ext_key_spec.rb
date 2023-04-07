@@ -313,6 +313,23 @@ describe Bitcoin::ExtKey, network: :mainnet do
     end
   end
 
+  describe '#derive' do
+    context 'with low-digit private key' do
+      it do
+        key =
+          Bitcoin::ExtPubkey.from_base58(
+            'xpub68WgmmEjvQ83zEHCDL7Xo2UJSpXNQQKvLqBYbov5KCw21qSdi8VtUn8ngr2RjVfr78D5xJRj8wz32pY5pqfLBHyUd6UpnKbr2Ksrz1QJkgd'
+          )
+        expect { key.derive(1) }.not_to raise_error
+        ext_key =
+          described_class.from_base58(
+            'xprv9u5ZUHmBBKmo79NoG4UecQHeHJ5ntK5efANQBeYNyUSWNpkGsyW95Msj3AWGB5wKYw6V28wTgwcTvXCkYFNQ2qMS2D13vz6EXUhTqjx4gFk'
+          )
+        expect { ext_key.derive(1) }.not_to raise_error
+      end
+    end
+  end
+
   describe 'Test Vector 3' do
     context 'ruby' do
       subject {
