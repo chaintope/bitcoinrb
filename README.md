@@ -67,6 +67,8 @@ And then add to your .rb file:
 
 ## Usage
 
+Examples can be found on the [wiki](https://github.com/chaintope/bitcoinrb/wiki).
+
 ### Chain selection
 
 The parameters of the blockchain are managed by `Bitcoin::ChainParams`. Switch chain parameters as follows:
