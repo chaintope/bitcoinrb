@@ -296,4 +296,26 @@ describe Bitcoin::Key do
       end
     end
   end
+
+  describe '#generate' do
+    context 'pure ruby' do
+      it 'return decompressed public key' do
+        test_generate
+      end
+    end
+
+    context 'libsecp256k1', use_secp256k1: true do
+      it 'return decompressed public key' do
+        test_generate
+      end
+    end
+
+    def test_generate
+      compressed = Bitcoin::Key.generate(Bitcoin::Key::TYPES[:compressed])
+      expect(compressed.compressed?).to be true
+      uncompressed = Bitcoin::Key.generate(Bitcoin::Key::TYPES[:uncompressed])
+      expect(uncompressed.compressed?).to be false
+    end
+  end
+
 end
