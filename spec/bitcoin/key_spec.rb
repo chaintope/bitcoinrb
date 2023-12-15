@@ -318,4 +318,26 @@ describe Bitcoin::Key do
     end
   end
 
+  describe '#decompress_pubkey' do
+    context 'pure ruby' do
+      it 'return decompressed public key' do
+        test_decompress
+      end
+    end
+
+    context 'libsecp256k1', use_secp256k1: true do
+      it 'return decompressed public key' do
+        test_decompress
+      end
+    end
+
+    def test_decompress
+      compress_key = Bitcoin::Key.generate(Bitcoin::Key::TYPES[:compressed])
+      uncompressed_pubkey = Bitcoin::Key.new(priv_key: compress_key.priv_key, key_type: Bitcoin::Key::TYPES[:uncompressed])
+      expect(compress_key.decompress_pubkey).to eq(uncompressed_pubkey.pubkey)
+
+      uncompressed_key = Bitcoin::Key.generate(Bitcoin::Key::TYPES[:uncompressed])
+      expect(uncompressed_key.decompress_pubkey).to eq(uncompressed_key.pubkey)
+    end
+  end
 end

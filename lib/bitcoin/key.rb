@@ -261,6 +261,12 @@ module Bitcoin
       pubkey[2..65]
     end
 
+    # Convert this key to decompress key.
+    # @return [String] decompress public key with hex format.
+    def decompress_pubkey
+      pubkey.htb.bytesize == PUBLIC_KEY_SIZE ? pubkey : to_point.to_hex(false)
+    end
+
     # check +pubkey+ (hex) is compress or uncompress pubkey.
     def self.compress_or_uncompress_pubkey?(pubkey)
       p = pubkey.htb
