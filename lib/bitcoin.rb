@@ -46,7 +46,6 @@ module Bitcoin
   autoload :RPC, 'bitcoin/rpc'
   autoload :Wallet, 'bitcoin/wallet'
   autoload :BloomFilter, 'bitcoin/bloom_filter'
-  autoload :Payments, 'bitcoin/payments'
   autoload :PSBT, 'bitcoin/psbt'
   autoload :GCSFilter, 'bitcoin/gcs_filter'
   autoload :BlockFilter, 'bitcoin/block_filter'
