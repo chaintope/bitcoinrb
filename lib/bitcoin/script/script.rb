@@ -233,6 +233,23 @@ module Bitcoin
       OP_HASH160 == chunks[0].ord && OP_EQUAL == chunks[2].ord && chunks[1].bytesize == 21
     end
 
+    # Check whether this script is a P2PK format script.
+    # @return [Boolean] if P2PK return true, otherwise false
+    def p2pk?
+      return false unless chunks.size == 2
+      return false unless chunks[0].pushdata?
+      key_type = chunks[0].pushed_data[0].ord
+      case key_type
+      when 0x02, 0x03
+        return false unless chunks[0].pushed_data.bytesize == 33
+      when 0x04, 0x05
+        return false unless chunks[0].pushed_data.bytesize == 65
+      else
+        return false
+      end
+      chunks[1].ord == OP_CHECKSIG
+    end
+
     def multisig?
       return false if chunks.size < 4 || chunks.last.ord != OP_CHECKMULTISIG
       pubkey_count = Opcodes.opcode_to_small_int(chunks[-2].opcode)

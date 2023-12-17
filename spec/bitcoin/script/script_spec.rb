@@ -62,6 +62,7 @@ describe Bitcoin::Script do
         expect(subject.multisig?).to be false
         expect(subject.op_return?).to be false
         expect(subject.standard?).to be true
+        expect(subject.p2pk?).to be false
         expect(subject.to_addr).to eq('17T9tBC2dSpusL1rhT4T4AV4if963Tpfym')
         expect(subject.get_pubkeys).to eq([])
       end
@@ -90,6 +91,7 @@ describe Bitcoin::Script do
         expect(subject.multisig?).to be false
         expect(subject.op_return?).to be false
         expect(subject.standard?).to be true
+        expect(subject.p2pk?).to be false
         expect(subject.to_addr).to eq('bc1qgmp0h7lvexdxx9y05pmdukx09xcteu9svvvxlw')
         expect(subject.get_pubkeys).to eq([])
       end
@@ -122,6 +124,7 @@ describe Bitcoin::Script do
         expect(subject[0].multisig?).to be false
         expect(subject[0].op_return?).to be false
         expect(subject[0].standard?).to be true
+        expect(subject[0].p2pk?).to be false
         expect(subject[0].to_addr).to eq('3CTcn59uJ89wCsQbeiy8AGLydXE9mh6Yrr')
         expect(subject[1].to_hex).to eq('5121021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e921032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e3552ae')
         expect(subject[1].to_s).to eq('1 021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9 032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35 2 OP_CHECKMULTISIG')
@@ -158,6 +161,7 @@ describe Bitcoin::Script do
         expect(subject.multisig?).to be false
         expect(subject.op_return?).to be false
         expect(subject.standard?).to be true
+        expect(subject.p2pk?).to be false
         expect(subject.to_addr).to eq('bc1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607s264w7g')
         expect(subject.get_pubkeys).to eq([])
       end
@@ -181,6 +185,7 @@ describe Bitcoin::Script do
       expect(subject.multisig?).to be false
       expect(subject.op_return?).to be false
       expect(subject.standard?).to be true
+      expect(subject.p2pk?).to be false
       expect(subject.to_addr).to eq('bc1p5rgvqejqh9dh37t9g94dd9cm8vtqns7dndgj423egwggsggcdzmsspvr7j')
     end
 
@@ -188,6 +193,22 @@ describe Bitcoin::Script do
       it 'raise ArgumentError' do
         expect{Bitcoin::Script.to_p2tr('03a0d0c06640b95b78f965416ad6971b3b1609c3cd9b512aaa39439088211868b7')}.to raise_error(ArgumentError, 'Invalid public key size')
       end
+    end
+  end
+
+  describe 'P2PK script' do
+    subject { Bitcoin::Script.new << '032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35' << OP_CHECKSIG }
+    it ' should be p2pk' do
+      expect(subject.p2pkh?).to be false
+      expect(subject.p2sh?).to be false
+      expect(subject.p2wpkh?).to be false
+      expect(subject.p2wsh?).to be false
+      expect(subject.p2tr?).to be false
+      expect(subject.multisig?).to be false
+      expect(subject.op_return?).to be false
+      expect(subject.standard?).to be false
+      expect(subject.p2pk?).to be true
+      expect(subject.to_addr).to be nil
     end
   end
 
@@ -206,6 +227,7 @@ describe Bitcoin::Script do
       expect(subject.multisig?).to be true
       expect(subject.op_return?).to be false
       expect(subject.standard?).to be true
+      expect(subject.p2pk?).to be false
       expect(subject.to_addr).to be nil
       expect(subject.get_pubkeys).to eq(['021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9', '032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35'])
     end
@@ -225,6 +247,7 @@ describe Bitcoin::Script do
         expect(subject.multisig?).to be false
         expect(subject.op_return?).to be true
         expect(subject.standard?).to be true
+        expect(subject.p2pk?).to be false
         expect(subject.op_return_data.bth).to eq('04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38')
         expect(subject.get_pubkeys).to eq([])
       end
