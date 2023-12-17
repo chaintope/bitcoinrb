@@ -213,23 +213,33 @@ describe Bitcoin::Script do
   end
 
   describe 'multisig script' do
-    subject {
-      k1 = '021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9'
-      k2 = '032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35'
-      Bitcoin::Script.to_multisig_script(2, [k1, k2])
-    }
-    it 'should treat as multisig' do
-      expect(subject.p2pkh?).to be false
-      expect(subject.p2sh?).to be false
-      expect(subject.p2wpkh?).to be false
-      expect(subject.p2wsh?).to be false
-      expect(subject.p2tr?).to be false
-      expect(subject.multisig?).to be true
-      expect(subject.op_return?).to be false
-      expect(subject.standard?).to be true
-      expect(subject.p2pk?).to be false
-      expect(subject.to_addr).to be nil
-      expect(subject.get_pubkeys).to eq(['021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9', '032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35'])
+    context 'valid multsig' do
+      subject {
+        k1 = '021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9'
+        k2 = '032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35'
+        Bitcoin::Script.to_multisig_script(2, [k1, k2])
+      }
+      it 'should treat as multisig' do
+        expect(subject.p2pkh?).to be false
+        expect(subject.p2sh?).to be false
+        expect(subject.p2wpkh?).to be false
+        expect(subject.p2wsh?).to be false
+        expect(subject.p2tr?).to be false
+        expect(subject.multisig?).to be true
+        expect(subject.op_return?).to be false
+        expect(subject.standard?).to be true
+        expect(subject.p2pk?).to be false
+        expect(subject.to_addr).to be nil
+        expect(subject.get_pubkeys).to eq(['021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9', '032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35'])
+      end
+    end
+
+    context 'invalid multisig' do
+      it 'should be false' do
+        # 2bb7e8720356f79a9005488a529ab12d6f516879b2357224204cb5f2b780fd02:0
+        script = Bitcoin::Script.parse_from_payload('402153484f55544f555420544f2023424954434f494e2d4153534554532020202020202020202020202020202020202020202020202020202020202020202020207551210391b373843e77f5ac1f05db4afb5151190e67cfee5a48f7925d71da7c5e91942251ae'.htb)
+        expect(script.multisig?).to be false
+      end
     end
   end
 

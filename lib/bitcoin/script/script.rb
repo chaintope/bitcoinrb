@@ -254,7 +254,7 @@ module Bitcoin
       return false if chunks.size < 4 || chunks.last.ord != OP_CHECKMULTISIG
       pubkey_count = Opcodes.opcode_to_small_int(chunks[-2].opcode)
       sig_count = Opcodes.opcode_to_small_int(chunks[0].opcode)
-      return false unless pubkey_count || sig_count
+      return false if pubkey_count.nil? || sig_count.nil?
       sig_count <= pubkey_count
     end
 
