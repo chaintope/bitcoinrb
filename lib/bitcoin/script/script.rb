@@ -242,7 +242,7 @@ module Bitcoin
       case key_type
       when 0x02, 0x03
         return false unless chunks[0].pushed_data.bytesize == 33
-      when 0x04, 0x05
+      when 0x04
         return false unless chunks[0].pushed_data.bytesize == 65
       else
         return false
