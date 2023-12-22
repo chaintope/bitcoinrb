@@ -5,7 +5,7 @@ module Bitcoin
   module Secp256k1
 
     # binding for secp256k1 (https://github.com/bitcoin-core/secp256k1/)
-    # commit: efad3506a8937162e8010f5839fdf3771dfcf516
+    # tag: v0.4.0
     # this is not included by default, to enable set shared object path to ENV['SECP256K1_LIB_PATH']
     # for linux, ENV['SECP256K1_LIB_PATH'] = '/usr/local/lib/libsecp256k1.so'
     # for mac,
@@ -50,8 +50,8 @@ module Bitcoin
         attach_function(:secp256k1_ecdsa_signature_parse_der, [:pointer, :pointer, :pointer, :size_t], :int)
         attach_function(:secp256k1_ecdsa_signature_normalize, [:pointer, :pointer, :pointer], :int)
         attach_function(:secp256k1_ecdsa_verify, [:pointer, :pointer, :pointer, :pointer], :int)
-        attach_function(:secp256k1_schnorrsig_sign, [:pointer, :pointer, :pointer, :pointer, :pointer, :pointer], :int)
-        attach_function(:secp256k1_schnorrsig_verify, [:pointer, :pointer, :pointer, :pointer], :int)
+        attach_function(:secp256k1_schnorrsig_sign32, [:pointer, :pointer, :pointer, :pointer, :pointer], :int)
+        attach_function(:secp256k1_schnorrsig_verify, [:pointer, :pointer, :pointer, :size_t, :pointer], :int)
         attach_function(:secp256k1_keypair_create, [:pointer, :pointer, :pointer], :int)
         attach_function(:secp256k1_xonly_pubkey_parse, [:pointer, :pointer, :pointer], :int)
         attach_function(:secp256k1_ecdsa_sign_recoverable, [:pointer, :pointer, :pointer, :pointer, :pointer, :pointer], :int)
@@ -280,7 +280,7 @@ module Bitcoin
           signature = FFI::MemoryPointer.new(:uchar, 64)
           msg32 = FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, data)
           aux_rand = FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, aux_rand) if aux_rand
-          raise 'Failed to generate schnorr signature.' unless secp256k1_schnorrsig_sign(context, signature, msg32, keypair, nil, aux_rand) == 1
+          raise 'Failed to generate schnorr signature.' unless secp256k1_schnorrsig_sign32(context, signature, msg32, keypair, aux_rand) == 1
           signature.read_string(64)
         end
       end
@@ -316,7 +316,7 @@ module Bitcoin
           xonly_pubkey = FFI::MemoryPointer.new(:uchar, pubkey.bytesize).put_bytes(0, pubkey)
           signature = FFI::MemoryPointer.new(:uchar, sig.bytesize).put_bytes(0, sig)
           msg32 = FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, data)
-          result = secp256k1_schnorrsig_verify(context, signature, msg32, xonly_pubkey)
+          result = secp256k1_schnorrsig_verify(context, signature, msg32, 32, xonly_pubkey)
           result == 1
         end
       end
