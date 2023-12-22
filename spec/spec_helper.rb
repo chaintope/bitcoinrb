@@ -4,6 +4,7 @@ require 'logger'
 require 'timecop'
 require 'webmock/rspec'
 require 'parallel'
+require 'csv'
 
 RSpec.configure do |config|
   config.before(:each) do |example|
@@ -45,6 +46,10 @@ end
 
 def fixture_path(relative_path)
   File.join(File.dirname(__FILE__), 'fixtures', relative_path)
+end
+
+def read_csv(relative_path)
+  CSV.read(File.join(File.dirname(__FILE__), 'fixtures', relative_path), headers: true)
 end
 
 def load_block(hash)
