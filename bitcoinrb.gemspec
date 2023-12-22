@@ -32,7 +32,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'iniparse'
   spec.add_runtime_dependency 'siphash'
   spec.add_runtime_dependency 'json_pure', '>= 2.3.1'
-  spec.add_runtime_dependency 'bip-schnorr', '>= 0.5.0'
+  spec.add_runtime_dependency 'bip-schnorr', '>= 0.6.0'
   spec.add_runtime_dependency 'base32', '>= 0.3.4'
 
   # for options
