@@ -105,6 +105,15 @@ Bitcoin.chain_params = :signet
 
 This parameter is described in https://github.com/chaintope/bitcoinrb/blob/master/lib/bitcoin/chainparams/signet.yml.
 
+## Test
+
+This library can use the [libsecp256k1](https://github.com/bitcoin-core/secp256k1/) dynamic library.
+Therefore, some tests require this library. In a Linux environment, `spec/lib/libsecp256k1.so` is already located,
+so there is no need to do anything. If you want to test in another environment,
+please set the library path in the environment variable `TEST_LIBSECP256K1_PATH`.
+
+The libsecp256k1 library currently tested for operation with this library is `v0.4.0`.
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/bitcoinrb. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
