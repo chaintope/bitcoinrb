@@ -23,8 +23,8 @@ module Bitcoin
           pubkey = Bitcoin.secp_impl.ellswift_decode(key)
           Bitcoin::Key.new(pubkey: pubkey, key_type: Bitcoin::Key::TYPES[:compressed])
         else
-          u = key[0...32].bti
-          t = key[32..-1].bti
+          u = key[0...32].bth
+          t = key[32..-1].bth
           x = BIP324.xswiftec(u, t)
           Bitcoin::Key.from_xonly_pubkey(x)
         end
