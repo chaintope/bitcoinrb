@@ -77,5 +77,20 @@ module Bitcoin
                  end
       ECDSA::Format::IntegerOctetString.encode(result, 32).bth
     end
+
+    # Given a field element X on the curve, find (u, t) that encode them.
+    # @param [String] x coordinate with hex format.
+    # @return [String] ElligatorSwift public key with hex format.
+    def xelligatorswift(x)
+      loop do
+        u = SecureRandom.random_number(1..ECDSA::Group::Secp256k1.order).to_s(16)
+        c = Random.rand(0..8)
+        t = xswiftec_inv(x, u, c)
+        unless t.nil?
+          return (ECDSA::Format::IntegerOctetString.encode(u.hex, 32) +
+            ECDSA::Format::IntegerOctetString.encode(t.hex, 32)).bth
+        end
+      end
+    end
   end
 end

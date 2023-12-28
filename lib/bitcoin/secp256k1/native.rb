@@ -59,6 +59,7 @@ module Bitcoin
         attach_function(:secp256k1_ecdsa_recover, [:pointer, :pointer, :pointer, :pointer], :int)
         attach_function(:secp256k1_ecdsa_recoverable_signature_parse_compact, [:pointer, :pointer, :pointer, :int], :int)
         attach_function(:secp256k1_ellswift_decode, [:pointer, :pointer, :pointer], :int)
+        attach_function(:secp256k1_ellswift_create, [:pointer, :pointer, :pointer, :pointer], :int)
       end
 
       def with_context(flags: (SECP256K1_CONTEXT_VERIFY | SECP256K1_CONTEXT_SIGN))
@@ -227,7 +228,7 @@ module Bitcoin
 
       # Decode ellswift public key.
       # @param [String] ell_key ElligatorSwift key with binary format.
-      # @return [String]
+      # @return [String] Decoded public key with hex format
       def ellswift_decode(ell_key)
         with_context do |context|
           ell64 = FFI::MemoryPointer.new(:uchar, ell_key.bytesize).put_bytes(0, ell_key)
@@ -235,6 +236,19 @@ module Bitcoin
           result = secp256k1_ellswift_decode(context, internal, ell64)
           raise ArgumentError, 'Decode failed.' unless result == 1
           serialize_pubkey_internal(context, internal, true)
+        end
+      end
+
+      # Compute an ElligatorSwift public key for a secret key.
+      # @param [String] priv_key private key with hex format
+      # @return [String] ElligatorSwift public key with hex format.
+      def ellswift_create(priv_key)
+        with_context(flags: SECP256K1_CONTEXT_SIGN) do |context|
+          ell64 = FFI::MemoryPointer.new(:uchar, 64)
+          seckey32 = FFI::MemoryPointer.new(:uchar, 32).put_bytes(0, priv_key.htb)
+          result = secp256k1_ellswift_create(context, ell64, seckey32, nil)
+          raise ArgumentError, 'Failed to create ElligatorSwift public key.' unless result == 1
+          ell64.read_string(64).bth
         end
       end
 

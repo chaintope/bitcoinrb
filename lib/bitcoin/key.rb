@@ -344,6 +344,17 @@ module Bitcoin
       valid_pubkey? && secp256k1_module.parse_ec_pubkey?(pubkey, allow_hybrid)
     end
 
+    # Create an ellswift-encoded public key for this key, with specified entropy.
+    # @return [Bitcoin::BIP324::EllSwiftPubkey]
+    # @raise ArgumentError If ent32 does not 32 bytes.
+    def create_ell_pubkey
+      if secp256k1_module.is_a?(Bitcoin::Secp256k1::Native)
+        Bitcoin::BIP324::EllSwiftPubkey.new(secp256k1_module.ellswift_create(priv_key))
+      else
+        Bitcoin::BIP324::EllSwiftPubkey.new(Bitcoin::BIP324.xelligatorswift(xonly_pubkey))
+      end
+    end
+
     private
 
     def self.compare_big_endian(c1, c2)

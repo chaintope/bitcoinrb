@@ -2,6 +2,11 @@ require 'spec_helper'
 
 describe Bitcoin::Key do
 
+  let(:secret1) { '5HxWvvfubhXpYYpS3tJkw6fq9jE9j18THftkZjHHfmFiWtmAbrj' }
+  let(:secret2) { '5KC4ejrDjv152FGwP386VD1i2NYc5KkfSMyv1nGy1VGDxGHqVY3' }
+  let(:secret3) { 'Kwr371tjA9u2rFSMZjTNun2PXXP3WPZu2afRHTcta6KxEUdm1vEw' }
+  let(:secret4) { 'L3Hq7a8FEQwJkW1M2GNKDW28546Vp5miewcCzSqUD9kCAXrJdS3g' }
+
   describe "initialize" do
     it do
       expect{described_class.new(priv_key: '6f3acb5b7ac66dacf87910bb0b04bed78284b9b50c0d061705a44447a947ff')}.
@@ -338,6 +343,23 @@ describe Bitcoin::Key do
 
       uncompressed_key = Bitcoin::Key.generate(Bitcoin::Key::TYPES[:uncompressed])
       expect(uncompressed_key.decompress_pubkey).to eq(uncompressed_key.pubkey)
+    end
+  end
+
+  describe "#create_ell_pubkey", network: :mainnet do
+    context "native", use_secp256k1: true do
+      it { test_ell_pubkey }
+    end
+    context "ruby" do
+      it { test_ell_pubkey }
+    end
+    def test_ell_pubkey
+      [secret1, secret2, secret3, secret4].each do |wif|
+        key = Bitcoin::Key.from_wif(wif)
+        ellswift = key.create_ell_pubkey
+        key = Bitcoin::Key.new(pubkey: key.to_point.to_hex(true)) unless key.compressed?
+        expect(ellswift.decode.pubkey).to eq(key.pubkey)
+      end
     end
   end
 end

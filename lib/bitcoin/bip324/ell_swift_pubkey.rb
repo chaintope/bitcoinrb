@@ -26,7 +26,7 @@ module Bitcoin
           u = key[0...32].bth
           t = key[32..-1].bth
           x = BIP324.xswiftec(u, t)
-          Bitcoin::Key.from_xonly_pubkey(x)
+          Bitcoin::Key.new(pubkey: "03#{x}")
         end
       end
 
