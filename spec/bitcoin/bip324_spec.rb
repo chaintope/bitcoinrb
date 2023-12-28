@@ -13,8 +13,7 @@ RSpec.describe Bitcoin::BIP324 do
 
     context 'ruby' do
       it do
-        # TODO
-        # test_vectors
+        test_vectors
       end
     end
 

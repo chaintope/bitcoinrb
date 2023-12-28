@@ -225,7 +225,7 @@ module Bitcoin
         true
       end
 
-      # Decode ellswift_decode.
+      # Decode ellswift public key.
       # @param [String] ell_key ElligatorSwift key with binary format.
       # @return [String]
       def ellswift_decode(ell_key)
