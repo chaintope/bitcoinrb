@@ -92,5 +92,42 @@ module Bitcoin
         end
       end
     end
+
+    # Compute x coordinate of shared ECDH point between +ellswift_theirs+ and +priv_key+.
+    # @param [Bitcoin::BIP324::EllSwiftPubkey] ellswift_theirs Their EllSwift public key.
+    # @param [String] priv_key Private key with hex format.
+    # @return [String] x coordinate of shared ECDH point with hex format.
+    # @raise ArgumentError
+    def ellswift_ecdh_xonly(ellswift_theirs, priv_key)
+      raise ArgumentError, "ellswift_theirs must be a Bitcoin::BIP324::EllSwiftPubkey" unless ellswift_theirs.is_a?(Bitcoin::BIP324::EllSwiftPubkey)
+      d = priv_key.hex
+      x = ellswift_theirs.decode.to_point.x
+      field = BIP324::FIELD
+      y = BIP324.sqrt(field.mod(field.power(x, 3) + 7))
+      return nil unless y
+      point = ECDSA::Point.new(ECDSA::Group::Secp256k1, x, y) * d
+      ECDSA::Format::FieldElementOctetString.encode(point.x, point.group.field).bth
+    end
+
+    # Compute BIP324 shared secret.
+    # @param [String] priv_key Private key with hex format.
+    # @param [Bitcoin::BIP324::EllSwiftPubkey] ellswift_theirs Their EllSwift public key.
+    # @param [Bitcoin::BIP324::EllSwiftPubkey] ellswift_ours Our EllSwift public key.
+    # @param [Boolean] initiating Whether your initiator or not.
+    # @return [String] Shared secret with hex format.
+    # @raise ArgumentError
+    def v2_ecdh(priv_key, ellswift_theirs, ellswift_ours, initiating)
+      raise ArgumentError, "ellswift_theirs must be a Bitcoin::BIP324::EllSwiftPubkey" unless ellswift_theirs.is_a?(Bitcoin::BIP324::EllSwiftPubkey)
+      raise ArgumentError, "ellswift_ours must be a Bitcoin::BIP324::EllSwiftPubkey" unless ellswift_ours.is_a?(Bitcoin::BIP324::EllSwiftPubkey)
+
+      if Bitcoin.secp_impl.is_a?(Bitcoin::Secp256k1::Native)
+        Bitcoin::Secp256k1::Native.ellswift_ecdh_xonly(ellswift_theirs, ellswift_ours, priv_key, initiating)
+      else
+        ecdh_point_x32 = ellswift_ecdh_xonly(ellswift_theirs, priv_key).htb
+        content = initiating ? ellswift_ours.key + ellswift_theirs.key + ecdh_point_x32 :
+                    ellswift_theirs.key + ellswift_ours.key + ecdh_point_x32
+        Bitcoin.tagged_hash('bip324_ellswift_xonly_ecdh', content).bth
+      end
+    end
   end
 end

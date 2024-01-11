@@ -3,7 +3,8 @@ require 'spec_helper'
 RSpec.describe Bitcoin::BIP324 do
 
   let(:decode_vectors) { read_csv('bip324/ellswift_decode_test_vectors.csv') }
-  let(:inv_vectors) { read_csv('bip324/xswiftec_inv_test_vectors.csv') }
+  let(:xswiftec_inv_vectors) { read_csv('bip324/xswiftec_inv_test_vectors.csv') }
+  let(:packet_encoding_vectors) { read_csv('bip324/packet_encoding_test_vectors.csv') }
 
   describe '#decode' do
     context 'native', use_secp256k1: true do
@@ -24,7 +25,7 @@ RSpec.describe Bitcoin::BIP324 do
 
   describe "xswiftec_inv" do
     it do
-      inv_vectors.each do |v|
+      xswiftec_inv_vectors.each do |v|
         8.times do |c|
           r = described_class.xswiftec_inv(v['x'], v['u'], c)
           if r.nil?
@@ -34,6 +35,30 @@ RSpec.describe Bitcoin::BIP324 do
             expect(described_class.xswiftec(v['u'], r))
           end
         end
+      end
+    end
+  end
+
+  describe "ellswift_xdh" do
+    context "native", use_secp256k1: true do
+      it { test_ellswift_xdh }
+    end
+
+    context "ruby" do
+      it { test_ellswift_xdh }
+    end
+
+    def test_ellswift_xdh
+      packet_encoding_vectors.each do |v|
+        initiating = v['in_initiating'] == "1"
+        our_priv = Bitcoin::Key.new(priv_key: v['in_priv_ours'])
+        expect(our_priv.xonly_pubkey).to eq(v['mid_x_ours'])
+        our_ell = Bitcoin::BIP324::EllSwiftPubkey.new(v['in_ellswift_ours'])
+        expect(our_ell.decode.xonly_pubkey).to eq(v['mid_x_ours'])
+        their_ell = Bitcoin::BIP324::EllSwiftPubkey.new(v['in_ellswift_theirs'])
+        expect(their_ell.decode.xonly_pubkey).to eq(v['mid_x_theirs'])
+        shared_x = described_class.v2_ecdh(our_priv.priv_key, their_ell, our_ell, initiating)
+        expect(shared_x).to eq(v['mid_shared_secret'])
       end
     end
   end
