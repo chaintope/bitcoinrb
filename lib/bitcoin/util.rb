@@ -131,10 +131,8 @@ module Bitcoin
       double_sha256(hex.htb).bth[0..7]
     end
 
-    DIGEST_NAME_SHA256 = 'sha256'
-
     def hmac_sha256(key, data)
-      OpenSSL::HMAC.digest(DIGEST_NAME_SHA256, key, data)
+      Bitcoin.hmac_sha256(key, data)
     end
 
     # check whether +addr+ is valid address.
