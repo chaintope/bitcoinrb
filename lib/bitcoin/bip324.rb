@@ -3,9 +3,12 @@ module Bitcoin
   # https://github.com/bitcoin/bips/blob/master/bip-0324.mediawiki
   module BIP324
     autoload :EllSwiftPubkey, 'bitcoin/bip324/ell_swift_pubkey'
+    autoload :Cipher, 'bitcoin/bip324/cipher'
 
     FIELD_SIZE = 2**256 - 2**32 - 977
     FIELD = ECDSA::PrimeField.new(FIELD_SIZE)
+
+    REKEY_INTERVAL = 224 # packets
 
     module_function
 

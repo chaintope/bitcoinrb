@@ -135,6 +135,16 @@ module Bitcoin
       Bitcoin.hmac_sha256(key, data)
     end
 
+    # Run HKDF.
+    # @param [String] ikm The input keying material with binary format.
+    # @param [String] salt The salt with binary format.
+    # @param [String] info The context and application specific information with binary format.
+    # @param [Integer] length The output length in octets.
+    # @return [String] The result of HKDF with binary format.
+    def hkdf_sha256(ikm, salt, info, length = 32)
+      OpenSSL::KDF.hkdf(ikm, salt: salt, info: info, length: length, hash: "SHA256")
+    end
+
     # check whether +addr+ is valid address.
     # @param [String] addr an address
     # @return [Boolean] if valid address return true, otherwise false.

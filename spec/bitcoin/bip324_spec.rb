@@ -39,7 +39,7 @@ RSpec.describe Bitcoin::BIP324 do
     end
   end
 
-  describe "ellswift_xdh" do
+  describe "ellswift_xdh", network: :mainnet do
     context "native", use_secp256k1: true do
       it { test_ellswift_xdh }
     end
@@ -57,8 +57,24 @@ RSpec.describe Bitcoin::BIP324 do
         expect(our_ell.decode.xonly_pubkey).to eq(v['mid_x_ours'])
         their_ell = Bitcoin::BIP324::EllSwiftPubkey.new(v['in_ellswift_theirs'])
         expect(their_ell.decode.xonly_pubkey).to eq(v['mid_x_theirs'])
+        cipher = Bitcoin::BIP324::Cipher.new(our_priv, our_ell)
+        cipher.setup(their_ell, initiating)
         shared_x = described_class.v2_ecdh(our_priv.priv_key, their_ell, our_ell, initiating)
         expect(shared_x).to eq(v['mid_shared_secret'])
+        if initiating
+          expect(cipher.send_l_cipher).to eq(v['mid_initiator_l'])
+          expect(cipher.send_p_cipher).to eq(v['mid_initiator_p'])
+          expect(cipher.recv_l_cipher).to eq(v['mid_responder_l'])
+          expect(cipher.recv_p_cipher).to eq(v['mid_responder_p'])
+        else
+          expect(cipher.recv_l_cipher).to eq(v['mid_initiator_l'])
+          expect(cipher.recv_p_cipher).to eq(v['mid_initiator_p'])
+          expect(cipher.send_l_cipher).to eq(v['mid_responder_l'])
+          expect(cipher.send_p_cipher).to eq(v['mid_responder_p'])
+        end
+        expect(cipher.send_garbage_terminator).to eq(v['mid_send_garbage_terminator'])
+        expect(cipher.recv_garbage_terminator).to eq(v['mid_recv_garbage_terminator'])
+        expect(cipher.session_id).to eq(v['out_session_id'])
       end
     end
   end
