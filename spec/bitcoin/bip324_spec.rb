@@ -62,19 +62,33 @@ RSpec.describe Bitcoin::BIP324 do
         shared_x = described_class.v2_ecdh(our_priv.priv_key, their_ell, our_ell, initiating)
         expect(shared_x).to eq(v['mid_shared_secret'])
         if initiating
-          expect(cipher.send_l_cipher).to eq(v['mid_initiator_l'])
-          expect(cipher.send_p_cipher).to eq(v['mid_initiator_p'])
-          expect(cipher.recv_l_cipher).to eq(v['mid_responder_l'])
-          expect(cipher.recv_p_cipher).to eq(v['mid_responder_p'])
+          expect(cipher.send_l_cipher.key.bth).to eq(v['mid_initiator_l'])
+          expect(cipher.send_p_cipher.key.bth).to eq(v['mid_initiator_p'])
+          expect(cipher.recv_l_cipher.key.bth).to eq(v['mid_responder_l'])
+          expect(cipher.recv_p_cipher.key.bth).to eq(v['mid_responder_p'])
         else
-          expect(cipher.recv_l_cipher).to eq(v['mid_initiator_l'])
-          expect(cipher.recv_p_cipher).to eq(v['mid_initiator_p'])
-          expect(cipher.send_l_cipher).to eq(v['mid_responder_l'])
-          expect(cipher.send_p_cipher).to eq(v['mid_responder_p'])
+          expect(cipher.recv_l_cipher.key.bth).to eq(v['mid_initiator_l'])
+          expect(cipher.recv_p_cipher.key.bth).to eq(v['mid_initiator_p'])
+          expect(cipher.send_l_cipher.key.bth).to eq(v['mid_responder_l'])
+          expect(cipher.send_p_cipher.key.bth).to eq(v['mid_responder_p'])
         end
         expect(cipher.send_garbage_terminator).to eq(v['mid_send_garbage_terminator'])
         expect(cipher.recv_garbage_terminator).to eq(v['mid_recv_garbage_terminator'])
         expect(cipher.session_id).to eq(v['out_session_id'])
+
+        in_index = v['in_idx'].to_i
+        in_index.times do
+          cipher.encrypt("")
+        end
+        aad = v['in_aad'] ? v['in_aad'].htb : ''
+        contents = v['in_contents'].htb * v['in_multiply'].to_i
+        ciphertext = cipher.encrypt(contents, aad: aad, ignore: v['in_ignore'] == '1')
+        if v['out_ciphertext']
+          expect(ciphertext.bth).to eq(v['out_ciphertext'])
+        end
+        if v['out_ciphertext_endswith']
+          expect(ciphertext.bth).to end_with(v['out_ciphertext_endswith'])
+        end
       end
     end
   end

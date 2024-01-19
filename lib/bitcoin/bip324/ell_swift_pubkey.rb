@@ -30,6 +30,13 @@ module Bitcoin
         end
       end
 
+      # Check whether same public key or not?
+      # @param [Bitcoin::BIP324::EllSwiftPubkey] other
+      # @return [Boolean]
+      def ==(other)
+        return false unless other.is_a?(EllSwiftPubkey)
+        key == other.key
+      end
     end
   end
 end

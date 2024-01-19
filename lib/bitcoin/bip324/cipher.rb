@@ -4,6 +4,8 @@ module Bitcoin
     class Cipher
       include Bitcoin::Util
 
+      HEADER = [1 << 7].pack('C')
+
       attr_reader :key
       attr_reader :our_pubkey
 
@@ -33,21 +35,44 @@ module Bitcoin
         ecdh_secret = BIP324.v2_ecdh(key.priv_key, their_pubkey, our_pubkey, initiator).htb
         terminator = hkdf_sha256(ecdh_secret, salt, 'garbage_terminators')
         if initiator
-          self.send_l_cipher = hkdf_sha256(ecdh_secret, salt, 'initiator_L').bth
-          self.send_p_cipher = hkdf_sha256(ecdh_secret, salt, 'initiator_P').bth
-          self.recv_l_cipher = hkdf_sha256(ecdh_secret, salt, 'responder_L').bth
-          self.recv_p_cipher = hkdf_sha256(ecdh_secret, salt, 'responder_P').bth
+          self.send_l_cipher = FSChaCha20.new(hkdf_sha256(ecdh_secret, salt, 'initiator_L'))
+          self.send_p_cipher = FSChaCha20Poly1305.new(hkdf_sha256(ecdh_secret, salt, 'initiator_P'))
+          self.recv_l_cipher = FSChaCha20.new(hkdf_sha256(ecdh_secret, salt, 'responder_L'))
+          self.recv_p_cipher = FSChaCha20Poly1305.new(hkdf_sha256(ecdh_secret, salt, 'responder_P'))
           self.send_garbage_terminator = terminator[0...16].bth
           self.recv_garbage_terminator = terminator[16..-1].bth
         else
-          self.recv_l_cipher = hkdf_sha256(ecdh_secret, salt, 'initiator_L').bth
-          self.recv_p_cipher = hkdf_sha256(ecdh_secret, salt, 'initiator_P').bth
-          self.send_l_cipher = hkdf_sha256(ecdh_secret, salt, 'responder_L').bth
-          self.send_p_cipher = hkdf_sha256(ecdh_secret, salt, 'responder_P').bth
+          self.recv_l_cipher = FSChaCha20.new(hkdf_sha256(ecdh_secret, salt, 'initiator_L'))
+          self.recv_p_cipher = FSChaCha20Poly1305.new(hkdf_sha256(ecdh_secret, salt, 'initiator_P'))
+          self.send_l_cipher = FSChaCha20.new(hkdf_sha256(ecdh_secret, salt, 'responder_L'))
+          self.send_p_cipher = FSChaCha20Poly1305.new(hkdf_sha256(ecdh_secret, salt, 'responder_P'))
           self.recv_garbage_terminator = terminator[0...16].bth
           self.send_garbage_terminator = terminator[16..-1].bth
         end
         self.session_id = hkdf_sha256(ecdh_secret, salt, 'session_id').bth
+      end
+
+      # Encrypt a packet. Only after setup.
+      #
+      def encrypt(contents, aad: '', ignore: false)
+        raise RuntimeError, "contents size over." unless contents.bytesize <= (2**24 - 1)
+
+        # encrypt length
+        len = Array.new(3)
+        len[0] = contents.bytesize & 0xff
+        len[1] = (contents.bytesize >> 8) & 0xff
+        len[2] = (contents.bytesize >> 16) & 0xff
+        enc_plaintext_len = send_l_cipher.encrypt(len.pack('C*'))
+
+        # encrypt contents
+        header = ignore ? HEADER : "00".htb
+        plaintext = header + contents
+        aead_ciphertext = send_p_cipher.encrypt(aad, plaintext)
+        enc_plaintext_len + aead_ciphertext
+      end
+
+      def decrypt
+
       end
     end
   end
