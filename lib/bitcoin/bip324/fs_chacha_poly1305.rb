@@ -82,7 +82,7 @@ module Bitcoin
           rekey_nonce = "ffffffff".htb + nonce[4..-1]
           newkey1 = chacha20_poly1305_encrypt(key, rekey_nonce, "", "00".htb * 32)[0...32]
           newkey2 = ChaCha20.block(key, rekey_nonce, 1)[0...32]
-          raise RuntimeError, "newkey1 != newkey2" unless newkey1 == newkey2
+          raise Bitcoin::BIP324::Error, "newkey1 != newkey2" unless newkey1 == newkey2
           self.key = newkey1
         end
         self.packet_counter += 1

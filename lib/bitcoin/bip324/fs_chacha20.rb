@@ -16,8 +16,8 @@ module Bitcoin
       # @param [Integer] bits
       # @return [Integer]
       def rotl32(v, bits)
-        raise ArgumentError, "v must be integer" unless v.is_a?(Integer)
-        raise ArgumentError, "bits must be integer" unless bits.is_a?(Integer)
+        raise Bitcoin::BIP324::Error, "v must be integer" unless v.is_a?(Integer)
+        raise Bitcoin::BIP324::Error, "bits must be integer" unless bits.is_a?(Integer)
         ((v << bits) & 0xffffffff) | (v >> (32 - bits))
       end
 
@@ -25,7 +25,7 @@ module Bitcoin
       # @param [Array[Integer]] s
       # @return
       def double_round(s)
-        raise ArgumentError, "s must be Array" unless s.is_a?(Array)
+        raise Bitcoin::BIP324::Error, "s must be Array" unless s.is_a?(Array)
         INDICES.each do |a, b, c, d|
           s[a] = (s[a] + s[b]) & 0xffffffff
           s[d] = rotl32(s[d] ^ s[a], 16)
@@ -45,9 +45,9 @@ module Bitcoin
       # @param [Integer] count 32-bit integer counter.
       # @return [String] 64-byte output.
       def block(key, nonce, count)
-        raise ArgumentError, "key must be 32 byte string" if !key.is_a?(String) || key.bytesize != 32
-        raise ArgumentError, "nonce must be 12 byte string" if !nonce.is_a?(String) || nonce.bytesize != 12
-        raise ArgumentError, "count must be integer" unless count.is_a?(Integer)
+        raise Bitcoin::BIP324::Error, "key must be 32 byte string" if !key.is_a?(String) || key.bytesize != 32
+        raise Bitcoin::BIP324::Error, "nonce must be 12 byte string" if !nonce.is_a?(String) || nonce.bytesize != 12
+        raise Bitcoin::BIP324::Error, "count must be integer" unless count.is_a?(Integer)
         # Initialize state
         init = Array.new(16, 0)
         4.times {|i| init[i] = CONSTANTS[i]}

@@ -23,6 +23,7 @@ module Bitcoin
       # Constructor
       # @param [Bitcoin::Key] key Private key.
       # @param [Bitcoin::BIP324::EllSwiftPubkey] our_pubkey Ellswift public key for testing.
+      # @raise ArgumentError
       def initialize(key, our_pubkey = nil)
         raise ArgumentError, "key must be Bitcoin::Key" unless key.is_a?(Bitcoin::Key)
         raise ArgumentError, "our_pubkey must be Bitcoin::BIP324::EllSwiftPubkey" if our_pubkey && !our_pubkey.is_a?(Bitcoin::BIP324::EllSwiftPubkey)
@@ -65,8 +66,9 @@ module Bitcoin
       # @param [String] contents Packet with binary format.
       # @param [String] aad AAD
       # @param [Boolean] ignore Whether contains ignore bit or not.
+      # @raise Bitcoin::BIP324::TooLargeContent
       def encrypt(contents, aad: '', ignore: false)
-        raise RuntimeError, "contents size over." unless contents.bytesize <= (2**24 - 1)
+        raise Bitcoin::BIP324::TooLargeContent unless contents.bytesize <= (2**24 - 1)
 
         # encrypt length
         len = Array.new(3)
@@ -87,9 +89,10 @@ module Bitcoin
       # @param [String] aad AAD
       # @param [Boolean] ignore Whether contains ignore bit or not.
       # @return [String] Plaintext
+      # @raise Bitcoin::BIP324::InvalidPaketLength
       def decrypt(input, aad: '', ignore: false)
         len = decrypt_length(input[0...Bitcoin::BIP324::Cipher::LENGTH_LEN])
-        raise RuntimeError, "Packet length invalid." unless input.bytesize == len + EXPANSION
+        raise Bitcoin::BIP324::InvalidPaketLength unless input.bytesize == len + EXPANSION
         recv_p_cipher.decrypt(aad, input[Bitcoin::BIP324::Cipher::LENGTH_LEN..-1])
       end
 
@@ -98,8 +101,9 @@ module Bitcoin
       # Decrypt the length of a packet. Only after setup.
       # @param [String] input Length packet with binary format.
       # @return [Integer] length
+      # @raise Bitcoin::BIP324::InvalidPaketLength
       def decrypt_length(input)
-        raise ArgumentError, "input length must be #{LENGTH_LEN}" unless input.bytesize == LENGTH_LEN
+        raise Bitcoin::BIP324::InvalidPaketLength unless input.bytesize == LENGTH_LEN
         ret = recv_l_cipher.decrypt(input)
         b0, b1, b2 = ret.unpack('CCC')
         b0 + (b1 << 8) + (b2 << 16)

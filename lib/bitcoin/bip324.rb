@@ -2,6 +2,12 @@ module Bitcoin
   # BIP 324 module
   # https://github.com/bitcoin/bips/blob/master/bip-0324.mediawiki
   module BIP324
+
+    class Error < StandardError; end
+    class InvalidPaketLength < Error; end
+    class TooLargeContent < Error; end
+    class InvalidEllSwiftKey < Error; end
+
     autoload :EllSwiftPubkey, 'bitcoin/bip324/ell_swift_pubkey'
     autoload :Cipher, 'bitcoin/bip324/cipher'
     autoload :FSChaCha20, 'bitcoin/bip324/fs_chacha20'

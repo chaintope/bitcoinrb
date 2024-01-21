@@ -10,10 +10,10 @@ module Bitcoin
 
       # Constructor
       # @param [String] key 64 bytes of key data.
-      # @raise ArgumentError If key is invalid.
+      # @raise Bitcoin::BIP324::InvalidEllSwiftKey If key is invalid.
       def initialize(key)
         @key = hex2bin(key)
-        raise ArgumentError, 'key must be 64 bytes.' unless @key.bytesize == SIZE
+        raise Bitcoin::BIP324::InvalidEllSwiftKey, 'key must be 64 bytes.' unless @key.bytesize == SIZE
       end
 
       # Decode to public key.
