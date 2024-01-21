@@ -5,6 +5,9 @@ module Bitcoin
       include Bitcoin::Util
 
       HEADER = [1 << 7].pack('C')
+      HEADER_LEN = 1
+      LENGTH_LEN = 3
+      EXPANSION = LENGTH_LEN + HEADER_LEN + 16
 
       attr_reader :key
       attr_reader :our_pubkey
@@ -30,22 +33,28 @@ module Bitcoin
       # Setup when the other side's public key is received.
       # @param [Bitcoin::BIP324::EllSwiftPubkey] their_pubkey
       # @param [Boolean] initiator Set true if we are the initiator establishing the v2 P2P connection.
-      def setup(their_pubkey, initiator)
+      # @param [Boolean] self_decrypt only for testing, and swaps encryption/decryption keys, so that encryption
+      # and decryption can be tested without knowing the other side's private key.
+      def setup(their_pubkey, initiator, self_decrypt = false)
         salt = 'bitcoin_v2_shared_secret' + Bitcoin.chain_params.magic_head.htb
         ecdh_secret = BIP324.v2_ecdh(key.priv_key, their_pubkey, our_pubkey, initiator).htb
         terminator = hkdf_sha256(ecdh_secret, salt, 'garbage_terminators')
-        if initiator
+        side = initiator != self_decrypt
+        if side
           self.send_l_cipher = FSChaCha20.new(hkdf_sha256(ecdh_secret, salt, 'initiator_L'))
           self.send_p_cipher = FSChaCha20Poly1305.new(hkdf_sha256(ecdh_secret, salt, 'initiator_P'))
           self.recv_l_cipher = FSChaCha20.new(hkdf_sha256(ecdh_secret, salt, 'responder_L'))
           self.recv_p_cipher = FSChaCha20Poly1305.new(hkdf_sha256(ecdh_secret, salt, 'responder_P'))
-          self.send_garbage_terminator = terminator[0...16].bth
-          self.recv_garbage_terminator = terminator[16..-1].bth
         else
           self.recv_l_cipher = FSChaCha20.new(hkdf_sha256(ecdh_secret, salt, 'initiator_L'))
           self.recv_p_cipher = FSChaCha20Poly1305.new(hkdf_sha256(ecdh_secret, salt, 'initiator_P'))
           self.send_l_cipher = FSChaCha20.new(hkdf_sha256(ecdh_secret, salt, 'responder_L'))
           self.send_p_cipher = FSChaCha20Poly1305.new(hkdf_sha256(ecdh_secret, salt, 'responder_P'))
+        end
+        if initiator
+          self.send_garbage_terminator = terminator[0...16].bth
+          self.recv_garbage_terminator = terminator[16..-1].bth
+        else
           self.recv_garbage_terminator = terminator[0...16].bth
           self.send_garbage_terminator = terminator[16..-1].bth
         end
@@ -53,7 +62,9 @@ module Bitcoin
       end
 
       # Encrypt a packet. Only after setup.
-      #
+      # @param [String] contents Packet with binary format.
+      # @param [String] aad AAD
+      # @param [Boolean] ignore Whether contains ignore bit or not.
       def encrypt(contents, aad: '', ignore: false)
         raise RuntimeError, "contents size over." unless contents.bytesize <= (2**24 - 1)
 
@@ -71,8 +82,27 @@ module Bitcoin
         enc_plaintext_len + aead_ciphertext
       end
 
-      def decrypt
+      # Decrypt a packet. Only after setup.
+      # @param [String] input Packet to be decrypt.
+      # @param [String] aad AAD
+      # @param [Boolean] ignore Whether contains ignore bit or not.
+      # @return [String] Plaintext
+      def decrypt(input, aad: '', ignore: false)
+        len = decrypt_length(input[0...Bitcoin::BIP324::Cipher::LENGTH_LEN])
+        raise RuntimeError, "Packet length invalid." unless input.bytesize == len + EXPANSION
+        recv_p_cipher.decrypt(aad, input[Bitcoin::BIP324::Cipher::LENGTH_LEN..-1])
+      end
 
+      private
+
+      # Decrypt the length of a packet. Only after setup.
+      # @param [String] input Length packet with binary format.
+      # @return [Integer] length
+      def decrypt_length(input)
+        raise ArgumentError, "input length must be #{LENGTH_LEN}" unless input.bytesize == LENGTH_LEN
+        ret = recv_l_cipher.decrypt(input)
+        b0, b1, b2 = ret.unpack('CCC')
+        b0 + (b1 << 8) + (b2 << 16)
       end
     end
   end

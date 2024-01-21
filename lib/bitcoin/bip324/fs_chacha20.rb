@@ -95,7 +95,7 @@ module Bitcoin
       # Decrypt a chunk
       # @param [String] chunk Chunk data with binary format.
       # @return [String] Decrypted data with binary format.
-      def decript(chunk)
+      def decrypt(chunk)
         crypt(chunk)
       end
 

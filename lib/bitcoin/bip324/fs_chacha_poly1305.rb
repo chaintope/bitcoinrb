@@ -4,6 +4,7 @@ module Bitcoin
     class Poly1305
 
       MODULUS = 2**130 - 5
+      TAG_LEN = 16
 
       attr_reader :r
       attr_reader :s
@@ -33,7 +34,7 @@ module Bitcoin
       # Compute the poly1305 tag.
       # @return Poly1305 tag wit binary format.
       def tag
-        ECDSA::Format::IntegerOctetString.encode((acc + s) & 0xffffffffffffffffffffffffffffffff, 16).reverse
+        ECDSA::Format::IntegerOctetString.encode((acc + s) & 0xffffffffffffffffffffffffffffffff, TAG_LEN).reverse
       end
     end
 
@@ -59,8 +60,12 @@ module Bitcoin
       end
 
       # Decrypt a *ciphertext* with a specified +aad+.
+      # @param [String] aad AAD
+      # @param [String] ciphertext Data to be decrypted with binary format.
+      # @return [Array] [header, plaintext]
       def decrypt(aad, ciphertext)
-        crypt(aad, ciphertext, true)
+        contents = crypt(aad, ciphertext, true)
+        [contents[0], contents[1..-1]]
       end
 
       private
@@ -110,15 +115,14 @@ module Bitcoin
         poly1305.add(ciphertext, length: msg_len, padding: true)
         poly1305.add([aad.bytesize, msg_len].pack("Q<Q<"))
         return nil unless ciphertext[-16..-1] == poly1305.tag
-        ret = ""
-        ((msg_len + 63) / 64).times do |i|
+        ret = ((msg_len + 63) / 64).times.map do |i|
           now = [64, msg_len - 64 * i].min
           keystream = ChaCha20.block(key, nonce, i + 1)
-          now.times do |j|
-            ret += [(ciphertext[j + 64 * i].unpack1('C') ^ keystream[j].unpack1('C'))].pack('C')
+          now.times.map do |j|
+            ciphertext[j + 64 * i].unpack1('C') ^ keystream[j].unpack1('C')
           end
         end
-        ret
+        ret.flatten.pack('C*')
       end
     end
   end

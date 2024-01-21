@@ -77,18 +77,33 @@ RSpec.describe Bitcoin::BIP324 do
         expect(cipher.session_id).to eq(v['out_session_id'])
 
         in_index = v['in_idx'].to_i
-        in_index.times do
+        dummies = in_index.times.map do
           cipher.encrypt("")
         end
         aad = v['in_aad'] ? v['in_aad'].htb : ''
         contents = v['in_contents'].htb * v['in_multiply'].to_i
-        ciphertext = cipher.encrypt(contents, aad: aad, ignore: v['in_ignore'] == '1')
+        ignore = v['in_ignore'] == '1'
+        ciphertext = cipher.encrypt(contents, aad: aad, ignore: ignore)
         if v['out_ciphertext']
           expect(ciphertext.bth).to eq(v['out_ciphertext'])
         end
         if v['out_ciphertext_endswith']
           expect(ciphertext.bth).to end_with(v['out_ciphertext_endswith'])
         end
+
+        # Decrypt
+        dec_cipher = Bitcoin::BIP324::Cipher.new(our_priv, our_ell)
+        dec_cipher.setup(their_ell, initiating, true)
+        expect(dec_cipher.session_id).to eq(v['out_session_id'])
+        expect(dec_cipher.send_garbage_terminator).to eq(v['mid_send_garbage_terminator'])
+        expect(dec_cipher.recv_garbage_terminator).to eq(v['mid_recv_garbage_terminator'])
+
+        in_index.times do |i|
+          dec_cipher.decrypt(dummies[i])
+        end
+
+        _, plaintext = dec_cipher.decrypt(ciphertext, aad: aad, ignore: ignore)
+        expect(plaintext.bth).to eq(contents.bth)
       end
     end
   end
