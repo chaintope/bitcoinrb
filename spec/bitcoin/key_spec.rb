@@ -102,20 +102,8 @@ describe Bitcoin::Key do
     end
   end
 
-  describe '#sign and verify' do
-    context 'pure ruby' do
-      it 'should be success' do
-        test_sign_verify
-      end
-    end
-
-    context 'libsecp256k1', use_secp256k1: true do
-      it 'should be success' do
-        test_sign_verify
-      end
-    end
-
-    def test_sign_verify
+  shared_examples "test sign verify" do
+    it do
       # ecdsa
       message = Bitcoin.sha256('message')
       key = Bitcoin::Key.generate
@@ -126,6 +114,16 @@ describe Bitcoin::Key do
       sig = key.sign(message, algo: :schnorr)
       expect(key.verify(sig, message, algo: :schnorr)).to be true
       expect(key.verify(sig, message)).to be false
+    end
+  end
+
+  describe '#sign and verify' do
+    context 'pure ruby' do
+      it_behaves_like "test sign verify", "pure ruby"
+    end
+
+    context 'libsecp256k1', use_secp256k1: true do
+      it_behaves_like "test sign verify", "secp256k1"
     end
 
     context 'pubkey start with 06' do
@@ -157,6 +155,38 @@ describe Bitcoin::Key do
     end
   end
 
+  shared_examples "test with entropy" do
+    it do
+      hash = Bitcoin.double_sha256('A message to be signed')
+      found = false
+      (1..20).each do |i|
+        tmp = [i].pack('I*').bth
+        entropy = tmp.ljust(64, '0').htb
+        sig = key.sign(hash, false, entropy)
+        found = (sig[3].bth.to_i(16) == 0x21 && sig[4].bth.to_i(16) == 0x00)
+        expect(sig.bth).to eq('304502210089e94fcb5a449e0f230a0dfc3b97f3947d36f0030fc6f11e2bedc37e8ccb7fbc022073b7a71756273955ed3bbab4b818a537658160b7f08b5a82169ea9cb8ff96fdd')
+        break if found
+      end
+      expect(found).to be true
+    end
+  end
+
+  shared_examples "test without entropy" do
+    it do
+      found = true
+      found_small = false
+      256.times do |i|
+        hash = Bitcoin.double_sha256("A message to be signed#{i}")
+        sig = key.sign(hash)
+        found = (sig[3].bth.to_i(16) == 0x20)
+        expect(sig.size <= 70).to be true
+        found_small |= sig.bytesize <= 70
+      end
+      expect(found).to be true
+      expect(found_small).to be true
+    end
+  end
+
   describe 'low/high R signature', network: :mainnet do
 
     context 'same sig output as Bitcoin Core' do
@@ -177,55 +207,19 @@ describe Bitcoin::Key do
     let(:key){Bitcoin::Key.from_wif('5HxWvvfubhXpYYpS3tJkw6fq9jE9j18THftkZjHHfmFiWtmAbrj')}
 
     context 'entropy is specified' do
-      it 'should see at least one high R signature within 20 signatures' do
-        test_with_entropy
-      end
+      it_behaves_like "test with entropy", "pure ruby"
     end
 
     context 'entropy is not specified' do
-      it 'should always see low R signatures that are less than 70 bytes in 256 tries' do
-        test_with_no_entropy
-      end
+      it_behaves_like "test without entropy", "pure ruby"
     end
 
     context 'entropy is specified with libsecp256k1', use_secp256k1: true do
-      it 'should see at least one high R signature within 20 signatures' do
-        test_with_entropy
-      end
+      it_behaves_like "test with entropy", "secp256k1"
     end
 
     context 'entropy is not specified with libsecp256k1', use_secp256k1: true do
-      it 'should always see low R signatures that are less than 70 bytes in 256 tries' do
-        test_with_no_entropy
-      end
-    end
-
-    def test_with_entropy
-      hash = Bitcoin.double_sha256('A message to be signed')
-      found = false
-      (1..20).each do |i|
-        tmp = [i].pack('I*').bth
-        entropy = tmp.ljust(64, '0').htb
-        sig = key.sign(hash, false, entropy)
-        found = (sig[3].bth.to_i(16) == 0x21 && sig[4].bth.to_i(16) == 0x00)
-        expect(sig.bth).to eq('304502210089e94fcb5a449e0f230a0dfc3b97f3947d36f0030fc6f11e2bedc37e8ccb7fbc022073b7a71756273955ed3bbab4b818a537658160b7f08b5a82169ea9cb8ff96fdd')
-        break if found
-      end
-      expect(found).to be true
-    end
-
-    def test_with_no_entropy
-      found = true
-      found_small = false
-      256.times do |i|
-        hash = Bitcoin.double_sha256("A message to be signed#{i}")
-        sig = key.sign(hash)
-        found = (sig[3].bth.to_i(16) == 0x20)
-        expect(sig.size <= 70).to be true
-        found_small |= sig.bytesize <= 70
-      end
-      expect(found).to be true
-      expect(found_small).to be true
+      it_behaves_like "test without entropy", "secp256k1"
     end
   end
 
@@ -302,20 +296,8 @@ describe Bitcoin::Key do
     end
   end
 
-  describe '#generate' do
-    context 'pure ruby' do
-      it 'return decompressed public key' do
-        test_generate
-      end
-    end
-
-    context 'libsecp256k1', use_secp256k1: true do
-      it 'return decompressed public key' do
-        test_generate
-      end
-    end
-
-    def test_generate
+  shared_examples "test generate" do
+    it do
       compressed = Bitcoin::Key.generate(Bitcoin::Key::TYPES[:compressed])
       expect(compressed.compressed?).to be true
       uncompressed = Bitcoin::Key.generate(Bitcoin::Key::TYPES[:uncompressed])
@@ -323,20 +305,18 @@ describe Bitcoin::Key do
     end
   end
 
-  describe '#decompress_pubkey' do
+  describe '#generate' do
     context 'pure ruby' do
-      it 'return decompressed public key' do
-        test_decompress
-      end
+      it_behaves_like "test generate", "pure ruby"
     end
 
     context 'libsecp256k1', use_secp256k1: true do
-      it 'return decompressed public key' do
-        test_decompress
-      end
+      it_behaves_like "test generate", "secp256k1"
     end
+  end
 
-    def test_decompress
+  shared_examples "decompress pubkey test" do
+    it do
       compress_key = Bitcoin::Key.generate(Bitcoin::Key::TYPES[:compressed])
       uncompressed_pubkey = Bitcoin::Key.new(priv_key: compress_key.priv_key, key_type: Bitcoin::Key::TYPES[:uncompressed])
       expect(compress_key.decompress_pubkey).to eq(uncompressed_pubkey.pubkey)
@@ -346,20 +326,33 @@ describe Bitcoin::Key do
     end
   end
 
-  describe "#create_ell_pubkey", network: :mainnet do
-    context "native", use_secp256k1: true do
-      it { test_ell_pubkey }
+  describe '#decompress_pubkey' do
+    context 'pure ruby' do
+      it_behaves_like "decompress pubkey test", "pure ruby"
     end
-    context "ruby" do
-      it { test_ell_pubkey }
+
+    context 'libsecp256k1', use_secp256k1: true do
+      it_behaves_like "decompress pubkey test", "secp256k1"
     end
-    def test_ell_pubkey
+  end
+
+  shared_examples "create ell public key" do
+    it do
       [secret1, secret2, secret3, secret4].each do |wif|
         key = Bitcoin::Key.from_wif(wif)
         ellswift = key.create_ell_pubkey
         key = Bitcoin::Key.new(pubkey: key.to_point.to_hex(true)) unless key.compressed?
         expect(ellswift.decode.pubkey).to eq(key.pubkey)
       end
+    end
+  end
+
+  describe "#create_ell_pubkey", network: :mainnet do
+    context "native", use_secp256k1: true do
+      it_behaves_like "create ell public key", "secp256k1"
+    end
+    context "ruby" do
+      it_behaves_like "create ell public key", "pure ruby"
     end
   end
 end

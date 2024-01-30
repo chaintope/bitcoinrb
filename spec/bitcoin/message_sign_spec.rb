@@ -2,18 +2,41 @@ require 'spec_helper'
 
 RSpec.describe Bitcoin::MessageSign, network: :mainnet do
 
-  describe 'sign_message in Bitcoin Core' do
-    it 'should generate signature using libsecp256k1', use_secp256k1: true do
-      test_bitcoin_core_spec
-    end
+  # bitcoinjs-lib fixtures.
+  let(:fixtures) { fixture_file('message_signs.json') }
 
-    it 'should generate signature using' do
-      test_bitcoin_core_spec
+  shared_examples "test valid spec" do
+    it do
+      valid['sign'].each do |v|
+        key = Bitcoin::Key.new(priv_key: ECDSA::Format::IntegerOctetString.encode(v['d'].to_i, 32).bth, compressed: false)
+        signature = Bitcoin::MessageSign.sign_message(key, v['message'], prefix: prefix(v['network']))
+        expect(signature).to eq(v['signature'])
+        if v['compressed']
+          key = Bitcoin::Key.new(priv_key: ECDSA::Format::IntegerOctetString.encode(v['d'].to_i, 32).bth)
+          signature = Bitcoin::MessageSign.sign_message(key, v['message'], prefix: prefix(v['network']))
+          expect(signature).to eq(v['compressed']['signature'])
+        end
+      end
+      valid['verify'].select{|v|v['network'] == 'bitcoin'}.each do |v|
+        expect(Bitcoin::MessageSign.verify_message(v['address'], v['signature'], v['message'])).to be true
+        if v['compressed']
+          expect(Bitcoin::MessageSign.verify_message(v['compressed']['address'], v['compressed']['signature'], v['message'])).to be true
+        end
+      end
     end
   end
 
-  # bitcoinjs-lib fixtures.
-  let(:fixtures) { fixture_file('message_signs.json') }
+  shared_examples "test invalid spec" do
+    it do
+      invalid['signature'].each do |v|
+        expect{Bitcoin::MessageSign.verify_message('15CRxFdyRpGZLW9w8HnHvVduizdL5jKNbs', Base64.encode64(v['hex'].htb), '')}.
+          to raise_error(ArgumentError, v['exception'])
+      end
+      invalid['verify'].each do |v|
+        expect(Bitcoin::MessageSign.verify_message(v['address'], v['signature'], v['message'])).to be false
+      end
+    end
+  end
 
   describe 'Test Vector' do
     context 'valid' do
@@ -25,23 +48,23 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
         end
       end
 
-      it 'should generate signature and verify using libsecp256ke', use_secp256k1: true do
-        test_valid_spec
+      context 'using libsecp256ke', use_secp256k1: true do
+        it_behaves_like "test valid spec", "secp256k1"
       end
 
-      it 'should generate signature and verify' do
-        test_valid_spec
+      context 'pure ruby' do
+        it_behaves_like "test valid spec", "pure ruby"
       end
     end
 
     let(:invalid) { fixtures['invalid'] }
     context 'invalid' do
-      it 'raise error. using libsecp256k1', use_secp256k1: true do
-        test_invalid_spec
+      context 'raise error. using libsecp256k1', use_secp256k1: true do
+        it_behaves_like "test invalid spec", "secp256k1"
       end
 
-      it 'raise error.' do
-        test_invalid_spec
+      context 'raise error.' do
+        it_behaves_like "test invalid spec", "pure ruby"
       end
     end
   end
@@ -105,65 +128,48 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
     fixtures['networks'][network]
   end
 
-  def test_valid_spec
-    valid['sign'].each do |v|
-      key = Bitcoin::Key.new(priv_key: ECDSA::Format::IntegerOctetString.encode(v['d'].to_i, 32).bth, compressed: false)
-      signature = Bitcoin::MessageSign.sign_message(key, v['message'], prefix: prefix(v['network']))
-      expect(signature).to eq(v['signature'])
-      if v['compressed']
-        key = Bitcoin::Key.new(priv_key: ECDSA::Format::IntegerOctetString.encode(v['d'].to_i, 32).bth)
-        signature = Bitcoin::MessageSign.sign_message(key, v['message'], prefix: prefix(v['network']))
-        expect(signature).to eq(v['compressed']['signature'])
-      end
-    end
-    valid['verify'].select{|v|v['network'] == 'bitcoin'}.each do |v|
-      expect(Bitcoin::MessageSign.verify_message(v['address'], v['signature'], v['message'])).to be true
-      if v['compressed']
-        expect(Bitcoin::MessageSign.verify_message(v['compressed']['address'], v['compressed']['signature'], v['message'])).to be true
-      end
+  shared_examples "test bitcoin core spec" do
+    it do
+      message = 'Trust no one'
+      private_key = 'd97f5108f11cda6eeebaaa420fef0726b1f898060b98489fa3098463c0032866'
+      key = Bitcoin::Key.new(priv_key: private_key, key_type: Bitcoin::Key::TYPES[:compressed])
+      expect(key.to_p2pkh).to eq('15CRxFdyRpGZLW9w8HnHvVduizdL5jKNbs')
+      expect(Bitcoin::MessageSign.message_hash(message).bth).to eq('aa8215d723ecd2f14867eeb7e19f192be7bc15a2352a24b991d4f5870cbaf6e8')
+      signature = Bitcoin::MessageSign.sign_message(key, message)
+      expect(signature).to eq('IPojfrX2dfPnH26UegfbGQQLrdK844DlHq5157/P6h57WyuS/Qsl+h/WSVGDF4MUi4rWSswW38oimDYfNNUBUOk=')
+      expect(Bitcoin::MessageSign.verify_message(key.to_p2pkh, signature, message)).to be true
+
+      expect{Bitcoin::MessageSign.verify_message("invalid address",
+                                                 "signature should be irrelevant",
+                                                 "message too")}.to raise_error(ArgumentError, 'Invalid address')
+      expect{Bitcoin::MessageSign.verify_message("3B5fQsEXEaV8v6U3ejYc8XaKXAkyQj2MjV",
+                                                 "signature should be irrelevant",
+                                                 "message too")}.to raise_error(ArgumentError, 'This address unsupported')
+      expect{Bitcoin::MessageSign.verify_message("1KqbBpLy5FARmTPD4VZnDDpYjkUvkr82Pm",
+                                                 "invalid signature, not in base64 encoding",
+                                                 "message should be irrelevant")}.to raise_error(ArgumentError, 'Invalid signature')
+      expect(Bitcoin::MessageSign.verify_message("1KqbBpLy5FARmTPD4VZnDDpYjkUvkr82Pm",
+                                                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+                                                 "message should be irrelevant")).to be false
+      expect(Bitcoin::MessageSign.verify_message("15CRxFdyRpGZLW9w8HnHvVduizdL5jKNbs",
+                                                 "IPojfrX2dfPnH26UegfbGQQLrdK844DlHq5157/P6h57WyuS/Qsl+h/WSVGDF4MUi4rWSswW38oimDYfNNUBUOk=",
+                                                 "I never signed this")).to be false
+      expect(Bitcoin::MessageSign.verify_message("15CRxFdyRpGZLW9w8HnHvVduizdL5jKNbs",
+                                                 "IPojfrX2dfPnH26UegfbGQQLrdK844DlHq5157/P6h57WyuS/Qsl+h/WSVGDF4MUi4rWSswW38oimDYfNNUBUOk=",
+                                                 "Trust no one")).to be true
+      expect(Bitcoin::MessageSign.verify_message("11canuhp9X2NocwCq7xNrQYTmUgZAnLK3",
+                                                 "IIcaIENoYW5jZWxsb3Igb24gYnJpbmsgb2Ygc2Vjb25kIGJhaWxvdXQgZm9yIGJhbmtzIAaHRtbCeDZINyavx14=",
+                                                 "Trust me")).to be true
     end
   end
 
-  def test_invalid_spec
-    invalid['signature'].each do |v|
-      expect{Bitcoin::MessageSign.verify_message('15CRxFdyRpGZLW9w8HnHvVduizdL5jKNbs', Base64.encode64(v['hex'].htb), '')}.
-        to raise_error(ArgumentError, v['exception'])
+  describe 'sign_message in Bitcoin Core' do
+    context 'using libsecp256k1', use_secp256k1: true do
+      it_behaves_like "test bitcoin core spec", "secp256k1"
     end
-    invalid['verify'].each do |v|
-      expect(Bitcoin::MessageSign.verify_message(v['address'], v['signature'], v['message'])).to be false
+
+    context 'pure ruby' do
+      it_behaves_like "test bitcoin core spec", "pure ruby"
     end
-  end
-
-  def test_bitcoin_core_spec
-    message = 'Trust no one'
-    private_key = 'd97f5108f11cda6eeebaaa420fef0726b1f898060b98489fa3098463c0032866'
-    key = Bitcoin::Key.new(priv_key: private_key, key_type: Bitcoin::Key::TYPES[:compressed])
-    expect(key.to_p2pkh).to eq('15CRxFdyRpGZLW9w8HnHvVduizdL5jKNbs')
-    expect(Bitcoin::MessageSign.message_hash(message).bth).to eq('aa8215d723ecd2f14867eeb7e19f192be7bc15a2352a24b991d4f5870cbaf6e8')
-    signature = Bitcoin::MessageSign.sign_message(key, message)
-    expect(signature).to eq('IPojfrX2dfPnH26UegfbGQQLrdK844DlHq5157/P6h57WyuS/Qsl+h/WSVGDF4MUi4rWSswW38oimDYfNNUBUOk=')
-    expect(Bitcoin::MessageSign.verify_message(key.to_p2pkh, signature, message)).to be true
-
-    expect{Bitcoin::MessageSign.verify_message("invalid address",
-                                               "signature should be irrelevant",
-                                               "message too")}.to raise_error(ArgumentError, 'Invalid address')
-    expect{Bitcoin::MessageSign.verify_message("3B5fQsEXEaV8v6U3ejYc8XaKXAkyQj2MjV",
-                                               "signature should be irrelevant",
-                                               "message too")}.to raise_error(ArgumentError, 'This address unsupported')
-    expect{Bitcoin::MessageSign.verify_message("1KqbBpLy5FARmTPD4VZnDDpYjkUvkr82Pm",
-                                               "invalid signature, not in base64 encoding",
-                                               "message should be irrelevant")}.to raise_error(ArgumentError, 'Invalid signature')
-    expect(Bitcoin::MessageSign.verify_message("1KqbBpLy5FARmTPD4VZnDDpYjkUvkr82Pm",
-                                               "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
-                                               "message should be irrelevant")).to be false
-    expect(Bitcoin::MessageSign.verify_message("15CRxFdyRpGZLW9w8HnHvVduizdL5jKNbs",
-                                               "IPojfrX2dfPnH26UegfbGQQLrdK844DlHq5157/P6h57WyuS/Qsl+h/WSVGDF4MUi4rWSswW38oimDYfNNUBUOk=",
-                                               "I never signed this")).to be false
-    expect(Bitcoin::MessageSign.verify_message("15CRxFdyRpGZLW9w8HnHvVduizdL5jKNbs",
-                                               "IPojfrX2dfPnH26UegfbGQQLrdK844DlHq5157/P6h57WyuS/Qsl+h/WSVGDF4MUi4rWSswW38oimDYfNNUBUOk=",
-                                               "Trust no one")).to be true
-    expect(Bitcoin::MessageSign.verify_message("11canuhp9X2NocwCq7xNrQYTmUgZAnLK3",
-                                               "IIcaIENoYW5jZWxsb3Igb24gYnJpbmsgb2Ygc2Vjb25kIGJhaWxvdXQgZm9yIGJhbmtzIAaHRtbCeDZINyavx14=",
-                                               "Trust me")).to be true
   end
 end

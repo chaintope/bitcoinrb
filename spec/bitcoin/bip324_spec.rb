@@ -6,20 +6,21 @@ RSpec.describe Bitcoin::BIP324 do
   let(:xswiftec_inv_vectors) { read_csv('bip324/xswiftec_inv_test_vectors.csv') }
   let(:packet_encoding_vectors) { read_csv('bip324/packet_encoding_test_vectors.csv') }
 
-  describe '#decode' do
-    context 'native', use_secp256k1: true do
-      it { test_vectors }
-    end
-
-    context 'ruby' do
-      it { test_vectors }
-    end
-
-    def test_vectors
+  shared_examples "test vector" do
+    it do
       decode_vectors.each do |v|
         k = Bitcoin::BIP324::EllSwiftPubkey.new(v['ellswift'])
         expect(k.decode.xonly_pubkey).to eq(v['x'])
       end
+    end
+  end
+  describe '#decode' do
+    context 'native', use_secp256k1: true do
+      it_behaves_like "test vector", "secp256k1"
+    end
+
+    context 'ruby' do
+      it_behaves_like "test vector", "pure ruby"
     end
   end
 
@@ -39,16 +40,8 @@ RSpec.describe Bitcoin::BIP324 do
     end
   end
 
-  describe "ellswift_xdh", network: :mainnet do
-    context "native", use_secp256k1: true do
-      it { test_ellswift_xdh }
-    end
-
-    context "ruby" do
-      it { test_ellswift_xdh }
-    end
-
-    def test_ellswift_xdh
+  shared_examples "test ellswift ecdh" do
+    it do
       packet_encoding_vectors.each do |v|
         initiating = v['in_initiating'] == "1"
         our_priv = Bitcoin::Key.new(priv_key: v['in_priv_ours'])
@@ -105,6 +98,16 @@ RSpec.describe Bitcoin::BIP324 do
         _, plaintext = dec_cipher.decrypt(ciphertext, aad: aad, ignore: ignore)
         expect(plaintext.bth).to eq(contents.bth)
       end
+    end
+  end
+
+  describe "ellswift_xdh", network: :mainnet do
+    context "native", use_secp256k1: true do
+      it_behaves_like "test ellswift ecdh", "secp256k1"
+    end
+
+    context "ruby" do
+      it_behaves_like "test ellswift ecdh", "pure ruby"
     end
   end
 end
