@@ -10,12 +10,6 @@ class ::ECDSA::Signature
   end
 end
 
-class ::ECDSA::Point
-  def to_hex(compression = true)
-    ECDSA::Format::PointOctetString.encode(self, compression: compression).bth
-  end
-end
-
 module ::ECDSA::Format::PointOctetString
 
   class << self
