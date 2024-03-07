@@ -73,11 +73,19 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
     it 'generate same signature between ruby and libsecp256k1', use_secp256k1: true do
       Parallel.each(1..100) do
         key = Bitcoin::Secp256k1::Native.generate_key
+        compressed = true
         digest = SecureRandom.random_bytes(32)
         sig1, rec1 = Bitcoin::Secp256k1::Native.sign_compact(digest, key.priv_key)
         sig2, rec2 = Bitcoin::Secp256k1::Ruby.sign_compact(digest, key.priv_key)
         expect(sig1).to eq(sig2)
         expect(rec1).to eq(rec2)
+        rec = Bitcoin::Key::COMPACT_SIG_HEADER_BYTE + rec1 + (compressed ? 4 : 0)
+        signature = [rec].pack('C') + ECDSA::Format::IntegerOctetString.encode(sig1.r, 32) +
+          ECDSA::Format::IntegerOctetString.encode(sig1.s, 32)
+        native_key = Bitcoin::Secp256k1::Native.recover_compact(digest, signature, rec1, compressed)
+        ruby_key = Bitcoin::Secp256k1::Ruby.recover_compact(digest, signature, rec1, compressed)
+        expect(key.pubkey).to eq(native_key.pubkey)
+        expect(key.pubkey).to eq(ruby_key.pubkey)
       end
     end
   end
@@ -141,10 +149,10 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
 
       expect{Bitcoin::MessageSign.verify_message("invalid address",
                                                  "signature should be irrelevant",
-                                                 "message too")}.to raise_error(ArgumentError, 'Invalid address')
+                                                 "message too")}.to raise_error(ArgumentError, 'Invalid address.')
       expect{Bitcoin::MessageSign.verify_message("3B5fQsEXEaV8v6U3ejYc8XaKXAkyQj2MjV",
                                                  "signature should be irrelevant",
-                                                 "message too")}.to raise_error(ArgumentError, 'This address unsupported')
+                                                 "message too")}.to raise_error(ArgumentError, 'Invalid signature')
       expect{Bitcoin::MessageSign.verify_message("1KqbBpLy5FARmTPD4VZnDDpYjkUvkr82Pm",
                                                  "invalid signature, not in base64 encoding",
                                                  "message should be irrelevant")}.to raise_error(ArgumentError, 'Invalid signature')

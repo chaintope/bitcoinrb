@@ -50,18 +50,22 @@ module Bitcoin
     # @param [String] message The message that was signed.
     # @return [Boolean] Verification result.
     def verify_message(address, signature, message, prefix: Bitcoin.chain_params.message_magic)
-      validate_address!(address)
+      addr_script = Bitcoin::Script.parse_from_addr(address)
       begin
         sig = Base64.strict_decode64(signature)
       rescue ArgumentError
         raise ArgumentError, 'Invalid signature'
       end
-      begin
-        # Legacy verification
-        pubkey = Bitcoin::Key.recover_compact(message_hash(message, prefix: prefix, legacy: true), sig)
-        return false unless pubkey
-        pubkey.to_p2pkh == address
-      rescue ArgumentError
+      if addr_script.p2pkh?
+        begin
+          # Legacy verification
+          pubkey = Bitcoin::Key.recover_compact(message_hash(message, prefix: prefix, legacy: true), sig)
+          return false unless pubkey
+          pubkey.to_p2pkh == address
+        rescue RuntimeError
+          return false
+        end
+      elsif addr_script.witness_program?
         # BIP322 verification
         tx = to_sign_tx(message_hash(message, prefix: prefix, legacy: false), address)
         tx.in[0].script_witness = Bitcoin::ScriptWitness.parse_from_payload(sig)
@@ -69,6 +73,8 @@ module Bitcoin
         tx_out = Bitcoin::TxOut.new(script_pubkey: script_pubkey)
         interpreter = Bitcoin::ScriptInterpreter.new(checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0, prevouts: [tx_out]))
         interpreter.verify_script(Bitcoin::Script.new, script_pubkey, tx.in[0].script_witness)
+      else
+        raise ArgumentError, "This address unsupported."
       end
     end
 
@@ -82,7 +88,6 @@ module Bitcoin
     end
 
     def validate_address!(address)
-      raise ArgumentError, 'Invalid address' unless Bitcoin.valid_address?(address)
       script = Bitcoin::Script.parse_from_addr(address)
       raise ArgumentError, 'This address unsupported' if script.p2sh? || script.p2wsh?
     end

@@ -77,13 +77,30 @@ module Bitcoin
       # @param [Boolean] compressed whether compressed public key or not.
       # @return [Bitcoin::Key] Recovered public key.
       def recover_compact(data, signature, rec, compressed)
+        group = Bitcoin::Secp256k1::GROUP
         r = ECDSA::Format::IntegerOctetString.decode(signature[1...33])
         s = ECDSA::Format::IntegerOctetString.decode(signature[33..-1])
-        ECDSA.recover_public_key(Bitcoin::Secp256k1::GROUP, data, ECDSA::Signature.new(r, s)).each do |p|
-          if p.y & 1 == rec
-            return Bitcoin::Key.from_point(p, compressed: compressed)
-          end
+        return nil if r.zero?
+        return nil if s.zero?
+
+        digest = ECDSA.normalize_digest(data, group.bit_length)
+        field = ECDSA::PrimeField.new(group.order)
+
+        unless rec & 2 == 0
+          r = field.mod(r + group.order)
         end
+
+        is_odd = (rec & 1 == 1)
+        y_coordinate = group.solve_for_y(r).find{|y| is_odd ? y.odd? : y.even?}
+
+        p = group.new_point([r, y_coordinate])
+
+        inv_r = field.inverse(r)
+        u1 = field.mod(inv_r * digest)
+        u2 = field.mod(inv_r * s)
+        q = p * u2 + (group.new_point(u1)).negate
+        return nil if q.infinity?
+        Bitcoin::Key.from_point(q, compressed: compressed)
       end
 
       # verify signature using public key
