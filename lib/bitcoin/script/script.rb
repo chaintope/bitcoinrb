@@ -555,6 +555,7 @@ module Bitcoin
       return 'multisig' if multisig?
       return 'witness_v0_keyhash' if p2wpkh?
       return 'witness_v0_scripthash' if p2wsh?
+      return 'witness_v1_taproot' if p2tr?
       'nonstandard'
     end
 
