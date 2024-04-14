@@ -187,6 +187,7 @@ describe Bitcoin::Script do
       expect(subject.standard?).to be true
       expect(subject.p2pk?).to be false
       expect(subject.to_addr).to eq('bc1p5rgvqejqh9dh37t9g94dd9cm8vtqns7dndgj423egwggsggcdzmsspvr7j')
+      expect(subject.type).to eq('witness_v1_taproot')
     end
 
     context 'invalid P2TR' do
