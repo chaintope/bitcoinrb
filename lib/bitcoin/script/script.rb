@@ -146,7 +146,7 @@ module Bitcoin
                 end
           if buf.eof?
             s.chunks << [len].pack('C')
-          else buf.eof?
+          else
             chunk = (packed_size ? (opcode + packed_size) : (opcode)) + buf.read(len)
             s.chunks << chunk
           end
