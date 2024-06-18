@@ -112,6 +112,10 @@ Therefore, some tests require this library. In a Linux environment, `spec/lib/li
 so there is no need to do anything. If you want to test in another environment,
 please set the library path in the environment variable `TEST_LIBSECP256K1_PATH`.
 
+In case the supplied linux `spec/lib/libsecp256k1.so` is not working (architecture), you might have to compile it yourself.
+Since if available in the repository, it might not be compiled using the `./configure --enable-module-recovery` option.
+Then `TEST_LIBSECP256K1_PATH=/path/to/secp256k1/.libs/libsecp256k1.so rspec` can be used.
+
 The libsecp256k1 library currently tested for operation with this library is `v0.4.0`.
 
 ## Contributing
