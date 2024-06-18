@@ -7,7 +7,7 @@ module Bitcoin
     # binding for secp256k1 (https://github.com/bitcoin-core/secp256k1/)
     # tag: v0.4.0
     # this is not included by default, to enable set shared object path to ENV['SECP256K1_LIB_PATH']
-    # for linux, ENV['SECP256K1_LIB_PATH'] = '/usr/local/lib/libsecp256k1.so'
+    # for linux, ENV['SECP256K1_LIB_PATH'] = '/usr/local/lib/libsecp256k1.so' or '/usr/lib64/libsecp256k1.so'
     # for mac,
     module Native
       include ::FFI::Library
