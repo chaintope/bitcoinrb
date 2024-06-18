@@ -25,7 +25,7 @@ def use_secp256k1
   host_os = RbConfig::CONFIG['host_os']
   case host_os
   when /linux/
-    ENV['SECP256K1_LIB_PATH'] = File.expand_path('lib/libsecp256k1.so', File.dirname(__FILE__))
+    ENV['SECP256K1_LIB_PATH'] = ENV['TEST_LIBSECP256K1_PATH'] || File.expand_path('lib/libsecp256k1.so', File.dirname(__FILE__))
   else
     if ENV['LIBSECP_PATH']
       ENV['SECP256K1_LIB_PATH'] = ENV['TEST_LIBSECP256K1_PATH']
