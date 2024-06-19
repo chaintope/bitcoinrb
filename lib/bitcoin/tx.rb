@@ -111,7 +111,7 @@ module Bitcoin
     end
 
     def witness?
-      !inputs.find { |i| !i.script_witness.empty? }.nil?
+      inputs.any?(&:has_witness?)
     end
 
     def ==(other)
