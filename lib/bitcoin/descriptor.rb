@@ -32,7 +32,8 @@ module Bitcoin
     # @return [Bitcoin::Script] P2SH script.
     def sh(script)
       script = script.to_hex if script.is_a?(Bitcoin::Script)
-      raise ArgumentError, "P2SH script is too large, 547 bytes is larger than #{Bitcoin::MAX_SCRIPT_ELEMENT_SIZE} bytes." if script.htb.bytesize > Bitcoin::MAX_SCRIPT_ELEMENT_SIZE
+      script_size = script.htb.bytesize
+      raise ArgumentError, "P2SH script is too large, #{script_size} bytes is larger than #{Bitcoin::MAX_SCRIPT_ELEMENT_SIZE} bytes." if script_size > Bitcoin::MAX_SCRIPT_ELEMENT_SIZE
       Bitcoin::Script.to_p2sh(Bitcoin.hash160(script))
     end
 
@@ -41,7 +42,6 @@ module Bitcoin
     # @return [Bitcoin::Script] P2WSH script.
     def wsh(script)
       script = Bitcoin::Script(script.htb) if script.is_a?(String)
-      raise ArgumentError, "P2SH script is too large, 547 bytes is larger than #{Bitcoin::MAX_SCRIPT_ELEMENT_SIZE} bytes." if script.to_payload.bytesize > Bitcoin::MAX_SCRIPT_ELEMENT_SIZE
       raise ArgumentError, "Uncompressed key are not allowed." if script.get_pubkeys.any?{|p|!compressed_key?(p)}
       Bitcoin::Script.to_p2wsh(script)
     end
