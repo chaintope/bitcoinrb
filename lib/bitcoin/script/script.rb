@@ -55,7 +55,9 @@ module Bitcoin
 
     # generate p2sh script with this as a redeem script
     # @return [Script] P2SH script
+    # @raise [RuntimeError] If the script size exceeds 520 bytes
     def to_p2sh
+      raise RuntimeError, "P2SH redeem script must be 520 bytes or less." if size > Bitcoin::MAX_SCRIPT_ELEMENT_SIZE
       Script.to_p2sh(to_hash160)
     end
 

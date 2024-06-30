@@ -139,6 +139,16 @@ describe Bitcoin::Script do
         expect(subject[1].to_addr).to be nil
       end
     end
+
+    context 'invalid script length' do
+      it 'should raise error' do
+        boundary = Bitcoin::Script.new
+        520.times { boundary << OP_0 }
+        expect{ boundary.to_p2sh }.not_to raise_error
+        boundary << OP_0
+        expect{ boundary.to_p2sh }.to raise_error(RuntimeError)
+      end
+    end
   end
 
   describe 'p2wsh script' do
