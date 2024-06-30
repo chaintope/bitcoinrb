@@ -76,9 +76,11 @@ module Bitcoin
     end
 
     # generate p2wsh script for +redeem_script+
-    # @param [Script] redeem_script target redeem script
-    # @param [Script] p2wsh script
+    # @param [Bitcoin::Script] redeem_script target redeem script
+    # @return [Bitcoin::Script] p2wsh script
+    # @raise [ArgumentError] If the script size exceeds 10,000 bytes
     def self.to_p2wsh(redeem_script)
+      raise ArgumentError, 'P2WSH witness script must be 10,000 bytes or less.' if redeem_script.size > Bitcoin::MAX_SCRIPT_SIZE
       new << WITNESS_VERSION_V0 << redeem_script.to_sha256
     end
 

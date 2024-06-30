@@ -182,6 +182,16 @@ describe Bitcoin::Script do
         expect(subject.to_addr).to eq('tb1q8nsuwycru4jyxrsv2ushyaee9yqyvvp2je60r4n6yjw06t88607sajrpy8')
       end
     end
+
+    context 'invalid script length' do
+      it 'should raise error' do
+        boundary = Bitcoin::Script.new
+        10_000.times { boundary << OP_0 }
+        expect{ Bitcoin::Script.to_p2wsh(boundary) }.not_to raise_error
+        boundary << OP_0
+        expect{ Bitcoin::Script.to_p2wsh(boundary) }.to raise_error(ArgumentError)
+      end
+    end
   end
 
   describe 'P2TR script' do
