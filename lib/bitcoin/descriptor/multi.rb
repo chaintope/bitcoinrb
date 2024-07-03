@@ -29,6 +29,10 @@ module Bitcoin
         super
       end
 
+      def to_s
+        "#{type.to_s}(#{threshold},#{keys.join(',')})"
+      end
+
       private
 
       def validate!(threshold, keys)

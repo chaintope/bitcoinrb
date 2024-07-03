@@ -11,6 +11,9 @@ module Bitcoin
         @key = key
       end
 
+      def to_s
+        "#{type.to_s}(#{key})"
+      end
     end
   end
 end

@@ -9,6 +9,10 @@ module Bitcoin
         @script = script
       end
 
+      def to_s
+        "#{type.to_s}(#{script.to_s})"
+      end
+
       private
 
       def validate!(script)
