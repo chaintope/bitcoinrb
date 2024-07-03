@@ -8,8 +8,8 @@ describe Bitcoin::Descriptor, network: :mainnet do
     it 'should be passe' do
       # Basic single-key compressed
       combo = %w(2103a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bdac 76a9149a1c78a507689f6f54b847ad1cef1e614ee23f1e88ac 00149a1c78a507689f6f54b847ad1cef1e614ee23f1e a91484ab21b1b2fd065d4504ff693d832434b6108d7b87)
-      expect(combo('L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1').to_script.map(&:to_hex)).to eq(combo)
-      expect(combo('03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd').to_script.map(&:to_hex)).to eq(combo)
+      expect(combo('L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1').to_scripts.map(&:to_hex)).to eq(combo)
+      expect(combo('03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd').to_scripts.map(&:to_hex)).to eq(combo)
       expect(pk("L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1").to_hex).to eq('2103a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bdac')
       expect(pk("03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd").to_hex).to eq('2103a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bdac')
       expect(pkh("[deadbeef/1/2'/3/4']L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1").to_hex).to eq('76a9149a1c78a507689f6f54b847ad1cef1e614ee23f1e88ac')
@@ -20,8 +20,8 @@ describe Bitcoin::Descriptor, network: :mainnet do
 
       # Basic single-key uncompressed
       combo = %w(4104a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd5b8dec5235a0fa8722476c7709c02559e3aa73aa03918ba2d492eea75abea235ac 76a914b5bd079c4d57cc7fc28ecf8213a6b791625b818388ac)
-      expect(combo('5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss').to_script.map(&:to_hex)).to eq(combo)
-      expect(combo('04a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd5b8dec5235a0fa8722476c7709c02559e3aa73aa03918ba2d492eea75abea235').to_script.map(&:to_hex)).to eq(combo)
+      expect(combo('5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss').to_scripts.map(&:to_hex)).to eq(combo)
+      expect(combo('04a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd5b8dec5235a0fa8722476c7709c02559e3aa73aa03918ba2d492eea75abea235').to_scripts.map(&:to_hex)).to eq(combo)
       expect(pk("5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss").to_hex).to eq('4104a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd5b8dec5235a0fa8722476c7709c02559e3aa73aa03918ba2d492eea75abea235ac')
       expect(pk("04a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd5b8dec5235a0fa8722476c7709c02559e3aa73aa03918ba2d492eea75abea235").to_hex).to eq('4104a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd5b8dec5235a0fa8722476c7709c02559e3aa73aa03918ba2d492eea75abea235ac')
       expect(pkh('5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss').to_hex).to eq('76a914b5bd079c4d57cc7fc28ecf8213a6b791625b818388ac')
@@ -40,8 +40,8 @@ describe Bitcoin::Descriptor, network: :mainnet do
 
       # Versions with BIP32 derivations
       combo = %w(2102d2b36900396c9282fa14628566582f206a5dd0bcc8d5e892611806cafb0301f0ac 76a91431a507b815593dfc51ffc7245ae7e5aee304246e88ac 001431a507b815593dfc51ffc7245ae7e5aee304246e a9142aafb926eb247cb18240a7f4c07983ad1f37922687)
-      expect(combo('[01234567]xprvA1RpRA33e1JQ7ifknakTFpgNXPmW2YvmhqLQYMmrj4xJXXWYpDPS3xz7iAxn8L39njGVyuoseXzU6rcxFLJ8HFsTjSyQbLYnMpCqE2VbFWc').to_script.map(&:to_hex)).to eq(combo)
-      expect(combo('[01234567]xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL').to_script.map(&:to_hex)).to eq(combo)
+      expect(combo('[01234567]xprvA1RpRA33e1JQ7ifknakTFpgNXPmW2YvmhqLQYMmrj4xJXXWYpDPS3xz7iAxn8L39njGVyuoseXzU6rcxFLJ8HFsTjSyQbLYnMpCqE2VbFWc').to_scripts.map(&:to_hex)).to eq(combo)
+      expect(combo('[01234567]xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL').to_scripts.map(&:to_hex)).to eq(combo)
       expect(pk('xprv9uPDJpEQgRQfDcW7BkF7eTya6RPxXeJCqCJGHuCJ4GiRVLzkTXBAJMu2qaMWPrS7AANYqdq6vcBcBUdJCVVFceUvJFjaPdGZ2y9WACViL4L/0').to_hex).to eq('210379e45b3cf75f9c5f9befd8e9506fb962f6a9d185ac87001ec44a8d3df8d4a9e3ac')
       expect(pk('xpub68NZiKmJWnxxS6aaHmn81bvJeTESw724CRDs6HbuccFQN9Ku14VQrADWgqbhhTHBaohPX4CjNLf9fq9MYo6oDaPPLPxSb7gwQN3ih19Zm4Y/0').to_hex).to eq('210379e45b3cf75f9c5f9befd8e9506fb962f6a9d185ac87001ec44a8d3df8d4a9e3ac')
       expect(pkh("xprv9s21ZrQH143K31xYSDQpPDxsXRTUcvj2iNHm5NUtrGiGG5e2DtALGdso3pGz6ssrdK4PFmM8NSpSBHNqPqm55Qn3LqFtT2emdEXVYsCzC2U/2147483647'/0").to_hex).to eq('76a914ebdc90806a9c4356c1c88e42216611e1cb4c1c1788ac')
