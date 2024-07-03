@@ -88,6 +88,11 @@ module Bitcoin
         end
         key
       end
+
+      def ==(other)
+        return false unless other.is_a?(Expression)
+        type == other.type && to_script == other.to_script
+      end
     end
   end
 end

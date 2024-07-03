@@ -16,6 +16,11 @@ module Bitcoin
         end
         candidates.map(&:to_script)
       end
+
+      def ==(other)
+        return false unless other.is_a?(Combo)
+        type == other.type && to_scripts == other.to_scripts
+      end
     end
   end
 end
