@@ -9,8 +9,9 @@ module Bitcoin
         @script = script
       end
 
-      def to_s
-        "#{type.to_s}(#{script.to_s})"
+      def to_s(checksum: false)
+        desc = "#{type.to_s}(#{script.to_s})"
+        checksum ? Checksum.descsum_create(desc) : desc
       end
 
       private
