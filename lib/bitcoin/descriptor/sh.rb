@@ -11,6 +11,10 @@ module Bitcoin
         script.to_script.to_p2sh
       end
 
+      def top_level?
+        true
+      end
+
       private
 
       def validate!(script)

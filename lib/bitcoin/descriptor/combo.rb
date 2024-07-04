@@ -21,6 +21,10 @@ module Bitcoin
         return false unless other.is_a?(Combo)
         type == other.type && to_scripts == other.to_scripts
       end
+
+      def top_level?
+        true
+      end
     end
   end
 end

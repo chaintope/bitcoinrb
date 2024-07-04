@@ -15,6 +15,26 @@ module Bitcoin
         raise NotImplementedError
       end
 
+      # Whether this is top level or not.
+      # @return [Boolean]
+      def top_level?
+        raise NotImplementedError
+      end
+
+      # Get args for this expression.
+      # @return [String] args
+      def args
+        raise NotImplementedError
+      end
+
+      # Get descriptor string.
+      # @param [Boolean] checksum If true, append checksum.
+      # @return [String] Descriptor string.
+      def to_s(checksum: false)
+        desc = "#{type.to_s}(#{args})"
+        checksum ? Checksum.descsum_create(desc) : desc
+      end
+
       # Convert to bitcoin script as hex string.
       # @return [String]
       def to_hex

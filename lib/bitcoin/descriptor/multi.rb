@@ -29,9 +29,12 @@ module Bitcoin
         super
       end
 
-      def to_s(checksum: false)
-        desc = "#{type.to_s}(#{threshold},#{keys.join(',')})"
-        checksum ? Checksum.descsum_create(desc) : desc
+      def args
+        "#{threshold},#{keys.join(',')}"
+      end
+
+      def top_level?
+        false
       end
 
       private

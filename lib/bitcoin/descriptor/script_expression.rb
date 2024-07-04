@@ -9,16 +9,14 @@ module Bitcoin
         @script = script
       end
 
-      def to_s(checksum: false)
-        desc = "#{type.to_s}(#{script.to_s})"
-        checksum ? Checksum.descsum_create(desc) : desc
+      def args
+        script.to_s
       end
 
       private
 
       def validate!(script)
-        raise ArgumentError, 'Can only have combo() at top level.' if script.is_a?(Combo)
-        raise ArgumentError, 'Can only have sh() at top level.' if script.is_a?(Sh)
+        raise ArgumentError, "Can only have #{script.type.to_s}() at top level." if script.is_a?(Expression) && script.top_level?
       end
     end
   end

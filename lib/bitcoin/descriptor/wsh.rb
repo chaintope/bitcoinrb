@@ -11,6 +11,10 @@ module Bitcoin
         Script.to_p2wsh(script.to_script)
       end
 
+      def top_level?
+        false
+      end
+
       def validate!(script)
         super(script)
         raise ArgumentError, 'A function is needed within P2WSH.' unless script.is_a?(Expression)

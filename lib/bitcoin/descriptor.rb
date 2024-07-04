@@ -14,39 +14,41 @@ module Bitcoin
     autoload :Combo, 'bitcoin/descriptor/combo'
     autoload :Multi, 'bitcoin/descriptor/multi'
     autoload :SortedMulti, 'bitcoin/descriptor/sorted_multi'
+    autoload :Raw, 'bitcoin/descriptor/raw'
+    autoload :Addr,  'bitcoin/descriptor/addr'
     autoload :Checksum, 'bitcoin/descriptor/checksum'
 
     module_function
 
-    # generate P2PK output for the given public key.
+    # Generate P2PK output for the given public key.
     # @param [String] key private key or public key with hex format
     # @return [Bitcoin::Descriptor::Pk]
     def pk(key)
       Pk.new(key)
     end
 
-    # generate P2PKH output for the given public key.
+    # Generate P2PKH output for the given public key.
     # @param [String] key private key or public key with hex format.
     # @return [Bitcoin::Descriptor::Pkh]
     def pkh(key)
       Pkh.new(key)
     end
 
-    # generate P2PKH output for the given public key.
+    # Generate P2PKH output for the given public key.
     # @param [String] key private key or public key with hex format.
     # @return [Bitcoin::Descriptor::Wpkh]
     def wpkh(key)
       Wpkh.new(key)
     end
 
-    # generate P2SH embed the argument.
+    # Generate P2SH embed the argument.
     # @param [Bitcoin::Descriptor::Base] exp script expression to be embed.
     # @return [Bitcoin::Descriptor::Sh]
     def sh(exp)
       Sh.new(exp)
     end
 
-    # generate P2WSH embed the argument.
+    # Generate P2WSH embed the argument.
     # @param [Bitcoin::Descriptor::Expression] exp script expression to be embed.
     # @return [Bitcoin::Descriptor::Wsh]
     def wsh(exp)
@@ -61,7 +63,7 @@ module Bitcoin
       Combo.new(key)
     end
 
-    # generate multisig output for given keys.
+    # Generate multisig output for given keys.
     # @param [Integer] threshold the threshold of multisig.
     # @param [Array[String]] keys an array of keys.
     # @return [Bitcoin::Descriptor::Multi] multisig script.
@@ -69,12 +71,26 @@ module Bitcoin
       Multi.new(threshold, keys)
     end
 
-    # generate sorted multisig output for given keys.
+    # Generate sorted multisig output for given keys.
     # @param [Integer] threshold the threshold of multisig.
     # @param [Array[String]] keys an array of keys.
     # @return [Bitcoin::Descriptor::SortedMulti]
     def sortedmulti(threshold, *keys)
       SortedMulti.new(threshold, keys)
+    end
+
+    # Generate raw output script about +hex+.
+    # @param [String] hex Hex string of bitcoin script.
+    # @return [Bitcoin::Descriptor::Raw]
+    def raw(hex)
+      Raw.new(hex)
+    end
+
+    # Generate raw output script about +hex+.
+    # @param [String] addr Bitcoin address.
+    # @return [Bitcoin::Descriptor::Addr]
+    def addr(addr)
+      Addr.new(addr)
     end
 
     # Parse descriptor string.
@@ -102,6 +118,10 @@ module Bitcoin
         threshold = args[0].to_i
         keys = args[1..-1]
         exp == 'multi' ? multi(threshold, *keys) : sortedmulti(threshold, *keys)
+      when 'raw'
+        raw(args_str)
+      when 'addr'
+        addr(args_str)
       else
         raise ArgumentError, "Parse failed: #{string}"
       end

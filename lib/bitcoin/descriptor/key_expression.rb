@@ -11,9 +11,12 @@ module Bitcoin
         @key = key
       end
 
-      def to_s(checksum: false)
-        desc = "#{type.to_s}(#{key})"
-        checksum ? Checksum.descsum_create(desc) : desc
+      def args
+        key
+      end
+
+      def top_level?
+        false
       end
     end
   end
