@@ -270,10 +270,4 @@ describe Bitcoin::Descriptor, network: :mainnet do
       expect(described_class.parse(nested_multi.to_s)).to eq(nested_multi)
     end
   end
-
-  describe "hoge" do
-    it do
-
-    end
-  end
 end
