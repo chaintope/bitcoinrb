@@ -14,6 +14,7 @@ module Bitcoin
     autoload :Combo, 'bitcoin/descriptor/combo'
     autoload :Multi, 'bitcoin/descriptor/multi'
     autoload :SortedMulti, 'bitcoin/descriptor/sorted_multi'
+    autoload :Checksum, 'bitcoin/descriptor/checksum'
 
     module_function
 
@@ -80,8 +81,9 @@ module Bitcoin
     # @param [String] string Descriptor string.
     # @return [Bitcoin::Descriptor::Expression]
     def parse(string)
-      # 最初の関数名を取得
-      exp, args_str = string.match(/(\w+)\((.+)\)/).captures
+      validate_checksum!(string)
+      content, _ = string.split('#')
+      exp, args_str = content.match(/(\w+)\((.+)\)/).captures
       case exp
       when 'pk'
         pk(args_str)
@@ -102,6 +104,21 @@ module Bitcoin
         exp == 'multi' ? multi(threshold, *keys) : sortedmulti(threshold, *keys)
       else
         raise ArgumentError, "Parse failed: #{string}"
+      end
+    end
+
+    # Validate descriptor checksum.
+    # @raise [ArgumentError] If +descriptor+ has invalid checksum.
+    def validate_checksum!(descriptor)
+      return unless descriptor.include?("#")
+      content, *checksums = descriptor.split("#")
+      raise ArgumentError, "Multiple '#' symbols." if checksums.length > 1
+      checksum = checksums.first
+      len = checksum.nil? ? 0 : checksum.length
+      raise ArgumentError, "Expected 8 character checksum, not #{len} characters." unless len == 8
+      _, calc_checksum = Checksum.descsum_create(content).split('#')
+      unless calc_checksum == checksum
+        raise ArgumentError, "Provided checksum '#{checksum}' does not match computed checksum '#{calc_checksum}'."
       end
     end
   end
