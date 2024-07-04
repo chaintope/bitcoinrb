@@ -15,6 +15,8 @@ module Bitcoin
     autoload :Multi, 'bitcoin/descriptor/multi'
     autoload :SortedMulti, 'bitcoin/descriptor/sorted_multi'
 
+    module_function
+
     # generate P2PK output for the given public key.
     # @param [String] key private key or public key with hex format
     # @return [Bitcoin::Descriptor::Pk]
@@ -72,6 +74,35 @@ module Bitcoin
     # @return [Bitcoin::Descriptor::SortedMulti]
     def sortedmulti(threshold, *keys)
       SortedMulti.new(threshold, keys)
+    end
+
+    # Parse descriptor string.
+    # @param [String] string Descriptor string.
+    # @return [Bitcoin::Descriptor::Expression]
+    def parse(string)
+      # 最初の関数名を取得
+      exp, args_str = string.match(/(\w+)\((.+)\)/).captures
+      case exp
+      when 'pk'
+        pk(args_str)
+      when 'pkh'
+        pkh(args_str)
+      when 'wpkh'
+        wpkh(args_str)
+      when 'sh'
+        sh(parse(args_str))
+      when 'wsh'
+        wsh(parse(args_str))
+      when 'combo'
+        combo(args_str)
+      when 'multi', 'sortedmulti'
+        args = args_str.split(',')
+        threshold = args[0].to_i
+        keys = args[1..-1]
+        exp == 'multi' ? multi(threshold, *keys) : sortedmulti(threshold, *keys)
+      else
+        raise ArgumentError, "Parse failed: #{string}"
+      end
     end
   end
 end
