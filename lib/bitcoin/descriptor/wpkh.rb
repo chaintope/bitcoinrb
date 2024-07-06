@@ -4,7 +4,7 @@ module Bitcoin
     class Wpkh < KeyExpression
       def initialize(key)
         super(key)
-        raise ArgumentError, "Uncompressed key are not allowed." unless compressed_key?(extract_pubkey(key))
+        raise ArgumentError, "Uncompressed key are not allowed." unless extract_pubkey(key).compressed?
       end
 
       def type
@@ -12,7 +12,7 @@ module Bitcoin
       end
 
       def to_script
-        Script.to_p2wpkh(Bitcoin.hash160(extract_pubkey(key)))
+        Script.to_p2wpkh(extract_pubkey(key).hash160)
       end
     end
   end

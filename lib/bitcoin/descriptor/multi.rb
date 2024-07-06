@@ -17,7 +17,7 @@ module Bitcoin
       end
 
       def to_script
-        Script.to_multisig_script(threshold, keys.map{|key| extract_pubkey(key) }, sort: false)
+        Script.to_multisig_script(threshold, keys.map{|key| extract_pubkey(key).pubkey }, sort: false)
       end
 
       def to_hex
@@ -44,7 +44,7 @@ module Bitcoin
         raise ArgumentError, 'Multisig threshold cannot be 0, must be at least 1.' unless threshold > 0
         raise ArgumentError, 'Multisig threshold cannot be larger than the number of keys.' if threshold > keys.size
         raise ArgumentError, "Multisig must have between 1 and #{Bitcoin::MAX_PUBKEYS_PER_MULTISIG} keys, inclusive." if keys.size > Bitcoin::MAX_PUBKEYS_PER_MULTISIG
-        keys.map{|key| extract_pubkey(key) }
+        keys.each{|key| extract_pubkey(key) }
       end
     end
   end

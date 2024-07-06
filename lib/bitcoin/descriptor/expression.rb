@@ -49,7 +49,7 @@ module Bitcoin
 
       # Extract public key from KEY format.
       # @param [String] key KEY string.
-      # @return [String] public key.
+      # @return [Bitcoin::Key] public key.
       def extract_pubkey(key)
         if key.start_with?('[') # BIP32 fingerprint
           raise ArgumentError, "Multiple ']' characters found for a single pubkey." if key.count('[') > 1 || key.count(']') > 1
@@ -83,7 +83,7 @@ module Bitcoin
         end
         key = key.is_a?(Bitcoin::Key) ? key : key.key
         raise ArgumentError, Errors::Messages::INVALID_PUBLIC_KEY unless key.fully_valid_pubkey?
-        key.pubkey
+        key
       end
 
       # Derive key using +paths+.

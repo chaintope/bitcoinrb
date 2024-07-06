@@ -11,7 +11,7 @@ module Bitcoin
       # Convert to bitcoin script.
       # @return [Bitcoin::Script]
       def to_script
-        Bitcoin::Script.new << extract_pubkey(key) << OP_CHECKSIG
+        Bitcoin::Script.new << extract_pubkey(key).pubkey << OP_CHECKSIG
       end
 
     end
