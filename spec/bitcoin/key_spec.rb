@@ -131,7 +131,7 @@ describe Bitcoin::Key do
       it 'should be treated as an Xonly public key.' do
         digest = Bitcoin.sha256('message')
         key = Bitcoin::Key.new(priv_key: '4f0bdbfda0e7acf1aa44cc5c5e90068096b258089fd8230ed3a7ea5227214038',
-                               key_type: Bitcoin::Key::TYPES[:compressed])
+                               key_type: Bitcoin::Key::TYPES[:p2tr])
         aux = 'bf498c6e09a829330f59127ff176e5c6dbe108893fea46cd11e123ba0425a7b2'
         sig = key.sign(digest, false, aux.htb, algo: :schnorr)
         expect(key.verify(sig, digest, algo: :schnorr)).to be true
@@ -231,6 +231,16 @@ describe Bitcoin::Key do
 
       # uncompressed key
       expect(Bitcoin::Key.new(pubkey: '04a232272863a59dfd3f5f643bfc7558711ce59df1fb1f3102b19aedb4f241db8f1fc4286d3ab3f8b6c60fc0e0d9f827745b09f1473c8f6ae6f915653765f5d313').xonly_pubkey).to eq('a232272863a59dfd3f5f643bfc7558711ce59df1fb1f3102b19aedb4f241db8f')
+    end
+  end
+
+  describe '#from_xonly_pubkey' do
+    it do
+      key = described_class.from_xonly_pubkey('669b8afcec803a0d323e9a17f3ea8e68e8abe5a278020a929adbec52421adbd0')
+      expect(key.xonly_pubkey).to eq('669b8afcec803a0d323e9a17f3ea8e68e8abe5a278020a929adbec52421adbd0')
+      expect(key.key_type).to eq(Bitcoin::Key::TYPES[:p2tr])
+      expect{described_class.from_xonly_pubkey('02669b8afcec803a0d323e9a17f3ea8e68e8abe5a278020a929adbec52421adbd0')}.
+        to raise_error(ArgumentError, "xonly_pubkey must be 32 bytes")
     end
   end
 

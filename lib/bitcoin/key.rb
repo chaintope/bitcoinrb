@@ -83,7 +83,7 @@ module Bitcoin
     # @return [Bitcoin::Key] key object has public key.
     def self.from_xonly_pubkey(xonly_pubkey)
       raise ArgumentError, "xonly_pubkey must be #{X_ONLY_PUBKEY_SIZE} bytes" unless xonly_pubkey.htb.bytesize == X_ONLY_PUBKEY_SIZE
-      Bitcoin::Key.new(pubkey: "02#{xonly_pubkey}", key_type: TYPES[:compressed])
+      Bitcoin::Key.new(pubkey: "02#{xonly_pubkey}", key_type: TYPES[:p2tr])
     end
 
     # Generate from public key point.
