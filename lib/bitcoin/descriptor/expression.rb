@@ -77,8 +77,12 @@ module Bitcoin
           begin
             key = Bitcoin::Key.from_wif(key)
           rescue ArgumentError
-            key_type =  compressed_key?(key) ? Bitcoin::Key::TYPES[:compressed] : Bitcoin::Key::TYPES[:uncompressed]
-            key = Bitcoin::Key.new(pubkey: key, key_type: key_type)
+            key = if key.length == 64
+                    Bitcoin::Key.from_xonly_pubkey(key)
+                  else
+                    key_type = compressed_key?(key) ? Bitcoin::Key::TYPES[:compressed] : Bitcoin::Key::TYPES[:uncompressed]
+                    Bitcoin::Key.new(pubkey: key, key_type: key_type)
+                  end
           end
         end
         key = key.is_a?(Bitcoin::Key) ? key : key.key

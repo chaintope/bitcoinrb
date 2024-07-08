@@ -6,6 +6,7 @@ module Bitcoin
     autoload :LeafNode, 'bitcoin/taproot/leaf_node'
     autoload :ControlBlock, 'bitcoin/taproot/control_block'
     autoload :SimpleBuilder, 'bitcoin/taproot/simple_builder'
+    autoload :CustomDepthBuilder,  'bitcoin/taproot/custom_depth_builder'
 
     module_function
 

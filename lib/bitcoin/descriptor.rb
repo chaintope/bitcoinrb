@@ -16,6 +16,7 @@ module Bitcoin
     autoload :SortedMulti, 'bitcoin/descriptor/sorted_multi'
     autoload :Raw, 'bitcoin/descriptor/raw'
     autoload :Addr,  'bitcoin/descriptor/addr'
+    autoload :Tr,  'bitcoin/descriptor/tr'
     autoload :Checksum, 'bitcoin/descriptor/checksum'
 
     module_function
@@ -93,6 +94,14 @@ module Bitcoin
       Addr.new(addr)
     end
 
+    # Generate taproot output script descriptor.
+    # @param [String] key
+    # @param [String] tree
+    # @return [Bitcoin::Descriptor::Tr]
+    def tr(key, tree = nil)
+      Tr.new(key, tree)
+    end
+
     # Parse descriptor string.
     # @param [String] string Descriptor string.
     # @return [Bitcoin::Descriptor::Expression]
@@ -122,6 +131,9 @@ module Bitcoin
         raw(args_str)
       when 'addr'
         addr(args_str)
+      when 'tr'
+        key, tree = args_str.split(',')
+        tr(key, tree)
       else
         raise ArgumentError, "Parse failed: #{string}"
       end
