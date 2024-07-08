@@ -132,8 +132,8 @@ module Bitcoin
       when 'addr'
         addr(args_str)
       when 'tr'
-        key, tree = args_str.split(',')
-        tr(key, tree)
+        key, rest = args_str.split(',', 2)
+        tr(key, parse_nested_string(rest))
       else
         raise ArgumentError, "Parse failed: #{string}"
       end
@@ -152,6 +152,37 @@ module Bitcoin
       unless calc_checksum == checksum
         raise ArgumentError, "Provided checksum '#{checksum}' does not match computed checksum '#{calc_checksum}'."
       end
+    end
+
+    def parse_nested_string(string)
+      return nil if string.nil?
+      stack = []
+      current = []
+      buffer = ""
+      string.each_char do |c|
+        case c
+        when '{'
+          stack << current
+          current = []
+        when '}'
+          unless buffer.empty?
+            current << parse(buffer)
+            buffer = ""
+          end
+          nested = current
+          current = stack.pop
+          current << nested
+        when ','
+          unless buffer.empty?
+            current << parse(buffer)
+            buffer = ""
+          end
+        else
+          buffer << c
+        end
+      end
+      current << parse(buffer) unless buffer.empty?
+      current.first
     end
   end
 end
