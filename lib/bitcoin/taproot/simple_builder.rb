@@ -113,12 +113,6 @@ module Bitcoin
 
       private
 
-      # Compute tweak from script tree.
-      # @return [String] tweak with binary format.
-      def tweak
-        Taproot.tweak(Bitcoin::Key.from_xonly_pubkey(internal_key), merkle_root)
-      end
-
       # Calculate merkle root from branches.
       # @return [String] merkle root with hex format.
       def merkle_root
