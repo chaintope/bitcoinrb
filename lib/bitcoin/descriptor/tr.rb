@@ -26,7 +26,11 @@ module Bitcoin
       end
 
       def args
-        tree.nil? ? key : "#{key},#{tree_string(tree)}"
+        if tree.nil?
+          key
+        else
+          tree.is_a?(Array) ? "#{key},#{tree_string(tree)}" : "#{key},#{tree}"
+        end
       end
 
       def to_script
@@ -40,7 +44,7 @@ module Bitcoin
         internal_key = extract_pubkey(key)
         return Bitcoin::Taproot::SimpleBuilder.new(internal_key.xonly_pubkey) if tree.nil?
         if tree.is_a?(Expression)
-          tree.xonly = true
+          tree.xonly = true if tree.respond_to?(:xonly)
           Bitcoin::Taproot::SimpleBuilder.new(internal_key.xonly_pubkey, [Bitcoin::Taproot::LeafNode.new(tree.to_script)])
         elsif tree.is_a?(Array)
           Bitcoin::Taproot::CustomDepthBuilder.new(internal_key.xonly_pubkey, parse_tree_items(tree))

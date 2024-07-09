@@ -22,11 +22,9 @@ module Bitcoin
 
       def to_hex
         result = to_script
-        if result.multisig?
-          pubkey_count = result.get_pubkeys.length
-          raise RuntimeError, "Cannot have #{pubkey_count} pubkeys in bare multisig; only at most 3 pubkeys." if pubkey_count > 3
-        end
-        super
+        pubkey_count = result.get_pubkeys.length
+        raise RuntimeError, "Cannot have #{pubkey_count} pubkeys in bare multisig; only at most 3 pubkeys." if pubkey_count > 3
+        result.to_hex
       end
 
       def args

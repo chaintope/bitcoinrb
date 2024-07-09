@@ -17,6 +17,8 @@ module Bitcoin
     autoload :Raw, 'bitcoin/descriptor/raw'
     autoload :Addr,  'bitcoin/descriptor/addr'
     autoload :Tr,  'bitcoin/descriptor/tr'
+    autoload :MultiA,  'bitcoin/descriptor/multi_a'
+    autoload :SortedMultiA, 'bitcoin/descriptor/sorted_multi_a'
     autoload :Checksum, 'bitcoin/descriptor/checksum'
 
     module_function
@@ -102,10 +104,26 @@ module Bitcoin
       Tr.new(key, tree)
     end
 
+    # Generate tapscript multisig output for given keys.
+    # @param [Integer] threshold the threshold of multisig.
+    # @param [Array[String]] keys an array of keys.
+    # @return [Bitcoin::Descriptor::MultiA] multisig script.
+    def multi_a(threshold, *keys)
+      MultiA.new(threshold, keys)
+    end
+
+    # Generate tapscript sorted multisig output for given keys.
+    # @param [Integer] threshold the threshold of multisig.
+    # @param [Array[String]] keys an array of keys.
+    # @return [Bitcoin::Descriptor::SortedMulti]
+    def sortedmulti_a(threshold, *keys)
+      SortedMultiA.new(threshold, keys)
+    end
+
     # Parse descriptor string.
     # @param [String] string Descriptor string.
     # @return [Bitcoin::Descriptor::Expression]
-    def parse(string)
+    def parse(string, top_level = true)
       validate_checksum!(string)
       content, _ = string.split('#')
       exp, args_str = content.match(/(\w+)\((.+)\)/).captures
@@ -117,23 +135,40 @@ module Bitcoin
       when 'wpkh'
         wpkh(args_str)
       when 'sh'
-        sh(parse(args_str))
+        sh(parse(args_str, false))
       when 'wsh'
-        wsh(parse(args_str))
+        wsh(parse(args_str, false))
       when 'combo'
         combo(args_str)
-      when 'multi', 'sortedmulti'
+      when 'multi', 'sortedmulti', 'multi_a', 'sortedmulti_a'
         args = args_str.split(',')
         threshold = args[0].to_i
         keys = args[1..-1]
-        exp == 'multi' ? multi(threshold, *keys) : sortedmulti(threshold, *keys)
+        case exp
+        when 'multi'
+          multi(threshold, *keys)
+        when 'sortedmulti'
+          sortedmulti(threshold, *keys)
+        when 'multi_a'
+          raise ArgumentError, "Can only have multi_a/sortedmulti_a inside tr()." if top_level
+          multi_a(threshold, *keys)
+        when 'sortedmulti_a'
+          raise ArgumentError, "Can only have multi_a/sortedmulti_a inside tr()." if top_level
+          sortedmulti_a(threshold, *keys)
+        end
       when 'raw'
         raw(args_str)
       when 'addr'
         addr(args_str)
       when 'tr'
         key, rest = args_str.split(',', 2)
-        tr(key, parse_nested_string(rest))
+        if rest.nil?
+          tr(key)
+        elsif rest.start_with?('{')
+          tr(key, parse_nested_string(rest))
+        else
+          tr(key, parse(rest, false))
+        end
       else
         raise ArgumentError, "Parse failed: #{string}"
       end
@@ -166,7 +201,7 @@ module Bitcoin
           current = []
         when '}'
           unless buffer.empty?
-            current << parse(buffer)
+            current << parse(buffer, false)
             buffer = ""
           end
           nested = current
@@ -174,14 +209,14 @@ module Bitcoin
           current << nested
         when ','
           unless buffer.empty?
-            current << parse(buffer)
+            current << parse(buffer, false)
             buffer = ""
           end
         else
           buffer << c
         end
       end
-      current << parse(buffer) unless buffer.empty?
+      current << parse(buffer, false) unless buffer.empty?
       current.first
     end
   end
