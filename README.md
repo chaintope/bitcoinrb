@@ -1,6 +1,5 @@
 # Bitcoinrb [![Build Status](https://github.com/chaintope/bitcoinrb/actions/workflows/ruby.yml/badge.svg?branch=master)](https://github.com/chaintope/bitcoinrb/actions/workflows/ruby.yml) [![Gem Version](https://badge.fury.io/rb/bitcoinrb.svg)](https://badge.fury.io/rb/bitcoinrb) [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE) <img src="http://segwit.co/static/public/images/logo.png" width="100">
 
-
 Bitcoinrb is a Ruby implementation of Bitcoin Protocol.
 
 NOTE: Bitcoinrb work in progress, and there is a possibility of incompatible change. 
@@ -18,10 +17,9 @@ Bitcoinrb supports following feature:
 * bech32([BIP-173](https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki)) and bech32m([BIP-350](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)) address support
 * [BIP-174](https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki) PSBT(Partially Signed Bitcoin Transaction) support
 * [BIP-85](https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki) Deterministic Entropy From BIP32 Keychains support by `Bitcoin::BIP85Entropy` class.
-* Schnorr signature([BIP-340](https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki))  
-* Taproot consensus([BIP-341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki) and [BIP-342](https://github.com/bitcoin/bips/blob/master/bip-0342.mediawiki))  
-* [WIP] SPV node
-* [WIP] 0ff-chain protocol
+* Schnorr signature([BIP-340](https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki))
+* Taproot consensus([BIP-341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki) and [BIP-342](https://github.com/bitcoin/bips/blob/master/bip-0342.mediawiki))
+* Output script descriptor([BIP-380](https://github.com/bitcoin/bips/blob/master/bip-0380.mediawiki), [BIP-381](https://github.com/bitcoin/bips/blob/master/bip-0381.mediawiki), [BIP-382](https://github.com/bitcoin/bips/blob/master/bip-0382.mediawiki), [BIP-383](https://github.com/bitcoin/bips/blob/master/bip-0383.mediawiki), [BIP-384](https://github.com/bitcoin/bips/blob/master/bip-0384.mediawiki), [BIP-385](https://github.com/bitcoin/bips/blob/master/bip-0385.mediawiki), [BIP-386](https://github.com/bitcoin/bips/blob/master/bip-0386.mediawiki), [BIP-387](https://github.com/bitcoin/bips/blob/master/bip-0387.mediawiki))
 
 ## Requirements
 
