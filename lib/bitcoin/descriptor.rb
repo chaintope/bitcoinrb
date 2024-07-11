@@ -19,6 +19,7 @@ module Bitcoin
     autoload :Tr,  'bitcoin/descriptor/tr'
     autoload :MultiA,  'bitcoin/descriptor/multi_a'
     autoload :SortedMultiA, 'bitcoin/descriptor/sorted_multi_a'
+    autoload :RawTr,  'bitcoin/descriptor/raw_tr'
     autoload :Checksum, 'bitcoin/descriptor/checksum'
 
     module_function
@@ -104,6 +105,13 @@ module Bitcoin
       Tr.new(key, tree)
     end
 
+    # Generate taproot output script descriptor.
+    # @param [String] key
+    # @return [Bitcoin::Descriptor::RawTr]
+    def rawtr(key)
+      RawTr.new(key)
+    end
+
     # Generate tapscript multisig output for given keys.
     # @param [Integer] threshold the threshold of multisig.
     # @param [Array[String]] keys an array of keys.
@@ -169,6 +177,8 @@ module Bitcoin
         else
           tr(key, parse(rest, false))
         end
+      when 'rawtr'
+        rawtr(args_str)
       else
         raise ArgumentError, "Parse failed: #{string}"
       end
