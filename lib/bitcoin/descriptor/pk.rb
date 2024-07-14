@@ -18,7 +18,7 @@ module Bitcoin
       # Convert to bitcoin script.
       # @return [Bitcoin::Script]
       def to_script
-        k = extract_pubkey(key)
+        k = extracted_key
         target_key = xonly ? k.xonly_pubkey : k.pubkey
         Bitcoin::Script.new << target_key << OP_CHECKSIG
       end

@@ -9,7 +9,7 @@ module Bitcoin
 
       def to_scripts
         candidates = [Pk.new(key), Pkh.new(key)]
-        pubkey = extract_pubkey(key)
+        pubkey = extracted_key
         if pubkey.compressed?
           candidates << Wpkh.new(pubkey.pubkey)
           candidates << Sh.new(candidates.last)

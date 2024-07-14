@@ -12,7 +12,7 @@ module Bitcoin
       end
 
       def to_script
-        Script.to_p2wpkh(extract_pubkey(key).hash160)
+        Script.to_p2wpkh(extracted_key.hash160)
       end
     end
   end

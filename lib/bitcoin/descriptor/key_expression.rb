@@ -18,6 +18,13 @@ module Bitcoin
       def top_level?
         false
       end
+
+      # Get extracted key.
+      # @return [Bitcoin::Key] Extracted key.
+      def extracted_key
+        extract_pubkey(key)
+      end
+
     end
   end
 end

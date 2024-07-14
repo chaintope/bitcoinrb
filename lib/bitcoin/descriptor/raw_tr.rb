@@ -13,8 +13,7 @@ module Bitcoin
       end
 
       def to_script
-        k = extract_pubkey(key)
-        Bitcoin::Script.new << OP_1 << k.xonly_pubkey
+        Bitcoin::Script.new << OP_1 << extract_pubkey(key).xonly_pubkey
       end
     end
   end
