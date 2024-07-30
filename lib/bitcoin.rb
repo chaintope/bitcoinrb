@@ -61,6 +61,7 @@ module Bitcoin
   autoload :SigHashGenerator, 'bitcoin/sighash_generator'
   autoload :MessageSign, 'bitcoin/message_sign'
   autoload :Taproot, 'bitcoin/taproot'
+  autoload :SilentPayment, 'bitcoin/silent_payment'
   autoload :BIP324, 'bitcoin/bip324'
 
   require_relative 'bitcoin/constants'
