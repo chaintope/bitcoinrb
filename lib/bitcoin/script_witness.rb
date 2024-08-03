@@ -10,8 +10,8 @@ module Bitcoin
     end
 
     def self.parse_from_payload(payload)
-      return self.new if payload.empty?
       buf = payload.is_a?(StringIO) ? payload : StringIO.new(payload)
+      return self.new if buf.eof?
       size = Bitcoin.unpack_var_int_from_io(buf)
       stack = size.times.map do
         buf.read(Bitcoin.unpack_var_int_from_io(buf))
