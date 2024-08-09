@@ -15,6 +15,27 @@ module Bitcoin
       @transactions = transactions
     end
 
+    # Create genesis block.
+    # @param [String] msg Message embedded in coinbase transaction.
+    # @param [Bitcoin::Script] script Coinbase transaction scriptPubkey.
+    # @param [Integer] time Block time.
+    # @param [Integer] nonce nonce.
+    # @param [Integer] bits nBits
+    # @param [Integer] version nVersion.
+    # @param [Integer] rewards Block rewards(satoshi).
+    def self.create_genesis(msg, script, time, nonce, bits, version, rewards = 50 * 100000000)
+      coinbase = Bitcoin::Tx.create_coinbase(msg, script, rewards)
+      header = BlockHeader.new(
+        version,
+        '00' * 32,
+        MerkleTree.build_from_leaf([coinbase.txid]).merkle_root.rhex,
+        time,
+        bits,
+        nonce
+      )
+      Block.new(header, [coinbase])
+    end
+
     def self.parse_from_payload(payload)
       Bitcoin::Message::Block.parse_from_payload(payload).to_block
     end

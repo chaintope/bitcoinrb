@@ -33,6 +33,19 @@ module Bitcoin
     alias_method :in, :inputs
     alias_method :out, :outputs
 
+    # Create coinbase transaction.
+    # @param [String] msg Message embedded in coinbase transaction.
+    # @param [Bitcoin::Script] script Coinbase transaction scriptPubkey.
+    # @param [Integer] rewards Coinbase Transaction Rewards
+    # @return [Bitcoin::Tx] Coinbase transaction.
+    def self.create_coinbase(msg, script, rewards = 50 * 100000000)
+      coinbase = Tx.new
+      script_sig = Bitcoin::Script.new << 486604799 << "04" << msg.bth
+      coinbase.in << TxIn.new(out_point: OutPoint.create_coinbase_outpoint, script_sig: script_sig)
+      coinbase.out << TxOut.new(value: rewards, script_pubkey: script)
+      coinbase
+    end
+
     def self.parse_from_payload(payload, non_witness: false, strict: false)
       buf = payload.is_a?(String) ? StringIO.new(payload) : payload
       tx = new

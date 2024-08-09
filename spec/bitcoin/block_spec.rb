@@ -86,4 +86,19 @@ describe Bitcoin::Block do
     end
   end
 
+  describe "create_genesis" do
+    it do
+      testnet4 = described_class.create_genesis(
+        "03/May/2024 000000000000000000001ebd58c244970b3aa9d783bb001011fbe8ea8e98e00e",
+        Bitcoin::Script.new << "000000000000000000000000000000000000000000000000000000000000000000" << Bitcoin::Opcodes::OP_CHECKSIG,
+        1714777860,
+        393743547,
+        0x1d00ffff,
+        1
+      )
+      expect(testnet4.header.merkle_root.rhex).to eq('7aa0a7ae1e223414cb807e40cd57e667b718e42aaf9306db9102fe28912b7b4e')
+      expect(testnet4.block_hash.rhex).to eq('00000000da84f2bafbbc53dee25a72ae507ff4914b867c565be350b0da8bf043')
+    end
+  end
+
 end
