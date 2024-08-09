@@ -4,7 +4,13 @@ module Bitcoin
     attr_accessor :header
     attr_accessor :transactions
 
+    # Constructor
+    # @param [Bitcoin::BlockHeader] header
+    # @param [Array] transactions An array of transaction.
+    # @raise [ArgumentError]
     def initialize(header, transactions = [])
+      raise ArgumentError, "header must be Bitcoin::BlockHeader." unless header.is_a?(Bitcoin::BlockHeader)
+      raise ArgumentError, "transactions must be an Array." unless transactions.is_a?(Array)
       @header = header
       @transactions = transactions
     end
