@@ -71,7 +71,8 @@ module Bitcoin
         tx.in[0].script_witness = Bitcoin::ScriptWitness.parse_from_payload(sig)
         script_pubkey = Bitcoin::Script.parse_from_addr(address)
         tx_out = Bitcoin::TxOut.new(script_pubkey: script_pubkey)
-        interpreter = Bitcoin::ScriptInterpreter.new(checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0, prevouts: [tx_out]))
+        flags = Bitcoin::STANDARD_SCRIPT_VERIFY_FLAGS
+        interpreter = Bitcoin::ScriptInterpreter.new(flags: flags, checker: Bitcoin::TxChecker.new(tx: tx, input_index: 0, prevouts: [tx_out]))
         interpreter.verify_script(Bitcoin::Script.new, script_pubkey, tx.in[0].script_witness)
       else
         raise ArgumentError, "This address unsupported."

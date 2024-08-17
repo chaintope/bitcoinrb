@@ -129,6 +129,7 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
       # Verify signature
       expect(described_class.verify_message(addr, sig1, '')).to be true
       expect(described_class.verify_message(addr, sig2, 'Hello World')).to be true
+      expect(described_class.verify_message(addr, sig2, 'Hello World2')).to be false
     end
   end
 
