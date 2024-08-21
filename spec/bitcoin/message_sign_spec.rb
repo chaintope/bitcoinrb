@@ -108,6 +108,11 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
         format: described_class::FORMAT_SIMPLE,
         address: addr)
       expect(sig1).to eq('AkcwRAIgM2gBAQqvZX15ZiysmKmQpDrG83avLIT492QBzLnQIxYCIBaTpOaD20qRlEylyxFSeEA2ba9YOixpX8z46TSDtS40ASECx/EgAxlkQpQ9hYjgGu6EBCPMVPwVIVJqO4XCsMvViHI=')
+      sig1_full = described_class.sign_message(
+        private_key,
+        '',
+        format: described_class::FORMAT_FULL,
+        address: addr)
       sig2 = described_class.sign_message(
         private_key,
         'Hello World',
@@ -130,6 +135,8 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
       expect(described_class.verify_message(addr, sig1, '')).to be true
       expect(described_class.verify_message(addr, sig2, 'Hello World')).to be true
       expect(described_class.verify_message(addr, sig2, 'Hello World2')).to be false
+      expect(described_class.verify_message(addr, sig1_full, '')).to be true
+      expect(described_class.verify_message(addr, sig1_full, 'Hello')).to be false
     end
   end
 

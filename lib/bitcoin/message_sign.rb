@@ -67,8 +67,18 @@ module Bitcoin
         end
       elsif addr_script.witness_program?
         # BIP322 verification
-        tx = to_sign_tx(message_hash(message, prefix: prefix, legacy: false), address)
-        tx.in[0].script_witness = Bitcoin::ScriptWitness.parse_from_payload(sig)
+        digest = message_hash(message, prefix: prefix, legacy: false)
+        begin
+          # Full
+          tx = Bitcoin::Tx.parse_from_payload(sig)
+          validate_to_sign_tx!(tx)
+          to_spend = to_spend_tx(digest, address)
+          return false unless tx.in[0].out_point.tx_hash == to_spend.tx_hash
+        rescue Exception
+          # Simple
+          tx = to_sign_tx(digest, address)
+          tx.in[0].script_witness = Bitcoin::ScriptWitness.parse_from_payload(sig)
+        end
         script_pubkey = Bitcoin::Script.parse_from_addr(address)
         tx_out = Bitcoin::TxOut.new(script_pubkey: script_pubkey)
         flags = Bitcoin::STANDARD_SCRIPT_VERIFY_FLAGS
@@ -99,6 +109,14 @@ module Bitcoin
       end
     end
 
+    def validate_to_sign_tx!(tx)
+      raise ArgumentError, "Multiple inputs (proof of funds) are not supported." unless tx.in.length == 1
+      raise ArgumentError, "vin[0].prevout.n must be 0." unless tx.in[0].out_point.index == 0
+      raise ArgumentError, "Multiple outputs are not supported." unless tx.out.length == 1
+      raise ArgumentError, "vout[0].nValue must be 0." unless tx.out[0].value == 0
+      raise ArgumentError, "vout[0].scriptPubKey must be OP_RETURN." unless tx.out[0].script_pubkey == Bitcoin::Script.new << Bitcoin::Opcodes::OP_RETURN
+    end
+
     def to_spend_tx(digest, addr)
       validate_address!(addr)
       message_challenge = Bitcoin::Script.parse_from_addr(addr)
@@ -124,5 +142,6 @@ module Bitcoin
 
     private_class_method :validate_address!
     private_class_method :validate_format!
+    private_class_method :validate_to_sign_tx!
   end
 end
