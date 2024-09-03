@@ -22,8 +22,7 @@ retarget_interval: 2016
 retarget_time: 1209600 # 2 weeks
 target_spacing: 600 # block interval
 max_money: 21000000
-bip34_height: 0
-genesis_hash: "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"
+bip34_height: 1
 proof_of_work_limit: 0x207fffff
 dns_seeds:
 genesis:

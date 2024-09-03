@@ -27,9 +27,13 @@ proof_of_work_limit: 0x1d00ffff
 dns_seeds:
   - "seed.bitcoin.sipa.be"
   - "dnsseed.bluematt.me"
-  - "dnsseed.bitcoin.dashjr.org"
-  - "seed.bitcoinstats.com"
+  - "dnsseed.bitcoin.dashjr-list-of-p2p-nodes.us"
   - "seed.bitcoin.jonasschnelli.ch"
+  - "seed.btc.petertodd.net"
+  - "seed.bitcoin.sprovoost.nl"
+  - "dnsseed.emzy.de"
+  - "seed.bitcoin.wiz.biz"
+  - "seed.mainnet.achownodes.xyz"
 genesis:
   hash: "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
   merkle_root: "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
