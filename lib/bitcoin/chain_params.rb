@@ -56,6 +56,11 @@ module Bitcoin
       init('signet')
     end
 
+    # testnet 4 genesis
+    def self.testnet4
+      init('testnet4')
+    end
+
     def mainnet?
       network == 'mainnet'
     end
@@ -70,6 +75,10 @@ module Bitcoin
 
     def signet?
       network == 'signet'
+    end
+
+    def testnet4?
+      network == 'testnet4'
     end
 
     def genesis_block
