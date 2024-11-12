@@ -34,14 +34,6 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'json_pure', '>= 2.3.1', '< 2.8.0'
   spec.add_runtime_dependency 'bip-schnorr', '>= 0.7.0'
   spec.add_runtime_dependency 'base32', '>= 0.3.4'
-
-  # for options
-  spec.add_development_dependency 'leveldb-native'
-
-  spec.add_development_dependency 'bundler'
-  spec.add_development_dependency 'rake', '>= 12.3.3'
-  spec.add_development_dependency 'rspec', '~> 3.0'
-  spec.add_development_dependency 'timecop'
-  spec.add_development_dependency 'webmock', '>= 3.11.1'
-  spec.add_development_dependency 'parallel', '>= 1.20.1'
+  spec.add_runtime_dependency 'base64', '~> 0.2.0'
+  spec.add_runtime_dependency 'observer', '~> 0.1.2'
 end
