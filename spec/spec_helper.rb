@@ -6,21 +6,6 @@ require 'webmock/rspec'
 require 'parallel'
 require 'csv'
 
-RSpec.configure do |config|
-  config.before(:each) do |example|
-    if example.metadata[:network]
-      Bitcoin.chain_params = example.metadata[:network]
-    else
-      Bitcoin.chain_params = :testnet
-    end
-    if example.metadata[:use_secp256k1]
-      use_secp256k1
-    else
-      use_ecdsa_gem
-    end
-  end
-end
-
 def use_secp256k1
   host_os = RbConfig::CONFIG['host_os']
   case host_os
@@ -102,5 +87,22 @@ RSpec::Matchers.define :custom_object do |clazz, properties|
       return false unless actual.send(key) == value
     end
     true
+  end
+end
+
+use_secp256k1
+
+RSpec.configure do |config|
+  config.before(:each) do |example|
+    if example.metadata[:network]
+      Bitcoin.chain_params = example.metadata[:network]
+    else
+      Bitcoin.chain_params = :testnet
+    end
+    if example.metadata[:use_secp256k1]
+      use_secp256k1
+    else
+      use_ecdsa_gem
+    end
   end
 end

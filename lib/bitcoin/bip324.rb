@@ -132,7 +132,7 @@ module Bitcoin
       raise ArgumentError, "ellswift_ours must be a Bitcoin::BIP324::EllSwiftPubkey" unless ellswift_ours.is_a?(Bitcoin::BIP324::EllSwiftPubkey)
 
       if Bitcoin.secp_impl.is_a?(Bitcoin::Secp256k1::Native)
-        Bitcoin::Secp256k1::Native.ellswift_ecdh_xonly(ellswift_theirs, ellswift_ours, priv_key, initiating)
+        Bitcoin::Secp256k1::Native.ellswift_ecdh_xonly(ellswift_theirs.key, ellswift_ours.key, priv_key, initiating)
       else
         ecdh_point_x32 = ellswift_ecdh_xonly(ellswift_theirs, priv_key).htb
         content = initiating ? ellswift_ours.key + ellswift_theirs.key + ecdh_point_x32 :
