@@ -146,11 +146,8 @@ module Bitcoin
     # @return [Bitcoin::Key] Recovered public key.
     def self.recover_compact(data, signature)
       rec_id = signature.unpack1('C')
-      rec = (rec_id - Bitcoin::Key::COMPACT_SIG_HEADER_BYTE) & 3
-      raise ArgumentError, 'Invalid signature parameter' if rec < 0 || rec > 3
-
       compressed = (rec_id - Bitcoin::Key::COMPACT_SIG_HEADER_BYTE) & 4 != 0
-      Bitcoin.secp_impl.recover_compact(data, signature, rec, compressed)
+      Bitcoin.secp_impl.recover_compact(data, signature, compressed)
     end
 
     # verify signature using public key

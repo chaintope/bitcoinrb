@@ -62,8 +62,8 @@ module Bitcoin
           pubkey = Bitcoin::Key.recover_compact(message_hash(message, prefix: prefix, legacy: true), sig)
           return false unless pubkey
           pubkey.to_p2pkh == address
-        rescue RuntimeError
-          return false
+        rescue Exception
+          false
         end
       elsif addr_script.witness_program?
         # BIP322 verification

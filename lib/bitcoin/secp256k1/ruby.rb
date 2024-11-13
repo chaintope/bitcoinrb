@@ -9,6 +9,7 @@ module Bitcoin
     module Ruby
 
       module_function
+      extend Schnorr::Util
 
       # generate ec private key and public key
       def generate_key_pair(compressed: true)
@@ -72,11 +73,20 @@ module Bitcoin
 
       # Recover public key from compact signature.
       # @param [String] data message digest using signature.
-      # @param [String] signature signature with binary format.
-      # @param [Integer] rec recovery id.
+      # @param [String] signature signature with binary format(65 bytes).
       # @param [Boolean] compressed whether compressed public key or not.
       # @return [Bitcoin::Key] Recovered public key.
-      def recover_compact(data, signature, rec, compressed)
+      # @raise [ArgumentError] If invalid arguments specified.
+      def recover_compact(data, signature, compressed)
+        raise ArgumentError, "data must be String." unless data.is_a?(String)
+        raise ArgumentError, "signature must be String." unless signature.is_a?(String)
+        signature = hex2bin(signature)
+        raise ArgumentError, "signature must be 64 bytes." unless signature.bytesize == 65
+        data = hex2bin(data)
+        raise ArgumentError, "data must be 32 bytes." unless data.bytesize == 32
+        rec = (signature[0].ord - 0x1b) & 3
+        raise ArgumentError, "rec must be between 0 and 3." if rec < 0 || rec > 3
+
         group = Bitcoin::Secp256k1::GROUP
         r = ECDSA::Format::IntegerOctetString.decode(signature[1...33])
         s = ECDSA::Format::IntegerOctetString.decode(signature[33..-1])

@@ -82,8 +82,8 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
         rec = Bitcoin::Key::COMPACT_SIG_HEADER_BYTE + rec1 + (compressed ? 4 : 0)
         signature = [rec].pack('C') + ECDSA::Format::IntegerOctetString.encode(sig1.r, 32) +
           ECDSA::Format::IntegerOctetString.encode(sig1.s, 32)
-        native_key = Bitcoin::Secp256k1::Native.recover_compact(digest, signature, rec1, compressed)
-        ruby_key = Bitcoin::Secp256k1::Ruby.recover_compact(digest, signature, rec1, compressed)
+        native_key = Bitcoin::Secp256k1::Native.recover_compact(digest, signature, compressed)
+        ruby_key = Bitcoin::Secp256k1::Ruby.recover_compact(digest, signature, compressed)
         expect(key.pubkey).to eq(native_key.pubkey)
         expect(key.pubkey).to eq(ruby_key.pubkey)
       end
