@@ -16,6 +16,12 @@ module Bitcoin
 
       extend ::Secp256k1
 
+      # Whether this module is native c wrapper or not?
+      # @return [Boolean]
+      def native?
+        true
+      end
+
       # generate bitcoin key object
       def generate_key(compressed: true)
         privkey, pubkey = generate_key_pair(compressed: compressed)

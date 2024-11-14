@@ -346,7 +346,7 @@ module Bitcoin
     # @raise ArgumentError If ent32 does not 32 bytes.
     def create_ell_pubkey
       raise ArgumentError, "private_key required." unless priv_key
-      if secp256k1_module.is_a?(Bitcoin::Secp256k1::Native)
+      if secp256k1_module.native?
         Bitcoin::BIP324::EllSwiftPubkey.new(secp256k1_module.ellswift_create(priv_key))
       else
         Bitcoin::BIP324::EllSwiftPubkey.new(Bitcoin::BIP324.xelligatorswift(xonly_pubkey))

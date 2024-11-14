@@ -11,6 +11,12 @@ module Bitcoin
       module_function
       extend Schnorr::Util
 
+      # Whether this module is native c wrapper or not?
+      # @return [Boolean]
+      def native?
+        false
+      end
+
       # generate ec private key and public key
       def generate_key_pair(compressed: true)
         private_key = 1 + SecureRandom.random_number(GROUP.order - 1)

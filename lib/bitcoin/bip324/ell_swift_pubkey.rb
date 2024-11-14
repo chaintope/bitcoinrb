@@ -19,7 +19,7 @@ module Bitcoin
       # Decode to public key.
       # @return [Bitcoin::Key] Decoded public key.
       def decode
-        if Bitcoin.secp_impl.is_a?(Bitcoin::Secp256k1::Native)
+        if Bitcoin.secp_impl.native?
           pubkey = Bitcoin.secp_impl.ellswift_decode(key)
           Bitcoin::Key.new(pubkey: pubkey, key_type: Bitcoin::Key::TYPES[:compressed])
         else
