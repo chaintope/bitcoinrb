@@ -26,7 +26,6 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'bech32', '>= 1.3.0'
   spec.add_runtime_dependency 'daemon-spawn'
   spec.add_runtime_dependency 'thor'
-  spec.add_runtime_dependency 'ffi'
   spec.add_runtime_dependency 'leb128', '~> 1.0.0'
   spec.add_runtime_dependency 'eventmachine_httpserver'
   spec.add_runtime_dependency 'iniparse'
