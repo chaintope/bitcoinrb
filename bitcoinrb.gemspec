@@ -30,7 +30,6 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'eventmachine_httpserver'
   spec.add_runtime_dependency 'iniparse'
   spec.add_runtime_dependency 'siphash'
-  spec.add_runtime_dependency 'json_pure', '>= 2.3.1', '< 2.8.0'
   spec.add_runtime_dependency 'bip-schnorr', '>= 0.7.0'
   spec.add_runtime_dependency 'base32', '>= 0.3.4'
   spec.add_runtime_dependency 'base64', '~> 0.2.0'

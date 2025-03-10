@@ -62,7 +62,8 @@ module Bitcoin
         request.body = data.to_json
         response = http.request(request)
         body = response.body
-        response = Bitcoin::Ext::JsonParser.new(body.gsub(/\\u([\da-fA-F]{4})/) { [$1].pack('H*').unpack('n*').pack('U*').encode('ISO-8859-1').force_encoding('UTF-8') }).parse
+        json_data = JSON.parse(body.gsub(/\\u([\da-fA-F]{4})/) { [$1].pack('H*').unpack('n*').pack('U*').encode('ISO-8859-1').force_encoding('UTF-8') })
+        response = convert_floats_to_strings(json_data)
         raise response['error'].to_json if response['error']
         response['result']
       end
@@ -77,6 +78,19 @@ module Bitcoin
         end
       end
 
+      # Convert float value
+      def convert_floats_to_strings(obj)
+        case obj
+        when Float
+          obj.to_s
+        when Hash
+          obj.transform_values { |v| convert_floats_to_strings(v) }
+        when Array
+          obj.map { |item| convert_floats_to_strings(item) }
+        else
+          obj
+        end
+      end
     end
   end
 end
