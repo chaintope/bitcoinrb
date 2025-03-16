@@ -37,7 +37,7 @@ module Bitcoin
 
     # check schnorr signature.
     # @param [String] sig schnorr signature with hex format.
-    # @param [String] pubkey a public key with hex fromat.
+    # @param [String] pubkey a public key with hex format.
     # @param [Symbol] sig_version whether :taproot or :tapscript
     # @return [Boolean] verification result
     def check_schnorr_sig(sig, pubkey, sig_version, opts = {})
