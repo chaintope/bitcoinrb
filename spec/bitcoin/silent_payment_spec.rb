@@ -9,7 +9,7 @@ RSpec.describe Bitcoin::SilentPayment, network: :mainnet do
         v['sending'].each do |s|
           d = s['given']
           recipients = d['recipients'].map do |r|
-            Bitcoin::SilentPayment::Addr.from_string(r)
+            Bech32::SilentPaymentAddr.parse(r)
           end
           expect(recipients.map(&:to_s)).to eq(d['recipients'])
         end
