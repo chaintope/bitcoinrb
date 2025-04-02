@@ -7,6 +7,7 @@ module Bitcoin
   class Tx
 
     include Bitcoin::HexConverter
+    include SilentPayment
 
     MAX_STANDARD_VERSION = 2
 

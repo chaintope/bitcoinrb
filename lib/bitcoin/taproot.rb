@@ -8,6 +8,8 @@ module Bitcoin
     autoload :SimpleBuilder, 'bitcoin/taproot/simple_builder'
     autoload :CustomDepthBuilder,  'bitcoin/taproot/custom_depth_builder'
 
+    NUMS_H = "50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0"
+
     module_function
 
     # Calculate tweak value from +internal_pubkey+ and +merkle_root+.

@@ -106,3 +106,13 @@ RSpec.configure do |config|
     end
   end
 end
+
+RSpec::Matchers.define :have_same_elements_as_any_of do |expected_arrays|
+  match do |actual|
+    expected_arrays.any? { |expected| actual.to_set == expected.to_set }
+  end
+
+  failure_message do |actual|
+    "expected #{actual} to have the same elements as any of: #{expected_arrays.inspect}"
+  end
+end
