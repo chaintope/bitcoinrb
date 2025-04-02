@@ -34,6 +34,9 @@ module Bitcoin
         @key_type = key_type
         compressed = @key_type != TYPES[:uncompressed]
       else
+        if pubkey && compressed && pubkey.length != COMPRESSED_PUBLIC_KEY_SIZE * 2
+          raise ArgumentError, "Invalid compressed pubkey length."
+        end
         @key_type = compressed ? TYPES[:compressed] : TYPES[:uncompressed]
       end
       @secp256k1_module =  Bitcoin.secp_impl
