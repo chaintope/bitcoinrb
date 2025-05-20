@@ -18,6 +18,10 @@ describe Bitcoin do
       Bitcoin.chain_params = :regtest
       expect(Bitcoin.chain_params.network).to eq('regtest')
       expect { Bitcoin.chain_params = :hoge }.to raise_error(RuntimeError)
+      Bitcoin.chain_params = :signet
+      expect(Bitcoin.chain_params.network).to eq('signet')
+      Bitcoin.chain_params = :testnet4
+      expect(Bitcoin.chain_params.network).to eq('testnet4')
     end
   end
 

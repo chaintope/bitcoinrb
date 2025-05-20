@@ -83,6 +83,8 @@ This parameter is described in https://github.com/chaintope/bitcoinrb/blob/maste
 
 ```ruby
 Bitcoin.chain_params = :testnet
+# or
+Bitcoin.chain_params = :testnet4
 ```
 
 This parameter is described in https://github.com/chaintope/bitcoinrb/blob/master/lib/bitcoin/chainparams/testnet.yml.
