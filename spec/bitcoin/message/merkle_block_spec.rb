@@ -11,6 +11,8 @@ describe Bitcoin::Message::MerkleBlock do
       expect(subject.header.merkle_root).to eq('8c380e4ec4582616f5fa29dfb8a7e47b4b3cf82fc8b504a17fca24407aafe9ef')
       expect(subject.tx_count).to eq(37)
       expect(subject.flags).to eq('5f1f00')
+      partial_tree = subject.partial_tree
+      expect(partial_tree.merkle_root).to eq(subject.header.merkle_root)
     end
   end
 

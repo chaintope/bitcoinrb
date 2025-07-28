@@ -10,6 +10,7 @@ require 'bech32'
 require 'base64'
 require 'observer'
 require 'tmpdir'
+require 'merkle'
 require_relative 'openassets'
 
 module Bitcoin
@@ -31,7 +32,7 @@ module Bitcoin
   autoload :TxOut, 'bitcoin/tx_out'
   autoload :OutPoint, 'bitcoin/out_point'
   autoload :ScriptWitness, 'bitcoin/script_witness'
-  autoload :MerkleTree, 'bitcoin/merkle_tree'
+  autoload :PartialTree, 'bitcoin/partial_tree'
   autoload :Key, 'bitcoin/key'
   autoload :ExtKey, 'bitcoin/ext_key'
   autoload :ExtPubkey, 'bitcoin/ext_key'

@@ -28,7 +28,7 @@ module Bitcoin
       header = BlockHeader.new(
         version,
         '00' * 32,
-        MerkleTree.build_from_leaf([coinbase.txid]).merkle_root.rhex,
+        Merkle::BinaryTree.new(config: Merkle::Config.bitcoin, leaves: [coinbase.txid]).compute_root.rhex,
         time,
         bits,
         nonce
@@ -72,7 +72,8 @@ module Bitcoin
 
     # calculate merkle root from tx list.
     def calculate_merkle_root
-      Bitcoin::MerkleTree.build_from_leaf(transactions.map(&:tx_hash)).merkle_root
+      tree = Merkle::BinaryTree.new(config: Merkle::Config.bitcoin, leaves: transactions.map(&:tx_hash))
+      tree.compute_root
     end
 
     # check the witness commitment in coinbase tx matches witness commitment calculated from tx list.
@@ -85,7 +86,8 @@ module Bitcoin
       witness_hashes = [COINBASE_WTXID]
       witness_hashes += (transactions[1..-1].map(&:witness_hash))
       reserved_value = transactions[0].inputs[0].script_witness.stack.map(&:bth).join
-      root_hash = Bitcoin::MerkleTree.build_from_leaf(witness_hashes).merkle_root
+      tree = Merkle::BinaryTree.new(config: Merkle::Config.bitcoin, leaves: witness_hashes)
+      root_hash = tree.compute_root
       Bitcoin.double_sha256([root_hash + reserved_value].pack('H*')).bth
     end
 

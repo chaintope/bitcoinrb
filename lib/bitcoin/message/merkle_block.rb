@@ -2,7 +2,7 @@ module Bitcoin
   module Message
 
     # merckleblock message
-    # https://bitcoin.org/en/developer-reference#merkleblock
+    # https://developer.bitcoin.org/reference/p2p_networking.html#merkleblock
     class MerkleBlock < Base
 
       COMMAND = 'merkleblock'
@@ -34,6 +34,12 @@ module Bitcoin
       def to_payload
         header.to_payload << [tx_count].pack('V') << Bitcoin.pack_var_int(hashes.size) <<
             hashes.map(&:htb).join << Bitcoin.pack_var_int(flags.htb.bytesize) << flags.htb
+      end
+
+      # Generate partial tree.
+      # @return [Bitcoin::PartialTree]
+      def partial_tree
+        Bitcoin::PartialTree.build(tx_count, hashes, Bitcoin.byte_to_bit(flags.htb))
       end
 
     end

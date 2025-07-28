@@ -1,7 +1,8 @@
 module Bitcoin
 
-  # merkle tree
-  class MerkleTree
+  # A class for recovering partial from merkleblock message.
+  # For a complete Merkle tree implementation, migrate to the merkle gem.
+  class PartialTree
 
     attr_accessor :root
 
@@ -13,21 +14,8 @@ module Bitcoin
       root.value
     end
 
-    def self.build_from_leaf(txids)
-      if txids.size == 1
-        nodes = [Node.new(txids.first)]
-      else
-        nodes = txids.each_slice(2).map{ |m|
-          left = Node.new(m[0])
-          right = Node.new(m[1] ? m[1] : m[0])
-          [left, right]
-        }.flatten
-      end
-      new(build_initial_tree(nodes))
-    end
-
     # https://bitcoin.org/en/developer-reference#creating-a-merkleblock-message
-    def self.build_partial(tx_count, hashes, flags)
+    def self.build(tx_count, hashes, flags)
       flags = flags.each_char.map(&:to_i)
       root = build_initial_tree( Array.new(tx_count) { Node.new })
       current_node = root
