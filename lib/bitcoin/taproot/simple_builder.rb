@@ -20,7 +20,6 @@ module Bitcoin
         raise Error, "Internal public key must be #{X_ONLY_PUBKEY_SIZE} bytes" unless internal_key.htb.bytesize == X_ONLY_PUBKEY_SIZE
         raise Error, 'leaf must be Bitcoin::Taproot::LeafNode object' if leaves.find{ |leaf| !leaf.is_a?(Bitcoin::Taproot::LeafNode)}
 
-        @leaves = leaves
         @branches = leaves.each_slice(2).map.to_a
         @internal_key = internal_key
       end
