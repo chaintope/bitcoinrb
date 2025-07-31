@@ -75,74 +75,46 @@ module Bitcoin
       # @param [Bitcoin::Taproot::LeafNode] leaf Leaf to use for unlocking.
       # @return [Bitcoin::Taproot::ControlBlock] control block.
       def control_block(leaf)
-        path = inclusion_proof(leaf)
+        path = inclusion_proof(leaf).siblings
         parity = tweak_public_key.to_point.has_even_y? ? 0 : 1
-        ControlBlock.new(parity, leaf.leaf_ver, internal_key, path.map(&:bth))
+        ControlBlock.new(parity, leaf.leaf_ver, internal_key, path)
       end
 
       # Generate inclusion proof for +leaf+.
       # @param [Bitcoin::Taproot::LeafNode] leaf The leaf node in script tree.
-      # @return [Array[String]] Inclusion proof.
+      # @return [Merkle::Proof] Inclusion proof.
       # @raise [Bitcoin::Taproot::Error] If the specified +leaf+ does not exist
       def inclusion_proof(leaf)
-        proofs = []
-        target_branch = branches.find{|b| b.include?(leaf)}
-        raise Error 'Specified leaf does not exist' unless target_branch
-
-        # flatten each branch
-        proofs << hash_value(target_branch.find{|b| b != leaf}) if target_branch.size == 2
-        parent_hash = combine_hash(target_branch)
-        parents = branches.map {|pair| combine_hash(pair)}
-
-        until parents.size == 1
-          parents = parents.each_slice(2).map do |pair|
-            combined = combine_hash(pair)
-            unless pair.size == 1
-              if hash_value(pair[0]) == parent_hash
-                proofs << hash_value(pair[1])
-                parent_hash = combined
-              elsif hash_value(pair[1]) == parent_hash
-                proofs << hash_value(pair[0])
-                parent_hash = combined
-              end
-            end
-            combined
+        tree = script_tree
+        leaf_index = 0
+        branches.each.with_index do |branch, i|
+          if branch.include?(leaf)
+            leaf_index += (branch[0] == leaf ? 0 : 1)
+            break
+          else
+            leaf_index += branch.length
           end
         end
-        proofs
+        tree.generate_proof(leaf_index)
       end
 
       private
 
-      # Calculate merkle root from branches.
-      # @return [String] merkle root with hex format.
+      def script_tree
+        leaves = []
+        branches.each do |pair|
+          if leaves.empty? || leaves.length == 1
+            leaves << pair.map(&:leaf_hash)
+          elsif leaves.length == 2
+            leaves = [leaves, pair.map(&:leaf_hash)]
+          end
+        end
+        Merkle::CustomTree.new(config: Merkle::Config.taptree, leaves: leaves)
+      end
+
       def merkle_root
-        parents = branches.map {|pair| combine_hash(pair)}
-        if parents.empty?
-          parents = ['']
-        elsif parents.size == 1
-          parents = [combine_hash(parents)]
-        else
-          parents = parents.each_slice(2).map { |pair| combine_hash(pair) } until parents.size == 1
-        end
-        parents.first.bth
-      end
-
-      def combine_hash(pair)
-        if pair.size == 1
-          hash_value(pair[0])
-        else
-          hash1 = hash_value(pair[0])
-          hash2 = hash_value(pair[1])
-
-          # Lexicographically sort a and b's hash, and compute parent hash.
-          payload = hash1.bth < hash2.bth ? hash1 + hash2 : hash2 + hash1
-          Bitcoin.tagged_hash('TapBranch', payload)
-        end
-      end
-
-      def hash_value(leaf_or_branch)
-        leaf_or_branch.is_a?(LeafNode) ? leaf_or_branch.leaf_hash : leaf_or_branch
+        return '' if branches.empty?
+        script_tree.compute_root
       end
     end
   end
