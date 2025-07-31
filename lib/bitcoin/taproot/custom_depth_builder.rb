@@ -31,33 +31,22 @@ module Bitcoin
         raise NotImplementedError
       end
 
-      def control_block(leaf)
-        raise NotImplementedError # TODO
-      end
-
-      def inclusion_proof(leaf)
-        raise NotImplementedError # TODO
-      end
-
       private
 
       def merkle_root
-        build_tree(tree).bth
+        return '' if tree.empty?
+        script_tree = Merkle::CustomTree.new(config: Merkle::Config.taptree, leaves: extract_leaves(tree))
+        script_tree.compute_root
       end
 
-      def build_tree(tree)
-        left, right = tree
-        left_hash = if left.is_a?(Array)
-                      build_tree(left)
-                    else
-                      left
-                    end
-        right_hash = if right.is_a?(Array)
-                       build_tree(right)
-                     else
-                       right
-                     end
-        combine_hash([left_hash, right_hash])
+      def extract_leaves(leaves)
+        leaves.map do |leaf|
+          if leaf.is_a?(Bitcoin::Taproot::LeafNode)
+            leaf.leaf_hash
+          elsif leaf.is_a?(Array)
+            extract_leaves(leaf)
+          end
+        end
       end
     end
   end
