@@ -24,42 +24,42 @@ module Bitcoin
 
     module_function
 
-    # Generate P2PK output for the given public key.
+    # Generate pk() descriptor.
     # @param [String] key private key or public key with hex format
     # @return [Bitcoin::Descriptor::Pk]
     def pk(key)
       Pk.new(key)
     end
 
-    # Generate P2PKH output for the given public key.
+    # Generate pkh() descriptor.
     # @param [String] key private key or public key with hex format.
     # @return [Bitcoin::Descriptor::Pkh]
     def pkh(key)
       Pkh.new(key)
     end
 
-    # Generate P2PKH output for the given public key.
+    # Generate wpkh() descriptor.
     # @param [String] key private key or public key with hex format.
     # @return [Bitcoin::Descriptor::Wpkh]
     def wpkh(key)
       Wpkh.new(key)
     end
 
-    # Generate P2SH embed the argument.
+    # Generate sh() descriptor.
     # @param [Bitcoin::Descriptor::Base] exp script expression to be embed.
     # @return [Bitcoin::Descriptor::Sh]
     def sh(exp)
       Sh.new(exp)
     end
 
-    # Generate P2WSH embed the argument.
+    # Generate wsh() descriptor.
     # @param [Bitcoin::Descriptor::Expression] exp script expression to be embed.
     # @return [Bitcoin::Descriptor::Wsh]
     def wsh(exp)
       Wsh.new(exp)
     end
 
-    # An alias for the collection of `pk(KEY)` and `pkh(KEY)`.
+    # Generate combo() descriptor.
     # If the key is compressed, it also includes `wpkh(KEY)` and `sh(wpkh(KEY))`.
     # @param [String] key private key or public key with hex format.
     # @return [Bitcoin::Descriptor::Combo]
@@ -67,7 +67,7 @@ module Bitcoin
       Combo.new(key)
     end
 
-    # Generate multisig output for given keys.
+    # Generate multi() descriptor.
     # @param [Integer] threshold the threshold of multisig.
     # @param [Array[String]] keys an array of keys.
     # @return [Bitcoin::Descriptor::Multi] multisig script.
@@ -75,7 +75,7 @@ module Bitcoin
       Multi.new(threshold, keys)
     end
 
-    # Generate sorted multisig output for given keys.
+    # Generate sortedmulti() descriptor.
     # @param [Integer] threshold the threshold of multisig.
     # @param [Array[String]] keys an array of keys.
     # @return [Bitcoin::Descriptor::SortedMulti]
@@ -83,21 +83,21 @@ module Bitcoin
       SortedMulti.new(threshold, keys)
     end
 
-    # Generate raw output script about +hex+.
+    # Generate raw() descriptor.
     # @param [String] hex Hex string of bitcoin script.
     # @return [Bitcoin::Descriptor::Raw]
     def raw(hex)
       Raw.new(hex)
     end
 
-    # Generate raw output script about +hex+.
+    # Generate addr() descriptor.
     # @param [String] addr Bitcoin address.
     # @return [Bitcoin::Descriptor::Addr]
     def addr(addr)
       Addr.new(addr)
     end
 
-    # Generate taproot output script descriptor.
+    # Generate tr() descriptor.
     # @param [String] key
     # @param [String] tree
     # @return [Bitcoin::Descriptor::Tr]
@@ -105,14 +105,14 @@ module Bitcoin
       Tr.new(key, tree)
     end
 
-    # Generate taproot output script descriptor.
+    # Generate rawtr() descriptor.
     # @param [String] key
     # @return [Bitcoin::Descriptor::RawTr]
     def rawtr(key)
       RawTr.new(key)
     end
 
-    # Generate tapscript multisig output for given keys.
+    # Generate multi_a() descriptor.
     # @param [Integer] threshold the threshold of multisig.
     # @param [Array[String]] keys an array of keys.
     # @return [Bitcoin::Descriptor::MultiA] multisig script.
@@ -120,7 +120,7 @@ module Bitcoin
       MultiA.new(threshold, keys)
     end
 
-    # Generate tapscript sorted multisig output for given keys.
+    # Generate sortedmulti_a() descriptor.
     # @param [Integer] threshold the threshold of multisig.
     # @param [Array[String]] keys an array of keys.
     # @return [Bitcoin::Descriptor::SortedMulti]
