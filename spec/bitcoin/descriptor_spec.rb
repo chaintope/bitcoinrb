@@ -200,7 +200,7 @@ describe Bitcoin::Descriptor, network: :mainnet do
       expect{wsh(sh(pk('L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1')))}.to raise_error(ArgumentError, 'Can only have sh() at top level.')
       expect{sh(sh(pk('L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1')))}.to raise_error(ArgumentError, 'Can only have sh() at top level.')
       expect{wsh(wsh(pk('L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1')))}.to raise_error(ArgumentError, 'Can only have wsh() at top level or inside sh().')
-      expect{combo(pkh('03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd'))}.to raise_error(ArgumentError, 'Key must be string.') # BIP-384
+      expect{combo(pkh('03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd'))}.to raise_error(ArgumentError, 'Key must be string or MuSig.') # BIP-384
 
       # Checksums
       expected = 'a91445a9a622a8b0a1269944be477640eedc447bbd8487'

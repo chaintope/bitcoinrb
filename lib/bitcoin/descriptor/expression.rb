@@ -98,6 +98,8 @@ module Bitcoin
         is_private = key.is_a?(Bitcoin::ExtKey)
         paths.each do |path|
           raise ArgumentError, 'xpub can not derive hardened key.' if !is_private && path.end_with?("'")
+          raise ArgumentError, 'Key ranges are not supported.' if path.include?("*")
+          raise ArgumentError, 'Key multipath are not supported.' if path.include?("<")
           if is_private
             hardened = path.end_with?("'")
             path = hardened ? path[0..-2] : path

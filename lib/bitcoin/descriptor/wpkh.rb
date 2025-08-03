@@ -3,6 +3,7 @@ module Bitcoin
     # wpkh() expression
     class Wpkh < KeyExpression
       def initialize(key)
+        raise ArgumentError, 'musig() is not allowed in wpkh().' if key.is_a?(MuSig)
         super(key)
         raise ArgumentError, "Uncompressed key are not allowed." unless extract_pubkey(key).compressed?
       end

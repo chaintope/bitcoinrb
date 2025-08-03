@@ -9,6 +9,7 @@ module Bitcoin
 
       # Constructor.
       def initialize(key, tree = nil)
+        key = key.to_hex if key.is_a?(MuSig)
         raise ArgumentError, "Key must be string." unless key.is_a?(String)
         k = extract_pubkey(key)
         raise ArgumentError, "Uncompressed key are not allowed." unless k.compressed?

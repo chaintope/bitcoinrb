@@ -21,6 +21,7 @@ module Bitcoin
     autoload :SortedMultiA, 'bitcoin/descriptor/sorted_multi_a'
     autoload :RawTr,  'bitcoin/descriptor/raw_tr'
     autoload :Checksum, 'bitcoin/descriptor/checksum'
+    autoload :MuSig, 'bitcoin/descriptor/musig'
 
     module_function
 
@@ -126,6 +127,14 @@ module Bitcoin
     # @return [Bitcoin::Descriptor::SortedMulti]
     def sortedmulti_a(threshold, *keys)
       SortedMultiA.new(threshold, keys)
+    end
+
+    # Generate musig() descriptor.
+    # @param [Array] keys An array fo keys.
+    # @param [String] path
+    # @return [Bitcoin::Descriptor::MuSig]
+    def musig(*keys, path: nil)
+      MuSig.new(keys, path)
     end
 
     # Parse descriptor string.

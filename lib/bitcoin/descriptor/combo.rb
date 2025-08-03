@@ -7,6 +7,10 @@ module Bitcoin
         :combo
       end
 
+      def to_hex
+        raise ArgumentError, 'musig() is not allowed in top-level combo().' if musig?
+      end
+
       def to_scripts
         candidates = [Pk.new(key), Pkh.new(key)]
         pubkey = extracted_key

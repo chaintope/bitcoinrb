@@ -1,8 +1,16 @@
 module Bitcoin
   module Descriptor
-    # rawtr() expression
+    # rawtr() descriptor
+    # @see
     class RawTr < KeyExpression
       include Bitcoin::Opcodes
+
+      # Constructor
+      # @raise [ArgumentError] If +key+ is invalid.
+      def initialize(key)
+        key = key.to_hex if key.is_a?(MuSig)
+        super(key)
+      end
 
       def type
         :rawtr

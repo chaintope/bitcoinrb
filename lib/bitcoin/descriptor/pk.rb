@@ -15,6 +15,11 @@ module Bitcoin
         :pk
       end
 
+      def to_hex
+        raise ArgumentError, 'musig() is not allowed in top-level pk().' if musig?
+        super
+      end
+
       # Convert to bitcoin script.
       # @return [Bitcoin::Script]
       def to_script
