@@ -143,10 +143,16 @@ module Bitcoin
     def parse(string, top_level = true)
       validate_checksum!(string)
       content, _ = string.split('#')
-      exp, args_str = content.match(/(\w+)\((.+)\)/).captures
+      exp, args_str, path = content.match(/(\w+)\((.+)\)(.*)/).captures # split "tag(10, 20)/0/1"
+      raise ArgumentError, 'Invalid format.' if exp != 'musig' && !path.empty?
+
       case exp
       when 'pk'
-        pk(args_str)
+        if args_str.include?('(')
+          pk(parse(args_str))
+        else
+          pk(args_str)
+        end
       when 'pkh'
         pkh(args_str)
       when 'wpkh'
@@ -178,16 +184,24 @@ module Bitcoin
       when 'addr'
         addr(args_str)
       when 'tr'
-        key, rest = args_str.split(',', 2)
-        if rest.nil?
+        key, tree = split_two(args_str)
+        key = parse(key) if key.include?('(')
+        if tree.nil?
           tr(key)
-        elsif rest.start_with?('{')
-          tr(key, parse_nested_string(rest))
+        elsif tree.start_with?('{')
+          tr(key, parse_nested_string(tree))
         else
-          tr(key, parse(rest, false))
+          tr(key, parse(tree, false))
         end
       when 'rawtr'
-        rawtr(args_str)
+        if args_str.include?('(')
+          rawtr(parse(args_str, false))
+        else
+          rawtr(args_str)
+        end
+      when 'musig'
+        keys = args_str.split(',')
+        path.empty? ? musig(*keys) : musig(*keys, path: path)
       else
         raise ArgumentError, "Parse failed: #{string}"
       end
@@ -237,6 +251,24 @@ module Bitcoin
       end
       current << parse(buffer, false) unless buffer.empty?
       current.first
+    end
+
+    def split_two(content)
+      paren_depth = 0
+      split_pos = content.chars.find_index do |char|
+        case char
+        when '(' then paren_depth += 1; false
+        when ')' then paren_depth -= 1; false
+        when ',' then paren_depth == 0
+        else false
+        end
+      end
+
+      if split_pos
+        [content[0...split_pos], content[split_pos+1..-1]]
+      else
+        [content, nil]
+      end
     end
   end
 end
