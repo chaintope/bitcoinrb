@@ -5,13 +5,6 @@ module Bitcoin
     class RawTr < KeyExpression
       include Bitcoin::Opcodes
 
-      # Constructor
-      # @raise [ArgumentError] If +key+ is invalid.
-      def initialize(key)
-        key = key.to_hex if key.is_a?(MuSig)
-        super(key)
-      end
-
       def type
         :rawtr
       end
@@ -21,7 +14,7 @@ module Bitcoin
       end
 
       def to_script
-        Bitcoin::Script.new << OP_1 << extract_pubkey(key).xonly_pubkey
+        Bitcoin::Script.new << OP_1 << extracted_key.xonly_pubkey
       end
     end
   end

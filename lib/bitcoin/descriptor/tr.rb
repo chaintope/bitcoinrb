@@ -2,19 +2,16 @@ module Bitcoin
   module Descriptor
     # tr() expression.
     # @see https://github.com/bitcoin/bips/blob/master/bip-0386.mediawiki
-    class Tr < Expression
+    class Tr < KeyExpression
 
       attr_reader :key
       attr_reader :tree
 
       # Constructor.
       def initialize(key, tree = nil)
-        key = key.to_hex if key.is_a?(MuSig)
-        raise ArgumentError, "Key must be string." unless key.is_a?(String)
-        k = extract_pubkey(key)
-        raise ArgumentError, "Uncompressed key are not allowed." unless k.compressed?
+        super(key)
         validate_tree!(tree)
-        @key = key
+        raise ArgumentError, "Uncompressed key are not allowed." unless extracted_key.compressed?
         @tree = tree
       end
 
@@ -42,7 +39,7 @@ module Bitcoin
       private
 
       def build_tree_scripts
-        internal_key = extract_pubkey(key)
+        internal_key = extracted_key
         return Bitcoin::Taproot::SimpleBuilder.new(internal_key.xonly_pubkey) if tree.nil?
         if tree.is_a?(Expression)
           tree.xonly = true if tree.respond_to?(:xonly)
