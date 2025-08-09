@@ -6,8 +6,6 @@ module Bitcoin
   # transaction output
   class TxOut
 
-    include OpenAssets::MarkerOutput
-
     attr_accessor :value
     attr_accessor :script_pubkey
 

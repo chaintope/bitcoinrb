@@ -11,7 +11,6 @@ require 'base64'
 require 'observer'
 require 'tmpdir'
 require 'merkle'
-require_relative 'openassets'
 
 module Bitcoin
 
