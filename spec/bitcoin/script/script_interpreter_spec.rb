@@ -2,20 +2,41 @@ require 'spec_helper'
 
 describe Bitcoin::ScriptInterpreter, use_secp256k1: true do
 
+  KEY0 = "0000000000000000000000000000000000000000000000000000000000000001"
+
   describe 'check script_test.json' do
     script_json = fixture_file('script_tests.json').select{ |j|j.size > 3}
     script_json.each do| r |
       it "should validate script #{r.inspect}" do
+        builder = nil
         if r[0].is_a?(Array)
-          witness = Bitcoin::ScriptWitness.new(r[0][0..-2].map{ |v| v.htb })
+          last_item = nil
+          payloads = r[0][0..-2].map do |v|
+            last_item = if v.start_with?("#SCRIPT#")
+                          Bitcoin::TestScriptParser.parse_script(v.split("#SCRIPT# ").last).to_payload
+                        elsif v == "#CONTROLBLOCK#"
+                          leaf = Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.parse_from_payload(last_item))
+                          builder = Bitcoin::Taproot::SimpleBuilder.new(KEY0, [leaf])
+                          builder.control_block(leaf).to_payload
+                        else
+                          v.htb
+                        end
+            last_item
+          end
+          witness = Bitcoin::ScriptWitness.new(payloads)
           sig, pubkey, flags, error_code = r[1], r[2], r[3], r[4]
           amount = (r[0][-1] * 100_000_000).to_i
         else
           witness, sig, pubkey, flags, error_code = Bitcoin::ScriptWitness.new, r[0], r[1], r[2], r[3]
           amount = 0
         end
+
         script_sig = Bitcoin::TestScriptParser.parse_script(sig)
-        script_pubkey = Bitcoin::TestScriptParser.parse_script(pubkey)
+        script_pubkey = if pubkey == "0x51 0x20 #TAPROOTOUTPUT#"
+                          builder.build
+                        else
+                          Bitcoin::TestScriptParser.parse_script(pubkey)
+                        end
         credit_tx = build_credit_tx(script_pubkey, amount)
         tx = build_spending_tx(script_sig, credit_tx, witness, amount)
         script_flags = parse_flags(flags)
