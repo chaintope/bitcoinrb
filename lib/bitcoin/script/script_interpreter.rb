@@ -565,7 +565,6 @@ module Bitcoin
           return set_error(SCRIPT_ERR_STACK_SIZE) if stack.size + alt_stack.size > MAX_STACK_SIZE
         end
       rescue Exception => e
-        puts e
         return set_error(SCRIPT_ERR_UNKNOWN_ERROR, e.message)
       end
 
