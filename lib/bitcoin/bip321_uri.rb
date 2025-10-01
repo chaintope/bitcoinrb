@@ -62,8 +62,15 @@ module Bitcoin
       raise ArgumentError, "pay must be string." if pay && !pay.is_a?(String)
       @pay = pay
 
-      raise ArgumentError, "sp must be string." if sp && !sp.is_a?(String)
-      @sp = sp
+      if sp
+        raise ArgumentError, "sp must be string." unless sp.is_a?(String)
+        begin
+          Bech32::SilentPaymentAddr.parse(sp)
+          @sp = sp
+        rescue ArgumentError
+          raise ArgumentError, "Invalid sp address specified."
+        end
+      end
 
       raise ArgumentError, 'pop is required, if req_pop is true.' if req_pop && pop.nil?
       @req_pop = req_pop

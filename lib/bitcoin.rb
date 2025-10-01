@@ -64,6 +64,7 @@ module Bitcoin
   autoload :SilentPayment, 'bitcoin/silent_payment'
   autoload :BIP324, 'bitcoin/bip324'
   autoload :BIP321URI, 'bitcoin/bip321_uri'
+  autoload :BIP353, 'bitcoin/bip353'
 
   require_relative 'bitcoin/constants'
   require_relative 'bitcoin/ext/ecdsa'

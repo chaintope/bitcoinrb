@@ -59,20 +59,20 @@ RSpec.describe Bitcoin::BIP321URI do
       uri = described_class.parse(raw_uri)
       expect(uri.lno).to eq('lno1bogusoffer')
 
-      raw_uri = 'bitcoin:?lno=lno1bogusoffer&sp=sp1qsilentpayment'
+      raw_uri = 'bitcoin:?lno=lno1bogusoffer&sp=sp1qqgste7k9hx0qftg6qmwlkqtwuy6cycyavzmzj85c6qdfhjdpdjtdgqjuexzk6murw56suy3e0rd2cgqvycxttddwsvgxe2usfpxumr70xc9pkqwv'
       uri = described_class.parse(raw_uri)
       expect(uri.lno).to eq('lno1bogusoffer')
-      expect(uri.sp).to eq('sp1qsilentpayment')
+      expect(uri.sp).to eq('sp1qqgste7k9hx0qftg6qmwlkqtwuy6cycyavzmzj85c6qdfhjdpdjtdgqjuexzk6murw56suy3e0rd2cgqvycxttddwsvgxe2usfpxumr70xc9pkqwv')
       expect(uri.to_s).to eq(raw_uri)
 
-      raw_uri = 'bitcoin:?sp=sp1qsilentpayment'
+      raw_uri = 'bitcoin:?sp=sp1qqgste7k9hx0qftg6qmwlkqtwuy6cycyavzmzj85c6qdfhjdpdjtdgqjuexzk6murw56suy3e0rd2cgqvycxttddwsvgxe2usfpxumr70xc9pkqwv'
       uri = described_class.parse(raw_uri)
-      expect(uri.sp).to eq('sp1qsilentpayment')
+      expect(uri.sp).to eq('sp1qqgste7k9hx0qftg6qmwlkqtwuy6cycyavzmzj85c6qdfhjdpdjtdgqjuexzk6murw56suy3e0rd2cgqvycxttddwsvgxe2usfpxumr70xc9pkqwv')
 
-      raw_uri = 'bitcoin:17T9tBC2dSpusL1rhT4T4AV4if963Tpfym?sp=sp1qsilentpayment'
+      raw_uri = 'bitcoin:17T9tBC2dSpusL1rhT4T4AV4if963Tpfym?sp=sp1qqgste7k9hx0qftg6qmwlkqtwuy6cycyavzmzj85c6qdfhjdpdjtdgqjuexzk6murw56suy3e0rd2cgqvycxttddwsvgxe2usfpxumr70xc9pkqwv'
       uri = described_class.parse(raw_uri)
       expect(uri.addresses.first).to eq('17T9tBC2dSpusL1rhT4T4AV4if963Tpfym')
-      expect(uri.sp).to eq('sp1qsilentpayment')
+      expect(uri.sp).to eq('sp1qqgste7k9hx0qftg6qmwlkqtwuy6cycyavzmzj85c6qdfhjdpdjtdgqjuexzk6murw56suy3e0rd2cgqvycxttddwsvgxe2usfpxumr70xc9pkqwv')
       expect(uri.req_pop).to be false
 
       raw_uri = 'bitcoin:17T9tBC2dSpusL1rhT4T4AV4if963Tpfym?req-pop=callback%3A'
@@ -113,6 +113,9 @@ RSpec.describe Bitcoin::BIP321URI do
       # Multiple proof of payment URIs must not appear, even if they are sometimes prefixed with req-:
       raw_uri = 'bitcoin:175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?pop=callback%3a&req-pop=callback%3a'
       expect{described_class.parse(raw_uri)}.to raise_error(ArgumentError, /pop must not appear twice./)
+
+      # Invalid sp address
+      expect{described_class.parse('bitcoin:?sp=sp1qsilentpayment')}.to raise_error(ArgumentError, /Invalid sp address specified./)
     end
   end
 
