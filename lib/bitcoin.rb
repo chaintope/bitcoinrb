@@ -63,6 +63,7 @@ module Bitcoin
   autoload :Taproot, 'bitcoin/taproot'
   autoload :SilentPayment, 'bitcoin/silent_payment'
   autoload :BIP324, 'bitcoin/bip324'
+  autoload :BIP21URI, 'bitcoin/bip21_uri'
 
   require_relative 'bitcoin/constants'
   require_relative 'bitcoin/ext/ecdsa'
