@@ -114,6 +114,8 @@ module Bitcoin
         'OP_CHECKMULTISIG(VERIFY) is not available in tapscript'
       when SCRIPT_ERR_TAPSCRIPT_MINIMALIF
         'OP_IF/NOTIF argument must be minimal in tapscript'
+      when SCRIPT_ERR_TAPSCRIPT_EMPTY_PUBKEY
+        'Empty public key in tapscript'
       when SCRIPT_ERR_OP_CODESEPARATOR
         'Using OP_CODESEPARATOR in non-witness script'
       when SCRIPT_ERR_SIG_FINDANDDELETE

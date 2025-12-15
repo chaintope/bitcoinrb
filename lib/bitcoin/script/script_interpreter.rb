@@ -740,7 +740,7 @@ module Bitcoin
 
       pubkey_size = pubkey.htb.bytesize
       if pubkey_size == 0
-        return set_error(SCRIPT_ERR_PUBKEYTYPE)
+        return set_error(SCRIPT_ERR_TAPSCRIPT_EMPTY_PUBKEY)
       elsif pubkey_size == X_ONLY_PUBKEY_SIZE
         if success
           result = checker.check_schnorr_sig(sig, pubkey, :tapscript, opts)
