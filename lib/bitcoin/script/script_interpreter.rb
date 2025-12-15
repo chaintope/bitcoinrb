@@ -167,6 +167,8 @@ module Bitcoin
           end
           return true unless need_evaluate
         end
+      elsif version == 1 && program == Script::P2A_PROGRAM
+        return true
       elsif flag?(SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM)
         return set_error(SCRIPT_ERR_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM)
       else

@@ -240,9 +240,19 @@ describe Bitcoin::Tx, use_secp256k1: true do
       tx = Bitcoin::Tx.parse_from_payload('01000000016bff7fcd4f8565ef406dd5d63d4ff94f318fe82027fd4dc451b04474019f74b4000000008c493046022100da0dc6aecefe1e06efdf05773757deb168820930e3b0d03f46f5fcf150bf990c022100d25b5c87040076e4f253f8262e763e2dd51e7ff0be157727c4bc42807f17bd39014104e6c26ef67dc610d2cd192484789a6cf9aea9930b944b7e2db5342b9d9e5b9ff79aff9a2ee1978dd7fd01dfc522ee02283d3b06a9d03acf8096968d7dbb0f9178ffffffff028ba7940e000000001976a914badeecfdef0507247fc8f74241d73bc039972d7b88ac4094a802000000001976a914c10932483fec93ed51f5fe95e72559f2cc7043f988ac00000000'.htb, strict: true)
       expect(tx.valid?).to be true
 
-      # dublicate txns
+      # duplicate txns
       tx.in << tx.in[0]
       expect(tx.valid?).to be false
+    end
+  end
+
+  describe 'using P2A input' do
+    it do
+      tx = Bitcoin::Tx.new
+      script_pubkey = Bitcoin::Script.to_p2a
+      tx.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.from_txid('00' * 32, 0))
+      tx.out << Bitcoin::TxOut.new(value: 10000, script_pubkey: script_pubkey)
+      expect(tx.verify_input_sig(0, script_pubkey)).to be true
     end
   end
 

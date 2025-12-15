@@ -234,6 +234,7 @@ module Bitcoin
     def verify_input_sig(input_index, script_pubkey, amount: nil, flags: STANDARD_SCRIPT_VERIFY_FLAGS, prevouts: [])
       script_sig = inputs[input_index].script_sig
       has_witness = inputs[input_index].has_witness?
+      has_witness = true if script_pubkey.witness_program?
 
       if script_pubkey.p2sh?
         flags << SCRIPT_VERIFY_P2SH
