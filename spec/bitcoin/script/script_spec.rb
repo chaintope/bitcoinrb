@@ -59,6 +59,7 @@ describe Bitcoin::Script do
         expect(subject.p2wpkh?).to be false
         expect(subject.p2wsh?).to be false
         expect(subject.p2tr?).to be false
+        expect(subject.p2a?).to be false
         expect(subject.multisig?).to be false
         expect(subject.op_return?).to be false
         expect(subject.standard?).to be true
@@ -88,6 +89,7 @@ describe Bitcoin::Script do
         expect(subject.p2wpkh?).to be true
         expect(subject.p2wsh?).to be false
         expect(subject.p2tr?).to be false
+        expect(subject.p2a?).to be false
         expect(subject.multisig?).to be false
         expect(subject.op_return?).to be false
         expect(subject.standard?).to be true
@@ -121,6 +123,7 @@ describe Bitcoin::Script do
         expect(subject[0].p2wpkh?).to be false
         expect(subject[0].p2wsh?).to be false
         expect(subject[0].p2tr?).to be false
+        expect(subject[0].p2a?).to be false
         expect(subject[0].multisig?).to be false
         expect(subject[0].op_return?).to be false
         expect(subject[0].standard?).to be true
@@ -168,6 +171,7 @@ describe Bitcoin::Script do
         expect(subject.p2wpkh?).to be false
         expect(subject.p2wsh?).to be true
         expect(subject.p2tr?).to be false
+        expect(subject.p2a?).to be false
         expect(subject.multisig?).to be false
         expect(subject.op_return?).to be false
         expect(subject.standard?).to be true
@@ -202,6 +206,7 @@ describe Bitcoin::Script do
       expect(subject.p2wpkh?).to be false
       expect(subject.p2wsh?).to be false
       expect(subject.p2tr?).to be true
+      expect(subject.p2a?).to be false
       expect(subject.multisig?).to be false
       expect(subject.op_return?).to be false
       expect(subject.standard?).to be true
@@ -217,6 +222,25 @@ describe Bitcoin::Script do
     end
   end
 
+  describe 'P2A script' do
+    subject { Bitcoin::Script.to_p2a}
+    it 'should be p2tr', network: :mainnet do
+      expect(subject.p2pkh?).to be false
+      expect(subject.p2sh?).to be false
+      expect(subject.p2wpkh?).to be false
+      expect(subject.p2wsh?).to be false
+      expect(subject.p2tr?).to be false
+      expect(subject.p2a?).to be true
+      expect(subject.multisig?).to be false
+      expect(subject.op_return?).to be false
+      expect(subject.standard?).to be true
+      expect(subject.p2pk?).to be false
+      expect(subject.to_addr).to eq('bc1pfeessrawgf')
+      expect(subject.type).to eq('anchor')
+      expect(subject.witness_program?).to be true
+    end
+  end
+
   describe 'P2PK script' do
     subject { Bitcoin::Script.new << '032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35' << OP_CHECKSIG }
     it ' should be p2pk' do
@@ -225,6 +249,7 @@ describe Bitcoin::Script do
       expect(subject.p2wpkh?).to be false
       expect(subject.p2wsh?).to be false
       expect(subject.p2tr?).to be false
+      expect(subject.p2a?).to be false
       expect(subject.multisig?).to be false
       expect(subject.op_return?).to be false
       expect(subject.standard?).to be false
@@ -246,6 +271,7 @@ describe Bitcoin::Script do
         expect(subject.p2wpkh?).to be false
         expect(subject.p2wsh?).to be false
         expect(subject.p2tr?).to be false
+        expect(subject.p2a?).to be false
         expect(subject.multisig?).to be true
         expect(subject.op_return?).to be false
         expect(subject.standard?).to be true
@@ -275,6 +301,7 @@ describe Bitcoin::Script do
         expect(subject.p2wpkh?).to be false
         expect(subject.p2wsh?).to be false
         expect(subject.p2tr?).to be false
+        expect(subject.p2a?).to be false
         expect(subject.multisig?).to be false
         expect(subject.op_return?).to be true
         expect(subject.standard?).to be true

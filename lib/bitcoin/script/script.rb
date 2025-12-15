@@ -8,6 +8,8 @@ module Bitcoin
     include Bitcoin::Opcodes
     include Bitcoin::HexConverter
 
+    P2A_PROGRAM = '4e73'.htb
+
     attr_accessor :chunks
 
     def initialize
@@ -35,6 +37,12 @@ module Bitcoin
       xonly_pubkey = xonly_pubkey.xonly_pubkey if xonly_pubkey.is_a?(Bitcoin::Key)
       raise ArgumentError, 'Invalid public key size' unless xonly_pubkey.htb.bytesize == Bitcoin::WITNESS_V1_TAPROOT_SIZE
       new << OP_1 << xonly_pubkey
+    end
+
+    # Generate P2TR script
+    # @return [Bitcoin::Script]
+    def self.to_p2a
+      new << OP_1 << P2A_PROGRAM
     end
 
     # generate m of n multisig p2sh script
@@ -198,7 +206,7 @@ module Bitcoin
 
     # check whether standard script.
     def standard?
-      p2pkh? | p2sh? | p2wpkh? | p2wsh? | p2tr? | multisig? | standard_op_return?
+      p2pkh? | p2sh? | p2wpkh? | p2wsh? | p2tr? | multisig? | standard_op_return? || p2a?
     end
 
     # Check whether this script is a P2PKH format script.
@@ -228,6 +236,13 @@ module Bitcoin
     def p2tr?
       return false unless chunks.size == 2
       chunks[0].ord == WITNESS_VERSION_V1 && chunks[1].bytesize == 33
+    end
+
+    # Check whether this script is a Pay to Anchor format script.
+    # @return [Boolean] if P2A return true, otherwise false
+    def p2a?
+      return false unless chunks.size == 2
+      chunks[0].ord == WITNESS_VERSION_V1 && chunks[1].pushed_data == P2A_PROGRAM
     end
 
     # Check whether this script is a P2SH format script.
@@ -560,6 +575,7 @@ module Bitcoin
       return 'witness_v0_keyhash' if p2wpkh?
       return 'witness_v0_scripthash' if p2wsh?
       return 'witness_v1_taproot' if p2tr?
+      return 'anchor' if p2a?
       'nonstandard'
     end
 
