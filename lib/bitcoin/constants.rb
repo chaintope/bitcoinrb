@@ -205,6 +205,7 @@ module Bitcoin
   SCRIPT_ERR_TAPSCRIPT_VALIDATION_WEIGHT = 94
   SCRIPT_ERR_TAPSCRIPT_CHECKMULTISIG = 95
   SCRIPT_ERR_TAPSCRIPT_MINIMALIF = 96
+  SCRIPT_ERR_TAPSCRIPT_EMPTY_PUBKEY = 97
 
   ERRCODES_MAP = Hash[*constants.grep(/^SCRIPT_ERR_/).map { |c| [const_get(c), c.to_s] }.flatten]
   NAME_MAP = Hash[*constants.grep(/^SCRIPT_ERR_/).map { |c| [c.to_s, const_get(c)] }.flatten]
