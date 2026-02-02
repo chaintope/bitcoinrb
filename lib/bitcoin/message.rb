@@ -48,6 +48,7 @@ module Bitcoin
     autoload :CFHeaders, 'bitcoin/message/cfheaders'
     autoload :SendAddrV2, 'bitcoin/message/send_addr_v2'
     autoload :AddrV2, 'bitcoin/message/addr_v2'
+    autoload :WTXIDRelay, 'bitcoin/message/wtxid_relay'
 
     USER_AGENT = "/bitcoinrb:#{Bitcoin::VERSION}/"
 
@@ -74,7 +75,8 @@ module Bitcoin
         send_headers: 70012,
         fee_filter: 70013,
         compact: 70014,
-        compact_witness: 70015
+        compact_witness: 70015,
+        wtxid_relay: 70016
     }
 
     module_function
@@ -142,6 +144,8 @@ module Bitcoin
         Bitcoin::Message::SendAddrV2.new
       when Bitcoin::Message::AddrV2::COMMAND
         Bitcoin::Message::AddrV2.parse_from_payload(payload)
+      when Bitcoin::Message::WTXIDRelay::COMMAND
+        Bitcoin::Message::WTXIDRelay.new
       end
     end
 
