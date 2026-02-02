@@ -258,7 +258,7 @@ module Bitcoin
                 when OP_IF, OP_NOTIF
                   result = false
                   if need_exec
-                    return set_error(SCRIPT_ERR_UNBALANCED_CONDITIONAL) if stack.size < 1
+                    return set_error(SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                     value = pop_string.htb
                     if sig_version == :witness_v0 && flag?(SCRIPT_VERIFY_MINIMALIF) || sig_version == :tapscript
                       # Under witness v0 rules it is only a policy rule, enabled through SCRIPT_VERIFY_MINIMALIF.
