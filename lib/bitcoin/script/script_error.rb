@@ -1,5 +1,8 @@
 module Bitcoin
 
+  class ScriptNumError < StandardError
+  end
+
   # bitcoin script error
   class ScriptError < Exception
 
@@ -122,6 +125,8 @@ module Bitcoin
         'Signature is found in scriptCode'
       when SCRIPT_ERR_UNKNOWN_ERROR, SCRIPT_ERR_ERROR_COUNT
         'unknown error'
+      when SCRIPT_ERR_SCRIPTNUM
+        'Script number overflowed or is non-minimally encoded'
       else
         extra_msg ? extra_msg : 'unknown error'
       end

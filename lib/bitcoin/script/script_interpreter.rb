@@ -566,6 +566,8 @@ module Bitcoin
           # max stack size check
           return set_error(SCRIPT_ERR_STACK_SIZE) if stack.size + alt_stack.size > MAX_STACK_SIZE
         end
+      rescue ScriptNumError => e
+        return set_error(SCRIPT_ERR_SCRIPTNUM, e.message)
       rescue Exception => e
         return set_error(SCRIPT_ERR_UNKNOWN_ERROR, e.message)
       end
@@ -591,10 +593,10 @@ module Bitcoin
     # cast item to int value.
     def cast_to_int(s, max_num_size = DEFAULT_MAX_NUM_SIZE)
       data = s.htb
-      raise '"script number overflow"' if data.bytesize > max_num_size
+      raise ScriptNumError, '"script number overflow"' if data.bytesize > max_num_size
       if require_minimal && data.bytesize > 0
         if data.bytes[-1] & 0x7f == 0 && (data.bytesize <= 1 || data.bytes[data.bytesize - 2] & 0x80 == 0)
-          raise 'non-minimally encoded script number'
+          raise ScriptNumError, 'non-minimally encoded script number'
         end
       end
       Script.decode_number(s)
