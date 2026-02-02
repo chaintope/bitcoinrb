@@ -49,6 +49,7 @@ module Bitcoin
     autoload :SendAddrV2, 'bitcoin/message/send_addr_v2'
     autoload :AddrV2, 'bitcoin/message/addr_v2'
     autoload :WTXIDRelay, 'bitcoin/message/wtxid_relay'
+    autoload :SendTxRcncl, 'bitcoin/message/send_tx_rcncl'
 
     USER_AGENT = "/bitcoinrb:#{Bitcoin::VERSION}/"
 
@@ -84,68 +85,70 @@ module Bitcoin
     # Decode P2P message.
     # @param [String] command P2P message command string.
     # @param [String] payload P2P message payload with hex format..
-    # @return [Bitcoin::Message::]
+    # @return [Bitcoin::Message]
     def decode(command, payload = nil)
       payload = payload.htb if payload
       case command
-      when Bitcoin::Message::Version::COMMAND
-        Bitcoin::Message::Version.parse_from_payload(payload)
-      when Bitcoin::Message::VerAck::COMMAND
-        Bitcoin::Message::VerAck.new
-      when Bitcoin::Message::GetAddr::COMMAND
-        Bitcoin::Message::GetAddr.new
-      when Bitcoin::Message::Addr::COMMAND
-        Bitcoin::Message::Addr.parse_from_payload(payload)
-      when Bitcoin::Message::SendHeaders::COMMAND
-        Bitcoin::Message::SendHeaders.new
-      when Bitcoin::Message::FeeFilter::COMMAND
-        Bitcoin::Message::FeeFilter.parse_from_payload(payload)
-      when Bitcoin::Message::Ping::COMMAND
-        Bitcoin::Message::Ping.parse_from_payload(payload)
-      when Bitcoin::Message::Pong::COMMAND
-        Bitcoin::Message::Pong.parse_from_payload(payload)
-      when Bitcoin::Message::GetHeaders::COMMAND
-        Bitcoin::Message::GetHeaders.parse_from_payload(payload)
-      when Bitcoin::Message::Headers::COMMAND
-        Bitcoin::Message::Headers.parse_from_payload(payload)
-      when Bitcoin::Message::Block::COMMAND
-        Bitcoin::Message::Block.parse_from_payload(payload)
-      when Bitcoin::Message::Tx::COMMAND
-        Bitcoin::Message::Tx.parse_from_payload(payload)
-      when Bitcoin::Message::NotFound::COMMAND
-        Bitcoin::Message::NotFound.parse_from_payload(payload)
-      when Bitcoin::Message::MemPool::COMMAND
-        Bitcoin::Message::MemPool.new
-      when Bitcoin::Message::Reject::COMMAND
-        Bitcoin::Message::Reject.parse_from_payload(payload)
-      when Bitcoin::Message::SendCmpct::COMMAND
-        Bitcoin::Message::SendCmpct.parse_from_payload(payload)
-      when Bitcoin::Message::Inv::COMMAND
-        Bitcoin::Message::Inv.parse_from_payload(payload)
-      when Bitcoin::Message::MerkleBlock::COMMAND
-        Bitcoin::Message::MerkleBlock.parse_from_payload(payload)
-      when Bitcoin::Message::CmpctBlock::COMMAND
-        Bitcoin::Message::CmpctBlock.parse_from_payload(payload)
-      when Bitcoin::Message::GetData::COMMAND
-        Bitcoin::Message::GetData.parse_from_payload(payload)
-      when Bitcoin::Message::GetCFHeaders::COMMAND
-        Bitcoin::Message::GetCFHeaders.parse_from_payload(payload)
-      when Bitcoin::Message::GetCFilters::COMMAND
-        Bitcoin::Message::GetCFilters.parse_from_payload(payload)
-      when Bitcoin::Message::GetCFCheckpt::COMMAND
-        Bitcoin::Message::GetCFCheckpt.parse_from_payload(payload)
-      when Bitcoin::Message::CFCheckpt::COMMAND
-        Bitcoin::Message::CFCheckpt.parse_from_payload(payload)
-      when Bitcoin::Message::CFHeaders::COMMAND
-        Bitcoin::Message::CFHeaders.parse_from_payload(payload)
-      when Bitcoin::Message::CFilter::COMMAND
-        Bitcoin::Message::CFilter.parse_from_payload(payload)
-      when Bitcoin::Message::SendAddrV2::COMMAND
-        Bitcoin::Message::SendAddrV2.new
-      when Bitcoin::Message::AddrV2::COMMAND
-        Bitcoin::Message::AddrV2.parse_from_payload(payload)
-      when Bitcoin::Message::WTXIDRelay::COMMAND
-        Bitcoin::Message::WTXIDRelay.new
+      when Version::COMMAND
+        Version.parse_from_payload(payload)
+      when VerAck::COMMAND
+        VerAck.new
+      when GetAddr::COMMAND
+        GetAddr.new
+      when Addr::COMMAND
+        Addr.parse_from_payload(payload)
+      when SendHeaders::COMMAND
+        SendHeaders.new
+      when FeeFilter::COMMAND
+        FeeFilter.parse_from_payload(payload)
+      when Ping::COMMAND
+        Ping.parse_from_payload(payload)
+      when Pong::COMMAND
+        Pong.parse_from_payload(payload)
+      when GetHeaders::COMMAND
+        GetHeaders.parse_from_payload(payload)
+      when Headers::COMMAND
+        Headers.parse_from_payload(payload)
+      when Block::COMMAND
+        Block.parse_from_payload(payload)
+      when Tx::COMMAND
+        Tx.parse_from_payload(payload)
+      when NotFound::COMMAND
+        NotFound.parse_from_payload(payload)
+      when MemPool::COMMAND
+        MemPool.new
+      when Reject::COMMAND
+        Reject.parse_from_payload(payload)
+      when SendCmpct::COMMAND
+        SendCmpct.parse_from_payload(payload)
+      when Inv::COMMAND
+        Inv.parse_from_payload(payload)
+      when MerkleBlock::COMMAND
+        MerkleBlock.parse_from_payload(payload)
+      when CmpctBlock::COMMAND
+        CmpctBlock.parse_from_payload(payload)
+      when GetData::COMMAND
+        GetData.parse_from_payload(payload)
+      when GetCFHeaders::COMMAND
+        GetCFHeaders.parse_from_payload(payload)
+      when GetCFilters::COMMAND
+        GetCFilters.parse_from_payload(payload)
+      when GetCFCheckpt::COMMAND
+        GetCFCheckpt.parse_from_payload(payload)
+      when CFCheckpt::COMMAND
+        CFCheckpt.parse_from_payload(payload)
+      when CFHeaders::COMMAND
+        CFHeaders.parse_from_payload(payload)
+      when CFilter::COMMAND
+        CFilter.parse_from_payload(payload)
+      when SendAddrV2::COMMAND
+        SendAddrV2.new
+      when AddrV2::COMMAND
+        AddrV2.parse_from_payload(payload)
+      when WTXIDRelay::COMMAND
+        WTXIDRelay.new
+      when SendTxRcncl::COMMAND
+        SendTxRcncl.parse_from_payload(payload)
       end
     end
 
