@@ -9,6 +9,22 @@ module Bitcoin
       include EM::HttpServer
       include RequestHandler
 
+      SUPPORTED_COMMANDS = %w[
+        getblockchaininfo
+        stop
+        getblockheader
+        getpeerinfo
+        sendrawtransaction
+        decoderawtransaction
+        decodescript
+        createwallet
+        listwallets
+        getwalletinfo
+        listaccounts
+        encryptwallet
+        getnewaddress
+      ].freeze
+
       attr_reader :node
       attr_accessor :logger
 
@@ -31,6 +47,9 @@ module Bitcoin
         operation = proc {
           command, args = parse_json_params
           logger.debug("process http request. command = #{command}")
+          unless SUPPORTED_COMMANDS.include?(command)
+            raise ArgumentError, "Unsupported method: #{command}"
+          end
           begin
             send(command, *args).to_json
           rescue Exception => e
