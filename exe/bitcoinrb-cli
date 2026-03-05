@@ -1,5 +1,0 @@
-#!/usr/bin/env ruby
-
-require 'bitcoin'
-
-Bitcoin::Node::CLI.start(ARGV)

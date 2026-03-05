@@ -21,13 +21,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_runtime_dependency 'ecdsa_ext', '~> 0.5.1'
-  spec.add_runtime_dependency 'eventmachine'
   spec.add_runtime_dependency 'murmurhash3', '~> 0.1.7'
   spec.add_runtime_dependency 'bech32', '>= 1.5.0'
-  spec.add_runtime_dependency 'daemon-spawn'
-  spec.add_runtime_dependency 'thor'
-  spec.add_runtime_dependency 'eventmachine_httpserver'
-  spec.add_runtime_dependency 'iniparse'
   spec.add_runtime_dependency 'siphash'
   spec.add_runtime_dependency 'bip-schnorr', '>= 0.7.0'
   spec.add_runtime_dependency 'base32', '>= 0.3.4'
@@ -36,4 +31,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'secp256k1rb', '0.1.1'
   spec.add_runtime_dependency 'logger'
   spec.add_runtime_dependency 'merkle', '0.3.0'
+  spec.add_runtime_dependency 'dnsruby', '1.73.0'
 end
