@@ -2,7 +2,6 @@
 # https://github.com/lian/bitcoin-ruby/blob/master/COPYING
 
 require 'bitcoin/version'
-require 'eventmachine'
 require 'schnorr'
 require 'securerandom'
 require 'json'
