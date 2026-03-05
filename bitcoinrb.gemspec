@@ -27,7 +27,6 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'bip-schnorr', '>= 0.7.0'
   spec.add_runtime_dependency 'base32', '>= 0.3.4'
   spec.add_runtime_dependency 'base64', '~> 0.2.0'
-  spec.add_runtime_dependency 'observer', '~> 0.1.2'
   spec.add_runtime_dependency 'secp256k1rb', '0.1.1'
   spec.add_runtime_dependency 'logger'
   spec.add_runtime_dependency 'merkle', '0.3.0'

@@ -7,7 +7,6 @@ require 'securerandom'
 require 'json'
 require 'bech32'
 require 'base64'
-require 'observer'
 require 'tmpdir'
 require 'merkle'
 
