@@ -1,13 +1,20 @@
+require 'set'
+
 module Bitcoin
   # BIP-352 silent payment module.
   # @see https://github.com/bitcoin/bips/blob/master/bip-0352.mediawiki
   module SilentPayment
     autoload :Output, 'bitcoin/silent_payment/output'
+
+    # Maximum number of silent payment addresses that can share the same scan public key
+    # within a single transaction. This is the maximum number of P2TR outputs that can fit
+    # within a 100KB transaction under current standardness rules.
+    K_MAX = 2323
     
     # Derive payment point.
     #
     # @param [Array<Bitcoin::Script>] prevouts An array of previous output script.
-    # @param [Array<Integer>] private_keys An array of private key corresponding to each public key in prevouts.
+    # @param [Array<Bitcoin::Key>] private_keys An array of Bitcoin::Key objects corresponding to each public key in prevouts.
     # @param [Array<Bech32::SilentPaymentAddr>] recipients
     # @return [Array<ECDSA::Point>] An array of derived points.
     # @raise [ArgumentError]
@@ -21,13 +28,15 @@ module Bitcoin
       field = ECDSA::PrimeField.new(Bitcoin::Secp256k1::GROUP.order)
       sum_priv_keys = 0
       prevouts.each_with_index do |prevout, index|
-        k = Bitcoin::Key.new(priv_key: private_keys[index].to_s(16))
+        key = private_keys[index]
+        raise ArgumentError, "private_keys element must be Bitcoin::Key." unless key.is_a? Bitcoin::Key
+        priv_key_int = key.priv_key.to_i(16)
         public_key = extract_public_key(prevout, inputs[index])
         next if public_key.nil?
-        private_key = if public_key.p2tr? && k.to_point.y.odd?
-                        field.mod(-private_keys[index])
+        private_key = if public_key.p2tr? && key.to_point.y.odd?
+                        field.mod(-priv_key_int)
                       else
-                        private_keys[index]
+                        priv_key_int
                       end
         input_pub_keys << public_key
         sum_priv_keys = field.mod(sum_priv_keys + private_key)
@@ -45,6 +54,12 @@ module Bitcoin
         destinations[sp_addr.scan_key] = [] unless destinations.has_key?(sp_addr.scan_key)
         destinations[sp_addr.scan_key] << sp_addr.spend_key
       end
+
+      # Check K_max limit: fail if any group exceeds the limit
+      destinations.each_value do |spends|
+        raise ArgumentError, "Recipient group exceeds K_max limit (#{K_MAX})." if spends.length > K_MAX
+      end
+
       outputs = []
       destinations.each do |scan_key, spends|
         scan_key = Bitcoin::Key.new(pubkey: scan_key).to_point.to_jacobian
@@ -99,8 +114,11 @@ module Bitcoin
 
       k = 0
       results = []
-      found_outputs = []
+      found_outputs = Set.new
       loop do
+        # Stop scanning if K_max limit is reached
+        break if k == K_MAX
+
         t_k = Bitcoin.tagged_hash('BIP0352/SharedSecret', ecdh_shared_secret + [k].pack('N'))
         p_k = Bitcoin::Secp256k1::GROUP.generator.to_jacobian * t_k.bti + spend_pubkey.to_point.to_jacobian
         found = false
