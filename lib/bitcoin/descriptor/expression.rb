@@ -67,10 +67,10 @@ module Bitcoin
 
         raise ArgumentError, "No key provided." unless key
 
-        if key.start_with?('xprv')
+        if key.start_with?('xprv') || key.start_with?('tprv')
           key = Bitcoin::ExtKey.from_base58(key)
           key = derive_path(key, paths) if paths
-        elsif key.start_with?('xpub')
+        elsif key.start_with?('xpub') || key.start_with?('tpub')
           key = Bitcoin::ExtPubkey.from_base58(key)
           key = derive_path(key, paths) if paths
         else

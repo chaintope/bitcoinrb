@@ -22,6 +22,7 @@ module Bitcoin
     autoload :RawTr,  'bitcoin/descriptor/raw_tr'
     autoload :Checksum, 'bitcoin/descriptor/checksum'
     autoload :MuSig, 'bitcoin/descriptor/musig'
+    autoload :Sp, 'bitcoin/descriptor/sp'
 
     module_function
 
@@ -137,6 +138,15 @@ module Bitcoin
       MuSig.new(keys, path)
     end
 
+    # Generate sp() descriptor for Silent Payment.
+    # @param [String] key_or_scan_key Either a spscan/spspend encoded key (single-argument form),
+    #   or the scan key for two-argument form.
+    # @param [String, Expression, nil] spend_key The spend key (for two-argument form) or nil for single-argument form.
+    # @return [Bitcoin::Descriptor::Sp]
+    def sp(key_or_scan_key, spend_key = nil)
+      Sp.new(key_or_scan_key, spend_key)
+    end
+
     # Parse descriptor string.
     # @param [String] string Descriptor string.
     # @return [Bitcoin::Descriptor::Expression]
@@ -202,6 +212,16 @@ module Bitcoin
       when 'musig'
         keys = args_str.split(',')
         path.empty? ? musig(*keys) : musig(*keys, path: path)
+      when 'sp'
+        scan_key, spend_key_str = split_two(args_str)
+        if spend_key_str.nil?
+          # Single argument form: spscan or spspend encoded key
+          sp(scan_key)
+        else
+          # Two argument form: separate scan and spend keys
+          spend_key = spend_key_str.include?('(') ? parse(spend_key_str, false) : spend_key_str
+          sp(scan_key, spend_key)
+        end
       else
         raise ArgumentError, "Parse failed: #{string}"
       end
