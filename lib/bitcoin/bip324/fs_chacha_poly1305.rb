@@ -92,14 +92,11 @@ module Bitcoin
       # Encrypt a plaintext using ChaCha20Poly1305.
       def chacha20_poly1305_encrypt(key, nonce, aad, plaintext)
         msg_len = plaintext.bytesize
-        ret = ((msg_len + 63) / 64).times.map do |i|
-          now = [64, msg_len - 64 * i].min
-          keystream = ChaCha20.block(key, nonce, i + 1)
-          now.times.map do |j|
-            plaintext[j + 64 * i].unpack1('C') ^ keystream[j].unpack1('C')
-          end
-        end
-        ret = ret.flatten.pack('C*')
+        num_blocks = (msg_len + 63) / 64
+        keystream = num_blocks.times.map { |i| ChaCha20.block(key, nonce, i + 1) }.join
+        pt_bytes = plaintext.unpack('C*')
+        ks_bytes = keystream.unpack('C*')
+        ret = Array.new(msg_len) { |i| pt_bytes[i] ^ ks_bytes[i] }.pack('C*')
         poly1305 = Poly1305.new(ChaCha20.block(key, nonce, 0)[0...32])
         poly1305.add(aad, padding: true).add(ret, padding: true)
         poly1305.add([aad.bytesize, msg_len].pack("Q<Q<"))
@@ -115,14 +112,11 @@ module Bitcoin
         poly1305.add(ciphertext, length: msg_len, padding: true)
         poly1305.add([aad.bytesize, msg_len].pack("Q<Q<"))
         return nil unless constant_time_equal?(ciphertext[-16..-1], poly1305.tag)
-        ret = ((msg_len + 63) / 64).times.map do |i|
-          now = [64, msg_len - 64 * i].min
-          keystream = ChaCha20.block(key, nonce, i + 1)
-          now.times.map do |j|
-            ciphertext[j + 64 * i].unpack1('C') ^ keystream[j].unpack1('C')
-          end
-        end
-        ret.flatten.pack('C*')
+        num_blocks = (msg_len + 63) / 64
+        keystream = num_blocks.times.map { |i| ChaCha20.block(key, nonce, i + 1) }.join
+        ct_bytes = ciphertext.unpack('C*')
+        ks_bytes = keystream.unpack('C*')
+        Array.new(msg_len) { |i| ct_bytes[i] ^ ks_bytes[i] }.pack('C*')
       end
 
       # Constant-time comparison of two equal-length byte strings.

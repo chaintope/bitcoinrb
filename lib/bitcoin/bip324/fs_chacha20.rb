@@ -16,8 +16,6 @@ module Bitcoin
       # @param [Integer] bits
       # @return [Integer]
       def rotl32(v, bits)
-        raise Bitcoin::BIP324::Error, "v must be integer" unless v.is_a?(Integer)
-        raise Bitcoin::BIP324::Error, "bits must be integer" unless bits.is_a?(Integer)
         ((v << bits) & 0xffffffff) | (v >> (32 - bits))
       end
 
@@ -117,9 +115,9 @@ module Bitcoin
       # @return [String]
       def crypt(chunk)
         ks = key_stream_bytes(chunk.bytesize)
-        ret = chunk.unpack("C*").zip(ks.unpack("C*")).map do |c, k|
-          c ^ k
-        end.pack("C*")
+        chunk_bytes = chunk.unpack("C*")
+        ks_bytes = ks.unpack("C*")
+        ret = chunk_bytes.each_with_index.map { |c, i| c ^ ks_bytes[i] }.pack("C*")
         if (self.chunk_counter + 1) % rekey_interval == 0
           self.key = key_stream_bytes(32)
           self.block_counter = 0
