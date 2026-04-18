@@ -114,7 +114,7 @@ module Bitcoin
         poly1305.add(aad, padding: true)
         poly1305.add(ciphertext, length: msg_len, padding: true)
         poly1305.add([aad.bytesize, msg_len].pack("Q<Q<"))
-        return nil unless ciphertext[-16..-1] == poly1305.tag
+        return nil unless constant_time_equal?(ciphertext[-16..-1], poly1305.tag)
         ret = ((msg_len + 63) / 64).times.map do |i|
           now = [64, msg_len - 64 * i].min
           keystream = ChaCha20.block(key, nonce, i + 1)
@@ -123,6 +123,14 @@ module Bitcoin
           end
         end
         ret.flatten.pack('C*')
+      end
+
+      # Constant-time comparison of two equal-length byte strings.
+      def constant_time_equal?(a, b)
+        return false unless a.bytesize == b.bytesize
+        diff = 0
+        a.bytesize.times { |i| diff |= a.getbyte(i) ^ b.getbyte(i) }
+        diff.zero?
       end
     end
   end
