@@ -95,7 +95,7 @@ module Bitcoin
     def xelligatorswift(x)
       loop do
         u = SecureRandom.random_number(1..ECDSA::Group::Secp256k1.order).to_s(16)
-        c = Random.rand(0..8)
+        c = SecureRandom.random_number(9)
         t = xswiftec_inv(x, u, c)
         unless t.nil?
           return (ECDSA::Format::IntegerOctetString.encode(u.hex, 32) +
