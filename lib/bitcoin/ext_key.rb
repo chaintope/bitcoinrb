@@ -108,9 +108,9 @@ module Bitcoin
       end
       l = Bitcoin.hmac_sha512(chain_code, data)
       left = l[0..31].bth.to_i(16)
-      raise 'invalid key' if left >= CURVE_ORDER
+      raise 'invalid key' if left >= CURVE_ORDER || left == 0
       child_priv = (left + key.priv_key.to_i(16)) % CURVE_ORDER
-      raise 'invalid key ' if child_priv >= CURVE_ORDER
+      raise 'invalid key' if child_priv == 0
       child_priv = ECDSA::Format::IntegerOctetString.encode(child_priv, 32)
       new_key.key = Bitcoin::Key.new(priv_key: child_priv.bth, key_type: key_type)
       new_key.chain_code = l[32..-1]
@@ -280,7 +280,7 @@ module Bitcoin
       data = pub.htb << [number].pack('N')
       l = Bitcoin.hmac_sha512(chain_code, data)
       left = l[0..31].bth.to_i(16)
-      raise 'invalid key' if left >= CURVE_ORDER
+      raise 'invalid key' if left >= CURVE_ORDER || left == 0
       l_priv = ECDSA::Format::IntegerOctetString.encode(left, 32)
       p1 = Bitcoin::Key.new(priv_key: l_priv.bth, key_type: Bitcoin::Key::TYPES[:uncompressed]).to_point
       p2 = Bitcoin::Key.new(pubkey: pubkey, key_type: key_type).to_point
