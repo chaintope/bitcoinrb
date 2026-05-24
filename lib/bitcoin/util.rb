@@ -102,7 +102,7 @@ module Bitcoin
     # @return [String] the hash value with binary format.
     def tagged_hash(tag, msg)
       tag_hash = Digest::SHA256.digest(tag)
-      Digest::SHA256.digest(tag_hash + tag_hash + msg)
+      Digest::SHA256.digest(tag_hash + tag_hash + msg.b)
     end
 
     # encode Base58 check address.

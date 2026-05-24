@@ -5,6 +5,79 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
   # bitcoinjs-lib fixtures.
   let(:fixtures) { fixture_file('message_signs.json') }
 
+  # BIP322 test vector
+  let(:basic) { fixture_file('bip322/basic-test-vectors.json') }
+  let(:generated) { fixture_file('bip322/generated-test-vectors.json') }
+
+  describe "BIP-322 basic test vectors" do
+    it do
+      basic['tx_hashes'].each do |tx_hash|
+        digest = described_class.message_hash(tx_hash['message'], legacy: false)
+        expect(digest.bth).to eq(tx_hash['message_hash'])
+
+        spend_tx = described_class.to_spend_tx(digest, tx_hash['address'])
+        expect(spend_tx.txid).to eq(tx_hash['to_spend_tx_hash'])
+        to_sign_tx = described_class.to_sign_tx(digest, tx_hash['address'])
+        expect(to_sign_tx.txid).to eq(tx_hash['to_sign_tx_hash'])
+      end
+      basic['simple'].each do |simple|
+        if simple['private_keys'].length == 1
+          private_key = Bitcoin::Key.from_wif(simple['private_keys'].first)
+          sig = described_class.sign_message(private_key, simple['message'], format: :simple, address: simple['address'])
+          if Bitcoin::Script.parse_from_addr(simple['address']).p2tr?
+            expect(described_class.verify_message(simple['address'], sig, simple['message'])).to be true
+          else
+            strip = ->(s) { s.sub(/\A(smp|ful|pof)/, '') }
+            expect(strip.call(sig)).to eq(strip.call(simple['bip322_signatures'].first))
+          end
+        end
+        simple['bip322_signatures'].each do |sig|
+          expect(described_class.verify_message(simple['address'], sig, simple['message'])).to be true
+        end
+      end
+      basic['error'].each do |error|
+        if error['error_substr'] == 'invalid signature'
+          expect(
+            described_class.verify_message(error['address'], error['signature'], error['message'])
+          ).to be false
+        else
+          expect {
+            described_class.verify_message(error['address'], error['signature'], error['message'])
+          }.to raise_error(ArgumentError)
+        end
+      end
+    end
+  end
+
+  describe "BIP-322 generated test vectors" do
+    it do
+      # Simple
+      generated['simple'].each do |simple|
+        simple['bip322_signatures'].each do |sig|
+          expect(described_class.verify_message(simple['address'], sig, simple['message'])).to be true
+        end
+      end
+      # Full
+      generated['full'].each do |full|
+        full['bip322_signatures'].each do |sig|
+          expect(described_class.verify_message(full['address'], sig, full['message'])).to be true
+        end
+      end
+      # Error
+      generated['error'].each do |error|
+        if error['error_substr'] == 'invalid signature'
+          expect(
+            described_class.verify_message(error['address'], error['signature'], error['message'])
+          ).to be false
+        else
+          expect {
+            described_class.verify_message(error['address'], error['signature'], error['message'])
+          }.to raise_error(ArgumentError)
+        end
+      end
+    end
+  end
+
   shared_examples "test valid spec" do
     it do
       valid['sign'].each do |v|
@@ -107,7 +180,7 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
         '',
         format: described_class::FORMAT_SIMPLE,
         address: addr)
-      expect(sig1).to eq('AkcwRAIgM2gBAQqvZX15ZiysmKmQpDrG83avLIT492QBzLnQIxYCIBaTpOaD20qRlEylyxFSeEA2ba9YOixpX8z46TSDtS40ASECx/EgAxlkQpQ9hYjgGu6EBCPMVPwVIVJqO4XCsMvViHI=')
+      expect(sig1).to eq('smpAkcwRAIgM2gBAQqvZX15ZiysmKmQpDrG83avLIT492QBzLnQIxYCIBaTpOaD20qRlEylyxFSeEA2ba9YOixpX8z46TSDtS40ASECx/EgAxlkQpQ9hYjgGu6EBCPMVPwVIVJqO4XCsMvViHI=')
       sig1_full = described_class.sign_message(
         private_key,
         '',
@@ -118,7 +191,7 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
         'Hello World',
         format: described_class::FORMAT_SIMPLE,
         address: addr)
-      expect(sig2).to eq('AkcwRAIgZRfIY3p7/DoVTty6YZbWS71bc5Vct9p9Fia83eRmw2QCICK/ENGfwLtptFluMGs2KsqoNSk89pO7F29zJLUx9a/sASECx/EgAxlkQpQ9hYjgGu6EBCPMVPwVIVJqO4XCsMvViHI=')
+      expect(sig2).to eq('smpAkcwRAIgZRfIY3p7/DoVTty6YZbWS71bc5Vct9p9Fia83eRmw2QCICK/ENGfwLtptFluMGs2KsqoNSk89pO7F29zJLUx9a/sASECx/EgAxlkQpQ9hYjgGu6EBCPMVPwVIVJqO4XCsMvViHI=')
 
       # Transaction hash
       to_spend1 = described_class.to_spend_tx(digest1, addr)
