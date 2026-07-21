@@ -1,3 +1,5 @@
+RubyVM::YJIT.enable if defined?(RubyVM::YJIT) && RubyVM::YJIT.respond_to?(:enable)
+
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'bitcoin'
 require 'logger'
