@@ -61,7 +61,7 @@ module Bitcoin
       end
 
       def unpack_relay_field(payload)
-        ( version >= 70001 && payload ) ? unpack_boolean(payload) : [ true, nil ]
+        ( version >= 70001 && payload && !payload.empty? ) ? unpack_boolean(payload) : [ true, nil ]
       end
 
       # Check whether +service_flag+ support this version.

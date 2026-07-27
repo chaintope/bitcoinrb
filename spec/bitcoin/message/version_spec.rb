@@ -27,6 +27,40 @@ describe Bitcoin::Message::Version do
     end
   end
 
+  describe 'parse relay field' do
+    let(:payload_with_relay) {
+      '721101000100000000000000bc8f5e5400000000010000000000000000000000000000000000ffffc61b6409208d010000000000000000000000000000000000ffffcb0071c0208d128035cbc97953f80f2f5361746f7368693a302e392e332fcf05050001'.htb
+    }
+
+    context 'relay field is omitted' do
+      subject {
+        Bitcoin::Message::Version.parse_from_payload(payload_with_relay[0..-2])
+      }
+      it 'should parse as relay true' do
+        expect(subject.relay).to be true
+        expect(subject.start_height).to eq(329167)
+      end
+    end
+
+    context 'relay field is 0x00' do
+      subject {
+        Bitcoin::Message::Version.parse_from_payload(payload_with_relay[0..-2] + "\x00")
+      }
+      it 'should parse as relay false' do
+        expect(subject.relay).to be false
+      end
+    end
+
+    context 'relay field is 0x01' do
+      subject {
+        Bitcoin::Message::Version.parse_from_payload(payload_with_relay)
+      }
+      it 'should parse as relay true' do
+        expect(subject.relay).to be true
+      end
+    end
+  end
+
   describe 'specify opts' do
     subject {
       Bitcoin::Message::Version.new(start_height: 500, remote_addr: '83.243.59.57:8333')
