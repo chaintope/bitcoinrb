@@ -18,11 +18,13 @@ module Bitcoin
       end
 
       def to_payload
-        [nonce].pack('Q')
+        nonce ? [nonce].pack('Q') : ''
       end
 
+      # Generate pong message as a response. Return nil if the ping has no nonce
+      # (sent by a node before BIP-31), since such a ping does not expect a pong.
       def to_response
-        Pong.new(nonce)
+        Pong.new(nonce) if nonce
       end
 
     end

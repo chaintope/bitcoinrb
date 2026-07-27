@@ -13,6 +13,16 @@ describe Bitcoin::Message::Ping do
     subject { Bitcoin::Message::Ping.parse_from_payload('c04933b200000000'.htb) }
     it 'should be parsed' do
       expect(subject.nonce).to eq(2989705664)
+      expect(subject.to_response.nonce).to eq(2989705664)
+    end
+  end
+
+  describe 'parse from payload without nonce' do
+    subject { Bitcoin::Message::Ping.parse_from_payload('') }
+    it 'should be parsed as ping without nonce' do
+      expect(subject.nonce).to be_nil
+      expect(subject.to_payload).to eq('')
+      expect(subject.to_response).to be_nil
     end
   end
 
