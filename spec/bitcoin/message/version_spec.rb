@@ -61,6 +61,19 @@ describe Bitcoin::Message::Version do
     end
   end
 
+  describe 'parse empty user_agent' do
+    let(:payload) {
+      Bitcoin::Message::Version.new(user_agent: '', timestamp: 1497706959, nonce: 13469974270669794112).to_payload
+    }
+    subject {
+      Bitcoin::Message::Version.parse_from_payload(payload)
+    }
+    it 'should parse user_agent as empty string' do
+      expect(subject.user_agent).to eq('')
+      expect(subject.to_payload).to eq(payload)
+    end
+  end
+
   describe 'specify opts' do
     subject {
       Bitcoin::Message::Version.new(start_height: 500, remote_addr: '83.243.59.57:8333')

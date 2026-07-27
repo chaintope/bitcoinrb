@@ -12,6 +12,8 @@ describe Bitcoin::Util do
 
     it 'should unpack var string' do
       expect(util.unpack_var_string("\x04hoge").first).to eq('hoge')
+      expect(util.unpack_var_string("\x00").first).to eq('')
+      expect(util.unpack_var_string('').first).to eq('')
     end
 
     it 'should pack var int' do

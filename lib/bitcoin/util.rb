@@ -14,7 +14,7 @@ module Bitcoin
 
     def unpack_var_string(payload)
       size, payload = unpack_var_int(payload)
-      size > 0 ? payload.unpack("a#{size}a*") : [nil, payload]
+      size && size > 0 ? payload.unpack("a#{size}a*") : ['', payload.to_s]
     end
 
     def pack_var_int(i)
