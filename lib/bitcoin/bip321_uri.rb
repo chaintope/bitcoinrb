@@ -105,7 +105,7 @@ module Bitcoin
                      req_pop = true
                      k = 'pop'
                    end
-                   if %w[bc tb].include?(k.downcase)
+                   if %w[bc tb bcrt].include?(k.downcase)
                      raise ArgumentError, "#{k} not allowed in current network." unless Bitcoin.chain_params.bech32_hrp == k.downcase
                      query_addrs << v
                      nil
@@ -160,12 +160,9 @@ module Bitcoin
       all_params = base_params.merge other_params
       params = all_params.map do |k, v|
         "#{k}=#{CGI.escape(v).gsub('+', '%20')}"
-      end.join('&')
-      uri << "?#{params}" unless params.empty?
-      unless query_addrs.empty?
-        uri << '?' unless uri.include?('?')
-        uri << query_addrs.map {|addr| "#{Bitcoin.chain_params.bech32_hrp}=#{addr}"}.join('&')
       end
+      params += query_addrs.map {|addr| "#{Bitcoin.chain_params.bech32_hrp}=#{addr}"}
+      uri << "?#{params.join('&')}" unless params.empty?
       uri
     end
   end

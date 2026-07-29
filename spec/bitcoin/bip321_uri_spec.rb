@@ -87,6 +87,13 @@ RSpec.describe Bitcoin::BIP321URI do
       expect(uri.addresses).to eq(%w[bc1qufgy354j3kmvuch987xe4s40836x3h0lg8f5n2 bc1p5swkugezn97763tl0yty6556856uug0q6jflljvep9m4p7339x5qzyrh4g])
       expect(uri.to_s).to eq(raw_uri)
 
+      # An address in the query parameters must be separated from the other parameters
+      raw_uri = 'bitcoin:17T9tBC2dSpusL1rhT4T4AV4if963Tpfym?amount=0.1&bc=bc1qufgy354j3kmvuch987xe4s40836x3h0lg8f5n2'
+      uri = described_class.parse(raw_uri)
+      expect(uri.amount).to eq(0.1)
+      expect(uri.addresses).to eq(%w[17T9tBC2dSpusL1rhT4T4AV4if963Tpfym bc1qufgy354j3kmvuch987xe4s40836x3h0lg8f5n2])
+      expect(uri.to_s).to eq(raw_uri)
+
       # Many QR codes utilize all-uppercase URIs, which should be handled fine
       raw_uri = 'BITCOIN:BC1QUFGY354J3KMVUCH987XE4S40836X3H0LG8F5N2?BC=BC1P5SWKUGEZN97763TL0YTY6556856UUG0Q6JFLLJVEP9M4P7339X5QZYRH4G'
       uri = described_class.parse(raw_uri)

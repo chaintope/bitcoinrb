@@ -114,14 +114,16 @@ module Bitcoin
       child_priv = ECDSA::Format::IntegerOctetString.encode(child_priv, 32)
       new_key.key = Bitcoin::Key.new(priv_key: child_priv.bth, key_type: key_type)
       new_key.chain_code = l[32..-1]
-      new_key.ver = version
+      # A depth 1 key derives its version bytes from the purpose, see #version.
+      new_key.ver = new_key.depth == 1 ? nil : version
       new_key
     end
 
     # get version bytes using serialization format
     def version
+      return ver if ver
       return ExtKey.version_from_purpose(number) if depth == 1
-      ver ? ver : Bitcoin.chain_params.extended_privkey_version
+      Bitcoin.chain_params.extended_privkey_version
     end
 
     # get key type defined by BIP-178 using version.
@@ -286,14 +288,16 @@ module Bitcoin
       p2 = Bitcoin::Key.new(pubkey: pubkey, key_type: key_type).to_point
       new_key.pubkey = (p1 + p2).to_hex
       new_key.chain_code = l[32..-1]
-      new_key.ver = version
+      # A depth 1 key derives its version bytes from the purpose, see #version.
+      new_key.ver = new_key.depth == 1 ? nil : version
       new_key
     end
 
     # get version bytes using serialization format
     def version
+      return ver if ver
       return ExtPubkey.version_from_purpose(number) if depth == 1
-      ver ? ver : Bitcoin.chain_params.extended_pubkey_version
+      Bitcoin.chain_params.extended_pubkey_version
     end
 
     # get key type defined by BIP-178 using version.
