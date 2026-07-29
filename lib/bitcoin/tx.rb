@@ -228,7 +228,7 @@ module Bitcoin
     # @param [Integer] input_index
     # @param [Bitcoin::Script] script_pubkey the script pubkey for target input.
     # @param [Integer] amount the amount of bitcoin, require for witness program only.
-    # @param [Array] flags the flags used when execute script interpreter.
+    # @param [Integer] flags the flags used when execute script interpreter.
     # @param [Array[Bitcoin::TxOut]] prevouts Previous outputs referenced by all Tx inputs, required for taproot.
     # @return [Boolean] result
     def verify_input_sig(input_index, script_pubkey, amount: nil, flags: STANDARD_SCRIPT_VERIFY_FLAGS, prevouts: [])
@@ -236,11 +236,9 @@ module Bitcoin
       has_witness = inputs[input_index].has_witness?
       has_witness = true if script_pubkey.witness_program?
 
-      if script_pubkey.p2sh?
-        flags << SCRIPT_VERIFY_P2SH
-        redeem_script = Script.parse_from_payload(script_sig.chunks.last)
-        script_pubkey = redeem_script if redeem_script.p2wpkh?
-      end
+      # The script interpreter resolves the redeem script of P2SH, including a nested witness
+      # program, from the scriptSig, so the scriptPubkey is passed through as it is.
+      flags |= SCRIPT_VERIFY_P2SH if script_pubkey.p2sh?
 
       if has_witness
         verify_input_sig_for_witness(input_index, script_pubkey, amount, flags, prevouts)

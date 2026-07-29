@@ -280,6 +280,18 @@ describe Bitcoin::Tx, use_secp256k1: true do
     "DISCOURAGE_UPGRADABLE_TAPROOT_VERSION": Bitcoin::SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION
   }.freeze
 
+  describe Bitcoin::TxOut do
+    describe 'parse from payload' do
+      it 'should parse value as unsigned integer' do
+        # the maximum value which fits in 8 bytes must not be parsed as a negative value.
+        tx_out = Bitcoin::TxOut.parse_from_payload(('ff' * 8 + '00').htb)
+        expect(tx_out.value).to eq(0xffffffffffffffff)
+        expect(tx_out.dust?).to be false
+        expect(tx_out.to_payload).to eq(('ff' * 8 + '00').htb)
+      end
+    end
+  end
+
   describe 'all flags in STANDARD_SCRIPT_VERIFY_FLAGS' do
     it 'present in map_flag_names' do
       standard_flags_missing = Bitcoin::STANDARD_SCRIPT_VERIFY_FLAGS

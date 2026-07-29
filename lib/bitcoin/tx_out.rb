@@ -16,13 +16,13 @@ module Bitcoin
 
     def self.parse_from_payload(payload)
       buf = payload.is_a?(String) ? StringIO.new(payload) : payload
-      value = buf.read(8).unpack1('q')
+      value = buf.read(8).unpack1('Q<')
       script_size = Bitcoin.unpack_var_int_from_io(buf)
       new(value: value, script_pubkey: Script.parse_from_payload(buf.read(script_size)))
     end
 
     def to_payload
-      [value].pack('Q') << script_pubkey.to_payload(true)
+      [value].pack('Q<') << script_pubkey.to_payload(true)
     end
 
     def to_empty_payload
