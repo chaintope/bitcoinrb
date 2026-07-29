@@ -18,7 +18,9 @@ module Bitcoin
         s[-8..-1].each_char do |c|
           return false unless CHECKSUM_CHARSET.include?(c)
         end
-        symbols = descsum_expand(s[0...-9]) + s[-8..-1].each_char.map{|c|CHECKSUM_CHARSET.index(c)}
+        expanded = descsum_expand(s[0...-9])
+        return false unless expanded
+        symbols = expanded + s[-8..-1].each_char.map{|c|CHECKSUM_CHARSET.index(c)}
         descsum_polymod(symbols) == 1
       end
 
@@ -26,7 +28,9 @@ module Bitcoin
       # @param [String] s Descriptor string without checksum.
       # @return [String] Descriptor string with checksum.
       def descsum_create(s)
-        symbols = descsum_expand(s) + [0, 0, 0, 0, 0, 0, 0, 0]
+        expanded = descsum_expand(s)
+        raise ArgumentError, 'Descriptor contains a character which is not in the input charset.' unless expanded
+        symbols = expanded + [0, 0, 0, 0, 0, 0, 0, 0]
         checksum = descsum_polymod(symbols) ^ 1
         result = 8.times.map do |i|
           CHECKSUM_CHARSET[(checksum >> (5 * (7 - i))) & 31]

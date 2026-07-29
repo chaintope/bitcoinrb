@@ -89,6 +89,10 @@ module Bitcoin
       to_hex.to_i(16)
     end
 
+    def eql?(other)
+      other.is_a?(Tx) && self == other
+    end
+
     def tx_hash
       Bitcoin.double_sha256(serialize_old_format).bth
     end
