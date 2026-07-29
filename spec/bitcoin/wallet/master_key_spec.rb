@@ -30,6 +30,19 @@ describe Bitcoin::Wallet::MasterKey do
       expect(key.salt).to eq('')
       expect{key.decrypt(passphrase)}.to raise_error('The wallet is not encrypted.') # not encrypted.
     end
+
+    it 'should be able to decrypt the seed restored from payload' do
+      passphrase = 'hogehoge'
+      seed = 'a262d6fb6122ecf45be09c50492b31f92e9beb7d9a845987a02cefda57a15f9c467a17872029a9e92299b5cbdf306e3a0ee620245cbd508959b6cb7ca637bd55'
+      key = Bitcoin::Wallet::MasterKey.new(seed)
+      key.encrypt(passphrase)
+      restored = Bitcoin::Wallet::MasterKey.parse_from_payload(key.to_payload)
+      expect(restored.encrypted).to be true
+      expect(restored.salt).to eq(key.salt)
+      expect(restored.seed).to eq(key.seed)
+      restored.decrypt(passphrase)
+      expect(restored.seed).to eq(seed)
+    end
   end
 
   describe '#derive' do
