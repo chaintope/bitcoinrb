@@ -38,7 +38,7 @@ module Bitcoin
         p = header.to_payload
         p << [nonce].pack('q*')
         p << Bitcoin.pack_var_int(short_ids.size)
-        p << short_ids.map{|id|sprintf('%12x', id).htb.reverse}.join
+        p << short_ids.map{|id|sprintf('%012x', id).htb.reverse}.join
         p << Bitcoin.pack_var_int(prefilled_txn.size)
         p << prefilled_txn.map(&:to_payload).join
         p

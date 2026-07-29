@@ -1,8 +1,6 @@
 module Bitcoin
   module Message
 
-    class Error < StandardError; end
-
     autoload :Base, 'bitcoin/message/base'
     autoload :Inventory, 'bitcoin/message/inventory'
     autoload :InventoriesParser, 'bitcoin/message/inventories_parser'

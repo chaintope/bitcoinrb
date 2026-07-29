@@ -13,4 +13,21 @@ describe Bitcoin::Message::HeaderAndShortIDs do
     end
   end
 
+  describe '#to_payload' do
+    context 'short id with leading zero bytes' do
+      subject {
+        header = Bitcoin::BlockHeader.new(536870912, '00' * 32, '11' * 32, 1613286512, 0x1d00ffff, 42)
+        Bitcoin::Message::HeaderAndShortIDs.new(header, 123456789, [0xabcdef12, 0x123456789abc])
+      }
+      it 'should serialize short id as 6 bytes little endian' do
+        payload = subject.to_payload
+        # 80 bytes header + 8 bytes nonce + 1 byte short_ids count
+        expect(payload[89...95].bth).to eq('12efcdab0000')
+        expect(payload[95...101].bth).to eq('bc9a78563412')
+        parsed = Bitcoin::Message::HeaderAndShortIDs.parse_from_payload(payload)
+        expect(parsed.short_ids).to eq(subject.short_ids)
+      end
+    end
+  end
+
 end
