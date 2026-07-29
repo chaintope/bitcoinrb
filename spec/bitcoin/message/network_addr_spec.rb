@@ -97,6 +97,73 @@ describe Bitcoin::Message::NetworkAddr do
     end
   end
 
+  describe '#to_payload with addr v2 format' do
+    shared_examples 'round-trip with addr v2 format' do
+      it 'should restore the original address' do
+        payload = original.to_payload(type: Bitcoin::Message::NetworkAddr::TYPE[:addr_v2])
+        parsed = Bitcoin::Message::NetworkAddr.parse_from_payload(payload, type: Bitcoin::Message::NetworkAddr::TYPE[:addr_v2])
+        expect(parsed.time).to eq(original.time)
+        expect(parsed.services).to eq(original.services)
+        expect(parsed.net).to eq(original.net)
+        expect(parsed.addr).to eq(original.addr)
+        expect(parsed.port).to eq(original.port)
+      end
+    end
+
+    context 'IPv4' do
+      let(:original) { Bitcoin::Message::NetworkAddr.new(ip: '10.0.0.1', port: 8333, time: 1613286512) }
+      include_examples 'round-trip with addr v2 format'
+    end
+
+    context 'IPv6' do
+      let(:original) {
+        Bitcoin::Message::NetworkAddr.new(ip: '102:304:506:708:90a:b0c:d0e:f10', port: 8333, time: 1613286512,
+                                          net: Bitcoin::Message::NETWORK_ID[:ipv6])
+      }
+      include_examples 'round-trip with addr v2 format'
+    end
+
+    context 'Tor v2' do
+      let(:original) {
+        a = Bitcoin::Message::NetworkAddr.new(ip: nil, port: 8333, time: 1613286512,
+                                              net: Bitcoin::Message::NETWORK_ID[:tor_v2])
+        a.addr = 'f1f2f3f4f5f6f7f8f9fa'
+        a
+      }
+      include_examples 'round-trip with addr v2 format'
+    end
+
+    context 'Tor v3' do
+      let(:original) {
+        a = Bitcoin::Message::NetworkAddr.new(ip: nil, port: 8333, time: 1613286512,
+                                              net: Bitcoin::Message::NETWORK_ID[:tor_v3])
+        a.addr = '79bcc625184b05194975c28b66b66b0469f7f6556fb1ac3189a79b40dda32f1f'
+        a
+      }
+      include_examples 'round-trip with addr v2 format'
+    end
+
+    context 'I2P' do
+      let(:original) {
+        a = Bitcoin::Message::NetworkAddr.new(ip: nil, port: 8333, time: 1613286512,
+                                              net: Bitcoin::Message::NETWORK_ID[:i2p])
+        a.addr = 'a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87'
+        a
+      }
+      include_examples 'round-trip with addr v2 format'
+    end
+
+    context 'CJDNS' do
+      let(:original) {
+        a = Bitcoin::Message::NetworkAddr.new(ip: nil, port: 8333, time: 1613286512,
+                                              net: Bitcoin::Message::NETWORK_ID[:cjdns])
+        a.addr = IPAddr.new('fc00:1:2:3:4:5:6:7')
+        a
+      }
+      include_examples 'round-trip with addr v2 format'
+    end
+  end
+
   describe '#to_payload' do
     subject {
       p = Bitcoin::Message::NetworkAddr.new(port: 18333).to_payload(true)

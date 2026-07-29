@@ -163,18 +163,22 @@ module Bitcoin
         case net
         when NETWORK_ID[:ipv4]
           p << Bitcoin.pack_var_int(4)
-          p << addr.to_i.to_s(16).htb
+          p << addr.hton
         when NETWORK_ID[:ipv6]
           p << Bitcoin.pack_var_int(16)
           p << addr.hton
         when NETWORK_ID[:tor_v2]
           p << Bitcoin.pack_var_int(10)
+          p << addr.htb
         when NETWORK_ID[:tor_v3]
           p << Bitcoin.pack_var_int(32)
+          p << addr.htb
         when NETWORK_ID[:i2p]
           p << Bitcoin.pack_var_int(32)
+          p << addr.htb
         when NETWORK_ID[:cjdns]
           p << Bitcoin.pack_var_int(16)
+          p << addr.hton
         end
         p << [port].pack('n')
         p
