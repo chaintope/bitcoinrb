@@ -24,7 +24,7 @@ module Bitcoin
     def to_entropy(words)
       word_master = load_words
       mnemonic = words.map do |w|
-        index = word_master.index(w.downcase)
+        index = word_master.index(normalize(w).downcase)
         raise IndexError, 'word not found in words list.' unless index
         index.to_s(2).rjust(11, '0')
       end.join
@@ -53,8 +53,8 @@ module Bitcoin
     # @return [String] seed
     def to_seed(mnemonic, passphrase: '')
       to_entropy(mnemonic)
-      OpenSSL::PKCS5.pbkdf2_hmac(mnemonic.join(' ').downcase,
-                                 'mnemonic' + passphrase, 2048, 64, OpenSSL::Digest::SHA512.new).bth
+      OpenSSL::PKCS5.pbkdf2_hmac(normalize(mnemonic.join(' ')).downcase,
+                                 'mnemonic' + normalize(passphrase), 2048, 64, OpenSSL::Digest::SHA512.new).bth
     end
 
     # calculate entropy checksum
@@ -69,7 +69,12 @@ module Bitcoin
 
     # load word list contents
     def load_words
-      File.readlines("#{WORD_DIR}/#{language}.txt").map(&:strip)
+      File.readlines("#{WORD_DIR}/#{language}.txt", encoding: Encoding::UTF_8).map{|w| normalize(w.strip)}
+    end
+
+    # BIP-39 requires that mnemonic sentences and passphrases are normalized using NFKD.
+    def normalize(str)
+      str.unicode_normalize(:nfkd)
     end
 
   end
