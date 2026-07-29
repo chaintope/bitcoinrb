@@ -22,12 +22,12 @@ module Bitcoin
       def self.parse_from_payload(payload)
         buf = StringIO.new(payload)
         mode = buf.read(1).unpack1('c')
-        version = buf.read(8).unpack1('Q')
+        version = buf.read(8).unpack1('Q<')
         new(mode, version)
       end
 
       def to_payload
-        [mode, version].pack('cQ')
+        [mode, version].pack('cQ<')
       end
 
       def high?

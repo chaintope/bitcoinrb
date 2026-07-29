@@ -14,11 +14,11 @@ module Bitcoin
       end
 
       def self.parse_from_payload(payload)
-        new(payload.unpack1('Q'))
+        new(payload.unpack1('Q<'))
       end
 
       def to_payload
-        [nonce].pack('Q')
+        [nonce].pack('Q<')
       end
     end
 

@@ -107,7 +107,7 @@ module Bitcoin
         has_time = buf.size > 26
         addr = NetworkAddr.new(time: nil)
         addr.time = buf.read(4).unpack1('V') if has_time
-        addr.services = buf.read(8).unpack1('Q')
+        addr.services = buf.read(8).unpack1('Q<')
         addr.addr = IPAddr::new_ntoh(buf.read(16))
         addr.port = buf.read(2).unpack1('n')
         addr
@@ -153,7 +153,7 @@ module Bitcoin
         p = ''
         p << [time].pack('V') unless skip_time
         ip = addr.ipv4? ? addr.ipv4_mapped : addr
-        p << [services].pack('Q') << ip.hton << [port].pack('n')
+        p << [services].pack('Q<') << ip.hton << [port].pack('n')
       end
 
       def v2_payload

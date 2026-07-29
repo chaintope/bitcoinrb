@@ -14,11 +14,11 @@ module Bitcoin
       end
 
       def self.parse_from_payload(payload)
-        new(payload.unpack1('Q'))
+        new(payload.unpack1('Q<'))
       end
 
       def to_payload
-        nonce ? [nonce].pack('Q') : ''
+        nonce ? [nonce].pack('Q<') : ''
       end
 
       # Generate pong message as a response. Return nil if the ping has no nonce

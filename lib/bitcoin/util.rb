@@ -25,7 +25,7 @@ module Bitcoin
       elsif i <= 0xffffffff
         [0xfe, i].pack('CV')
       elsif i <= 0xffffffffffffffff
-        [0xff, i].pack('CQ')
+        [0xff, i].pack('CQ<')
       else
         raise "int(#{i}) too large!"
       end
@@ -39,7 +39,7 @@ module Bitcoin
       when 0xfe
         payload.unpack('xVa*')
       when 0xff
-        payload.unpack('xQa*')
+        payload.unpack('xQ<a*')
       else
         payload.unpack('Ca*')
       end
@@ -54,7 +54,7 @@ module Bitcoin
       when 0xfe
         buf.read(4)&.unpack1('V')
       when 0xff
-        buf.read(8)&.unpack1('Q')
+        buf.read(8)&.unpack1('Q<')
       else
         uchar
       end

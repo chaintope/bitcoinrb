@@ -15,11 +15,11 @@ module Bitcoin
       end
 
       def self.parse_from_payload(payload)
-        new(payload.unpack1('Q'))
+        new(payload.unpack1('Q<'))
       end
 
       def to_payload
-        [fee_rate].pack('Q')
+        [fee_rate].pack('Q<')
       end
 
     end

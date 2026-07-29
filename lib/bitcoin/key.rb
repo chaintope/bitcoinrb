@@ -120,7 +120,7 @@ module Bitcoin
         if low_r && !sig_has_low_r?(sig)
           counter = 1
           until sig_has_low_r?(sig)
-            extra_entropy = [counter].pack('I*').bth.ljust(64, '0').htb
+            extra_entropy = [counter].pack('V').bth.ljust(64, '0').htb
             sig = secp256k1_module.sign_data(data, priv_key, extra_entropy)
             counter += 1
           end

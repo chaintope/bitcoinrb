@@ -32,7 +32,7 @@ module Bitcoin
       end
 
       def self.parse_from_payload(payload)
-        version, services, timestamp, local_addr, remote_addr, nonce, rest = payload.unpack('VQQa26a26Qa*')
+        version, services, timestamp, local_addr, remote_addr, nonce, rest = payload.unpack('VQ<Q<a26a26Q<a*')
         v = new
         v.version = version
         v.services = services
@@ -50,10 +50,10 @@ module Bitcoin
 
       def to_payload
         [
-          [version, services, timestamp].pack('VQQ'),
+          [version, services, timestamp].pack('VQ<Q<'),
           local_addr.to_payload(true),
           remote_addr.to_payload(true),
-          [nonce].pack('Q'),
+          [nonce].pack('Q<'),
           pack_var_string(user_agent),
           [start_height].pack('V'),
           pack_boolean(relay)

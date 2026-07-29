@@ -32,7 +32,7 @@ module Bitcoin
 
       def save_account(account)
         level_db.batch do
-          id = [account.purpose, account.index].pack('I*').bth
+          id = [account.purpose, account.index].pack('V*').bth
           key = KEY_PREFIX[:account] + id
           level_db.put(key, account.to_payload)
         end
@@ -40,14 +40,14 @@ module Bitcoin
 
       def save_key(account, purpose, index, key)
         pubkey = key.pub
-        id = [account.purpose, account.index, purpose, index].pack('I*').bth
+        id = [account.purpose, account.index, purpose, index].pack('V*').bth
         k = KEY_PREFIX[:key] + id
         level_db.put(k, pubkey)
         key
       end
 
       def get_keys(account)
-        id = [account.purpose, account.index].pack('I*').bth
+        id = [account.purpose, account.index].pack('V*').bth
         from = KEY_PREFIX[:key] + id + '00000000'
         to = KEY_PREFIX[:key] + id + 'ffffffff'
         level_db.each(from: from, to: to).map { |k, v| v}

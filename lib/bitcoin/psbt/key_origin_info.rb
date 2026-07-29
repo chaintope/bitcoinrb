@@ -15,11 +15,11 @@ module Bitcoin
 
       def self.parse_from_payload(payload)
         buf = StringIO.new(payload)
-        self.new(fingerprint: buf.read(4).bth, key_paths: buf.read.unpack('I*'))
+        self.new(fingerprint: buf.read(4).bth, key_paths: buf.read.unpack('V*'))
       end
 
       def to_payload
-        fingerprint.htb + key_paths.pack('I*')
+        fingerprint.htb + key_paths.pack('V*')
       end
 
       def to_h

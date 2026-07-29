@@ -33,7 +33,7 @@ module Bitcoin
         payload = buf.read
         name, payload = Bitcoin.unpack_var_string(payload)
         name = name.force_encoding('utf-8')
-        purpose, index, receive_depth, change_depth, lookahead = payload.unpack('I*')
+        purpose, index, receive_depth, change_depth, lookahead = payload.unpack('V*')
         a = Account.new(account_key, purpose, index, name)
         a.receive_depth = receive_depth
         a.change_depth = change_depth
@@ -44,7 +44,7 @@ module Bitcoin
       def to_payload
         payload = account_key.to_payload
         payload << Bitcoin.pack_var_string(name.unpack1('H*').htb)
-        payload << [purpose, index, receive_depth, change_depth, lookahead].pack('I*')
+        payload << [purpose, index, receive_depth, change_depth, lookahead].pack('V*')
         payload
       end
 

@@ -68,7 +68,7 @@ module Bitcoin
         hash_prevouts = Bitcoin.double_sha256(tx.inputs.map{|i|i.out_point.to_payload}.join)
         hash_sequence = Bitcoin.double_sha256(tx.inputs.map{|i|[i.sequence].pack('V')}.join)
         outpoint = tx.inputs[input_index].out_point.to_payload
-        amount = [amount].pack('Q')
+        amount = [amount].pack('Q<')
         nsequence = [tx.inputs[input_index].sequence].pack('V')
         hash_outputs = Bitcoin.double_sha256(tx.outputs.map{|o|o.to_payload}.join)
         if output_script.p2wsh?
@@ -120,7 +120,7 @@ module Bitcoin
         buf << [hash_type, tx.version, tx.lock_time].pack('CVV')
         unless input_type == SIGHASH_TYPE[:anyonecanpay]
           buf << Bitcoin.sha256(tx.in.map{|i|i.out_point.to_payload}.join) # sha_prevouts
-          buf << Bitcoin.sha256(opts[:prevouts].map(&:value).pack('Q*'))# sha_amounts
+          buf << Bitcoin.sha256(opts[:prevouts].map(&:value).pack('Q<*'))# sha_amounts
           buf << Bitcoin.sha256(opts[:prevouts].map{|o|o.script_pubkey.to_payload(true)}.join) # sha_scriptpubkeys
           buf << Bitcoin.sha256(tx.in.map(&:sequence).pack('V*')) # sha_sequences
         end

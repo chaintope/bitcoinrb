@@ -16,13 +16,13 @@ module Bitcoin
         @nonce = nonce
         @short_ids = short_ids
         @prefilled_txn = prefilled_txn
-        @siphash_key = Bitcoin.sha256(header.to_payload << [nonce].pack('q*'))[0...16]
+        @siphash_key = Bitcoin.sha256(header.to_payload << [nonce].pack('q<*'))[0...16]
       end
 
       def self.parse_from_payload(payload)
         buf = StringIO.new(payload)
         header = Bitcoin::BlockHeader.parse_from_payload(buf.read(80))
-        nonce = buf.read(8).unpack1('q*')
+        nonce = buf.read(8).unpack1('q<*')
         short_ids_len = Bitcoin.unpack_var_int_from_io(buf)
         short_ids = short_ids_len.times.map do
            buf.read(6).reverse.bth.to_i(16)
@@ -36,7 +36,7 @@ module Bitcoin
 
       def to_payload
         p = header.to_payload
-        p << [nonce].pack('q*')
+        p << [nonce].pack('q<*')
         p << Bitcoin.pack_var_int(short_ids.size)
         p << short_ids.map{|id|sprintf('%012x', id).htb.reverse}.join
         p << Bitcoin.pack_var_int(prefilled_txn.size)

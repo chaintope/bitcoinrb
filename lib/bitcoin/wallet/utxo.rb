@@ -18,7 +18,7 @@ module Bitcoin
       def self.parse_from_payload(payload)
         return nil if payload.nil?
 
-        tx_hash, index, block_height, value, payload = payload.unpack('H64VVQa*')
+        tx_hash, index, block_height, value, payload = payload.unpack('H64VVQ<a*')
 
         buf = StringIO.new(payload)
         script_size = Bitcoin.unpack_var_int_from_io(buf)
@@ -27,7 +27,7 @@ module Bitcoin
       end
 
       def to_payload
-        payload = [tx_hash, index, block_height.nil? ? 0 : block_height, value].pack('H64VVQ')
+        payload = [tx_hash, index, block_height.nil? ? 0 : block_height, value].pack('H64VVQ<')
         s = script_pubkey.to_payload
         payload << Bitcoin.pack_var_int(s.length) << s
         payload
