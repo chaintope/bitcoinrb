@@ -101,7 +101,7 @@ module Bitcoin
 
       def key_stream_bytes(n_bytes)
         while key_stream.bytesize < n_bytes
-          nonce = [0, (chunk_counter / REKEY_INTERVAL)].pack("VQ<")
+          nonce = [0, (chunk_counter / rekey_interval)].pack("VQ<")
           self.key_stream << ChaCha20.block(key, nonce, block_counter)
           self.block_counter += 1
         end

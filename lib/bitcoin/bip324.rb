@@ -10,7 +10,9 @@ module Bitcoin
 
     autoload :EllSwiftPubkey, 'bitcoin/bip324/ell_swift_pubkey'
     autoload :Cipher, 'bitcoin/bip324/cipher'
+    autoload :ChaCha20, 'bitcoin/bip324/fs_chacha20'
     autoload :FSChaCha20, 'bitcoin/bip324/fs_chacha20'
+    autoload :Poly1305, 'bitcoin/bip324/fs_chacha_poly1305'
     autoload :FSChaCha20Poly1305, 'bitcoin/bip324/fs_chacha_poly1305'
 
     FIELD_SIZE = 2**256 - 2**32 - 977

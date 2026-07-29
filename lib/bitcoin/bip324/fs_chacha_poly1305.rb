@@ -65,6 +65,7 @@ module Bitcoin
       # @return [Array] [header, plaintext]
       def decrypt(aad, ciphertext)
         contents = crypt(aad, ciphertext, true)
+        raise Bitcoin::BIP324::Error, 'Decryption failed.' unless contents
         [contents[0], contents[1..-1]]
       end
 
