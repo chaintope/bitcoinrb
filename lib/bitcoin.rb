@@ -4,6 +4,7 @@
 require 'bitcoin/version'
 require 'schnorr'
 require 'securerandom'
+require 'stringio'
 require 'json'
 require 'bech32'
 require 'base64'
