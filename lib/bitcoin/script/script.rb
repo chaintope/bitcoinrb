@@ -100,10 +100,20 @@ module Bitcoin
         if opcode
           script << (v =~ /^\d/ && Opcodes.small_int_to_opcode(v.ord) ? v.ord : opcode)
         else
-          script << (v =~ /^[0-9]+$/ ? v.to_i : v)
+          script << (number_token?(v) ? v.to_i : v)
         end
       end
       script
+    end
+
+    # Whether +token+ is a script number rather than pushed data with hex format.
+    # A digit only token is ambiguous since #to_s emits pushed data as hex. #to_s never emits
+    # a number with more than 10 digits, so a longer even-length token must be pushed data.
+    # @param [String] token a token of the script string.
+    # @return [Boolean] whether +token+ should be interpreted as a script number.
+    def self.number_token?(token)
+      return false unless token =~ /^[0-9]+$/
+      token.length < 12 || token.length.odd?
     end
 
     # generate script from addr.
