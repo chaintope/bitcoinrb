@@ -501,11 +501,11 @@ module Bitcoin
       size = data.bytesize
       header = if size < OP_PUSHDATA1
                  [size].pack('C')
-               elsif size < 0xff
+               elsif size <= 0xff
                  [OP_PUSHDATA1, size].pack('CC')
-               elsif size < 0xffff
+               elsif size <= 0xffff
                  [OP_PUSHDATA2, size].pack('Cv')
-               elsif size < 0xffffffff
+               elsif size <= 0xffffffff
                  [OP_PUSHDATA4, size].pack('CV')
                else
                  raise ArgumentError, 'data size is too big.'
