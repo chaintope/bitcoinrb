@@ -32,8 +32,9 @@ module Bitcoin
             found_sep = true
             break
           end
-          key_type = buf.read(1).unpack1('C')
-          key = buf.read(key_len - 1)
+          key_start = buf.pos
+          key_type = Bitcoin.unpack_var_int_from_io(buf)
+          key = buf.read(key_len - (buf.pos - key_start))
           value = buf.read(Bitcoin.unpack_var_int_from_io(buf))
           case key_type
           when PSBT_OUT_TYPES[:redeem_script]
@@ -48,21 +49,24 @@ module Bitcoin
             raise ArgumentError, 'Duplicate Key, pubkey derivation path already provided' if output.hd_key_paths[key.bth]
             output.hd_key_paths[key.bth] = Bitcoin::PSBT::HDKeyPath.new(key, Bitcoin::PSBT::KeyOriginInfo.parse_from_payload(value))
           when PSBT_OUT_TYPES[:proprietary]
-            raise ArgumentError, 'Duplicate Key, key for proprietary value already provided.' if output.proprietaries.any?{|p| p.key == key}
-            output.proprietaries << Proprietary.new(key, value)
+            proprietary = Proprietary.new(key, value)
+            raise ArgumentError, 'Duplicate Key, key for proprietary value already provided.' if output.proprietaries.any?{|p| p.key == proprietary.key}
+            output.proprietaries << proprietary
           when PSBT_OUT_TYPES[:tap_internal_key]
             raise ArgumentError, 'Invalid output tap internal key typed key.' unless key_len == 1
+            raise ArgumentError, 'Duplicate Key, output tap internal key already provided.' if output.tap_internal_key
             raise ArgumentError, 'Invalid x-only public key size for the type tap internal key' unless value.bytesize == X_ONLY_PUBKEY_SIZE
             output.tap_internal_key = value.bth
           when PSBT_OUT_TYPES[:tap_tree]
             raise ArgumentError, 'Invalid output tap tree typed key.' unless key_len == 1
+            raise ArgumentError, 'Duplicate Key, output tap tree already provided.' if output.tap_tree
             output.tap_tree = value.bth # TODO implement builder.
           when PSBT_OUT_TYPES[:tap_bip32_derivation]
             raise ArgumentError, 'Duplicate Key, key for tap bip32 derivation value already provided.' if output.tap_bip32_derivations[key.bth]
             raise ArgumentError, 'Size of key was not the expected size for the type tap bip32 derivation' unless key.bytesize == X_ONLY_PUBKEY_SIZE
             output.tap_bip32_derivations[key.bth] = value.bth
           else
-            unknown_key = ([key_type].pack('C') + key).bth
+            unknown_key = (Bitcoin.pack_var_int(key_type) + key).bth
             raise ArgumentError, 'Duplicate Key, key for unknown value already provided' if output.unknowns[unknown_key]
             output.unknowns[unknown_key] = value
           end

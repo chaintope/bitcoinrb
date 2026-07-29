@@ -482,4 +482,67 @@ describe Bitcoin::PSBT do
       end
     end
   end
+
+  describe 'Bitcoin::PSBT::Input#parse_from_buf' do
+    context 'duplicate proprietary key' do
+      it 'raise ArgumentError' do
+        # key_len: 07, key type: fc, identifier: 04 'test', sub type: 00, value_len: 00
+        record = '07fc04746573740000'
+        buf = StringIO.new("#{record}#{record}00".htb)
+        expect{Bitcoin::PSBT::Input.parse_from_buf(buf)}.
+          to raise_error(ArgumentError, 'Duplicate Key, key for proprietary value already provided.')
+      end
+    end
+
+    context 'duplicate unknown key' do
+      it 'raise ArgumentError' do
+        # key_len: 02, key type: f0, key: aa, value_len: 01, value: 76
+        record = '02f0aa0176'
+        buf = StringIO.new("#{record}#{record}00".htb)
+        expect{Bitcoin::PSBT::Input.parse_from_buf(buf)}.
+          to raise_error(ArgumentError, 'Duplicate Key, key for unknown value already provided.')
+      end
+    end
+  end
+
+  describe 'Bitcoin::PSBT::Input#to_payload' do
+    it 'should keep the fields which final scripts do not replace' do
+      # partial signature and final scriptSig can be contained in the same input map.
+      sig = '3045022100f61038b308dc1da865a34852746f015772934208c6d24454393cd99bdf2217770220056e675a675a6d0a02b85b14e5e29074d8a25a9b5760bea2816f661910a006ea01'
+      pubkey = '029583bf39ae0a609747ad199addd634fa6108559d6c5cd39b4c2183f1ab96e07f'
+      input = Bitcoin::PSBT::Input.new
+      input.partial_sigs[pubkey] = sig.htb
+      input.final_script_sig = Bitcoin::Script.from_string('OP_0')
+      payload = input.to_payload
+      parsed = Bitcoin::PSBT::Input.parse_from_buf(StringIO.new(payload))
+      expect(parsed.partial_sigs[pubkey]).to eq(sig.htb)
+      expect(parsed.final_script_sig).to eq(input.final_script_sig)
+      expect(parsed.to_payload).to eq(payload)
+    end
+  end
+
+  describe 'Bitcoin::PSBT::Input#merge' do
+    let(:prev_tx) {
+      Bitcoin::Tx.parse_from_payload('0200000001aad73931018bd25f84ae400b68848be09db706eac2ac18298babee71ab656f8b0000000000feffffff0180f0fa020000000017a9140fb9463421696b82c833af241c78c17ddbde49348700000000'.htb)
+    }
+    context 'utxo is missing in one of them' do
+      it 'raise ArgumentError' do
+        input = Bitcoin::PSBT::Input.new(non_witness_utxo: prev_tx)
+        expect{input.merge(Bitcoin::PSBT::Input.new)}.
+          to raise_error(ArgumentError, 'The Partially Signed Input\'s non_witness_utxo are different.')
+      end
+    end
+  end
+
+  describe 'Bitcoin::PSBT::Input#valid_witness_input?' do
+    context 'native P2WSH' do
+      it 'should be true without redeem script' do
+        witness_script = Bitcoin::Script.from_string('OP_DUP OP_HASH160 46c2fbfbecc99a63148fa076de58cf29b0bcf0b0 OP_EQUALVERIFY OP_CHECKSIG')
+        input = Bitcoin::PSBT::Input.new(
+          witness_utxo: Bitcoin::TxOut.new(value: 600_000, script_pubkey: Bitcoin::Script.to_p2wsh(witness_script)))
+        input.witness_script = witness_script
+        expect(input.valid_witness_input?).to be true
+      end
+    end
+  end
 end

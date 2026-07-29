@@ -68,8 +68,9 @@ module Bitcoin
             found_sep = true
             break
           end
+          key_start = buf.pos
           key_type = Bitcoin.unpack_var_int_from_io(buf)
-          key = buf.read(key_len - 1)
+          key = buf.read(key_len - (buf.pos - key_start))
           value = buf.read(Bitcoin.unpack_var_int_from_io(buf))
 
           case key_type
@@ -89,14 +90,19 @@ module Bitcoin
             raise ArgumentError, "global xpub's depth and the number of indexes not matched." unless xpub.depth == info.key_paths.size
             partial_tx.xpubs << Bitcoin::PSBT::GlobalXpub.new(xpub, info)
           when PSBT_GLOBAL_TYPES[:ver]
+            raise ArgumentError, 'Invalid global version typed key.' unless key_len == 1
+            raise ArgumentError, 'Duplicate Key, global version already provided.' if partial_tx.version_number
+            raise ArgumentError, 'Invalid global version value.' unless value.bytesize == 4
             partial_tx.version_number = value.unpack1('V')
             raise ArgumentError, "An unsupported version was detected." if SUPPORT_VERSION < partial_tx.version_number
           when PSBT_GLOBAL_TYPES[:proprietary]
-            raise ArgumentError, 'Duplicate Key, key for proprietary value already provided.' if partial_tx.proprietaries.any?{|p| p.key == key}
-            partial_tx.proprietaries << Proprietary.new(key, value)
+            proprietary = Proprietary.new(key, value)
+            raise ArgumentError, 'Duplicate Key, key for proprietary value already provided.' if partial_tx.proprietaries.any?{|p| p.key == proprietary.key}
+            partial_tx.proprietaries << proprietary
           else
-            raise ArgumentError, 'Duplicate Key, key for unknown value already provided.' if partial_tx.unknowns[key]
-            partial_tx.unknowns[([key_type].pack('C') + key).bth] = value
+            unknown_key = (Bitcoin.pack_var_int(key_type) + key).bth
+            raise ArgumentError, 'Duplicate Key, key for unknown value already provided.' if partial_tx.unknowns[unknown_key]
+            partial_tx.unknowns[unknown_key] = value
           end
         end
 
@@ -206,7 +212,6 @@ module Bitcoin
             inputs[i].redeem_script = redeem_script if redeem_script
             inputs[i].witness_script = witness_script if witness_script
             inputs[i].hd_key_paths = hd_key_paths.map(&:pubkey).zip(hd_key_paths).to_h
-            break
           end
         end
       end

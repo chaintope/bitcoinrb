@@ -55,8 +55,9 @@ module Bitcoin
             found_sep = true
             break
           end
-          key_type = buf.read(1).unpack1('C')
-          key = buf.read(key_len - 1)
+          key_start = buf.pos
+          key_type = Bitcoin.unpack_var_int_from_io(buf)
+          key = buf.read(key_len - (buf.pos - key_start))
           value = buf.read(Bitcoin.unpack_var_int_from_io(buf))
 
           case key_type
@@ -79,7 +80,8 @@ module Bitcoin
           when PSBT_IN_TYPES[:sighash]
             raise ArgumentError, 'Invalid input sighash type typed key.' unless key_len == 1
             raise ArgumentError, 'Duplicate Key, input sighash type already provided.' if input.sighash_type
-            input.sighash_type = value.unpack1('I')
+            raise ArgumentError, 'Invalid input sighash type value.' unless value.bytesize == 4
+            input.sighash_type = value.unpack1('V')
           when PSBT_IN_TYPES[:redeem_script]
             raise ArgumentError, 'Invalid redeemscript typed key.' unless key_len == 1
             raise ArgumentError, 'Duplicate Key, input redeemScript already provided.' if input.redeem_script
@@ -117,10 +119,12 @@ module Bitcoin
             raise ArgumentError, 'Duplicate Key, input hash256 preimage already provided' if input.hash256_preimages[key.bth]
             input.hash256_preimages[key.bth] = value.bth
           when PSBT_IN_TYPES[:proprietary]
-            raise ArgumentError, 'Duplicate Key, key for proprietary value already provided.' if input.proprietaries.any?{|p| p.key == key}
-            input.proprietaries << Proprietary.new(key, value)
+            proprietary = Proprietary.new(key, value)
+            raise ArgumentError, 'Duplicate Key, key for proprietary value already provided.' if input.proprietaries.any?{|p| p.key == proprietary.key}
+            input.proprietaries << proprietary
           when PSBT_IN_TYPES[:tap_key_sig]
             raise ArgumentError, 'Size of key was not the expected size for the type tap key sig' unless key_len == 1
+            raise ArgumentError, 'Duplicate Key, input tap key sig already provided.' if input.tap_key_sig
             raise ArgumentError, 'Invalid schnorr signature size for the type tap key sig' unless [64, 65].include?(value.bytesize)
             input.tap_key_sig = value.bth
           when PSBT_IN_TYPES[:tap_script_sig]
@@ -142,14 +146,16 @@ module Bitcoin
             input.tap_bip32_derivations[key.bth] = value.bth
           when PSBT_IN_TYPES[:tap_internal_key]
             raise ArgumentError, 'Size of key was not the expected size for the type tap internal key' unless key_len == 1
+            raise ArgumentError, 'Duplicate Key, input tap internal key already provided.' if input.tap_internal_key
             raise ArgumentError, 'Invalid x-only public key size for the type tap internal key' unless value.bytesize == X_ONLY_PUBKEY_SIZE
             input.tap_internal_key = value.bth
           when PSBT_IN_TYPES[:tap_merkle_root]
             raise ArgumentError, 'Size of key was not the expected size for the type tap merkle root' unless key_len == 1
+            raise ArgumentError, 'Duplicate Key, input tap merkle root already provided.' if input.tap_merkle_root
             raise ArgumentError, 'Invalid merkle root hash size for the type tap merkle root' unless value.bytesize == 32
             input.tap_merkle_root = value.bth
           else
-            unknown_key = ([key_type].pack('C') + key).bth
+            unknown_key = (Bitcoin.pack_var_int(key_type) + key).bth
             raise ArgumentError, 'Duplicate Key, key for unknown value already provided.' if input.unknowns[unknown_key]
             input.unknowns[unknown_key] = value
           end
@@ -163,23 +169,21 @@ module Bitcoin
         payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:non_witness_utxo], value:
             (witness_utxo && valid_witness_input?) ? non_witness_utxo.serialize_old_format : non_witness_utxo.to_payload) if non_witness_utxo
         payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:witness_utxo], value: witness_utxo.to_payload) if witness_utxo
-        if final_script_sig.nil? && final_script_witness.nil?
-          payload << partial_sigs.map{|k, v|PSBT.serialize_to_vector(PSBT_IN_TYPES[:partial_sig], key: k.htb, value: v)}.join
-          payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:sighash], value: [sighash_type].pack('I')) if sighash_type
-          payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:redeem_script], value: redeem_script.to_payload) if redeem_script
-          payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:witness_script], value: witness_script.to_payload) if witness_script
-          payload << hd_key_paths.values.map(&:to_payload).join
-          payload << ripemd160_preimages.map{|k, v|PSBT.serialize_to_vector(PSBT_IN_TYPES[:ripemd160], key: k.htb, value: v.htb)}.join
-          payload << sha256_preimages.map{|k, v|PSBT.serialize_to_vector(PSBT_IN_TYPES[:sha256], key: k.htb, value: v.htb)}.join
-          payload << hash160_preimages.map{|k, v|PSBT.serialize_to_vector(PSBT_IN_TYPES[:hash160], key: k.htb, value: v.htb)}.join
-          payload << hash256_preimages.map{|k, v|PSBT.serialize_to_vector(PSBT_IN_TYPES[:hash256], key: k.htb, value: v.htb)}.join
-          payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_key_sig], value: tap_key_sig.htb) if tap_key_sig
-          payload << tap_script_sigs.map{|k, v| PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_script_sig], key: k.htb, value: v.htb)}.join
-          payload << tap_leaf_scripts.map{|k, v| PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_leaf_script], key: k.to_payload, value: v.htb)}.join
-          payload << tap_bip32_derivations.map{|k, v| PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_bip32_derivation], key: k.htb, value: v.htb)}.join
-          payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_internal_key], value: tap_internal_key.htb) if tap_internal_key
-          payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_merkle_root], value: tap_merkle_root.htb) if tap_merkle_root
-        end
+        payload << partial_sigs.map{|k, v|PSBT.serialize_to_vector(PSBT_IN_TYPES[:partial_sig], key: k.htb, value: v)}.join
+        payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:sighash], value: [sighash_type].pack('V')) if sighash_type
+        payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:redeem_script], value: redeem_script.to_payload) if redeem_script
+        payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:witness_script], value: witness_script.to_payload) if witness_script
+        payload << hd_key_paths.values.map(&:to_payload).join
+        payload << ripemd160_preimages.map{|k, v|PSBT.serialize_to_vector(PSBT_IN_TYPES[:ripemd160], key: k.htb, value: v.htb)}.join
+        payload << sha256_preimages.map{|k, v|PSBT.serialize_to_vector(PSBT_IN_TYPES[:sha256], key: k.htb, value: v.htb)}.join
+        payload << hash160_preimages.map{|k, v|PSBT.serialize_to_vector(PSBT_IN_TYPES[:hash160], key: k.htb, value: v.htb)}.join
+        payload << hash256_preimages.map{|k, v|PSBT.serialize_to_vector(PSBT_IN_TYPES[:hash256], key: k.htb, value: v.htb)}.join
+        payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_key_sig], value: tap_key_sig.htb) if tap_key_sig
+        payload << tap_script_sigs.map{|k, v| PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_script_sig], key: k.htb, value: v.htb)}.join
+        payload << tap_leaf_scripts.map{|k, v| PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_leaf_script], key: k.to_payload, value: v.htb)}.join
+        payload << tap_bip32_derivations.map{|k, v| PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_bip32_derivation], key: k.htb, value: v.htb)}.join
+        payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_internal_key], value: tap_internal_key.htb) if tap_internal_key
+        payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:tap_merkle_root], value: tap_merkle_root.htb) if tap_merkle_root
         payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:script_sig], value: final_script_sig.to_payload) if final_script_sig
         payload << PSBT.serialize_to_vector(PSBT_IN_TYPES[:script_witness], value: final_script_witness.to_payload) if final_script_witness
         payload << proprietaries.map(&:to_payload).join
@@ -191,10 +195,13 @@ module Bitcoin
       # Check whether input's scriptPubkey is correct witness.
       # @return [Boolean]
       def valid_witness_input?
-        return true if witness_utxo&.script_pubkey.p2wpkh? # P2WPKH
-        return true if witness_utxo&.script_pubkey.p2wsh? && witness_utxo&.script_pubkey == redeem_script.to_p2wsh # P2WSH
+        return false unless witness_utxo
+        return true if witness_utxo.script_pubkey.p2wpkh? # P2WPKH
+        # P2WSH. The scriptPubkey commits to the witness script directly, so a redeem script is not used.
+        return true if witness_utxo.script_pubkey.p2wsh? && witness_script &&
+          Bitcoin::Script.to_p2wsh(witness_script) == witness_utxo.script_pubkey
         # segwit nested in P2SH
-        if witness_utxo&.script_pubkey.p2sh? && redeem_script&.witness_program? && redeem_script.to_p2sh == witness_utxo&.script_pubkey
+        if witness_utxo.script_pubkey.p2sh? && redeem_script&.witness_program? && redeem_script.to_p2sh == witness_utxo.script_pubkey
           return true if redeem_script.p2wpkh?# nested p2wpkh
           return true if witness_script&.to_sha256 == redeem_script.witness_data[1].bth # nested p2wsh
         end
@@ -235,19 +242,19 @@ module Bitcoin
       # @return [Bitcoin::PSBT::Input] combined object.
       def merge(psbi)
         raise ArgumentError, 'The argument psbt must be an instance of Bitcoin::PSBT::Input.' unless psbi.is_a?(Bitcoin::PSBT::Input)
-        raise ArgumentError, 'The Partially Signed Input\'s non_witness_utxo are different.' unless non_witness_utxo == psbi.non_witness_utxo
-        raise ArgumentError, 'The Partially Signed Input\'s witness_utxo are different.' unless witness_utxo == psbi.witness_utxo
+        raise ArgumentError, 'The Partially Signed Input\'s non_witness_utxo are different.' unless same_field?(non_witness_utxo, psbi.non_witness_utxo)
+        raise ArgumentError, 'The Partially Signed Input\'s witness_utxo are different.' unless same_field?(witness_utxo, psbi.witness_utxo)
         raise ArgumentError, 'The Partially Signed Input\'s sighash_type are different.' if sighash_type && psbi.sighash_type && sighash_type != psbi.sighash_type
-        raise ArgumentError, 'The Partially Signed Input\'s redeem_script are different.' unless redeem_script == psbi.redeem_script
-        raise ArgumentError, 'The Partially Signed Input\'s witness_script are different.' unless witness_script == psbi.witness_script
+        raise ArgumentError, 'The Partially Signed Input\'s redeem_script are different.' unless same_field?(redeem_script, psbi.redeem_script)
+        raise ArgumentError, 'The Partially Signed Input\'s witness_script are different.' unless same_field?(witness_script, psbi.witness_script)
         combined = Bitcoin::PSBT::Input.new(non_witness_utxo: non_witness_utxo, witness_utxo: witness_utxo)
         combined.unknowns = Hash[unknowns.merge(psbi.unknowns).sort]
         combined.redeem_script = redeem_script
         combined.witness_script = witness_script
         combined.sighash_type = sighash_type
         sigs = Hash[partial_sigs.merge(psbi.partial_sigs)]
-        redeem_script.get_multisig_pubkeys.each{|pubkey|combined.partial_sigs[pubkey.bth] = sigs[pubkey.bth]} if redeem_script&.multisig?
-        witness_script.get_multisig_pubkeys.each{|pubkey|combined.partial_sigs[pubkey.bth] = sigs[pubkey.bth]} if witness_script&.multisig?
+        redeem_script.get_multisig_pubkeys.each{|pubkey|combined.partial_sigs[pubkey.bth] = sigs[pubkey.bth] if sigs[pubkey.bth]} if redeem_script&.multisig?
+        witness_script.get_multisig_pubkeys.each{|pubkey|combined.partial_sigs[pubkey.bth] = sigs[pubkey.bth] if sigs[pubkey.bth]} if witness_script&.multisig?
         combined.hd_key_paths = hd_key_paths.merge(psbi.hd_key_paths)
         combined
       end
@@ -288,7 +295,7 @@ module Bitcoin
         h[:non_witness_utxo] = non_witness_utxo.to_h if non_witness_utxo
         h[:witness_utxo] = witness_utxo.to_h if witness_utxo
         h[:redeem_script] = redeem_script.to_h if redeem_script
-        h[:witness_script] = witness_script.to_h if redeem_script
+        h[:witness_script] = witness_script.to_h if witness_script
         h[:final_script_sig] = final_script_sig.to_h if final_script_sig
         h[:final_script_witness] = final_script_witness.to_h if final_script_witness
         h[:bip32_derivs] = hd_key_paths.values.map(&:to_h) unless hd_key_paths.empty?
@@ -307,6 +314,17 @@ module Bitcoin
         h[:tap_merkle_root] = tap_merkle_root if tap_merkle_root
         h[:unknown] = unknowns.map {|k, v| {"#{k}": v.bth}} unless unknowns.empty?
         h
+      end
+
+      private
+
+      # Whether +a+ and +b+ are the same field value. Unlike ==, this does not raise
+      # NoMethodError when only one of them is nil.
+      # @return [Boolean]
+      def same_field?(a, b)
+        return true if a.nil? && b.nil?
+        return false if a.nil? || b.nil?
+        a == b
       end
 
     end
