@@ -267,20 +267,21 @@ module Bitcoin
       # extract final tx.
       # @return [Bitcoin::Tx] final tx.
       def extract_tx
-        extract_tx = tx.dup
+        extract_tx = Bitcoin::Tx.parse_from_payload(tx.to_payload)
         inputs.each_with_index do |input, index|
           extract_tx.in[index].script_sig = input.final_script_sig if input.final_script_sig
           extract_tx.in[index].script_witness = input.final_script_witness if input.final_script_witness
         end
         # validate signature
-        tx.in.each_with_index do |tx_in, index|
+        extract_tx.in.each_with_index do |tx_in, index|
           input = inputs[index]
           if input.non_witness_utxo
             utxo = input.non_witness_utxo.out[tx_in.out_point.index]
-            raise "input[#{index}]'s signature is invalid.'" unless tx.verify_input_sig(index, utxo.script_pubkey)
+            raise "input[#{index}]'s signature is invalid.'" unless extract_tx.verify_input_sig(index, utxo.script_pubkey)
           else
             utxo = input.witness_utxo
-            raise "input[#{index}]'s signature is invalid.'" unless tx.verify_input_sig(index, utxo.script_pubkey, amount: input.witness_utxo.value)
+            raise ArgumentError, "input[#{index}] does not have utxo." unless utxo
+            raise "input[#{index}]'s signature is invalid.'" unless extract_tx.verify_input_sig(index, utxo.script_pubkey, amount: utxo.value)
           end
         end
         extract_tx
