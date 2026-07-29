@@ -107,6 +107,8 @@ module Bitcoin
         Pong.parse_from_payload(payload)
       when GetHeaders::COMMAND
         GetHeaders.parse_from_payload(payload)
+      when GetBlocks::COMMAND
+        GetBlocks.parse_from_payload(payload)
       when Headers::COMMAND
         Headers.parse_from_payload(payload)
       when Block::COMMAND
@@ -125,8 +127,18 @@ module Bitcoin
         Inv.parse_from_payload(payload)
       when MerkleBlock::COMMAND
         MerkleBlock.parse_from_payload(payload)
+      when FilterLoad::COMMAND
+        FilterLoad.parse_from_payload(payload)
+      when FilterAdd::COMMAND
+        FilterAdd.parse_from_payload(payload)
+      when FilterClear::COMMAND
+        FilterClear.new
       when CmpctBlock::COMMAND
         CmpctBlock.parse_from_payload(payload)
+      when GetBlockTxn::COMMAND
+        GetBlockTxn.parse_from_payload(payload)
+      when BlockTxn::COMMAND
+        BlockTxn.parse_from_payload(payload)
       when GetData::COMMAND
         GetData.parse_from_payload(payload)
       when GetCFHeaders::COMMAND
