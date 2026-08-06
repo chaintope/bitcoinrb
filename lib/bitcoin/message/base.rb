@@ -32,11 +32,17 @@ module Bitcoin
         magic = buf.read(4)
         raise ArgumentError, 'Invalid magic.' unless magic == Bitcoin.chain_params.magic_head.htb
         command = buf.read(12).delete("\x00")
+        # The length is announced by the peer, so it is checked before it is used to read.
         length = buf.read(4).unpack1('V')
+        if length > MAX_PROTOCOL_MESSAGE_LENGTH
+          raise ArgumentError, "Payload must not be longer than #{MAX_PROTOCOL_MESSAGE_LENGTH} bytes."
+        end
         checksum = buf.read(4)
+        # read returns "" for a length of 0 and nil once the buffer is exhausted.
         payload = buf.read(length)
+        raise ArgumentError, 'Payload is shorter than the announced length.' unless payload&.bytesize == length
         raise ArgumentError, 'Checksum do not match.' unless checksum == Bitcoin.double_sha256(payload)[0...4]
-        Bitcoin::Message.decode(command, payload&.bth)
+        Bitcoin::Message.decode(command, payload.bth)
       end
 
     end

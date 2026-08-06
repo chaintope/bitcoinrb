@@ -51,6 +51,9 @@ module Bitcoin
 
     USER_AGENT = "/bitcoinrb:#{Bitcoin::VERSION}/"
 
+    # The maximum payload size a peer may announce in a message header.
+    MAX_PROTOCOL_MESSAGE_LENGTH = 4_000_000
+
     SERVICE_FLAGS = {
         none: 0,
         network: 1 << 0,  # the node is capable of serving the block chain. It is currently set by all Bitcoin Core node, and is unset by SPV clients or other peers that just want network services but don't provide them.
