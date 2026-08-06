@@ -30,7 +30,7 @@ module Bitcoin
       begin
         key = Key.new(pubkey: pubkey, key_type: key_type, allow_hybrid: allow_hybrid)
         key.verify(sig, sighash)
-      rescue Exception
+      rescue StandardError
         false
       end
     end

@@ -568,7 +568,7 @@ module Bitcoin
         end
       rescue ScriptNumError => e
         return set_error(SCRIPT_ERR_SCRIPTNUM, e.message)
-      rescue Exception => e
+      rescue StandardError => e
         return set_error(SCRIPT_ERR_UNKNOWN_ERROR, e.message)
       end
 

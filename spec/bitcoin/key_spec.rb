@@ -137,6 +137,19 @@ describe Bitcoin::Key do
         expect(key.verify(sig, digest, algo: :schnorr)).to be true
       end
     end
+
+    context 'verification raises something which is not a StandardError' do
+      # #verify reports a signature it cannot check as invalid, but an Interrupt or a
+      # NoMemoryError is not a statement about the signature and must not be reported as one.
+      subject {
+        key = Bitcoin::Key.generate
+        allow(key.secp256k1_module).to receive(:verify_sig).and_raise(Interrupt)
+        key
+      }
+      it 'should not report it as an invalid signature' do
+        expect { subject.verify('00' * 70, '00' * 32) }.to raise_error(Interrupt)
+      end
+    end
   end
 
   describe 'private key range check' do

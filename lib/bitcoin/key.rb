@@ -170,7 +170,7 @@ module Bitcoin
         else
           false
         end
-      rescue Exception
+      rescue StandardError
         false
       end
     end

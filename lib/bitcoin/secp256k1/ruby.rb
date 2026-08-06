@@ -45,7 +45,7 @@ module Bitcoin
         return false unless pubkey.bytesize == X_ONLY_PUBKEY_SIZE
         begin
           ECDSA::Format::PointOctetString.decode(pubkey, ECDSA::Group::Secp256k1)
-        rescue Exception
+        rescue StandardError
           return false
         end
         true
@@ -201,7 +201,7 @@ module Bitcoin
           k = ECDSA::Format::PointOctetString.decode(repack_pubkey(pubkey), GROUP)
           signature = ECDSA::Format::SignatureDerString.decode(sig)
           ECDSA.valid_signature?(k, data, signature)
-        rescue Exception
+        rescue StandardError
           false
         end
       end

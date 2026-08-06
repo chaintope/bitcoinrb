@@ -152,7 +152,7 @@ module Bitcoin
       begin
         Bitcoin::Script.parse_from_addr(addr)
         true
-      rescue Exception
+      rescue StandardError
         false
       end
     end
