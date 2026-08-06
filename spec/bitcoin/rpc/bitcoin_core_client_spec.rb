@@ -47,6 +47,24 @@ describe Bitcoin::RPC::BitcoinCoreClient do
       end
     end
 
+    context 'contains escaped unicode' do
+      it 'should unescape it' do
+        stub_request(:post, server_url).to_return(
+            body: '{"result":{"label":"\u3042\u00e9"},"error":null,"id":"jsonrpc"}'
+        )
+        expect(client.rpc_command['label']).to eq("あé")
+      end
+
+      # An escaped double quote must stay inside the string it belongs to. Unescaping it before
+      # JSON.parse lets a value close its own string and inject arbitrary JSON into the result.
+      it 'should not let an escaped quote break out of the string' do
+        stub_request(:post, server_url).to_return(
+            body: '{"result":{"label":"a\u0022,\u0022result\u0022:\u0022INJECTED"},"error":null,"id":"jsonrpc"}'
+        )
+        expect(client.rpc_command).to eq({ 'label' => 'a","result":"INJECTED' })
+      end
+    end
+
     context 'wallet is specified in config' do
       let(:config) { super().merge({ wallet: 'mywallet' }) }
       let(:server_url) { "#{config[:schema]}://#{config[:host]}:#{config[:port]}/wallet/#{config[:wallet]}" }
