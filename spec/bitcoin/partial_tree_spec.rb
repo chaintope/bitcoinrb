@@ -90,6 +90,45 @@ describe Bitcoin::PartialTree do
         expect(subject.merkle_root).to eq('7f16c5962e8bd963659c793ce370d95f093bc7e367117b3c30c1f8fdd0d97287')
       end
     end
+
+    context 'tx_count is 0' do
+      subject { Bitcoin::PartialTree.build(0, [], Bitcoin.byte_to_bit('00'.htb)) }
+      it 'should raise error' do
+        expect { subject }.to raise_error(ArgumentError, 'tx_count must be greater than 0.')
+      end
+    end
+
+    context 'tx_count exceeds the maximum' do
+      subject {
+        hashes = ['5be239fdd6c626d196288bd2a4175258dc772370be25d52ea46a09ece54f6f9f']
+        Bitcoin::PartialTree.build(Bitcoin::PartialTree::MAX_TX_COUNT + 1, hashes, Bitcoin.byte_to_bit('00'.htb))
+      }
+      it 'should raise error' do
+        expect { subject }.to raise_error(
+          ArgumentError, "tx_count must be less than or equal to #{Bitcoin::PartialTree::MAX_TX_COUNT}.")
+      end
+    end
+
+    context 'hashes is greater than tx_count' do
+      subject {
+        hashes = ['5be239fdd6c626d196288bd2a4175258dc772370be25d52ea46a09ece54f6f9f',
+                  '36a39ed285a4ffdb141c16af1eb1029bf18a18a7fdc54c70561d9371714f0c74']
+        Bitcoin::PartialTree.build(1, hashes, Bitcoin.byte_to_bit('00'.htb))
+      }
+      it 'should raise error' do
+        expect { subject }.to raise_error(ArgumentError, 'hashes must not be greater than tx_count.')
+      end
+    end
+
+    context 'flags has fewer bits than hashes' do
+      subject {
+        hashes = 9.times.map { '5be239fdd6c626d196288bd2a4175258dc772370be25d52ea46a09ece54f6f9f' }
+        Bitcoin::PartialTree.build(37, hashes, Bitcoin.byte_to_bit('00'.htb))
+      }
+      it 'should raise error' do
+        expect { subject }.to raise_error(ArgumentError, 'flags must have at least one bit per hash.')
+      end
+    end
   end
 
   describe 'find_node' do

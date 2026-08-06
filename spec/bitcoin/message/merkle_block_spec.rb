@@ -14,6 +14,37 @@ describe Bitcoin::Message::MerkleBlock do
       partial_tree = subject.partial_tree
       expect(partial_tree.merkle_root).to eq(subject.header.merkle_root)
     end
+
+    # Build a merkleblock payload with an arbitrary tx_count, which a peer fully controls.
+    def build_payload(tx_count, hash_count: 1, flags: '00')
+      header = '00000020ac70b03084a595f8b06c4de338ff14b6953a96cb5ce44a5ffe66f760000000008c380e4ec4582616f5fa29dfb8a7e47b4b3cf82fc8b504a17fca24407aafe9ef04a95159ffff001def078438'
+      payload = header.htb << [tx_count].pack('V')
+      payload << Bitcoin.pack_var_int(hash_count) << ('9f6f4fe5ec096aa42ed525be702377dc585217a4d28b2896d126c6d6fd39e25b'.htb * hash_count)
+      payload << Bitcoin.pack_var_int(flags.htb.bytesize) << flags.htb
+      payload
+    end
+
+    context 'tx_count is 0' do
+      subject { Bitcoin::Message::MerkleBlock.parse_from_payload(build_payload(0)) }
+      it 'should raise error' do
+        expect { subject }.to raise_error(Bitcoin::Message::Error, 'tx_count must be greater than 0.')
+      end
+    end
+
+    context 'tx_count exceeds the maximum' do
+      subject { Bitcoin::Message::MerkleBlock.parse_from_payload(build_payload(0xffffffff)) }
+      it 'should raise error' do
+        expect { subject }.to raise_error(
+          Bitcoin::Message::Error, "tx_count must be less than or equal to #{Bitcoin::PartialTree::MAX_TX_COUNT}.")
+      end
+    end
+
+    context 'hashes is greater than tx_count' do
+      subject { Bitcoin::Message::MerkleBlock.parse_from_payload(build_payload(1, hash_count: 2)) }
+      it 'should raise error' do
+        expect { subject }.to raise_error(Bitcoin::Message::Error, 'hashes must not be greater than tx_count.')
+      end
+    end
   end
 
   describe 'to_pkt' do

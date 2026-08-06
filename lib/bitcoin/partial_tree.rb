@@ -4,6 +4,10 @@ module Bitcoin
   # For a complete Merkle tree implementation, migrate to the merkle gem.
   class PartialTree
 
+    # The maximum number of transactions a block can contain, so the maximum tx_count
+    # a valid merkleblock message can commit to.
+    MAX_TX_COUNT = MAX_BLOCK_WEIGHT / MIN_TRANSACTION_WEIGHT
+
     attr_accessor :root
 
     def initialize(root = nil)
@@ -15,7 +19,13 @@ module Bitcoin
     end
 
     # https://bitcoin.org/en/developer-reference#creating-a-merkleblock-message
+    # @param [Integer] tx_count The number of transactions in the block.
+    # @param [Array] hashes Array of hash values with hex format.
+    # @param [String] flags The sequence of bits, a string of '0' and '1'.
+    # @return [Bitcoin::PartialTree]
+    # @raise [ArgumentError] If the given parameters are out of range or inconsistent.
     def self.build(tx_count, hashes, flags)
+      validate!(tx_count, hashes, flags)
       flags = flags.each_char.map(&:to_i)
       root = build_initial_tree( Array.new(tx_count) { Node.new })
       current_node = root
@@ -37,7 +47,22 @@ module Bitcoin
       new(root)
     end
 
+    # Validate the parameters of a partial merkle tree.
+    # A merkleblock message is received from an untrusted peer, so these bounds are required
+    # to stop it from making #build allocate an unbounded number of nodes or loop forever.
+    # See Bitcoin Core's CPartialMerkleTree::ExtractMatches.
+    # @raise [ArgumentError]
+    def self.validate!(tx_count, hashes, flags)
+      raise ArgumentError, 'tx_count must be greater than 0.' unless tx_count.is_a?(Integer) && tx_count > 0
+      raise ArgumentError, "tx_count must be less than or equal to #{MAX_TX_COUNT}." if tx_count > MAX_TX_COUNT
+      # There can never be more hashes provided than one for every txid.
+      raise ArgumentError, 'hashes must not be greater than tx_count.' if hashes.size > tx_count
+      # There must be at least one bit per node in the partial tree, and at least one node per hash.
+      raise ArgumentError, 'flags must have at least one bit per hash.' if flags.size < hashes.size
+    end
+
     def self.build_initial_tree(nodes)
+      raise ArgumentError, 'nodes must not be empty.' if nodes.empty?
       while nodes.size != 1
         nodes = nodes.each_slice(2).map { |m|
           parent = Node.new

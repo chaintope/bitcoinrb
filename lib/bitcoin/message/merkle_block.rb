@@ -28,6 +28,12 @@ module Bitcoin
         flag_count = Bitcoin.unpack_var_int_from_io(buf)
         # A sequence of bits packed eight in a byte with the least significant bit first.
         m.flags = buf.read(flag_count).bth
+        # Reject a tree an untrusted peer could use to exhaust memory or CPU in #partial_tree.
+        begin
+          Bitcoin::PartialTree.validate!(m.tx_count, m.hashes, Bitcoin.byte_to_bit(m.flags.htb))
+        rescue ArgumentError => e
+          raise Bitcoin::Message::Error, e.message
+        end
         m
       end
 
