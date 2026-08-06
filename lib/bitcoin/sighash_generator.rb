@@ -107,8 +107,14 @@ module Bitcoin
       # - leaf_hash: leaf hash with binary format if sig_version is :tapscript, it required
       # - last_code_separator_pos: the position of last code separator
       # @return [String] signature hash with binary format.
+      # @raise [ArgumentError] If +opts[:prevouts]+ does not cover every input of the tx.
       def generate(tx, input_index, hash_type, opts)
         raise ArgumentError, 'Invalid sig_version was specified.' unless [:taproot, :tapscript].include?(opts[:sig_version])
+        # sha_amounts and sha_scriptpubkeys commit to every prevout, so a partial set silently
+        # produces a sighash which is not the one consensus computes for this tx.
+        unless opts[:prevouts].is_a?(Array) && opts[:prevouts].size == tx.in.size
+          raise ArgumentError, 'prevouts must be specified for all inputs.'
+        end
 
         ext_flag = opts[:sig_version] == :taproot ? 0 : 1
         key_version = 0

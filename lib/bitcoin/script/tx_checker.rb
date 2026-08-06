@@ -40,9 +40,14 @@ module Bitcoin
     # @param [String] pubkey a public key with hex format.
     # @param [Symbol] sig_version whether :taproot or :tapscript
     # @return [Boolean] verification result
+    # @raise [ArgumentError] If +prevouts+ does not cover every input of the tx.
     def check_schnorr_sig(sig, pubkey, sig_version, opts = {})
       return false unless [:taproot, :tapscript].include?(sig_version)
-      return false if prevouts.size < input_index
+      # A taproot sighash commits to the amount and scriptPubkey of every prevout, so a partial
+      # set does not fail to verify, it verifies against a sighash consensus never computes.
+      # Checked here rather than left to the generator, since the rescue below would turn it
+      # into a script error.
+      raise ArgumentError, 'prevouts must be specified for all inputs.' unless prevouts.size == tx.in.size
 
       sig = sig.htb
       return set_error(SCRIPT_ERR_SCHNORR_SIG_SIZE) unless [64, 65].include?(sig.bytesize)

@@ -84,6 +84,47 @@ describe Bitcoin::Tx, use_secp256k1: true do
             Bitcoin::SIGHASH_TYPE[:none] | Bitcoin::SIGHASH_TYPE[:anyonecanpay]).bth).to eq('a94ba0fd2c08b5b753282f15483901714bb862fd37b9339b38dec31e6d4c793d')
       end
     end
+
+    context 'taproot' do
+      # A taproot sighash commits to the amount and scriptPubkey of every prevout, so a caller
+      # which passes fewer of them gets a sighash consensus never computes for this tx.
+      let(:key) { Bitcoin::Key.generate }
+      let(:script_pubkey) { Bitcoin::Script.to_p2tr(key) }
+      let(:prevouts) { 2.times.map { Bitcoin::TxOut.new(value: 100_000, script_pubkey: script_pubkey) } }
+      let(:tx) {
+        tx = Bitcoin::Tx.new
+        2.times { |i| tx.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.from_txid('00' * 32, i)) }
+        tx.out << Bitcoin::TxOut.new(value: 190_000, script_pubkey: script_pubkey)
+        tx
+      }
+
+      it 'should be generate with the prevouts of all inputs' do
+        expect { tx.sighash_for_input(1, sig_version: :taproot, prevouts: prevouts) }.not_to raise_error
+      end
+
+      context 'prevouts does not cover all inputs' do
+        it 'should raise error' do
+          expect { tx.sighash_for_input(1, sig_version: :taproot, prevouts: prevouts[0..0]) }.to raise_error(
+            ArgumentError, 'prevouts must be specified for all inputs.')
+        end
+      end
+
+      context 'prevouts is not specified' do
+        it 'should raise error' do
+          expect { tx.sighash_for_input(1, sig_version: :taproot) }.to raise_error(
+            ArgumentError, 'prevouts must be specified for all inputs.')
+        end
+      end
+
+      context 'verify without prevouts' do
+        it 'should raise error instead of verifying against a wrong sighash' do
+          tx.in[1].script_witness.stack << ('00' * 64).htb
+          expect { tx.verify_input_sig(1, script_pubkey) }.to raise_error(
+            ArgumentError, 'prevouts must be specified for all inputs.')
+          expect(tx.verify_input_sig(1, script_pubkey, prevouts: prevouts)).to be false
+        end
+      end
+    end
   end
 
   describe 'check tx_valid.json' do
