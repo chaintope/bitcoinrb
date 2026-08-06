@@ -40,6 +40,25 @@ RSpec.describe Bitcoin::BIP324 do
     end
   end
 
+  describe "xelligatorswift" do
+    it 'should encode x, selecting the case from the 8 xswiftec_inv defines' do
+      x = decode_vectors.first['x']
+      # c is read as 3 bits, so a selector of 8 is out of range and silently repeats case 0,
+      # which biases the encoding away from the uniform distribution BIP-324 relies on.
+      bounds = []
+      allow(SecureRandom).to receive(:random_number).and_wrap_original do |original, arg|
+        bounds << arg
+        original.call(arg)
+      end
+      ellswift = described_class.xelligatorswift(x)
+
+      expect(ellswift.htb.bytesize).to eq(64)
+      expect(described_class.xswiftec(ellswift[0...64], ellswift[64..-1])).to eq(x)
+      expect(bounds.grep(Integer).select { |b| b <= 256 }.uniq).to eq([described_class::CASE_COUNT])
+      expect(described_class::CASE_COUNT).to eq(8)
+    end
+  end
+
   shared_examples "test ellswift ecdh" do
     it do
       packet_encoding_vectors.each do |v|

@@ -91,13 +91,16 @@ module Bitcoin
       ECDSA::Format::IntegerOctetString.encode(result, 32).bth
     end
 
+    # Number of cases xswiftec_inv selects between. It reads c as 3 bits, c & 1, c & 2 and c & 4.
+    CASE_COUNT = 8
+
     # Given a field element X on the curve, find (u, t) that encode them.
     # @param [String] x coordinate with hex format.
     # @return [String] ElligatorSwift public key with hex format.
     def xelligatorswift(x)
       loop do
         u = SecureRandom.random_number(1..ECDSA::Group::Secp256k1.order).to_s(16)
-        c = SecureRandom.random_number(9)
+        c = SecureRandom.random_number(CASE_COUNT)
         t = xswiftec_inv(x, u, c)
         unless t.nil?
           return (ECDSA::Format::IntegerOctetString.encode(u.hex, 32) +
