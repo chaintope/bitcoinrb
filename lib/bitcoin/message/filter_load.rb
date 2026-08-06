@@ -22,8 +22,18 @@ module Bitcoin
       def self.parse_from_payload(payload)
         buf = StringIO.new(payload)
         filter_count = Bitcoin.unpack_var_int_from_io(buf)
+        # A filterload message is received from an untrusted peer, so the limits which bound
+        # the work BloomFilter#add and #contains? perform have to be enforced here.
+        if filter_count > Bitcoin::BloomFilter::MAX_BLOOM_FILTER_SIZE
+          raise Bitcoin::Message::Error,
+                "filter size must be less than or equal to #{Bitcoin::BloomFilter::MAX_BLOOM_FILTER_SIZE}."
+        end
         filter = buf.read(filter_count).unpack('C*')
         func_count = buf.read(4).unpack1('V')
+        if func_count > Bitcoin::BloomFilter::MAX_HASH_FUNCS
+          raise Bitcoin::Message::Error,
+                "hash funcs must be less than or equal to #{Bitcoin::BloomFilter::MAX_HASH_FUNCS}."
+        end
         tweak = buf.read(4).unpack1('V')
         flag = buf.read(1).unpack1('C')
         FilterLoad.new(Bitcoin::BloomFilter.new(filter, func_count, tweak), flag)

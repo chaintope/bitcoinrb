@@ -13,6 +13,44 @@ describe Bitcoin::Message::FilterLoad do
       expect(subject.filter.tweak).to eq(0)
       expect(subject.flag).to eq(0)
     end
+
+    context 'filter size exceeds the maximum' do
+      subject {
+        size = Bitcoin::BloomFilter::MAX_BLOOM_FILTER_SIZE + 1
+        payload = Bitcoin.pack_var_int(size) << ("\x00" * size) << [11, 0, 0].pack('VVC')
+        Bitcoin::Message::FilterLoad.parse_from_payload(payload)
+      }
+      it 'should raise error' do
+        expect { subject }.to raise_error(
+          Bitcoin::Message::Error,
+          "filter size must be less than or equal to #{Bitcoin::BloomFilter::MAX_BLOOM_FILTER_SIZE}.")
+      end
+    end
+
+    context 'hash funcs exceeds the maximum' do
+      subject {
+        payload = '02b50f'.htb << [Bitcoin::BloomFilter::MAX_HASH_FUNCS + 1, 0, 0].pack('VVC')
+        Bitcoin::Message::FilterLoad.parse_from_payload(payload)
+      }
+      it 'should raise error' do
+        expect { subject }.to raise_error(
+          Bitcoin::Message::Error,
+          "hash funcs must be less than or equal to #{Bitcoin::BloomFilter::MAX_HASH_FUNCS}.")
+      end
+    end
+
+    context 'filter size and hash funcs are at the maximum' do
+      subject {
+        size = Bitcoin::BloomFilter::MAX_BLOOM_FILTER_SIZE
+        payload = Bitcoin.pack_var_int(size) << ("\x00" * size)
+        payload << [Bitcoin::BloomFilter::MAX_HASH_FUNCS, 0, 0].pack('VVC')
+        Bitcoin::Message::FilterLoad.parse_from_payload(payload)
+      }
+      it 'should be parsed' do
+        expect(subject.filter.filter.size).to eq(Bitcoin::BloomFilter::MAX_BLOOM_FILTER_SIZE)
+        expect(subject.filter.hash_funcs).to eq(Bitcoin::BloomFilter::MAX_HASH_FUNCS)
+      end
+    end
   end
 
   describe 'to_pkt' do
