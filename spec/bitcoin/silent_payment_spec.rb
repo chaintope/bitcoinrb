@@ -2,76 +2,71 @@ require 'spec_helper'
 
 RSpec.describe Bitcoin::SilentPayment, network: :mainnet, use_secp256k1: true do
 
+  # Build the tx, the prevout scripts and the input keys a test vector's vin describes.
+  # @param [Array] vin The vin of a test vector.
+  # @return [Array] tx, prevout scripts and the private key of each input.
+  def parse_vin(vin)
+    tx = Bitcoin::Tx.new
+    prevouts = []
+    private_keys = []
+    vin.each do |i|
+      tx.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.from_txid(i['txid'], i['vout']),
+                                 script_sig: Bitcoin::Script.parse_from_payload(i['scriptSig'].htb),
+                                 script_witness: Bitcoin::ScriptWitness.parse_from_payload(i['txinwitness'].htb))
+      prevouts << Bitcoin::Script.parse_from_payload(i['prevout']['scriptPubKey']['hex'].htb)
+      # Only a sending vector gives the key of its inputs.
+      private_keys << Bitcoin::Key.new(priv_key: i['private_key']) if i['private_key']
+    end
+    [tx, prevouts, private_keys]
+  end
+
   describe 'BIP352 Test Vector' do
-    it do
-      vectors = fixture_file('bip352/send_and_receive_test_vectors.json')
-      vectors.each do |v|
-        puts v['comment']
-        is_k_max_test = v['comment'].include?('K_max')
+    fixture_file('bip352/send_and_receive_test_vectors.json').each do |vector|
+      # The only vector where sending is expected to fail and the recipient stops scanning
+      # once it reaches the limit rather than reporting the outputs it found.
+      k_max = vector['comment'].include?('K_max')
 
-        v['sending'].each do |s| # for sender
-          d = s['given']
-          tx = Bitcoin::Tx.new
-          private_keys = []
-          prevouts = []
-          d['vin'].each do |i|
-            input = Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.from_txid(i['txid'], i['vout']),
-                                      script_sig: Bitcoin::Script.parse_from_payload(i['scriptSig'].htb),
-                                      script_witness: Bitcoin::ScriptWitness.parse_from_payload(i['txinwitness'].htb))
-            tx.in << input
-            private_keys << Bitcoin::Key.new(priv_key: i['private_key'])
-            prevouts << Bitcoin::Script.parse_from_payload(i['prevout']['scriptPubKey']['hex'].htb)
-          end
-          # Expand recipients with count field
-          recipients = d['recipients'].flat_map do |r|
-            count = r['count'] || 1
-            Array.new(count) { Bech32::SilentPaymentAddr.parse(r['address']) }
-          end
-
-          if is_k_max_test
-            # K_max exceeded: expect ArgumentError
-            expect { tx.derive_payment_points(prevouts, private_keys, recipients) }.to raise_error(ArgumentError, /K_max/)
-          else
-            outputs = tx.derive_payment_points(prevouts, private_keys, recipients)
-            expect(outputs.map{|o|o.x.to_s(16)}).to have_same_elements_as_any_of(s['expected']['outputs'])
+      context vector['comment'] do
+        it 'should derive the outputs of a sender' do
+          vector['sending'].each do |sending|
+            given = sending['given']
+            tx, prevouts, private_keys = parse_vin(given['vin'])
+            recipients = given['recipients'].flat_map do |r|
+              Array.new(r['count'] || 1) { Bech32::SilentPaymentAddr.parse(r['address']) }
+            end
+            if k_max
+              expect { tx.derive_payment_points(prevouts, private_keys, recipients) }.
+                to raise_error(ArgumentError, /K_max/)
+            else
+              outputs = tx.derive_payment_points(prevouts, private_keys, recipients)
+              expect(outputs.map{|o|o.x.to_s(16)}).to have_same_elements_as_any_of(sending['expected']['outputs'])
+            end
           end
         end
 
-        v['receiving'].each do |r| # for receiver
-          d = r['given']
-          tx = Bitcoin::Tx.new
-          prevouts = []
-          d['vin'].each do |i|
-            input = Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.from_txid(i['txid'], i['vout']),
-                                      script_sig: Bitcoin::Script.parse_from_payload(i['scriptSig'].htb),
-                                      script_witness: Bitcoin::ScriptWitness.parse_from_payload(i['txinwitness'].htb))
-            tx.in << input
-            prevouts << Bitcoin::Script.parse_from_payload(i['prevout']['scriptPubKey']['hex'].htb)
-          end
-          d['outputs'].each do |o|
-            begin
-              tx.out << Bitcoin::TxOut.new(script_pubkey: Bitcoin::Script.to_p2tr(Bitcoin::Key.from_xonly_pubkey(o)))
-            rescue ArgumentError
-              # Ignored
+        it 'should scan the outputs of a recipient' do
+          vector['receiving'].each do |receiving|
+            given = receiving['given']
+            tx, prevouts, = parse_vin(given['vin'])
+            # Script.to_p2tr takes the x-only key as it is. Building the output through
+            # Key.from_xonly_pubkey instead would reject the all zero key of the point at
+            # infinity vector, which is a scriptPubkey a tx can carry, and leave that vector
+            # with an empty tx to scan.
+            given['outputs'].each do |o|
+              tx.out << Bitcoin::TxOut.new(script_pubkey: Bitcoin::Script.to_p2tr(o))
             end
-          end
-          scan_priv_key = Bitcoin::Key.new(priv_key: d['key_material']['scan_priv_key'])
-          spend_pubkey = Bitcoin::Key.new(priv_key: d['key_material']['spend_priv_key'])
-          labels = d['labels'] || []
-          outputs = tx.scan_sp_outputs(prevouts, scan_priv_key, spend_pubkey, labels)
+            expect(tx.out.size).to eq(given['outputs'].size)
+            scan_priv_key = Bitcoin::Key.new(priv_key: given['key_material']['scan_priv_key'])
+            spend_pubkey = Bitcoin::Key.new(priv_key: given['key_material']['spend_priv_key'])
+            outputs = tx.scan_sp_outputs(prevouts, scan_priv_key, spend_pubkey, given['labels'] || [])
 
-          # Handle K_max test case with n_outputs format
-          if r['expected']['n_outputs']
-            expect(outputs.length).to eq(r['expected']['n_outputs'])
-          else
-            expect(outputs.length).to eq(r['expected']['outputs'].length)
-            expected_pub_keys = r['expected']['outputs'].map { |o| o['pub_key'] }
-            actual_pub_keys = outputs.map(&:pubkey)
-            expect(actual_pub_keys).to match_array(expected_pub_keys)
-            # Verify tweak values
-            expected_tweaks = r['expected']['outputs'].map { |o| o['priv_key_tweak'] }
-            actual_tweaks = outputs.map(&:tweak_hex)
-            expect(actual_tweaks).to match_array(expected_tweaks)
+            expected = receiving['expected']
+            if expected['n_outputs'] # K_max
+              expect(outputs.length).to eq(expected['n_outputs'])
+            else
+              expect(outputs.map(&:pubkey)).to match_array(expected['outputs'].map{|o|o['pub_key']})
+              expect(outputs.map(&:tweak_hex)).to match_array(expected['outputs'].map{|o|o['priv_key_tweak']})
+            end
           end
         end
       end
