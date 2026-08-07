@@ -534,6 +534,77 @@ describe Bitcoin::PSBT do
     end
   end
 
+  describe 'Bitcoin::PSBT::Tx#extract_tx' do
+    # A taproot input is signed over a sighash which commits to the amount and the scriptPubkey
+    # of every prevout of the tx, see BIP-341, so the extractor has to collect them all before
+    # it verifies any input, including the prevouts of the inputs which are not taproot.
+    context 'taproot key path input' do
+      let(:internal_key) {
+        Bitcoin::Key.new(priv_key: 'b7c9a5b8f6ad9b1e5e0e1b3e4c2d7f8a0916253647586970a1b2c3d4e5f60718')
+      }
+      # Taproot.tweak_public_key derives the tweak from the x-only key, so it is lifted first.
+      let(:tweaked_pubkey) {
+        Bitcoin::Taproot.tweak_public_key(Bitcoin::Key.from_xonly_pubkey(internal_key.xonly_pubkey), '')
+      }
+      let(:tweaked_key) { Bitcoin::Taproot.tweak_private_key(internal_key, '') }
+      let(:tr_script_pubkey) { Bitcoin::Script.to_p2tr(tweaked_pubkey) }
+      let(:wpkh_key) {
+        Bitcoin::Key.new(priv_key: '2f8c1d0e9b7a6543210fedcba9876543210123456789abcdef0123456789abcd')
+      }
+      let(:wpkh_script_pubkey) { Bitcoin::Script.to_p2wpkh(wpkh_key.hash160) }
+      let(:prevouts) {
+        [Bitcoin::TxOut.new(value: 100_000, script_pubkey: tr_script_pubkey),
+         Bitcoin::TxOut.new(value: 100_000, script_pubkey: wpkh_script_pubkey)]
+      }
+      let(:unsigned_tx) {
+        tx = Bitcoin::Tx.new
+        tx.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.from_txid('11' * 32, 0))
+        tx.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.from_txid('22' * 32, 1))
+        tx.out << Bitcoin::TxOut.new(value: 180_000, script_pubkey: tr_script_pubkey)
+        tx
+      }
+      subject {
+        psbt = Bitcoin::PSBT::Tx.new(unsigned_tx)
+        prevouts.each_with_index { |utxo, i| psbt.inputs[i].witness_utxo = utxo }
+
+        # input 0: taproot key path
+        sighash = unsigned_tx.sighash_for_input(
+          0, sig_version: :taproot, prevouts: prevouts, hash_type: Bitcoin::SIGHASH_TYPE[:default])
+        psbt.inputs[0].tap_key_sig = tweaked_key.sign(sighash, algo: :schnorr).bth
+        witness = Bitcoin::ScriptWitness.new
+        witness.stack << psbt.inputs[0].tap_key_sig.htb
+        psbt.inputs[0].final_script_witness = witness
+
+        # input 1: P2WPKH
+        sighash = unsigned_tx.sighash_for_input(
+          1, Bitcoin::Script.to_p2pkh(wpkh_key.hash160),
+          sig_version: :witness_v0, amount: prevouts[1].value, prevouts: prevouts)
+        witness = Bitcoin::ScriptWitness.new
+        witness.stack << wpkh_key.sign(sighash) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
+        witness.stack << wpkh_key.pubkey.htb
+        psbt.inputs[1].final_script_witness = witness
+
+        Bitcoin::PSBT::Tx.parse_from_payload(psbt.to_payload)
+      }
+
+      it 'should extract tx' do
+        expect(subject.inputs[0].tap_key_sig).not_to be_nil
+        tx = subject.extract_tx
+        expect(tx.txid).to eq(unsigned_tx.txid)
+        expect(tx.witness?).to be true
+        expect(tx.in[0].script_witness.stack.size).to eq(1)
+        expect(tx.verify_input_sig(0, tr_script_pubkey, prevouts: prevouts)).to be true
+      end
+
+      context 'an input does not carry its utxo' do
+        it 'should raise error' do
+          subject.inputs[1].witness_utxo = nil
+          expect { subject.extract_tx }.to raise_error(ArgumentError, 'input[1] does not have utxo.')
+        end
+      end
+    end
+  end
+
   describe 'Bitcoin::PSBT::Input#valid_witness_input?' do
     context 'native P2WSH' do
       it 'should be true without redeem script' do

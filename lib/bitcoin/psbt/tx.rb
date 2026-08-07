@@ -277,16 +277,17 @@ module Bitcoin
           extract_tx.in[index].script_sig = input.final_script_sig if input.final_script_sig
           extract_tx.in[index].script_witness = input.final_script_witness if input.final_script_witness
         end
+        # A taproot sighash commits to every prevout of the tx, see BIP-341, so they are all
+        # collected before any input is verified.
+        prevouts = extract_tx.in.each_with_index.map do |tx_in, index|
+          utxo = inputs[index].utxo(tx_in.out_point.index)
+          raise ArgumentError, "input[#{index}] does not have utxo." unless utxo
+          utxo
+        end
         # validate signature
-        extract_tx.in.each_with_index do |tx_in, index|
-          input = inputs[index]
-          if input.non_witness_utxo
-            utxo = input.non_witness_utxo.out[tx_in.out_point.index]
-            raise "input[#{index}]'s signature is invalid.'" unless extract_tx.verify_input_sig(index, utxo.script_pubkey)
-          else
-            utxo = input.witness_utxo
-            raise ArgumentError, "input[#{index}] does not have utxo." unless utxo
-            raise "input[#{index}]'s signature is invalid.'" unless extract_tx.verify_input_sig(index, utxo.script_pubkey, amount: utxo.value)
+        prevouts.each_with_index do |utxo, index|
+          unless extract_tx.verify_input_sig(index, utxo.script_pubkey, amount: utxo.value, prevouts: prevouts)
+            raise "input[#{index}]'s signature is invalid.'"
           end
         end
         extract_tx

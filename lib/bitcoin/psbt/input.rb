@@ -192,6 +192,13 @@ module Bitcoin
         payload
       end
 
+      # Get the previous output this input spends.
+      # @param [Integer] index The index of the outpoint this input refers to.
+      # @return [Bitcoin::TxOut] The previous output, or nil if this input does not carry it.
+      def utxo(index)
+        (non_witness_utxo ? non_witness_utxo.out[index] : nil) || witness_utxo
+      end
+
       # Check whether input's scriptPubkey is correct witness.
       # @return [Boolean]
       def valid_witness_input?
