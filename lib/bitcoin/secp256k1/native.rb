@@ -99,6 +99,54 @@ module Bitcoin
           raise ArgumentError, "unknown algo: #{algo}"
         end
       end
+
+      # Whether the loaded library supports BIP-352 silent payments.
+      # The module exists in libsecp256k1 v0.8.0 or later.
+      # @return [Boolean]
+      def sp_available?
+        silentpayments_available?
+      end
+
+      # Create the silent payment outputs for +recipients+.
+      # @param [Array] recipients An array of [scan public key, spend public key], both with hex
+      # format(33 bytes). A recipient may appear more than once.
+      # @param [String] outpoint_smallest The lexicographically smallest outpoint of the tx inputs
+      # with hex format(36 bytes).
+      # @param [Array] plain_seckeys Private keys of the non-taproot inputs with hex format.
+      # @param [Array] taproot_seckeys Private keys of the taproot inputs with hex format.
+      # @return [Array] An x-only public key with hex format for each recipient, in the same order.
+      # @raise [Secp256k1::Error] If the outputs could not be created.
+      def sp_create_outputs(recipients, outpoint_smallest, plain_seckeys: [], taproot_seckeys: [])
+        silentpayments_sender_create_outputs(
+          recipients, outpoint_smallest, plain_seckeys: plain_seckeys, taproot_seckeys: taproot_seckeys)
+      end
+
+      # Create the label and the label tweak of the +m+ th label of +scan_key+.
+      # @param [String] scan_key The recipient's scan private key with hex format(32 bytes).
+      # @param [Integer] m The label index.
+      # @return [Array] The serialized label(33 bytes) and its tweak(32 bytes), both with hex format.
+      def sp_create_label(scan_key, m)
+        silentpayments_create_label(scan_key, m)
+      end
+
+      # Scan +tx_outputs+ for the silent payment outputs of the recipient.
+      # @param [Array] tx_outputs The x-only public key of each taproot output with hex format.
+      # @param [String] scan_key The recipient's scan private key with hex format(32 bytes).
+      # @param [String] outpoint_smallest The lexicographically smallest outpoint of the tx inputs
+      # with hex format(36 bytes).
+      # @param [String] spend_pubkey The recipient's spend public key with hex format(33 bytes).
+      # @param [Array] plain_pubkeys Public keys of the non-taproot inputs with hex format(33 bytes).
+      # @param [Array] xonly_pubkeys X-only public keys of the taproot inputs with hex format.
+      # @param [Hash] labels A serialized label to label tweak map, both with hex format.
+      # @return [Array] A hash per found output, with the :output, :tweak and :label keys.
+      # @raise [Secp256k1::Error] If the tx is not a silent payment transaction.
+      def sp_scan_outputs(tx_outputs, scan_key, outpoint_smallest, spend_pubkey,
+                          plain_pubkeys: [], xonly_pubkeys: [], labels: {})
+        summary = silentpayments_create_prevouts_summary(
+          outpoint_smallest, plain_pubkeys: plain_pubkeys, xonly_pubkeys: xonly_pubkeys)
+        silentpayments_scan_outputs(
+          tx_outputs, scan_key, summary, spend_pubkey, labels: labels.empty? ? nil : labels)
+      end
     end
   end
 end

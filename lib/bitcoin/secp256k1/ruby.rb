@@ -210,6 +210,119 @@ module Bitcoin
         Schnorr.valid_sig?(data, pubkey.htb, sig)
       end
 
+      # Whether this module supports BIP-352 silent payments.
+      # @return [Boolean]
+      def sp_available?
+        true
+      end
+
+      # Create the silent payment outputs for +recipients+.
+      # See Bitcoin::Secp256k1::Native#sp_create_outputs for the parameters.
+      # @return [Array] An x-only public key with hex format for each recipient, in the same order.
+      # @raise [ArgumentError] If the input private keys sum to zero.
+      def sp_create_outputs(recipients, outpoint_smallest, plain_seckeys: [], taproot_seckeys: [])
+        field = ECDSA::PrimeField.new(GROUP.order)
+        sum = sp_sum_seckeys(plain_seckeys, taproot_seckeys, field)
+        raise ArgumentError, 'The input private keys sum to zero.' if sum.zero?
+        agg_pubkey = (GROUP.generator.to_jacobian * sum).to_affine
+        input_hash = Bitcoin.tagged_hash('BIP0352/Inputs', outpoint_smallest.htb + agg_pubkey.to_hex.htb)
+
+        # k counts up within the group of recipients sharing a scan key, but an output keeps the
+        # position of the recipient it pays.
+        groups = {}
+        recipients.each_with_index do |(scan_pubkey, spend_pubkey), index|
+          (groups[scan_pubkey] ||= []) << [spend_pubkey, index]
+        end
+        results = Array.new(recipients.length)
+        groups.each do |scan_pubkey, spends|
+          scan_point = Bitcoin::Key.new(pubkey: scan_pubkey).to_point.to_jacobian
+          shared_secret = (scan_point * field.mod(input_hash.bti * sum)).to_affine.to_hex.htb
+          spends.each_with_index do |(spend_pubkey, index), k|
+            t_k = Bitcoin.tagged_hash('BIP0352/SharedSecret', shared_secret + [k].pack('N'))
+            spend_point = Bitcoin::Key.new(pubkey: spend_pubkey).to_point.to_jacobian
+            output = (spend_point + GROUP.generator.to_jacobian * t_k.bti).to_affine
+            results[index] = sp_xonly(output.x)
+          end
+        end
+        results
+      end
+
+      # Create the label and the label tweak of the +m+ th label of +scan_key+.
+      # See Bitcoin::Secp256k1::Native#sp_create_label for the parameters.
+      # @return [Array] The serialized label(33 bytes) and its tweak(32 bytes), both with hex format.
+      def sp_create_label(scan_key, m)
+        tweak = Bitcoin.tagged_hash('BIP0352/Label', scan_key.htb + [m].pack('N'))
+        [(GROUP.generator.to_jacobian * tweak.bti).to_affine.to_hex(true), tweak.bth]
+      end
+
+      # Scan +tx_outputs+ for the silent payment outputs of the recipient.
+      # See Bitcoin::Secp256k1::Native#sp_scan_outputs for the parameters.
+      # @return [Array] A hash per found output, with the :output, :tweak and :label keys.
+      # @raise [ArgumentError] If the input public keys sum to the point at infinity.
+      def sp_scan_outputs(tx_outputs, scan_key, outpoint_smallest, spend_pubkey,
+                          plain_pubkeys: [], xonly_pubkeys: [], labels: {})
+        field = ECDSA::PrimeField.new(GROUP.order)
+        sum_pubkeys = GROUP.infinity.to_jacobian
+        plain_pubkeys.each { |p| sum_pubkeys += Bitcoin::Key.new(pubkey: p).to_point.to_jacobian }
+        xonly_pubkeys.each { |p| sum_pubkeys += Bitcoin::Key.from_xonly_pubkey(p).to_point.to_jacobian }
+        raise ArgumentError, 'The input public keys sum to the point at infinity.' if sum_pubkeys.infinity?
+
+        input_hash = Bitcoin.tagged_hash(
+          'BIP0352/Inputs', outpoint_smallest.htb + sum_pubkeys.to_affine.to_hex.htb)
+        shared_secret = (sum_pubkeys * field.mod(input_hash.bti * scan_key.to_i(16))).to_affine.to_hex.htb
+        spend_point = Bitcoin::Key.new(pubkey: spend_pubkey).to_point.to_jacobian
+        # A labeled output is P_k + label. Only the x coordinate is compared, which covers the
+        # label of either parity without negating the output.
+        label_points = labels.map do |label, tweak|
+          [label, tweak, Bitcoin::Key.new(pubkey: label).to_point.to_jacobian]
+        end
+
+        results = []
+        remaining = tx_outputs.map(&:downcase)
+        k = 0
+        while k < Bitcoin::SilentPayment::K_MAX
+          t_k = Bitcoin.tagged_hash('BIP0352/SharedSecret', shared_secret + [k].pack('N'))
+          p_k = GROUP.generator.to_jacobian * t_k.bti + spend_point
+          index = remaining.index(sp_xonly(p_k.to_affine.x))
+          found = if index
+                    {output: remaining.delete_at(index), tweak: t_k.bth, label: nil}
+                  else
+                    sp_find_labeled(p_k, remaining, label_points, t_k, field)
+                  end
+          break unless found
+          results << found
+          k += 1
+        end
+        results
+      end
+
+      # Sum the private keys of the inputs, negating a taproot key whose public key has odd y.
+      def sp_sum_seckeys(plain_seckeys, taproot_seckeys, field)
+        sum = plain_seckeys.inject(0) { |total, sk| field.mod(total + sk.to_i(16)) }
+        taproot_seckeys.inject(sum) do |total, sk|
+          d = sk.to_i(16)
+          d = field.mod(-d) unless (GROUP.generator.to_jacobian * d).to_affine.has_even_y?
+          field.mod(total + d)
+        end
+      end
+
+      # Find the output +p_k+ pays through one of +label_points+, or nil.
+      def sp_find_labeled(p_k, remaining, label_points, t_k, field)
+        label_points.each do |label, tweak, point|
+          index = remaining.index(sp_xonly((p_k + point).to_affine.x))
+          next unless index
+          return {output: remaining.delete_at(index),
+                  tweak: sp_xonly(field.mod(t_k.bti + tweak.to_i(16))),
+                  label: label}
+        end
+        nil
+      end
+
+      # Serialize a field element as a 32 byte value with hex format.
+      def sp_xonly(value)
+        ECDSA::Format::IntegerOctetString.encode(value, 32).bth
+      end
+
     end
   end
 end

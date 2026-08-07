@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-RSpec.describe Bitcoin::SilentPayment, network: :mainnet, use_secp256k1: true do
+RSpec.describe Bitcoin::SilentPayment, network: :mainnet do
 
   # Build the tx, the prevout scripts and the input keys a test vector's vin describes.
   # @param [Array] vin The vin of a test vector.
@@ -20,7 +20,7 @@ RSpec.describe Bitcoin::SilentPayment, network: :mainnet, use_secp256k1: true do
     [tx, prevouts, private_keys]
   end
 
-  describe 'BIP352 Test Vector' do
+  shared_examples 'BIP352 test vector' do
     fixture_file('bip352/send_and_receive_test_vectors.json').each do |vector|
       # The only vector where sending is expected to fail and the recipient stops scanning
       # once it reaches the limit rather than reporting the outputs it found.
@@ -70,6 +70,23 @@ RSpec.describe Bitcoin::SilentPayment, network: :mainnet, use_secp256k1: true do
           end
         end
       end
+    end
+  end
+
+  describe 'BIP352 Test Vector' do
+    context 'pure ruby' do
+      it 'should run without libsecp256k1' do
+        expect(Bitcoin.secp_impl.native?).to be false
+      end
+      it_behaves_like 'BIP352 test vector'
+    end
+
+    context 'libsecp256k1', use_secp256k1: true do
+      it 'should run with libsecp256k1' do
+        expect(Bitcoin.secp_impl.native?).to be true
+        expect(Bitcoin.secp_impl.sp_available?).to be true
+      end
+      it_behaves_like 'BIP352 test vector'
     end
   end
 end

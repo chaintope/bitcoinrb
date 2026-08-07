@@ -1,5 +1,3 @@
-require 'set'
-
 module Bitcoin
   # BIP-352 silent payment module.
   # @see https://github.com/bitcoin/bips/blob/master/bip-0352.mediawiki
@@ -16,7 +14,7 @@ module Bitcoin
     # @param [Array<Bitcoin::Script>] prevouts An array of previous output script.
     # @param [Array<Bitcoin::Key>] private_keys An array of Bitcoin::Key objects corresponding to each public key in prevouts.
     # @param [Array<Bech32::SilentPaymentAddr>] recipients
-    # @return [Array<ECDSA::Point>] An array of derived points.
+    # @return [Array<ECDSA::Point>] An array of derived points, one per recipient in the same order.
     # @raise [ArgumentError]
     def derive_payment_points(prevouts, private_keys, recipients)
       raise ArgumentError, "prevouts must be Array." unless prevouts.is_a? Array
@@ -24,53 +22,41 @@ module Bitcoin
       raise ArgumentError, "prevouts and private_keys must be the same length." unless prevouts.length == private_keys.length
       raise ArgumentError, "recipients must be Array." unless recipients.is_a? Array
 
-      input_pub_keys = []
       field = ECDSA::PrimeField.new(Bitcoin::Secp256k1::GROUP.order)
+      plain_seckeys = []
+      taproot_seckeys = []
       sum_priv_keys = 0
       prevouts.each_with_index do |prevout, index|
         key = private_keys[index]
         raise ArgumentError, "private_keys element must be Bitcoin::Key." unless key.is_a? Bitcoin::Key
-        priv_key_int = key.priv_key.to_i(16)
         public_key = extract_public_key(prevout, inputs[index])
         next if public_key.nil?
-        private_key = if public_key.p2tr? && key.to_point.y.odd?
-                        field.mod(-priv_key_int)
-                      else
-                        priv_key_int
-                      end
-        input_pub_keys << public_key
-        sum_priv_keys = field.mod(sum_priv_keys + private_key)
-      end
-      agg_pubkey = (Bitcoin::Secp256k1::GROUP.generator.to_jacobian * sum_priv_keys).to_affine
-      return [] if agg_pubkey.infinity?
-
-      outpoint_l = inputs.map{|i|i.out_point.to_hex}.sort.first
-
-      input_hash = Bitcoin.tagged_hash("BIP0352/Inputs", outpoint_l.htb + agg_pubkey.to_hex.htb).bth
-
-      destinations = {}
-      recipients.each do |sp_addr|
-        raise ArgumentError, "recipients element must be Bech32::SilentPaymentAddr." unless sp_addr.is_a? Bech32::SilentPaymentAddr
-        destinations[sp_addr.scan_key] = [] unless destinations.has_key?(sp_addr.scan_key)
-        destinations[sp_addr.scan_key] << sp_addr.spend_key
-      end
-
-      # Check K_max limit: fail if any group exceeds the limit
-      destinations.each_value do |spends|
-        raise ArgumentError, "Recipient group exceeds K_max limit (#{K_MAX})." if spends.length > K_MAX
-      end
-
-      outputs = []
-      destinations.each do |scan_key, spends|
-        scan_key = Bitcoin::Key.new(pubkey: scan_key).to_point.to_jacobian
-        ecdh_shared_secret = (scan_key * field.mod(input_hash.to_i(16) * sum_priv_keys)).to_affine.to_hex.htb
-        spends.each.with_index do |spend, i|
-          t_k = Bitcoin.tagged_hash('BIP0352/SharedSecret', ecdh_shared_secret + [i].pack('N'))
-          spend_key = Bitcoin::Key.new(pubkey: spend).to_point.to_jacobian
-          outputs << (spend_key + Bitcoin::Secp256k1::GROUP.generator.to_jacobian * t_k.bth.to_i(16)).to_affine
+        priv_key_int = key.priv_key.to_i(16)
+        if public_key.p2tr?
+          taproot_seckeys << key.priv_key
+          priv_key_int = field.mod(-priv_key_int) unless key.to_point.has_even_y?
+        else
+          plain_seckeys << key.priv_key
         end
+        sum_priv_keys = field.mod(sum_priv_keys + priv_key_int)
       end
-      outputs
+      return [] if plain_seckeys.empty? && taproot_seckeys.empty?
+      # The input private keys sum to zero, so the aggregate public key is the point at infinity
+      # and no shared secret exists.
+      return [] if sum_priv_keys.zero?
+
+      destinations = recipients.map do |sp_addr|
+        raise ArgumentError, "recipients element must be Bech32::SilentPaymentAddr." unless sp_addr.is_a? Bech32::SilentPaymentAddr
+        [sp_addr.scan_key, sp_addr.spend_key]
+      end
+      destinations.group_by(&:first).each_value do |group|
+        raise ArgumentError, "Recipient group exceeds K_max limit (#{K_MAX})." if group.length > K_MAX
+      end
+
+      Bitcoin.secp_impl.sp_create_outputs(
+        destinations, sp_outpoint_smallest,
+        plain_seckeys: plain_seckeys, taproot_seckeys: taproot_seckeys
+      ).map { |xonly| Bitcoin::Key.from_xonly_pubkey(xonly).to_point }
     end
 
 
@@ -87,8 +73,11 @@ module Bitcoin
       raise ArgumentError, "scan_private_key must be Bitcoin::Key." unless scan_private_key.is_a? Bitcoin::Key
       raise ArgumentError, "spend_pubkey must be Bitcoin::Key." unless spend_pubkey.is_a? Bitcoin::Key
 
-      has_taproot = !outputs.find{|o| o.script_pubkey.p2tr? }.nil?
-      return [] unless has_taproot
+      taproot_outputs = outputs.select{|o| o.script_pubkey.p2tr? }
+      return [] if taproot_outputs.empty?
+
+      plain_pubkeys = []
+      xonly_pubkeys = []
       sum_pub_keys = Bitcoin::Secp256k1::GROUP.infinity.to_jacobian
       maximum_witness_version = Bitcoin::Opcodes.opcode_to_small_int(Bitcoin::Opcodes::OP_1)
       prevouts.each.with_index do |prevout, index|
@@ -96,64 +85,41 @@ module Bitcoin
 
         public_key = extract_public_key(prevout, inputs[index])
         next if public_key.nil?
+        if public_key.p2tr?
+          xonly_pubkeys << public_key.xonly_pubkey
+        else
+          plain_pubkeys << public_key.pubkey
+        end
         sum_pub_keys += public_key.to_point.to_jacobian
       end
+      return [] if plain_pubkeys.empty? && xonly_pubkeys.empty?
+      # Not a silent payment transaction, so there is nothing to find. Checked here rather than
+      # left to the implementation, which reports it as an error.
       return [] if sum_pub_keys.infinity?
 
-      field = ECDSA::PrimeField.new(Bitcoin::Secp256k1::GROUP.order)
-      outpoint_l = inputs.map{|i|i.out_point.to_hex}.sort.first
-      input_hash = Bitcoin.tagged_hash("BIP0352/Inputs", outpoint_l.htb + sum_pub_keys.to_affine.to_hex.htb).bth
-      ecdh_shared_secret = (sum_pub_keys * field.mod(input_hash.to_i(16) * scan_private_key.priv_key.to_i(16))).to_affine.to_hex.htb
-
-      # Pre-compute label tweak points with their label values and scalar tweaks
-      label_tweaks = labels.map do |m|
-        label_tweak = Bitcoin.tagged_hash('BIP0352/Label', scan_private_key.priv_key.htb + [m].pack('N'))
-        label_point = Bitcoin::Secp256k1::GROUP.generator.to_jacobian * label_tweak.bti
-        [m, label_tweak, label_point]
+      impl = Bitcoin.secp_impl
+      label_values = {}
+      label_tweaks = {}
+      labels.each do |m|
+        label, tweak = impl.sp_create_label(scan_private_key.priv_key, m)
+        label_values[label] = m
+        label_tweaks[label] = tweak
       end
 
-      k = 0
-      results = []
-      found_outputs = Set.new
-      loop do
-        # Stop scanning if K_max limit is reached
-        break if k == K_MAX
-
-        t_k = Bitcoin.tagged_hash('BIP0352/SharedSecret', ecdh_shared_secret + [k].pack('N'))
-        p_k = Bitcoin::Secp256k1::GROUP.generator.to_jacobian * t_k.bti + spend_pubkey.to_point.to_jacobian
-        found = false
-        outputs.each do |output|
-          next unless output.script_pubkey.p2tr?
-          next if found_outputs.include?(output)
-          output_pubkey = Bitcoin::Key.from_xonly_pubkey(output.script_pubkey.witness_data[1].bth)
-
-          # Check basic match (no label)
-          if p_k.to_affine.x == output_pubkey.to_point.x
-            results << SilentPayment::Output.new(output, t_k)
-            found_outputs << output
-            k += 1
-            found = true
-            break
-          end
-
-          # Check labeled matches
-          label_tweaks.each do |label_value, label_tweak_scalar, label_point|
-            p_k_labeled = p_k + label_point
-            if p_k_labeled.to_affine.x == output_pubkey.to_point.x
-              # Full tweak is t_k + label_tweak (mod order)
-              full_tweak = field.mod(t_k.bti + label_tweak_scalar.bti).to_s(16).rjust(64, '0').htb
-              results << SilentPayment::Output.new(output, full_tweak, label_value)
-              found_outputs << output
-              k += 1
-              found = true
-              break
-            end
-          end
-          break if found
-        end
-        break unless found
+      tx_outputs = taproot_outputs.map{|o| o.script_pubkey.witness_data[1].bth }
+      impl.sp_scan_outputs(tx_outputs, scan_private_key.priv_key, sp_outpoint_smallest, spend_pubkey.pubkey,
+                           plain_pubkeys: plain_pubkeys, xonly_pubkeys: xonly_pubkeys,
+                           labels: label_tweaks).map do |found|
+        tx_out = taproot_outputs[tx_outputs.index(found[:output])]
+        SilentPayment::Output.new(tx_out, found[:tweak].htb, found[:label] && label_values[found[:label]])
       end
-      results
+    end
+
+    # The lexicographically smallest outpoint of this tx's inputs, which the input hash of
+    # BIP-352 commits to.
+    # @return [String] The outpoint with hex format(36 bytes).
+    def sp_outpoint_smallest
+      inputs.map{|i| i.out_point.to_hex }.min
     end
 
     # Extract public keys from +prevout+ and input.
