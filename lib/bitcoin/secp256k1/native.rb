@@ -6,7 +6,8 @@ module Bitcoin
   module Secp256k1
 
     # binding for secp256k1 (https://github.com/bitcoin-core/secp256k1/)
-    # tag: v0.4.0
+    # tag: v0.8.0, which secp256k1rb 0.8.0 binds the public API of. An older library is missing
+    # symbols the gem attaches, such as secp256k1_ec_pubkey_sort and the musig module.
     # this is not included by default, to enable set shared object path to ENV['SECP256K1_LIB_PATH']
     # for linux, ENV['SECP256K1_LIB_PATH'] = '/usr/local/lib/libsecp256k1.so' or '/usr/lib64/libsecp256k1.so'
     # for mac,
