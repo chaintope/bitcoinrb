@@ -33,7 +33,12 @@ module Bitcoin
     def tweak_public_key(internal_key, merkle_root)
       t = tweak(internal_key, merkle_root)
       key = Bitcoin::Key.new(priv_key: t.bth, key_type: Key::TYPES[:compressed])
-      Bitcoin::Key.from_point(key.to_point + internal_key.to_point)
+      # BIP-341 tweaks lift_x(P), the point with even y. #tweak commits to the x-only key and
+      # #tweak_private_key negates the private key to match, so the point is lifted here too.
+      # An internal key with odd y would otherwise give a Q the tweaked private key cannot spend.
+      internal_point = internal_key.to_point
+      internal_point = internal_point.negate unless internal_point.has_even_y?
+      Bitcoin::Key.from_point(key.to_point + internal_point)
     end
 
     # Generate tweak private key

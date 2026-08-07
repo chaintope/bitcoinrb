@@ -204,6 +204,10 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet, use_secp256k1
           expect(Bitcoin::Taproot.tweak(internal_private_key, merkle_root).bth).to eq(spending['intermediary']['tweak'])
           tweaked_key = Bitcoin::Taproot.tweak_private_key(internal_private_key, merkle_root)
           expect(tweaked_key.priv_key).to eq(spending['intermediary']['tweakedPrivkey'])
+          # BIP-341 tweaks lift_x(P), so the tweaked public key must not depend on the parity of
+          # the internal key. 3 of these 7 vectors have an internal key with odd y.
+          expect(Bitcoin::Taproot.tweak_public_key(internal_private_key, merkle_root).xonly_pubkey)
+            .to eq(tweaked_key.xonly_pubkey)
 
           # Calculate sighash
           sighash = tx.sighash_for_input(index, sig_version: :taproot, prevouts: prevouts, hash_type: hash_type)
