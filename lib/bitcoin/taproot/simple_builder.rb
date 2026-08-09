@@ -100,15 +100,17 @@ module Bitcoin
       private
 
       def script_tree
-        leaves = []
+        # A node holding one child hashes to that child, so the tree rejects the shape as
+        # indistinguishable from the child itself. A branch of one leaf, and a tree of one
+        # branch, are therefore that leaf and that branch rather than a node above them.
+        tree = nil
         branches.each do |pair|
-          if leaves.empty? || leaves.length == 1
-            leaves << pair.map(&:leaf_hash)
-          elsif leaves.length == 2
-            leaves = [leaves, pair.map(&:leaf_hash)]
-          end
+          hashes = pair.map { |leaf| leaf.leaf_hash.bth }
+          node = hashes.length == 1 ? hashes.first : hashes
+          tree = tree.nil? ? node : [tree, node]
         end
-        Merkle::CustomTree.new(config: Merkle::Config.taptree, leaves: leaves)
+        leaves = tree.is_a?(Array) ? tree : [tree]
+        Merkle::CustomTree.new(config: Merkle::Config.taptree(element_encoding: :hex), leaves: leaves)
       end
 
       def merkle_root

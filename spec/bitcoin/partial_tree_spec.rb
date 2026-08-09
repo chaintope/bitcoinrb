@@ -42,7 +42,7 @@ describe Bitcoin::PartialTree do
        '20a6587b441793253a44e13fcb053ef6eb8aaa855c2a39fa38cb732eaf5d84e8',
        'd2f9b2a4abbd29464eccedf319f4d1eb6a3bfb28002f8e2a12340fec4639f9b4'
       ]}
-    subject { Merkle::BinaryTree.new(config: Merkle::Config.bitcoin, leaves: leaves) }
+    subject { Merkle::BinaryTree.new(config: Merkle::Config.bitcoin(element_encoding: :hex), leaves: leaves) }
     it 'should be build' do
       expect(subject.compute_root).to eq('8c380e4ec4582616f5fa29dfb8a7e47b4b3cf82fc8b504a17fca24407aafe9ef')
     end

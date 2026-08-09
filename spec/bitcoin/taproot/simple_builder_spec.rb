@@ -53,13 +53,13 @@ RSpec.describe Bitcoin::Taproot::SimpleBuilder, network: :mainnet, use_secp256k1
         builder = Bitcoin::Taproot::SimpleBuilder.new(internal_key, [script1, script2, script3])
         expect(builder.build.to_addr).to eq('bc1pkysykpr4e9alyu7wthrtmp2km6sylrjlz83qzrsjkxhdaazyfrusyk2pwg')
         proof1 = builder.inclusion_proof(script1)
-        expect(proof1.leaf).to eq(script1.leaf_hash)
+        expect(proof1.leaf).to eq(script1.leaf_hash.bth)
         expect(proof1.valid?).to be true
         proof2 = builder.inclusion_proof(script2)
-        expect(proof2.leaf).to eq(script2.leaf_hash)
+        expect(proof2.leaf).to eq(script2.leaf_hash.bth)
         expect(proof2.valid?).to be true
         proof3 = builder.inclusion_proof(script3)
-        expect(proof3.leaf).to eq(script3.leaf_hash)
+        expect(proof3.leaf).to eq(script3.leaf_hash.bth)
         expect(proof3.valid?).to be true
 
         # four leaves tree.

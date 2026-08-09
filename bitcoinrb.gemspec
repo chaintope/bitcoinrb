@@ -29,6 +29,6 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'base64', '~> 0.2.0'
   spec.add_runtime_dependency 'secp256k1rb', '0.8.0'
   spec.add_runtime_dependency 'logger'
-  spec.add_runtime_dependency 'merkle', '0.3.0'
+  spec.add_runtime_dependency 'merkle', '1.0.0'
   spec.add_runtime_dependency 'dnsruby', '1.73.0'
 end

@@ -35,14 +35,14 @@ module Bitcoin
 
       def merkle_root
         return '' if tree.empty?
-        script_tree = Merkle::CustomTree.new(config: Merkle::Config.taptree, leaves: extract_leaves(tree))
+        script_tree = Merkle::CustomTree.new(config: Merkle::Config.taptree(element_encoding: :hex), leaves: extract_leaves(tree))
         script_tree.compute_root
       end
 
       def extract_leaves(leaves)
         leaves.map do |leaf|
           if leaf.is_a?(Bitcoin::Taproot::LeafNode)
-            leaf.leaf_hash
+            leaf.leaf_hash.bth
           elsif leaf.is_a?(Array)
             extract_leaves(leaf)
           end
