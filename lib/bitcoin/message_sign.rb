@@ -43,13 +43,6 @@ module Bitcoin
             else
               validate_address!(address)
               addr = Bitcoin::Script.parse_from_addr(address)
-              sig_ver, algo = if addr.p2wpkh? || addr.p2wsh?
-                                [:witness_v0, :ecdsa]
-                              elsif addr.p2tr?
-                                [:taproot, :schnorr]
-                              else
-
-                              end
               tx = to_sign_tx(digest, address)
               prev_out = Bitcoin::TxOut.new(script_pubkey: addr, value: 0)
               if addr.p2tr?
