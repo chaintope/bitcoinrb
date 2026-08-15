@@ -33,6 +33,7 @@ module Bitcoin
     # @param [String] format Format of signature data. Default is +FORMAT_LEGACY+.
     # @param [String] prefix (Optional) Prefix used in legacy format.
     # @return [String] Signature, base64 encoded.
+    # @raise [ArgumentError] If +address+ is not supported, or +key+ does not correspond to it.
     def sign_message(key, message, prefix: Bitcoin.chain_params.message_magic, format: FORMAT_LEGACY, address: nil)
       validate_format!(format)
       digest = message_hash(message, prefix: prefix, legacy: format == FORMAT_LEGACY)
@@ -46,10 +47,12 @@ module Bitcoin
               tx = to_sign_tx(digest, address)
               prev_out = Bitcoin::TxOut.new(script_pubkey: addr, value: 0)
               if addr.p2tr?
-                sighash = tx.sighash_for_input(0, addr, sig_version: :taproot, prevouts: [prev_out], hash_type: Bitcoin::SIGHASH_TYPE[:default])
                 tweaked = Bitcoin::Taproot.tweak_private_key(key, '')
+                validate_key!(Bitcoin::Script.to_p2tr(tweaked), addr, address)
+                sighash = tx.sighash_for_input(0, addr, sig_version: :taproot, prevouts: [prev_out], hash_type: Bitcoin::SIGHASH_TYPE[:default])
                 tx.in[0].script_witness.stack << tweaked.sign(sighash, algo: :schnorr)
-              elsif addr.p2wpkh? || addr.p2wsh?
+              elsif addr.p2wpkh?
+                validate_key!(Bitcoin::Script.to_p2wpkh(key.hash160), addr, address)
                 sighash = tx.sighash_for_input(0, addr, sig_version: :witness_v0, amount: 0, prevouts: [prev_out])
                 ecdsa  = key.sign(sighash, algo: :ecdsa) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
                 tx.in[0].script_witness.stack << ecdsa
@@ -121,6 +124,23 @@ module Bitcoin
       Bitcoin::Script.parse_from_addr(address)
     end
 
+    # Ensure the signing key can satisfy +address+.
+    # A key the address does not commit to still produces a signature, and BIP-322 carries
+    # nothing that would report it verifies against no one.
+    # @param [Bitcoin::Script] derived The script the signing key produces.
+    # @param [Bitcoin::Script] expected The script of the address to be signed for.
+    # @param [String] address The address to be signed for, for the error message.
+    # @raise [ArgumentError] If the key does not correspond to +address+.
+    def validate_key!(derived, expected, address)
+      return if derived == expected
+      message = "Key does not correspond to #{address}."
+      if expected.p2tr?
+        message += ' A P2TR address holds the output key, which is the internal key this key' \
+                   ' holds tweaked with an empty merkle root. See Bitcoin::Key#to_p2tr.'
+      end
+      raise ArgumentError, message
+    end
+
     def validate_format!(format)
       unless [FORMAT_LEGACY, FORMAT_FULL, FORMAT_SIMPLE].include?(format)
         raise ArgumentError "Invalid format specified."
@@ -190,6 +210,7 @@ module Bitcoin
     end
 
     private_class_method :validate_address!
+    private_class_method :validate_key!
     private_class_method :validate_format!
     private_class_method :validate_to_sign_tx!
     private_class_method :run_interpreter

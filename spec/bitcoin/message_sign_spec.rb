@@ -261,4 +261,41 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
       it_behaves_like "test bitcoin core spec", "pure ruby"
     end
   end
+
+  describe '#sign_message with a key the address does not commit to' do
+    # Signing with such a key used to return a signature which verifies against no one,
+    # and BIP-322 carries nothing that reports it.
+    let(:key) { Bitcoin::Key.from_wif('L3VFeEujGtevx9w18HD1fhRbCH67Az2dpCymeRE1SoPK6XQtaN2k') }
+    let(:other) { Bitcoin::Key.from_wif('L4DksdGZ4KQJfcLHD5Dv25fu8Rxyv7hHi2RjZR4TYzr8c6h9VNrp') }
+
+    it 'raises for a P2WPKH address of another key' do
+      expect(described_class.sign_message(
+        key, 'Hello World', format: :simple, address: key.to_p2wpkh)).to be_a(String)
+      expect {
+        described_class.sign_message(key, 'Hello World', format: :simple, address: other.to_p2wpkh)
+      }.to raise_error(ArgumentError, /Key does not correspond to/)
+    end
+
+    it 'raises for a P2TR address which is not the tweaked output key' do
+      expect(described_class.sign_message(
+        key, 'Hello World', format: :simple, address: key.to_p2tr(as_internal: true))).to be_a(String)
+      # +to_p2tr+ without +as_internal+ is the untweaked key, so it is not this key's address.
+      expect {
+        described_class.sign_message(key, 'Hello World', format: :simple, address: key.to_p2tr)
+      }.to raise_error(ArgumentError, /Key does not correspond to/)
+      expect {
+        described_class.sign_message(
+          key, 'Hello World', format: :simple, address: other.to_p2tr(as_internal: true))
+      }.to raise_error(ArgumentError, /Key does not correspond to/)
+    end
+
+    it 'raises for a P2WSH address' do
+      # A P2WSH address commits to a witness script, which cannot be derived from a key alone.
+      script = Bitcoin::Script.new << key.pubkey << Bitcoin::Opcodes::OP_CHECKSIG
+      addr = Bitcoin::Script.to_p2wsh(script).to_addr
+      expect {
+        described_class.sign_message(key, 'Hello World', format: :simple, address: addr)
+      }.to raise_error(ArgumentError, /not supported/)
+    end
+  end
 end
