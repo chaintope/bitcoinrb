@@ -262,6 +262,103 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
     end
   end
 
+  describe '#verify_message with a signature forged by an unrelated key' do
+    # The negative BIP-322 vectors reject a wrong signer by replaying the signature of another
+    # address, and to_spend commits to the address, so those fail on the sighash before the key
+    # is ever compared to the address. These build a signature which is valid for the address's
+    # own sighash, so only the binding between the key and the address rejects it. That binding
+    # is what GHSA-5chw-87w3-j9cv was missing, and no test vector covers it.
+    let(:victim) { Bitcoin::Key.from_wif('L3VFeEujGtevx9w18HD1fhRbCH67Az2dpCymeRE1SoPK6XQtaN2k') }
+    let(:attacker) { Bitcoin::Key.from_wif('L4DksdGZ4KQJfcLHD5Dv25fu8Rxyv7hHi2RjZR4TYzr8c6h9VNrp') }
+    let(:message) { 'Hello World' }
+
+    # Sign the to_sign tx of +address+ with +key+, whichever key +address+ actually commits to.
+    # @return [Array] the simple and the full variant of the signature.
+    def forge(address, key, script_code: nil, tail: nil, redeem: nil)
+      digest = described_class.message_hash(message, legacy: false)
+      tx = described_class.to_sign_tx(digest, address)
+      spk = Bitcoin::Script.parse_from_addr(address)
+      prev_out = Bitcoin::TxOut.new(script_pubkey: spk, value: 0)
+      tx.in[0].script_sig = Bitcoin::Script.new << redeem.to_payload if redeem
+      if spk.p2tr?
+        sighash = tx.sighash_for_input(0, spk, sig_version: :taproot, prevouts: [prev_out],
+                                       hash_type: Bitcoin::SIGHASH_TYPE[:default])
+        tweaked = Bitcoin::Taproot.tweak_private_key(key, '')
+        tx.in[0].script_witness.stack << tweaked.sign(sighash, algo: :schnorr)
+      else
+        sighash = tx.sighash_for_input(0, script_code || spk, sig_version: :witness_v0,
+                                       amount: 0, prevouts: [prev_out])
+        tx.in[0].script_witness.stack << (key.sign(sighash) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C'))
+        tx.in[0].script_witness.stack << tail
+      end
+      [described_class::SIGNATURE_PREFIX_SIMPLE + Base64.strict_encode64(tx.in[0].script_witness.to_payload),
+       described_class::SIGNATURE_PREFIX_FULL + Base64.strict_encode64(tx.to_payload)]
+    end
+
+    def witness_of(sig)
+      Bitcoin::ScriptWitness.parse_from_payload(Base64.strict_decode64(sig[3..]))
+    end
+
+    it 'rejects a P2WPKH signature made by another key' do
+      addr = victim.to_p2wpkh
+      legit = forge(addr, victim, tail: victim.pubkey.htb)
+      forged = forge(addr, attacker, tail: attacker.pubkey.htb)
+      # The signature itself is valid, only hash160 of the witness key differs from the address.
+      expect(witness_of(forged.first).stack.last.bth).to eq(attacker.pubkey)
+      expect(attacker.hash160).not_to eq(victim.hash160)
+      legit.zip(forged).each do |ok, ng|
+        expect(described_class.verify_message(addr, ok, message)).to be true
+        expect(described_class.verify_message(addr, ng, message)).to be false
+      end
+    end
+
+    it 'rejects a P2SH-P2WPKH signature made by another key' do
+      # The redeem script stays the victim's so the P2SH hash still matches, and only the key
+      # in the witness is the attacker's. Simple is not defined for P2SH, so full only.
+      addr = victim.to_nested_p2wpkh
+      redeem = Bitcoin::Script.to_p2wpkh(victim.hash160)
+      legit = forge(addr, victim, script_code: redeem, tail: victim.pubkey.htb, redeem: redeem)
+      forged = forge(addr, attacker, script_code: redeem, tail: attacker.pubkey.htb, redeem: redeem)
+      expect(described_class.verify_message(addr, legit.last, message)).to be true
+      expect(described_class.verify_message(addr, forged.last, message)).to be false
+    end
+
+    it 'rejects a P2WSH signature made by another key' do
+      victim_script = Bitcoin::Script.new << victim.pubkey << Bitcoin::Opcodes::OP_CHECKSIG
+      attacker_script = Bitcoin::Script.new << attacker.pubkey << Bitcoin::Opcodes::OP_CHECKSIG
+      addr = Bitcoin::Script.to_p2wsh(victim_script).to_addr
+      legit = forge(addr, victim, script_code: victim_script, tail: victim_script.to_payload)
+      # The attacker's own witness script does not hash to the address.
+      forged = forge(addr, attacker, script_code: attacker_script, tail: attacker_script.to_payload)
+      # The victim's witness script hashes to the address but commits to the victim's key.
+      substituted = forge(addr, attacker, script_code: victim_script, tail: victim_script.to_payload)
+      legit.zip(forged, substituted).each do |ok, ng, ng2|
+        expect(described_class.verify_message(addr, ok, message)).to be true
+        expect(described_class.verify_message(addr, ng, message)).to be false
+        expect(described_class.verify_message(addr, ng2, message)).to be false
+      end
+    end
+
+    it 'rejects a P2TR signature made by another key' do
+      addr = victim.to_p2tr(as_internal: true)
+      legit = forge(addr, victim)
+      forged = forge(addr, attacker)
+      expect(witness_of(forged.first).stack.first.bytesize).to eq(64)
+      legit.zip(forged).each do |ok, ng|
+        expect(described_class.verify_message(addr, ok, message)).to be true
+        expect(described_class.verify_message(addr, ng, message)).to be false
+      end
+    end
+
+    it 'rejects a legacy signature made by another key' do
+      addr = victim.to_p2pkh
+      expect(described_class.verify_message(
+        addr, described_class.sign_message(victim, message), message)).to be true
+      expect(described_class.verify_message(
+        addr, described_class.sign_message(attacker, message), message)).to be false
+    end
+  end
+
   describe '#sign_message with a key the address does not commit to' do
     # Signing with such a key used to return a signature which verifies against no one,
     # and BIP-322 carries nothing that reports it.
