@@ -192,10 +192,17 @@ module Bitcoin
       Bitcoin::Script.to_p2wpkh(hash160).to_addr
     end
 
-    # Get pay to taproot address
+    # Get pay to taproot address.
+    # By default the x-only public key of this key becomes the output key as it is, which is
+    # what the rawtr() descriptor does. With +as_internal+ this key is the internal key P and
+    # the output key is Q = P + hash_TapTweak(P)G, which is what the tr() descriptor does and
+    # what BIP-86 defines for a single key address. Spending such an output needs the tweaked
+    # private key, see Bitcoin::Taproot.tweak_private_key.
+    # @param [Boolean] as_internal Whether to treat this key as the internal key. Default is false.
     # @return [String] address
-    def to_p2tr
-      Bitcoin::Script.to_p2tr(self).to_addr
+    def to_p2tr(as_internal: false)
+      output_key = as_internal ? Bitcoin::Taproot.tweak_public_key(self, '') : self
+      Bitcoin::Script.to_p2tr(output_key).to_addr
     end
 
     # get p2wpkh address nested in p2sh.

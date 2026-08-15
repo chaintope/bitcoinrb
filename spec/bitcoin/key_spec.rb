@@ -286,6 +286,57 @@ describe Bitcoin::Key do
     end
   end
 
+  describe '#to_p2tr', network: :mainnet do
+    context 'default' do
+      it 'uses the x-only public key as the output key, as rawtr() does' do
+        # BIP-86 account 0, first receiving address. Its internal key is not the output key.
+        internal = Bitcoin::Key.new(
+          pubkey: '02cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115')
+        expect(internal.to_p2tr).to eq(
+          Bitcoin::Script.to_p2tr(internal.xonly_pubkey).to_addr)
+        expect(internal.to_p2tr).not_to eq(
+          'bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr')
+      end
+    end
+
+    context 'as_internal' do
+      it 'tweaks with an empty merkle root, as tr() and BIP-86 do' do
+        # BIP-86 test vector, account 0.
+        # https://github.com/bitcoin/bips/blob/master/bip-0086.mediawiki#test-vectors
+        internal_key = '02cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115'
+        output_key = 'a60869f0dbcf1dc659c9cecbaf8050135ea9e8cdc487053f1dc6880949dc684c'
+        addr = 'bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr'
+        key = Bitcoin::Key.new(pubkey: internal_key)
+        expect(key.to_p2tr(as_internal: true)).to eq(addr)
+        expect(Bitcoin::Taproot.tweak_public_key(key, '').xonly_pubkey).to eq(output_key)
+      end
+
+      it 'matches the addresses of the BIP-322 test vectors' do
+        # The addresses of the BIP-322 vectors are output keys, so signing them treats the
+        # private key as the internal key. See Bitcoin::MessageSign.sign_message.
+        {
+          'KyrSGCFPhqZMjCe5fNTYddiLMp4tMj4gLKuJ26TsB2rvr1VJGPbt' =>
+            'bc1pss0zhytly75awhm6x2hhvd5lnzv3vssgrf9axfheq8ldyzn88ges79fler',
+          'L5XqN6ckPPsDiTbRxcsthwiWpDBfWLo4uquUEydsPt8rSMoTpqpc' =>
+            'bc1pcquvhrqv0q68t4m0hfq6tpn006qrskyc7yrqnp2uyrf2emg3wynsdjyk38'
+        }.each do |wif, addr|
+          key = Bitcoin::Key.from_wif(wif)
+          expect(key.to_p2tr(as_internal: true)).to eq(addr)
+          expect(key.to_p2tr).not_to eq(addr)
+        end
+      end
+
+      it 'lifts an internal key with odd y' do
+        # tweak_public_key tweaks lift_x(P), so both parities of the same x give one address.
+        even = Bitcoin::Key.new(
+          pubkey: '02cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115')
+        odd = Bitcoin::Key.new(
+          pubkey: '03cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115')
+        expect(odd.to_p2tr(as_internal: true)).to eq(even.to_p2tr(as_internal: true))
+      end
+    end
+  end
+
   describe 'key_io_valid test vector' do
     valid_json = fixture_file('key_io_valid.json')
     valid_json.each do |base58_str, payload, metadata|
