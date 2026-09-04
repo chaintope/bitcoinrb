@@ -164,4 +164,44 @@ describe Bitcoin::SLIP39 do
     end
   end
 
+  describe 'share value with leading zero byte' do
+    def build_share(value)
+      share = Bitcoin::SLIP39::Share.new
+      share.id = 1234
+      share.iteration_exp = 0
+      share.group_index = 0
+      share.group_threshold = 1
+      share.group_count = 1
+      share.member_index = 0
+      share.member_threshold = 1
+      share.value = value
+      share
+    end
+
+    def build_share_with_checksum(value)
+      share = build_share(value)
+      share.checksum = share.calculate_checksum
+      share
+    end
+
+    it 'should round trip through mnemonic words.' do
+      ['00' + '11' * 15, '0000' + '22' * 30, '00' * 15 + '01'].each do |value|
+        share = build_share_with_checksum(value)
+        recovered = Bitcoin::SLIP39::Share.from_words(share.to_words)
+        expect(recovered.value).to eq(value)
+      end
+    end
+
+    it 'should generate the same number of words as a value without a leading zero byte.' do
+      expect(build_share_with_checksum('00' + '11' * 31).to_words.size).to eq(build_share_with_checksum('ff' * 32).to_words.size)
+    end
+
+    it 'should reject a value which is not an even number of bytes.' do
+      # A 25-byte value with a leading zero byte is the case this guard exists for. The padding
+      # from_words assumes is one byte wider than the one to_words writes, so without the check the
+      # value comes back as a different 24-byte value rather than as an error.
+      expect{build_share('00' + 'ab' * 24).to_words}.to raise_error(ArgumentError, 'The length of the share value in bytes must be an even number.')
+    end
+  end
+
 end
