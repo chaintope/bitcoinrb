@@ -144,8 +144,96 @@ describe Bitcoin::SLIP39 do
     end
 
     it 'should encode the identifier with the minimum number of bytes in legacy mode.' do
-      expect(Bitcoin::SLIP39::SSS.send(:get_salt, 5, true)).to eq('7368616d697205'.htb)
-      expect(Bitcoin::SLIP39::SSS.send(:get_salt, 256, true)).to eq('7368616d69720100'.htb)
+      expect(Bitcoin::SLIP39::SSS.send(:get_salt, 5, legacy: true)).to eq('7368616d697205'.htb)
+      expect(Bitcoin::SLIP39::SSS.send(:get_salt, 256, legacy: true)).to eq('7368616d69720100'.htb)
+    end
+
+    it 'should be empty when the extendable backup flag is set.' do
+      expect(Bitcoin::SLIP39::SSS.send(:get_salt, 5, extendable: true)).to eq('')
+      expect(Bitcoin::SLIP39::SSS.send(:get_salt, 5, extendable: true, legacy: true)).to eq('')
+    end
+  end
+
+  describe 'extendable backup flag' do
+    it 'should be set by default.' do
+      groups = Bitcoin::SLIP39::SSS.setup_shares(group_threshold: 1, groups: [[2, 3]], secret: master_secret, passphrase: passphrase)
+      shares = groups.flatten
+      expect(shares.map(&:extendable?)).to all(be true)
+      recovered = shares.map{|s| Bitcoin::SLIP39::Share.from_words(s.to_words)}
+      expect(recovered.map(&:extendable?)).to all(be true)
+      expect(recovered.map(&:iteration_exp)).to all(eq 0)
+      expect(Bitcoin::SLIP39::SSS.recover_secret(recovered[0..1], passphrase: passphrase)).to eq(master_secret)
+    end
+
+    it 'should generate shares without the flag.' do
+      groups = Bitcoin::SLIP39::SSS.setup_shares(group_threshold: 1, groups: [[2, 3]], secret: master_secret, passphrase: passphrase, extendable: false)
+      shares = groups.flatten
+      expect(shares.map(&:extendable?)).to all(be false)
+      recovered = shares.map{|s| Bitcoin::SLIP39::Share.from_words(s.to_words)}
+      expect(recovered.map(&:extendable?)).to all(be false)
+      expect(Bitcoin::SLIP39::SSS.recover_secret(recovered[1..2], passphrase: passphrase)).to eq(master_secret)
+    end
+
+    it 'should not be set on a share built by hand.' do
+      expect(Bitcoin::SLIP39::Share.new.extendable?).to be false
+    end
+
+    it 'should not use the identifier in the encryption when set.' do
+      ems1 = Bitcoin::SLIP39::SSS.send(:encrypt, master_secret, passphrase, 0, 1, true)
+      ems2 = Bitcoin::SLIP39::SSS.send(:encrypt, master_secret, passphrase, 0, 2, true)
+      expect(ems1).to eq(ems2)
+      expect(Bitcoin::SLIP39::SSS.send(:encrypt, master_secret, passphrase, 0, 1, false)).not_to eq(ems1)
+      expect(Bitcoin::SLIP39::SSS.send(:encrypt, master_secret, passphrase, 0, 2, false)).not_to eq(ems1)
+    end
+
+    it 'should recover the same master secret from sets of shares with different identifiers.' do
+      set1 = Bitcoin::SLIP39::SSS.setup_shares(group_threshold: 1, groups: [[1, 1]], secret: master_secret, passphrase: passphrase).flatten
+      set2 = Bitcoin::SLIP39::SSS.setup_shares(group_threshold: 1, groups: [[2, 3]], secret: master_secret, passphrase: passphrase).flatten
+      expect(set1.first.id).not_to eq(set2.first.id)
+      expect(Bitcoin::SLIP39::SSS.recover_secret(set1, passphrase: passphrase)).to eq(master_secret)
+      expect(Bitcoin::SLIP39::SSS.recover_secret(set2[0..1], passphrase: passphrase)).to eq(master_secret)
+      # The passphrase is applied to the same encrypted master secret in both sets.
+      expect(Bitcoin::SLIP39::SSS.recover_secret(set1, passphrase: 'other')).to eq(Bitcoin::SLIP39::SSS.recover_secret(set2[1..2], passphrase: 'other'))
+    end
+
+    it 'should reject a set of shares whose flags differ.' do
+      with_flag = Bitcoin::SLIP39::SSS.setup_shares(group_threshold: 1, groups: [[2, 2]], secret: master_secret).flatten
+      without_flag = with_flag.map do |s|
+        copy = Bitcoin::SLIP39::Share.from_words(s.to_words)
+        copy.extendable = false
+        copy.checksum = copy.calculate_checksum
+        copy
+      end
+      expect{
+        Bitcoin::SLIP39::SSS.recover_secret([with_flag[0], without_flag[1]])
+      }.to raise_error(ArgumentError, 'Invalid set of shares. All shares must have the same extendable backup flag.')
+    end
+
+    it 'should use its own customization string in the checksum.' do
+      share = Bitcoin::SLIP39::SSS.setup_shares(group_threshold: 1, groups: [[1, 1]], secret: master_secret).flatten.first
+      words = share.to_words
+      expect(Bitcoin::SLIP39::Share.from_words(words).checksum).to eq(share.checksum)
+      # The same data with the flag cleared no longer matches the checksum.
+      indices = words.map{|w| Bitcoin::SLIP39::WORDS.index(w)}
+      indices[1] &= ~(1 << 4) # The flag is bit 15 of the data, which is bit 4 of the second word.
+      expect{
+        Bitcoin::SLIP39::Share.from_words(indices.map{|i| Bitcoin::SLIP39::WORDS[i]})
+      }.to raise_error(ArgumentError, 'Invalid mnemonic checksum.')
+    end
+
+    it 'should limit the iteration exponent to 4 bits.' do
+      expect{
+        Bitcoin::SLIP39::SSS.setup_shares(group_threshold: 1, groups: [[1, 1]], secret: master_secret, exp: 16)
+      }.to raise_error(ArgumentError, 'Iteration exponent(16) must be between 0 and 15.')
+      # Built by hand, since an exponent of 15 makes the encryption run 2^15 times the base iterations.
+      share = Bitcoin::SLIP39::SSS.setup_shares(group_threshold: 1, groups: [[1, 1]], secret: master_secret).flatten.first
+      share.iteration_exp = 15
+      share.checksum = share.calculate_checksum
+      recovered = Bitcoin::SLIP39::Share.from_words(share.to_words)
+      expect(recovered.iteration_exp).to eq(15)
+      expect(recovered.extendable?).to be true
+      share.iteration_exp = 16
+      expect{share.to_words}.to raise_error(ArgumentError, 'Iteration exponent(16) must be between 0 and 15.')
     end
   end
 

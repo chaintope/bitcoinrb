@@ -19,18 +19,26 @@ module Bitcoin
     RADIX = 2 ** RADIX_BITS
     # The length of the random identifier in bits.
     ID_LENGTH_BITS = 15
+    # The length of the extendable backup flag in bits.
+    EXTENDABLE_FLAG_LENGTH_BITS = 1
     # The length of the iteration exponent in bits.
-    ITERATION_EXP_LENGTH_BITS = 5
-    # The length of the random identifier and iteration exponent in words.
-    ID_EXP_LENGTH_WORDS = bits_to_words(ID_LENGTH_BITS + ITERATION_EXP_LENGTH_BITS)
+    ITERATION_EXP_LENGTH_BITS = 4
+    # The maximum iteration exponent.
+    MAX_ITERATION_EXP = (1 << ITERATION_EXP_LENGTH_BITS) - 1
+    # The length of the random identifier, extendable backup flag and iteration exponent in words.
+    ID_EXP_LENGTH_WORDS = bits_to_words(ID_LENGTH_BITS + EXTENDABLE_FLAG_LENGTH_BITS + ITERATION_EXP_LENGTH_BITS)
     # The maximum number of shares that can be created.
     MAX_SHARE_COUNT = 16
     # The length of the RS1024 checksum in words.
     CHECKSUM_LENGTH_WORDS = 3
     # The length of the digest of the shared secret in bytes.
     DIGEST_LENGTH_BYTES = 4
-    # The customization string used in the RS1024 checksum and in the PBKDF2 salt.
-    CUSTOMIZATION_STRING = 'shamir'.bytes
+    # The customization string used in the RS1024 checksum and in the PBKDF2 salt when the extendable backup flag is not set.
+    CUSTOMIZATION_STRING_ORIG = 'shamir'.bytes
+    # The customization string used in the RS1024 checksum when the extendable backup flag is set.
+    CUSTOMIZATION_STRING_EXTENDABLE = 'shamir_extendable'.bytes
+    # Deprecated alias of CUSTOMIZATION_STRING_ORIG.
+    CUSTOMIZATION_STRING = CUSTOMIZATION_STRING_ORIG
     # The length of the mnemonic in words without the share value.
     METADATA_LENGTH_WORDS = ID_EXP_LENGTH_WORDS + 2 + CHECKSUM_LENGTH_WORDS
     # The minimum allowed entropy of the master secret.

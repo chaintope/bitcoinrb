@@ -5,7 +5,8 @@ module Bitcoin
     class Share
 
       attr_accessor :id               # 15 bits, Integer
-      attr_accessor :iteration_exp    # 5 bits, Integer
+      attr_accessor :extendable       # 1 bit, Boolean. The extendable backup flag.
+      attr_accessor :iteration_exp    # 4 bits, Integer
       attr_accessor :group_index      # 4 bits, Integer
       attr_accessor :group_threshold  # 4 bits, Integer
       attr_accessor :group_count      # 4 bits, Integer
@@ -13,6 +14,24 @@ module Bitcoin
       attr_accessor :member_threshold # 4 bits, Integer
       attr_accessor :value            # 8n bits, hex string.
       attr_accessor :checksum         # 30 bits, Integer
+
+      def initialize
+        @extendable = false
+      end
+
+      # Whether the extendable backup flag is set.
+      # When it is set, the identifier is not used as the salt of the master secret encryption, so sets of shares
+      # with different identifiers can be created for the same master secret and passphrase.
+      # @return [Boolean]
+      def extendable?
+        !!extendable
+      end
+
+      # The customization string of the RS1024 checksum for this share.
+      # @return [Array[Integer]]
+      def customization_string
+        extendable? ? CUSTOMIZATION_STRING_EXTENDABLE : CUSTOMIZATION_STRING_ORIG
+      end
 
       # Recover Share from the mnemonic words
       # @param [Array{String}] words the mnemonic words
@@ -26,15 +45,19 @@ module Bitcoin
         end
 
         raise ArgumentError, 'Invalid mnemonic length.' if indices.size < MIN_MNEMONIC_LENGTH_WORDS
-        raise ArgumentError, 'Invalid mnemonic checksum.' unless verify_rs1024_checksum(indices)
-
-        padding_length = (RADIX_BITS * (indices.size - METADATA_LENGTH_WORDS)) % 16
-        raise ArgumentError, 'Invalid mnemonic length.' if padding_length > 8
         data = indices.map{|i|i.to_s(2).rjust(10, '0')}.join
 
         s = self.new
         s.id = data[0...ID_LENGTH_BITS].to_i(2)
-        s.iteration_exp = data[ID_LENGTH_BITS...(ID_LENGTH_BITS + ITERATION_EXP_LENGTH_BITS)].to_i(2)
+        # The flag selects the customization string, so it is read before the checksum is verified.
+        s.extendable = data[ID_LENGTH_BITS] == '1'
+        raise ArgumentError, 'Invalid mnemonic checksum.' unless verify_rs1024_checksum(indices, s.customization_string)
+
+        padding_length = (RADIX_BITS * (indices.size - METADATA_LENGTH_WORDS)) % 16
+        raise ArgumentError, 'Invalid mnemonic length.' if padding_length > 8
+
+        exp_start = ID_LENGTH_BITS + EXTENDABLE_FLAG_LENGTH_BITS
+        s.iteration_exp = data[exp_start...(exp_start + ITERATION_EXP_LENGTH_BITS)].to_i(2)
         s.group_index = data[20...24].to_i(2)
         s.group_threshold = data[24...28].to_i(2) + 1
         s.group_count = data[28...32].to_i(2) + 1
@@ -84,7 +107,9 @@ module Bitcoin
       # @param [Boolean] include_checksum whether include checksum when creating indices.
       # @param [Array[Integer]] the array of index
       def build_word_indices(include_checksum = true)
+        raise ArgumentError, "Iteration exponent(#{iteration_exp}) must be between 0 and #{MAX_ITERATION_EXP}." unless (0..MAX_ITERATION_EXP).cover?(iteration_exp)
         s = id.to_bits(ID_LENGTH_BITS)
+        s << (extendable? ? '1' : '0')
         s << iteration_exp.to_bits(ITERATION_EXP_LENGTH_BITS)
         s << group_index.to_bits(4)
         s << (group_threshold - 1).to_bits(4)
@@ -105,16 +130,17 @@ module Bitcoin
 
       # Verify RS1024 checksum
       # @param [Array[Integer] data the array of mnemonic word index
+      # @param [Array[Integer]] cs the customization string
       # @return [Boolean] verify result
-      def self.verify_rs1024_checksum(data)
-        rs1024_polymod(CUSTOMIZATION_STRING + data) == 1
+      def self.verify_rs1024_checksum(data, cs)
+        rs1024_polymod(cs + data) == 1
       end
 
       # Create RS1024 checksum
       # @param [Array[Integer] data the array of mnemonic word index without checksum
       # @return [Array[Integer]] the array of checksum integer
       def create_rs1024_checksum(data)
-        values = CUSTOMIZATION_STRING + data + Array.new(CHECKSUM_LENGTH_WORDS, 0)
+        values = customization_string + data + Array.new(CHECKSUM_LENGTH_WORDS, 0)
         polymod = Bitcoin::SLIP39::Share.rs1024_polymod(values) ^ 1
         CHECKSUM_LENGTH_WORDS.times.to_a.reverse.map {|i|(polymod >> (10 * i)) & 1023 }
       end
