@@ -174,11 +174,10 @@ module Bitcoin
           # StringIO#read returns nil at EOF for a positive length, which is a push whose data is missing entirely.
           s.chunks << (opcode + (packed_size || '') + buf.read(len).to_s)
         else
-          if Opcodes.defined?(opcode.ord)
-            s << opcode.ord
-          else
-            s.chunks << (opcode + buf.read) # If opcode is invalid, put all remaining data in last chunk.
-          end
+          # Every non-push byte is an opcode of its own, defined or not, like GetOp in Bitcoin Core.
+          # An undefined opcode only fails the script when it is executed, so the bytes after it
+          # still have to be parsed for OP_ELSE and OP_ENDIF in an unexecuted branch to be found.
+          s.chunks << opcode
         end
       end
       s

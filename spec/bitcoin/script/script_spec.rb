@@ -346,7 +346,10 @@ describe Bitcoin::Script do
       it 'should be parsed' do
         expect(subject.to_hex).to eq('76a914c486de584a735ec2f22da7cd9681614681f92173d83d0aa68688ac')
         expect(subject.p2pkh?).to be false
-        expect(subject.to_s).to eq('OP_DUP OP_HASH160 c486de584a735ec2f22da7cd9681614681f92173 OP_UNKNOWN [error]')
+        # 0xd8 is an undefined opcode and the bytes after it are parsed on, as GetOp does. 0x3d is a
+        # push of 61 bytes with only 5 bytes left, so it is printed as it is.
+        expect(subject.to_s).to eq('OP_DUP OP_HASH160 c486de584a735ec2f22da7cd9681614681f92173 OP_UNKNOWN [error] 3d0aa68688ac')
+        expect(subject.chunks.map(&:bth)).to eq(%w[76 a9 14c486de584a735ec2f22da7cd9681614681f92173 d8 3d0aa68688ac])
         # no push data
         s = Bitcoin::Script.parse_from_payload('614c'.htb) # OP_NOP OP_PUSHDATA1
         expect(s.to_hex).to eq('614c')
@@ -375,6 +378,14 @@ describe Bitcoin::Script do
         # A push following other opcodes in the same payload keeps its data.
         s = Bitcoin::Script.parse_from_payload('00000151'.htb)
         expect(s.chunks.map(&:bth)).to eq(['00', '00', '0151'])
+      end
+
+      it 'should parse the bytes after an undefined opcode as opcodes' do
+        # OP_0 OP_IF 0xbb OP_ENDIF OP_1. The undefined 0xbb is never executed, so Bitcoin Core accepts
+        # this script. The bytes after it used to be swallowed into one chunk, which hid the OP_ENDIF.
+        s = Bitcoin::Script.parse_from_payload('0063bb6851'.htb)
+        expect(s.chunks.map(&:bth)).to eq(%w[00 63 bb 68 51])
+        expect(s.to_payload.bth).to eq('0063bb6851')
       end
     end
   end

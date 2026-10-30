@@ -112,6 +112,14 @@ describe Bitcoin::ScriptInterpreter, use_secp256k1: true do
       end
     end
 
+    it 'should accept an undefined opcode in a branch which is not executed' do
+      # OP_0 OP_IF 0xbb OP_ENDIF OP_1, as a bare script and wrapped in P2SH.
+      script = raw('0063bb6851')
+      expect(verify(Bitcoin::Script.new, script, flags)).to eq([true, Bitcoin::SCRIPT_ERR_OK])
+      expect(verify(Bitcoin::Script.new << script.to_hex, script.to_p2sh, flags)).to eq([true, Bitcoin::SCRIPT_ERR_OK])
+      # Executed, it fails.
+      expect(verify(Bitcoin::Script.new, raw('bb51'), Bitcoin::SCRIPT_VERIFY_NONE)).to eq([false, Bitcoin::SCRIPT_ERR_BAD_OPCODE])
+    end
   end
 
   describe '#eval' do
