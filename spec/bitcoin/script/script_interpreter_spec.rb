@@ -61,6 +61,44 @@ describe Bitcoin::ScriptInterpreter, use_secp256k1: true do
     end
   end
 
+  describe '#verify_script' do
+
+    def verify(script_sig, script_pubkey, flags, witness: Bitcoin::ScriptWitness.new, amount: 0)
+      credit_tx = build_credit_tx(script_pubkey, amount)
+      tx = build_spending_tx(script_sig, credit_tx, witness, amount)
+      checker = Bitcoin::TxChecker.new(tx: tx, input_index: 0, amount: amount, prevouts: credit_tx.out)
+      i = Bitcoin::ScriptInterpreter.new(flags: flags, checker: checker)
+      [i.verify_script(script_sig, script_pubkey, witness), i.error&.code]
+    end
+
+    def raw(hex)
+      Bitcoin::Script.parse_from_payload(hex.htb)
+    end
+
+    let(:flags) { Bitcoin::SCRIPT_VERIFY_P2SH | Bitcoin::SCRIPT_VERIFY_WITNESS | Bitcoin::SCRIPT_VERIFY_CLEANSTACK }
+
+    it 'should treat a zero left by a P2SH redeem script or a P2WSH witness script as false' do
+      # The stack holds hex strings, and the final check of a redeem script and of a witness script
+      # used to inspect the hex characters, so any encoding of zero other than the empty vector passed.
+      ['0100', '0180', '020000'].each do |push_zero|
+        redeem = raw(push_zero)
+        expect(verify(Bitcoin::Script.new << redeem.to_hex, redeem.to_p2sh, flags)).to eq([false, Bitcoin::SCRIPT_ERR_EVAL_FALSE])
+        witness = Bitcoin::ScriptWitness.new([redeem.to_payload])
+        expect(verify(Bitcoin::Script.new, Bitcoin::Script.to_p2wsh(redeem), flags, witness: witness)).to eq([false, Bitcoin::SCRIPT_ERR_EVAL_FALSE])
+      end
+      one = raw('51')
+      expect(verify(Bitcoin::Script.new << one.to_hex, one.to_p2sh, flags)).to eq([true, Bitcoin::SCRIPT_ERR_OK])
+    end
+
+    it 'should not duplicate a zero with OP_IFDUP' do
+      # <0x00> OP_IFDUP OP_DEPTH OP_1 OP_EQUAL
+      expect(verify(Bitcoin::Script.new, raw('0100737451 87'.delete(' ')), Bitcoin::SCRIPT_VERIFY_NONE)).to eq([true, Bitcoin::SCRIPT_ERR_OK])
+      # <0x01> OP_IFDUP OP_DEPTH OP_2 OP_EQUAL
+      expect(verify(Bitcoin::Script.new, raw('0101737452 87'.delete(' ')), Bitcoin::SCRIPT_VERIFY_NONE)).to eq([true, Bitcoin::SCRIPT_ERR_OK])
+    end
+
+  end
+
   describe '#eval' do
     it 'should be verified.' do
       script_pubkey = Bitcoin::Script.from_string('1 OP_ADD 7 OP_EQUAL')

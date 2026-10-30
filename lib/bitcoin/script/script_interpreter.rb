@@ -67,7 +67,7 @@ module Bitcoin
         raise 'stack cannot be empty.' if stack.empty?
         redeem_script = Bitcoin::Script.parse_from_payload(stack.pop.htb)
         return false unless eval_script(redeem_script, :base)
-        return set_error(SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !cast_to_bool(stack.last)
+        return set_error(SCRIPT_ERR_EVAL_FALSE) if stack.empty? || !cast_to_bool(stack.last.htb)
 
         # P2SH witness program
         if flag?(SCRIPT_VERIFY_WITNESS) && redeem_script.witness_program?
@@ -182,7 +182,7 @@ module Bitcoin
       return false unless eval_script(script_pubkey, sig_version, opts: opts)
 
       return set_error(SCRIPT_ERR_CLEANSTACK) unless stack.size == 1
-      return set_error(SCRIPT_ERR_EVAL_FALSE) unless cast_to_bool(stack.last)
+      return set_error(SCRIPT_ERR_EVAL_FALSE) unless cast_to_bool(stack.last.htb)
       true
     end
 
@@ -324,7 +324,7 @@ module Bitcoin
                   3.times { stack << stack[-3] }
                 when OP_IFDUP
                   return set_error(SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
-                  stack << stack.last if cast_to_bool(stack.last)
+                  stack << stack.last if cast_to_bool(stack.last.htb)
                 when OP_RIPEMD160
                   return set_error(SCRIPT_ERR_INVALID_STACK_OPERATION) if stack.size < 1
                   stack << Digest::RMD160.hexdigest(pop_string.htb)
