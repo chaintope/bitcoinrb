@@ -29,9 +29,9 @@ module Bitcoin
                 script.chunks << data
               end
             else
-              until buf.eof?
-                script.chunks << buf.read(1)
-              end
+              # Raw bytes are inserted as they are, like Bitcoin Core's ParseScript. A push opcode
+              # which follows other opcodes in the same token has to keep its data with it.
+              script.chunks.concat(Bitcoin::Script.parse_from_payload(data).chunks)
             end
           elsif w.size >= 2 && w.start_with?("'") && w.end_with?("'")
             script << w[1..-2].bth
