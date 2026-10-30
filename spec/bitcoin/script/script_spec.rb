@@ -352,6 +352,30 @@ describe Bitcoin::Script do
         expect(s.to_hex).to eq('614c')
         expect(s.to_s).to eq('OP_NOP 4c')
       end
+
+      it 'should keep a push cut short in the length field or the data as it is' do
+        # The length field is present but no data follows. The opcode used to be dropped from the chunk.
+        s = Bitcoin::Script.parse_from_payload('4c05'.htb)
+        expect(s.chunks.map(&:bth)).to eq(['4c05'])
+        expect(s.to_hex).to eq('4c05')
+        expect(s.chunks.first.valid_pushdata_length?).to be false
+        # The length field itself is cut short. This used to raise TypeError.
+        {'4d05' => '', '4e050000' => '', '4c0501' => '01'}.each do |hex, pushed|
+          s = Bitcoin::Script.parse_from_payload(hex.htb)
+          expect(s.chunks.map(&:bth)).to eq([hex])
+          expect(s.to_hex).to eq(hex)
+          expect(s.chunks.first.valid_pushdata_length?).to be false
+          expect(s.chunks.first.pushed_data.bth).to eq(pushed)
+        end
+        # A complete push keeps working.
+        s = Bitcoin::Script.parse_from_payload('4d02000102'.htb)
+        expect(s.chunks.map(&:bth)).to eq(['4d02000102'])
+        expect(s.chunks.first.valid_pushdata_length?).to be true
+        expect(s.chunks.first.pushed_data.bth).to eq('0102')
+        # A push following other opcodes in the same payload keeps its data.
+        s = Bitcoin::Script.parse_from_payload('00000151'.htb)
+        expect(s.chunks.map(&:bth)).to eq(['00', '00', '0151'])
+      end
     end
   end
 

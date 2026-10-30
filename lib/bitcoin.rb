@@ -164,7 +164,7 @@ module Bitcoin
       when Bitcoin::Opcodes::OP_PUSHDATA4
         offset += 4
       end
-      self[offset..-1]
+      self[offset..-1] || '' # A length field cut short leaves no data.
     end
 
     def valid_pushdata_length?
@@ -185,6 +185,7 @@ module Bitcoin
             else
               opcode
             end
+      return false if len.nil? # The length field itself is cut short.
       self.bytesize == len + offset
     end
 

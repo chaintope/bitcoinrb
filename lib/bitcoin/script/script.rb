@@ -153,25 +153,26 @@ module Bitcoin
             s.chunks << opcode
             return s
           end
-          len = case pushcode
-                  when OP_PUSHDATA1
-                    packed_size = buf.read(1)
-                    packed_size.unpack1('C')
-                  when OP_PUSHDATA2
-                    packed_size = buf.read(2)
-                    packed_size.unpack1('v')
-                  when OP_PUSHDATA4
-                    packed_size = buf.read(4)
-                    packed_size.unpack1('V')
-                  else
-                    pushcode < OP_PUSHDATA1 ? pushcode : 0
-                end
-          if buf.eof?
-            s.chunks << [len].pack('C')
+          size_length, format = case pushcode
+                                  when OP_PUSHDATA1 then [1, 'C']
+                                  when OP_PUSHDATA2 then [2, 'v']
+                                  when OP_PUSHDATA4 then [4, 'V']
+                                  else [0, nil]
+                                end
+          if size_length > 0
+            packed_size = buf.read(size_length)
+            # A length field cut short. Keep the bytes as they are so that the payload round trips,
+            # and leave it to the interpreter to reject the push.
+            if packed_size.bytesize < size_length
+              s.chunks << (opcode + packed_size)
+              return s
+            end
+            len = packed_size.unpack1(format)
           else
-            chunk = (packed_size ? (opcode + packed_size) : (opcode)) + buf.read(len)
-            s.chunks << chunk
+            len = pushcode
           end
+          # StringIO#read returns nil at EOF for a positive length, which is a push whose data is missing entirely.
+          s.chunks << (opcode + (packed_size || '') + buf.read(len).to_s)
         else
           if Opcodes.defined?(opcode.ord)
             s << opcode.ord
@@ -425,8 +426,8 @@ module Bitcoin
             if v
               v
             else
-              data = c.pushed_data
-              if data
+              if c.valid_pushdata_length?
+                data = c.pushed_data
                 if data.bytesize <= 4
                   Script.decode_number(data.bth) # for scriptnum
                 else
