@@ -483,6 +483,7 @@ module Bitcoin
 
                   push_int(success ? num + 1 : num)
                 when OP_CHECKMULTISIG, OP_CHECKMULTISIGVERIFY
+                  return set_error(SCRIPT_ERR_TAPSCRIPT_CHECKMULTISIG) if sig_version == :tapscript # BIP-342
                   return set_error(SCRIPT_ERR_INVALID_STACK_OPERATION)  if stack.size < 1
                   pubkey_count = pop_int
                   unless (0..MAX_PUBKEYS_PER_MULTISIG).include?(pubkey_count)

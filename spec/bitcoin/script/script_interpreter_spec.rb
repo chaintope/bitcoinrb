@@ -97,6 +97,21 @@ describe Bitcoin::ScriptInterpreter, use_secp256k1: true do
       expect(verify(Bitcoin::Script.new, raw('0101737452 87'.delete(' ')), Bitcoin::SCRIPT_VERIFY_NONE)).to eq([true, Bitcoin::SCRIPT_ERR_OK])
     end
 
+    it 'should reject OP_CHECKMULTISIG and OP_CHECKMULTISIGVERIFY in tapscript' do
+      internal = Bitcoin::Key.from_xonly_pubkey('79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798')
+      {
+        (Bitcoin::Script.new << Bitcoin::Opcodes::OP_0 << Bitcoin::Opcodes::OP_0 << Bitcoin::Opcodes::OP_0 << Bitcoin::Opcodes::OP_CHECKMULTISIG) => [false, Bitcoin::SCRIPT_ERR_TAPSCRIPT_CHECKMULTISIG],
+        (Bitcoin::Script.new << Bitcoin::Opcodes::OP_0 << Bitcoin::Opcodes::OP_0 << Bitcoin::Opcodes::OP_0 << Bitcoin::Opcodes::OP_CHECKMULTISIGVERIFY << Bitcoin::Opcodes::OP_1) => [false, Bitcoin::SCRIPT_ERR_TAPSCRIPT_CHECKMULTISIG],
+        # Not executed, so allowed.
+        (Bitcoin::Script.new << Bitcoin::Opcodes::OP_0 << Bitcoin::Opcodes::OP_IF << Bitcoin::Opcodes::OP_CHECKMULTISIG << Bitcoin::Opcodes::OP_ENDIF << Bitcoin::Opcodes::OP_1) => [true, Bitcoin::SCRIPT_ERR_OK]
+      }.each do |script, expected|
+        leaf = Bitcoin::Taproot::LeafNode.new(script)
+        builder = Bitcoin::Taproot::SimpleBuilder.new(internal.xonly_pubkey, [leaf])
+        witness = Bitcoin::ScriptWitness.new([script.to_payload, builder.control_block(leaf).to_payload])
+        expect(verify(Bitcoin::Script.new, builder.build, Bitcoin::STANDARD_SCRIPT_VERIFY_FLAGS, witness: witness, amount: 1000)).to eq(expected)
+      end
+    end
+
   end
 
   describe '#eval' do
