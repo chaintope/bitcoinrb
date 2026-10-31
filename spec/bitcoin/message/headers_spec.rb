@@ -13,6 +13,32 @@ describe Bitcoin::Message::Headers do
     end
   end
 
+  describe 'parse from payload with an unusual tx count or a bad count' do
+    let(:header1) { '00000020d74691935ea3e3a1a1b72191d9540ab6de1ac0f1ccb928b9a40b6f1c0000000059b250a16ae1bdd0d066f0bbff76722550783076372d9687550c31f565f72836cf8a5059ffff001de5baa202'.htb }
+    let(:header2) { '00000020f5e0e8a8e4374d258a3067bdaee39db29a1e9f5a29f9585136150a0d000000002c6e32d84acfe697a08d8c2071a0956927fad8ab028b8969a7c3c794dced35cec2905059ffff001db75e5200'.htb }
+
+    it 'should read the tx count as a CompactSize' do
+      # A three byte encoding of 0 after the first header used to shift the second header by two bytes.
+      headers = Bitcoin::Message::Headers.parse_from_payload("\x02".b + header1 + "\xfd\x00\x00".b + header2 + "\x00".b)
+      expect(headers.headers.length).to eq(2)
+      expect(headers.headers[1].block_hash).to eq('a11ad960c23169f8fe050840edb3526a27bc057b0c51d30f509cee5300000000')
+      expect(headers.headers[1].version).to eq(536870912)
+    end
+
+    it 'should reject more headers than Bitcoin Core allows in one message' do
+      payload = Bitcoin.pack_var_int(2001) + (header1 + "\x00".b) * 2001
+      expect { Bitcoin::Message::Headers.parse_from_payload(payload) }.to raise_error(Bitcoin::Message::Error, /header count 2001 exceeds 2000/)
+      expect(Bitcoin::Message::Headers.parse_from_payload(Bitcoin.pack_var_int(2000) + (header1 + "\x00".b) * 2000).headers.size).to eq(2000)
+    end
+
+    it 'should reject a truncated payload' do
+      expect { Bitcoin::Message::Headers.parse_from_payload(''.b) }.to raise_error(Bitcoin::Message::Error, /header count is missing/)
+      expect { Bitcoin::Message::Headers.parse_from_payload("\x01".b + header1[0, 79]) }.to raise_error(Bitcoin::Message::Error, /header is truncated/)
+      expect { Bitcoin::Message::Headers.parse_from_payload("\x01".b + header1) }.to raise_error(Bitcoin::Message::Error, /tx count is missing/)
+      expect { Bitcoin::Message::Headers.parse_from_payload("\x02".b + header1 + "\x00".b) }.to raise_error(Bitcoin::Message::Error, /header is truncated/)
+    end
+  end
+
   describe 'to_pkt' do
     subject {
       h = Bitcoin::BlockHeader.parse_from_payload('00000020d74691935ea3e3a1a1b72191d9540ab6de1ac0f1ccb928b9a40b6f1c0000000059b250a16ae1bdd0d066f0bbff76722550783076372d9687550c31f565f72836cf8a5059ffff001de5baa20200'.htb)
