@@ -313,6 +313,22 @@ describe Bitcoin::ExtKey, network: :mainnet do
     end
   end
 
+  describe '#derive with an index out of range' do
+    let(:master) { described_class.generate_master('000102030405060708090a0b0c0d0e0f') }
+
+    it 'should reject an index which does not fit the 32 bit child number' do
+      expect(master.derive(2**31 - 1, true).number).to eq(2**32 - 1)
+      expect(master.derive(2**32 - 1).hardened?).to be true
+      expect { master.derive(2**31, true) }.to raise_error(ArgumentError, 'Child index is out of range.')
+      expect { master.derive(2**32) }.to raise_error(ArgumentError, 'Child index is out of range.')
+      expect { master.derive(-1) }.to raise_error(ArgumentError, 'Child index is out of range.')
+      expect { master.derive(1.5) }.to raise_error(ArgumentError, 'Child index is out of range.')
+      expect { master.ext_pubkey.derive(2**32) }.to raise_error(ArgumentError, 'Child index is out of range.')
+      expect { master.ext_pubkey.derive(-1) }.to raise_error(ArgumentError, 'Child index is out of range.')
+      expect { master.ext_pubkey.derive(2**31) }.to raise_error(RuntimeError, 'hardened key is not support')
+    end
+  end
+
   describe '#derive' do
     context 'with low-digit private key' do
       it do

@@ -8,6 +8,11 @@ module Bitcoin
 
     attr_reader :language
 
+    # The number of words of a valid mnemonic sentence (BIP-39).
+    WORD_COUNTS = [12, 15, 18, 21, 24].freeze
+    # The number of bytes of a valid entropy (BIP-39).
+    ENTROPY_BYTES = [16, 20, 24, 28, 32].freeze
+
     def initialize(language)
       raise ArgumentError, 'specified language is not supported.' unless Mnemonic.word_lists.include?(language)
       @language = language
@@ -22,6 +27,8 @@ module Bitcoin
     # @param [Array[String]] words the array of mnemonic word.
     # @return [String] an entropy with hex format.
     def to_entropy(words)
+      # BIP-39: the entropy is 128 to 256 bits in steps of 32, which gives 12, 15, 18, 21 or 24 words.
+      raise ArgumentError, 'Invalid mnemonic length.' unless words.is_a?(Array) && WORD_COUNTS.include?(words.size)
       word_master = load_words
       mnemonic = words.map do |w|
         index = word_master.index(normalize(w).downcase)
@@ -39,6 +46,7 @@ module Bitcoin
     # @return [Array] the array of mnemonic word.
     def to_mnemonic(entropy)
       raise ArgumentError, 'entropy is empty.' if entropy.nil? || entropy.empty?
+      raise ArgumentError, 'Invalid entropy length.' unless ENTROPY_BYTES.include?(entropy.htb.bytesize)
       e = entropy.htb.unpack1('B*')
       seed = e + checksum(e)
       mnemonic_index = seed.chars.each_slice(11).map{|i|i.join.to_i(2)}

@@ -73,6 +73,26 @@ RSpec.describe Bitcoin::SilentPayment, network: :mainnet do
     end
   end
 
+  describe '#extract_public_key' do
+    let(:key) { Bitcoin::Key.generate }
+    let(:tx) { Bitcoin::Tx.new }
+
+    it 'should return nil for an input without a scriptSig or a witness' do
+      empty = Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new('00' * 32, 0))
+      expect(tx.send(:extract_public_key, Bitcoin::Script.to_p2tr(key), empty)).to be_nil
+      expect(tx.send(:extract_public_key, Bitcoin::Script.to_p2wpkh(key.hash160), empty)).to be_nil
+      expect(tx.send(:extract_public_key, Bitcoin::Script.to_p2sh('00' * 20), empty)).to be_nil
+      expect(tx.send(:extract_public_key, Bitcoin::Script.to_p2pkh(key.hash160), empty)).to be_nil
+      # A P2SH-P2WPKH input whose witness is missing.
+      redeem = Bitcoin::Script.to_p2wpkh(key.hash160)
+      nested = Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new('00' * 32, 0), script_sig: Bitcoin::Script.new << redeem.to_payload)
+      expect(tx.send(:extract_public_key, redeem.to_p2sh, nested)).to be_nil
+      # And the key is still found when the data is there.
+      nested.script_witness.stack << 'ff'.htb * 71 << key.pubkey.htb
+      expect(tx.send(:extract_public_key, redeem.to_p2sh, nested).pubkey).to eq(key.pubkey)
+    end
+  end
+
   describe 'BIP352 Test Vector' do
     context 'pure ruby' do
       it 'should run without libsecp256k1' do

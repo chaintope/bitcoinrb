@@ -325,6 +325,19 @@ describe Bitcoin::Key do
     end
   end
 
+  describe '#from_point' do
+    it 'should keep the compression it is asked for' do
+      point = Bitcoin::Key.generate.to_point
+      compressed = Bitcoin::Key.from_point(point)
+      uncompressed = Bitcoin::Key.from_point(point, compressed: false)
+      expect(compressed.compressed?).to be true
+      expect(compressed.pubkey.htb.bytesize).to eq(33)
+      expect(uncompressed.compressed?).to be false
+      expect(uncompressed.pubkey.htb.bytesize).to eq(65)
+      expect(uncompressed.to_point).to eq(point)
+    end
+  end
+
   describe '#to_addr' do
     it 'return address corresponding to key_type' do
       p2pkh = 'mmy7BEH1SUGAeSVUR22pt5hPaejo2645F1'

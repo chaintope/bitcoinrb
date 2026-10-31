@@ -95,7 +95,7 @@ module Bitcoin
     # @return [Bitcoin::Key]
     def self.from_point(point, compressed: true)
       pubkey = ECDSA::Format::PointOctetString.encode(point, compression: compressed).bth
-      Bitcoin::Key.new(pubkey: pubkey, key_type: TYPES[:compressed])
+      Bitcoin::Key.new(pubkey: pubkey, key_type: compressed ? TYPES[:compressed] : TYPES[:uncompressed])
     end
 
     # export private key with wif format

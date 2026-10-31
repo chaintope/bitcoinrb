@@ -43,6 +43,21 @@ describe Bitcoin::Mnemonic, network: :mainnet do
     end
   end
 
+  describe 'length of the sentence and the entropy' do
+    it 'should accept only 12, 15, 18, 21 or 24 words' do
+      [16, 20, 24, 28, 32].zip([12, 15, 18, 21, 24]).each do |bytes, count|
+        words = subject.to_mnemonic('00' * bytes)
+        expect(words.size).to eq(count)
+        expect(subject.to_entropy(words)).to eq('00' * bytes)
+      end
+      expect { subject.to_entropy([]) }.to raise_error(ArgumentError, 'Invalid mnemonic length.')
+      expect { subject.to_entropy(%w[abandon ability able]) }.to raise_error(ArgumentError, 'Invalid mnemonic length.')
+      expect { subject.to_entropy(subject.to_mnemonic('00' * 16)[0, 11]) }.to raise_error(ArgumentError, 'Invalid mnemonic length.')
+      expect { subject.to_mnemonic('00' * 15) }.to raise_error(ArgumentError, 'Invalid entropy length.')
+      expect { subject.to_mnemonic('00' * 33) }.to raise_error(ArgumentError, 'Invalid entropy length.')
+    end
+  end
+
   describe '#to_seed' do
     context 'lower case' do
       it 'should be generate' do

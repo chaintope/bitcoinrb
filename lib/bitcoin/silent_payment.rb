@@ -134,16 +134,19 @@ module Bitcoin
           end
         end
       elsif prevout.p2sh?
-        redeem_script = Bitcoin::Script.parse_from_payload(input.script_sig.chunks.last.pushed_data)
+        redeem_payload = input.script_sig.chunks.last&.pushed_data
+        return nil if redeem_payload.nil? # an input without a scriptSig, or whose last element is not a push
+        redeem_script = Bitcoin::Script.parse_from_payload(redeem_payload)
         if redeem_script.p2wpkh?
           pk = input.script_witness.stack.last
-          return Bitcoin::Key.new(pubkey: pk.bth) if pk.bytesize == Bitcoin::Key::COMPRESSED_PUBLIC_KEY_SIZE
+          return Bitcoin::Key.new(pubkey: pk.bth) if pk && pk.bytesize == Bitcoin::Key::COMPRESSED_PUBLIC_KEY_SIZE
         end
       elsif prevout.p2wpkh?
         pk = input.script_witness.stack.last
-        return Bitcoin::Key.new(pubkey: pk.bth) if pk.bytesize == Bitcoin::Key::COMPRESSED_PUBLIC_KEY_SIZE
+        return Bitcoin::Key.new(pubkey: pk.bth) if pk && pk.bytesize == Bitcoin::Key::COMPRESSED_PUBLIC_KEY_SIZE
       elsif prevout.p2tr?
         witness_stack = input.script_witness.stack.dup
+        return nil if witness_stack.empty?
         witness_stack.pop if witness_stack.last.bth.start_with?("50")
         if witness_stack.length > 1
           # script-path

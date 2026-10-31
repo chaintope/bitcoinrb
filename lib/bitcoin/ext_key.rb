@@ -95,6 +95,10 @@ module Bitcoin
     # @param [Boolean] harden whether hardened key or not. If true, 2^31 is added to +number+.
     # @return [Bitcoin::ExtKey] derived new key.
     def derive(number, harden = false)
+      # A child index is 31 bits plus the hardened bit. Anything else was packed with 'N' and silently
+      # wrapped, giving a key whose serialized index differs from the one it was derived with.
+      limit = harden ? Bitcoin::HARDENED_THRESHOLD : 2**32
+      raise ArgumentError, 'Child index is out of range.' unless number.is_a?(Integer) && number >= 0 && number < limit
       number += Bitcoin::HARDENED_THRESHOLD if harden
       new_key = ExtKey.new
       new_key.depth = depth + 1
@@ -273,6 +277,7 @@ module Bitcoin
 
     # derive child key
     def derive(number)
+      raise ArgumentError, 'Child index is out of range.' unless number.is_a?(Integer) && number >= 0 && number < 2**32
       new_key = ExtPubkey.new
       new_key.depth = depth + 1
       raise IndexError, 'Depth over 255.' if new_key.depth > Bitcoin::ExtKey::MAX_DEPTH
