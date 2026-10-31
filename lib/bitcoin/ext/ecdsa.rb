@@ -21,7 +21,13 @@ module ::ECDSA::Format::PointOctetString
     raise ECDSA::Format::DecodeError, 'Point octet string is empty.' if string.empty?
     if [6, 7].include?(string[0].ord)
       raise ECDSA::Format::DecodeError, 'Unrecognized start byte for point octet string: 0x%x' % string[0].ord unless allow_hybrid
-      decode_uncompressed string, group if allow_hybrid
+      point = decode_uncompressed(string, group)
+      # A hybrid encoding carries the parity of y in its first byte, 0x06 for even and 0x07 for odd, and
+      # libsecp256k1 rejects the point when the byte does not match the y it carries.
+      unless point.infinity? || (string[0].ord == 6) == point.y.even?
+        raise ECDSA::Format::DecodeError, 'Hybrid point octet string has a parity byte which does not match y.'
+      end
+      point
     else
       base_decode(string, group)
     end

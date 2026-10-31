@@ -112,6 +112,24 @@ describe Bitcoin::ScriptInterpreter, use_secp256k1: true do
       end
     end
 
+    it 'should reject a hybrid public key whose parity byte does not match y' do
+      key = Bitcoin::Key.new(priv_key: '01' * 32, key_type: Bitcoin::Key::TYPES[:uncompressed])
+      point = key.pubkey[2..] # x and y of the uncompressed key
+      prefix = key.to_point.y.even? ? ['06', '07'] : ['07', '06']
+      right = Bitcoin::Script.new << (prefix[0] + point) << Bitcoin::Opcodes::OP_CHECKSIG
+      wrong = Bitcoin::Script.new << (prefix[1] + point) << Bitcoin::Opcodes::OP_CHECKSIG
+      sign = lambda do |spk|
+        credit_tx = build_credit_tx(spk, 0)
+        tx = build_spending_tx(Bitcoin::Script.new, credit_tx, Bitcoin::ScriptWitness.new, 0)
+        Bitcoin::Script.new << (key.sign(tx.sighash_for_input(0, spk)) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C'))
+      end
+      # Without STRICTENC a hybrid key is allowed, but only with the parity byte of its y.
+      expect(verify(sign.call(right), right, Bitcoin::SCRIPT_VERIFY_NONE)).to eq([true, Bitcoin::SCRIPT_ERR_OK])
+      expect(verify(sign.call(wrong), wrong, Bitcoin::SCRIPT_VERIFY_NONE)).to eq([false, Bitcoin::SCRIPT_ERR_EVAL_FALSE])
+      # With STRICTENC no hybrid key is allowed at all.
+      expect(verify(sign.call(right), right, Bitcoin::SCRIPT_VERIFY_STRICTENC)).to eq([false, Bitcoin::SCRIPT_ERR_PUBKEYTYPE])
+    end
+
     it 'should accept an undefined opcode in a branch which is not executed' do
       # OP_0 OP_IF 0xbb OP_ENDIF OP_1, as a bare script and wrapped in P2SH.
       script = raw('0063bb6851')
