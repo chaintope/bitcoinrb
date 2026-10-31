@@ -131,8 +131,14 @@ module Bitcoin
           params[key] = value
         else
           raise ArgumentError, 'An unsupported reqparam is included.' if key.start_with?('req-')
-          # BIP-321: a key this implementation does not know may appear more than once.
-          others[key] = others.key?(key) ? Array(others[key]) + [value] : value
+          # BIP-321: a key this implementation does not know may appear more than once. The values are kept in
+          # order, and a key given without a value is kept as nil.
+          others[key] = if others.key?(key)
+                          values = others[key].is_a?(Array) ? others[key] : [others[key]]
+                          values + [value]
+                        else
+                          value
+                        end
         end
       end
       amount = params['amount'] ? parse_amount(params['amount']) : nil

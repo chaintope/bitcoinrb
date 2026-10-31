@@ -171,6 +171,10 @@ RSpec.describe Bitcoin::BIP321URI do
       uri = described_class.parse("bitcoin:#{addr}?foo=1&foo=2&bar")
       expect(uri.other_params).to eq({ 'foo' => %w[1 2], 'bar' => nil })
       expect(uri.to_s).to eq("bitcoin:#{addr}?foo=1&foo=2&bar")
+      # A key without a value stays in place however many times the key appears.
+      uri = described_class.parse("bitcoin:#{addr}?foo&foo=2&foo")
+      expect(uri.other_params).to eq({ 'foo' => [nil, '2', nil] })
+      expect(uri.to_s).to eq("bitcoin:#{addr}?foo&foo=2&foo")
       expect { described_class.parse("bitcoin:#{addr}?lightning=a&lightning=b") }.to raise_error(ArgumentError, 'lightning must not appear twice.')
     end
 
