@@ -89,6 +89,40 @@ describe Bitcoin::RPC::BitcoinCoreClient do
         expect { client.undefinedmethod }.to raise_error(NoMethodError)
       end
     end
+
+    context 'command with arguments' do
+      let!(:client) {
+        stub_request(:post, server_url).to_return(body: JSON.generate({ 'result': "getblockhash\nrpccommand" }))
+        Bitcoin::RPC::BitcoinCoreClient.new(config)
+      }
+      it 'should pass the arguments as the params array, not nested in another array' do
+        stub_request(:post, server_url).with(body: hash_including('method' => 'getblockhash', 'params' => [1])).
+          to_return(body: JSON.generate({ 'result': 'HASH' }))
+        expect(client.get_block_hash(1)).to eq('HASH')
+        expect(client.getblockhash(1)).to eq('HASH')
+        expect(client.respond_to?(:get_block_hash)).to be true
+        expect(client.respond_to?(:get_block_hush)).to be false
+      end
+    end
+  end
+
+  describe 'credentials and wallet in the request' do
+    let(:config) { super().merge(user: 'alice', password: 'p@ss/w#rd%41 x') }
+
+    it 'should send the credentials in the Authorization header, whatever characters they contain' do
+      stub_request(:post, server_url).with(basic_auth: ['alice', 'p@ss/w#rd%41 x']).to_return(body: JSON.generate({ 'result': 'OK' }))
+      expect(client.rpccommand).to eq('OK')
+      assert_requested(:post, server_url, basic_auth: ['alice', 'p@ss/w#rd%41 x'], times: 2) # help + rpccommand
+    end
+
+    context 'wallet name with characters which are not allowed in a path' do
+      let(:config) { super().merge(wallet: 'my wallet/1') }
+      let(:server_url) { "http://localhost:18332/wallet/my%20wallet%2F1" }
+      it 'should percent-encode the wallet name' do
+        stub_request(:post, server_url).to_return(body: JSON.generate({ 'result': 'OK' }))
+        expect(client.rpccommand).to eq('OK')
+      end
+    end
   end
 
 end

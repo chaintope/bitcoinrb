@@ -37,14 +37,28 @@ module Bitcoin
         end
       end
 
+      # Whether a Ruby-like method name such as get_block_hash maps to an RPC command.
+      def respond_to_missing?(name, include_private = false)
+        (name.to_s.include?('_') && respond_to?(name.to_s.delete('_').to_sym)) || super
+      end
+
       private
 
-      def server_url
-        url = "#{config[:schema]}://#{config[:user]}:#{config[:password]}@#{config[:host]}:#{config[:port]}"
+      # The URL of the RPC endpoint, without the credentials. These go in the Authorization header,
+      # so a password with characters such as '@', '/' or '#' cannot change the host or the path.
+      # @return [URI::HTTP]
+      def server_uri
+        path = '/'
         if !config[:wallet].nil? && !config[:wallet].empty?
-          url += "/wallet/#{config[:wallet]}"
+          path = "/wallet/#{percent_encode(config[:wallet])}"
         end
-        url
+        klass = config[:schema].to_s == 'https' ? URI::HTTPS : URI::HTTP
+        klass.build(host: config[:host], port: config[:port], path: path)
+      end
+
+      # Percent-encode every character of +str+ which is not unreserved in a URL path.
+      def percent_encode(str)
+        str.to_s.b.gsub(/[^A-Za-z0-9\-._~]/) { |c| format('%%%02X', c.ord) }
       end
 
       def request(command, *params)
@@ -53,11 +67,11 @@ module Bitcoin
             :params => params,
             :id => 'jsonrpc'
         }
-        uri = URI.parse(server_url)
+        uri = server_uri
         http = Net::HTTP.new(uri.hostname, uri.port)
-        http.use_ssl = uri.scheme === "https"
-        request = Net::HTTP::Post.new(uri.path.empty? ? '/' : uri.path)
-        request.basic_auth(uri.user, uri.password)
+        http.use_ssl = uri.scheme == 'https'
+        request = Net::HTTP::Post.new(uri.path)
+        request.basic_auth(config[:user].to_s, config[:password].to_s)
         request.content_type = 'application/json'
         request.body = data.to_json
         response = http.request(request)
@@ -72,8 +86,9 @@ module Bitcoin
       # Call CLI command on Ruby-like method names.
       # e.g. generate_to_address, send_to_address, get_wallet_info
       def method_missing(name, *args)
-        if name.to_s.include?('_')
-          send(name.to_s.gsub('_', '').to_sym, args)
+        command = name.to_s.delete('_').to_sym
+        if name.to_s.include?('_') && respond_to?(command)
+          send(command, *args)
         else
           super
         end
