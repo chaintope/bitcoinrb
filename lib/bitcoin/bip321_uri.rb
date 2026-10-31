@@ -87,6 +87,13 @@ module Bitcoin
         raise ArgumentError, 'An unsupported reqparam is included.' if key.downcase.start_with?('req-')
       end
       @other_params = other_params
+
+      # BIP-321: the address may be left empty only if a query parameter carries a payment instruction.
+      # label, message, pop and amount describe a payment but are not one. A key this class does not know
+      # may be a payment instruction added after it, so it counts as one.
+      unless @addr || @query_addrs.any? || @lightning || @lno || @pay || @sp || @other_params.any?
+        raise ArgumentError, 'A URI without an address must have at least one payment instruction.'
+      end
     end
 
     # The keys which hold one value. BIP-321 forbids a second label, message, pop or amount, and this

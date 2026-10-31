@@ -183,11 +183,17 @@ RSpec.describe Bitcoin::BIP321URI do
       expect { described_class.parse('bitcoin:?bc=bc1notanaddress') }.to raise_error(ArgumentError, /Invalid address/)
     end
 
-    it 'should parse a URI with neither an address nor a query' do
-      uri = described_class.parse('bitcoin:')
-      expect(uri.addresses).to be_empty
-      expect(uri.amount).to be_nil
-      expect(uri.to_s).to eq('bitcoin:')
+    it 'should require a payment instruction when the address is empty' do
+      error = 'A URI without an address must have at least one payment instruction.'
+      expect { described_class.parse('bitcoin:') }.to raise_error(ArgumentError, error)
+      expect { described_class.parse('bitcoin:?') }.to raise_error(ArgumentError, error)
+      # label, message, pop and amount describe a payment but are not payment instructions.
+      expect { described_class.parse('bitcoin:?label=a&message=b&amount=1&pop=https%3A%2F%2Fexample.com') }.to raise_error(ArgumentError, error)
+      expect { described_class.new(label: 'a') }.to raise_error(ArgumentError, error)
+      # A known instruction, an address in the query, or a key which may be an instruction this class does not know yet.
+      expect(described_class.parse('bitcoin:?lightning=lnbc1').addresses).to be_empty
+      expect(described_class.parse('bitcoin:?bc=bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4').addresses.size).to eq(1)
+      expect(described_class.parse('bitcoin:?newinstruction=abc').other_params).to eq({ 'newinstruction' => 'abc' })
     end
   end
 
