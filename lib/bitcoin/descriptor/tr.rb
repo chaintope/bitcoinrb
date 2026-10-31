@@ -55,7 +55,7 @@ module Bitcoin
           if item.is_a?(Array)
             items << parse_tree_items(item)
           elsif item.is_a?(Expression)
-            item.xonly = true
+            item.xonly = true if item.respond_to?(:xonly=)
             items << Bitcoin::Taproot::LeafNode.new(item.to_script)
           else
             raise RuntimeError, "Unsupported item #{item}"

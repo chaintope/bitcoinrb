@@ -45,4 +45,20 @@ RSpec.describe Bitcoin::Descriptor::Tr, network: :mainnet do
         to raise_error(ArgumentError, "Can only have tr() at top level.")
     end
   end
+
+  describe 'tree validation' do
+    let(:key) { 'a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd' }
+    let(:compressed) { '03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd' }
+    let(:uncompressed) { '04a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd5b8dec5235a0fa8722476c7709c02559e3aa73aa03918ba2d492eea75abea235' }
+    let(:hybrid) { '06a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd5b8dec5235a0fa8722476c7709c02559e3aa73aa03918ba2d492eea75abea235' }
+
+    it 'should keep the commas of a leaf expression inside braces' do
+      desc = "tr(#{key},{multi_a(1,#{key},#{compressed}),{pk(#{key}),sortedmulti_a(2,#{compressed},#{key})}})"
+      tr = Bitcoin::Descriptor.parse(desc)
+      expect(tr.tree[0].type).to eq(:multi_a)
+      expect(tr.tree[0].keys.size).to eq(2)
+      expect(tr.tree[1][1].type).to eq(:sortedmulti_a)
+      expect(tr.to_s).to eq(desc)
+    end
+  end
 end

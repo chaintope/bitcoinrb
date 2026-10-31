@@ -247,7 +247,14 @@ module Bitcoin
       stack = []
       current = []
       buffer = ""
+      paren_depth = 0 # Braces and commas inside a script expression, such as multi_a(1,A,B), belong to that expression.
       string.each_char do |c|
+        if paren_depth > 0 || c == '('
+          paren_depth += 1 if c == '('
+          paren_depth -= 1 if c == ')'
+          buffer << c
+          next
+        end
         case c
         when '{'
           stack << current
