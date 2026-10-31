@@ -605,6 +605,164 @@ describe Bitcoin::PSBT do
     end
   end
 
+  describe 'Bitcoin::PSBT::Input#finalize!' do
+    let(:keys) { 3.times.map { Bitcoin::Key.generate } }
+    let(:amount) { 100_000 }
+
+    # Build a PSBT which spends +script_pubkey+ with a single input.
+    def build_psbt(script_pubkey, redeem_script: nil, witness_script: nil)
+      prev = Bitcoin::Tx.new
+      prev.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new('00' * 32, 0))
+      prev.out << Bitcoin::TxOut.new(value: amount, script_pubkey: script_pubkey)
+      tx = Bitcoin::Tx.new
+      tx.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.from_txid(prev.txid, 0))
+      tx.out << Bitcoin::TxOut.new(value: amount - 1_000, script_pubkey: Bitcoin::Script.to_p2wpkh(keys[0].hash160))
+      psbt = Bitcoin::PSBT::Tx.new(tx)
+      psbt.update!(prev, redeem_script: redeem_script, witness_script: witness_script)
+      psbt
+    end
+
+    def sign(psbt, key, script_code, sig_version: :witness_v0)
+      sighash = psbt.tx.sighash_for_input(0, script_code, amount: amount, sig_version: sig_version)
+      psbt.inputs[0].add_sig(key.pubkey, key.sign(sighash) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C'))
+    end
+
+    # Serialize and parse, as a PSBT reaches the finalizer from a combiner.
+    def round_trip(psbt)
+      Bitcoin::PSBT::Tx.parse_from_payload(psbt.to_payload)
+    end
+
+    it 'should order the signatures of a multisig by the keys of the script' do
+      k1, k2 = keys[0].pubkey < keys[1].pubkey ? [keys[1], keys[0]] : [keys[0], keys[1]] # script order is the reverse of the lexicographic order
+      ws = Bitcoin::Script.to_multisig_script(2, [k1.pubkey, k2.pubkey])
+      psbt = build_psbt(Bitcoin::Script.to_p2wsh(ws), witness_script: ws)
+      sign(psbt, k2, ws)
+      sign(psbt, k1, ws)
+      psbt = round_trip(psbt)
+      expect(psbt.inputs[0].partial_sigs.keys).to eq([k2.pubkey, k1.pubkey])
+      psbt.finalize!
+      input = psbt.inputs[0]
+      expect(input.final_script_witness.stack.size).to eq(4)
+      expect(input.final_script_witness.stack.first).to eq('')
+      expect(input.final_script_witness.stack.last).to eq(ws.to_payload)
+      expect(input.final_script_sig).to be_nil
+      expect(input.witness_script).to be_nil
+      expect(input.partial_sigs).to be_empty
+      expect { psbt.extract_tx }.not_to raise_error
+    end
+
+    it 'should finalize a P2WSH input whose non_witness_utxo is also set' do
+      ws = Bitcoin::Script.to_multisig_script(1, [keys[0].pubkey, keys[1].pubkey])
+      psbt = build_psbt(Bitcoin::Script.to_p2wsh(ws), witness_script: ws)
+      expect(psbt.inputs[0].non_witness_utxo).not_to be_nil
+      expect(psbt.inputs[0].witness_utxo).not_to be_nil
+      sign(psbt, keys[1], ws)
+      psbt.finalize!
+      expect(psbt.inputs[0].final_script_sig).to be_nil
+      expect(psbt.inputs[0].final_script_witness.stack.size).to eq(3)
+      expect { psbt.extract_tx }.not_to raise_error
+    end
+
+    it 'should finalize a P2WPKH input' do
+      psbt = build_psbt(Bitcoin::Script.to_p2wpkh(keys[0].hash160))
+      sign(psbt, keys[0], Bitcoin::Script.to_p2pkh(keys[0].hash160))
+      psbt = round_trip(psbt)
+      psbt.finalize!
+      input = psbt.inputs[0]
+      expect(input.final_script_sig).to be_nil
+      expect(input.final_script_witness.stack.size).to eq(2)
+      expect(input.final_script_witness.stack.last).to eq(keys[0].pubkey.htb)
+      expect { psbt.extract_tx }.not_to raise_error
+    end
+
+    it 'should finalize a P2SH-P2WPKH input' do
+      redeem = Bitcoin::Script.to_p2wpkh(keys[0].hash160)
+      psbt = build_psbt(redeem.to_p2sh, redeem_script: redeem)
+      sign(psbt, keys[0], Bitcoin::Script.to_p2pkh(keys[0].hash160))
+      psbt.finalize!
+      input = psbt.inputs[0]
+      expect(input.final_script_sig.chunks.size).to eq(1)
+      expect(input.final_script_sig.chunks.first.pushed_data).to eq(redeem.to_payload)
+      expect(input.final_script_witness.stack.size).to eq(2)
+      expect(input.redeem_script).to be_nil
+      expect { psbt.extract_tx }.not_to raise_error
+    end
+
+    it 'should finalize a P2SH-P2WSH input with the signatures in script order' do
+      k1, k2, k3 = keys.sort_by(&:pubkey).reverse
+      ws = Bitcoin::Script.to_multisig_script(2, [k1.pubkey, k2.pubkey, k3.pubkey])
+      redeem = Bitcoin::Script.to_p2wsh(ws)
+      psbt = build_psbt(redeem.to_p2sh, redeem_script: redeem, witness_script: ws)
+      sign(psbt, k3, ws)
+      sign(psbt, k1, ws)
+      psbt = round_trip(psbt)
+      psbt.finalize!
+      expect(psbt.inputs[0].final_script_witness.stack.size).to eq(4)
+      expect { psbt.extract_tx }.not_to raise_error
+    end
+
+    it 'should finalize a P2PKH input' do
+      spk = Bitcoin::Script.to_p2pkh(keys[0].hash160)
+      psbt = build_psbt(spk)
+      sign(psbt, keys[0], spk, sig_version: :base)
+      psbt.finalize!
+      input = psbt.inputs[0]
+      expect(input.final_script_witness).to be_nil
+      expect(input.final_script_sig.chunks.size).to eq(2)
+      expect(input.final_script_sig.chunks.last.pushed_data).to eq(keys[0].pubkey.htb)
+      expect { psbt.extract_tx }.not_to raise_error
+    end
+
+    it 'should finalize a P2SH multisig input' do
+      k1, k2 = keys.sort_by(&:pubkey).reverse
+      redeem = Bitcoin::Script.to_multisig_script(2, [k1.pubkey, k2.pubkey])
+      psbt = build_psbt(redeem.to_p2sh, redeem_script: redeem)
+      sign(psbt, k2, redeem, sig_version: :base)
+      sign(psbt, k1, redeem, sig_version: :base)
+      psbt = round_trip(psbt)
+      psbt.finalize!
+      sig = psbt.inputs[0].final_script_sig
+      expect(sig.chunks.size).to eq(4)
+      expect(sig.chunks.first.opcode).to eq(Bitcoin::Opcodes::OP_0)
+      expect(sig.chunks.last.pushed_data).to eq(redeem.to_payload)
+      expect { psbt.extract_tx }.not_to raise_error
+    end
+
+    it 'should raise when there are not enough signatures' do
+      ws = Bitcoin::Script.to_multisig_script(2, [keys[0].pubkey, keys[1].pubkey])
+      psbt = build_psbt(Bitcoin::Script.to_p2wsh(ws), witness_script: ws)
+      sign(psbt, keys[0], ws)
+      expect { psbt.finalize! }.to raise_error(ArgumentError, 'Not enough signatures: 2 required, 1 present.')
+      expect(psbt.inputs[0].partial_sigs.size).to eq(1) # nothing was dropped
+    end
+
+    it 'should raise when the signature of the key is missing' do
+      psbt = build_psbt(Bitcoin::Script.to_p2wpkh(keys[0].hash160))
+      sign(psbt, keys[1], Bitcoin::Script.to_p2pkh(keys[1].hash160))
+      expect { psbt.finalize! }.to raise_error(ArgumentError, /partial signature for the key of this input is missing/)
+    end
+
+    it 'should raise for a script type it does not support instead of dropping the signatures' do
+      psbt = build_psbt(Bitcoin::Script.new << Bitcoin::Opcodes::OP_1)
+      expect { psbt.finalize! }.to raise_error(ArgumentError, /not supported/)
+    end
+
+    it 'should raise when the scriptPubKey cannot be determined' do
+      input = Bitcoin::PSBT::Input.new
+      input.add_sig(keys[0].pubkey, "\x30\x00\x01".b)
+      expect { input.finalize! }.to raise_error(ArgumentError, /cannot be determined/)
+    end
+
+    it 'should leave a finalized input as it is' do
+      psbt = build_psbt(Bitcoin::Script.to_p2wpkh(keys[0].hash160))
+      sign(psbt, keys[0], Bitcoin::Script.to_p2pkh(keys[0].hash160))
+      psbt.finalize!
+      witness = psbt.inputs[0].final_script_witness.to_payload
+      psbt.finalize!
+      expect(psbt.inputs[0].final_script_witness.to_payload).to eq(witness)
+    end
+  end
+
   describe 'Bitcoin::PSBT::Input#valid_witness_input?' do
     context 'native P2WSH' do
       it 'should be true without redeem script' do

@@ -266,34 +266,38 @@ module Bitcoin
         combined
       end
 
-      # finalize input.
-      # TODO This feature is experimental and support only multisig.
+      # Finalize this input, building the final scriptSig and witness from the partial signatures and scripts.
+      # Supported: P2PKH, P2PK, bare multisig, P2WPKH, P2WSH and P2SH wrapping any of them. Anything else,
+      # a missing script or too few signatures raises rather than producing an unspendable input.
+      # @param [Integer] prevout_index The index of the output this input spends, used to look up the scriptPubKey
+      #   in +non_witness_utxo+. Not needed when +witness_utxo+ or a redeem/witness script is present.
       # @return [Bitcoin::PSBT::Input] finalized input.
-      def finalize!
-        if non_witness_utxo
-          self.final_script_sig = Bitcoin::Script.new << Bitcoin::Opcodes::OP_0 if redeem_script.multisig?
-          partial_sigs.values.each {|sig|final_script_sig << sig}
-          final_script_sig << redeem_script.to_hex
-          self.partial_sigs = {}
-          self.hd_key_paths = {}
-          self.redeem_script = nil
-          self.sighash_type = nil
+      # @raise [ArgumentError] If the input cannot be finalized.
+      def finalize!(prevout_index = nil)
+        return self if signed?
+        script_pubkey = spent_script_pubkey(prevout_index)
+        if script_pubkey.p2sh?
+          raise ArgumentError, 'The redeem script is missing.' unless redeem_script
+          raise ArgumentError, 'The redeem script does not match the scriptPubKey.' unless redeem_script.to_p2sh == script_pubkey
+          if redeem_script.witness_program?
+            self.final_script_witness = Bitcoin::ScriptWitness.new(witness_stack(redeem_script))
+            self.final_script_sig = Bitcoin::Script.new << redeem_script.to_payload
+          else
+            self.final_script_sig = Bitcoin::Script.new
+            satisfaction(redeem_script).each { |item| final_script_sig << item }
+            final_script_sig << redeem_script.to_payload
+          end
+        elsif script_pubkey.witness_program?
+          self.final_script_witness = Bitcoin::ScriptWitness.new(witness_stack(script_pubkey))
         else
-          if redeem_script
-            self.final_script_sig = Bitcoin::Script.parse_from_payload(Bitcoin::Script.pack_pushdata(redeem_script.to_payload))
-            self.redeem_script = nil
-          end
-          if witness_script
-            self.final_script_witness = Bitcoin::ScriptWitness.new
-            final_script_witness.stack << '' if witness_script.multisig?
-            partial_sigs.values.each {|sig| final_script_witness.stack << sig}
-            final_script_witness.stack << witness_script.to_payload
-            self.witness_script = nil
-          end
-          self.sighash_type = nil
-          self.partial_sigs = {}
-          self.hd_key_paths = {}
+          self.final_script_sig = Bitcoin::Script.new
+          satisfaction(script_pubkey).each { |item| final_script_sig << item }
         end
+        self.partial_sigs = {}
+        self.hd_key_paths = {}
+        self.redeem_script = nil
+        self.witness_script = nil
+        self.sighash_type = nil
         self
       end
 
@@ -324,6 +328,63 @@ module Bitcoin
       end
 
       private
+
+      # The scriptPubKey this input spends.
+      # @param [Integer, nil] prevout_index The index of the output in +non_witness_utxo+.
+      # @return [Bitcoin::Script]
+      # @raise [ArgumentError] If it cannot be determined.
+      def spent_script_pubkey(prevout_index)
+        return witness_utxo.script_pubkey if witness_utxo
+        if non_witness_utxo && prevout_index
+          out = non_witness_utxo.out[prevout_index]
+          raise ArgumentError, "non_witness_utxo does not have output #{prevout_index}." unless out
+          return out.script_pubkey
+        end
+        # Without the utxo the scriptPubKey can still be inferred from the scripts.
+        return redeem_script.to_p2sh if redeem_script
+        return Bitcoin::Script.to_p2wsh(witness_script) if witness_script
+        raise ArgumentError, 'The scriptPubKey of this input cannot be determined. Set witness_utxo, or non_witness_utxo and pass the prevout index.'
+      end
+
+      # The witness stack satisfying the witness program +program+.
+      # @param [Bitcoin::Script] program A P2WPKH or P2WSH script.
+      # @return [Array[String]] stack items with binary format.
+      def witness_stack(program)
+        if program.p2wpkh?
+          satisfaction(program)
+        elsif program.p2wsh?
+          raise ArgumentError, 'The witness script is missing.' unless witness_script
+          raise ArgumentError, 'The witness script does not match the witness program.' unless Bitcoin::Script.to_p2wsh(witness_script) == program
+          satisfaction(witness_script) + [witness_script.to_payload]
+        else
+          raise ArgumentError, "Finalizing a witness program of this type is not supported: #{program}"
+        end
+      end
+
+      # The stack items which satisfy +script+, built from the partial signatures.
+      # @param [Bitcoin::Script] script A P2PKH, P2PK, P2WPKH or bare multisig script.
+      # @return [Array[String]] items with binary format, in the order they are pushed.
+      def satisfaction(script)
+        if script.p2pkh? || script.p2wpkh?
+          hash = (script.p2pkh? ? script.chunks[2] : script.chunks[1]).pushed_data.bth
+          pubkey, sig = partial_sigs.find { |pk, _| Bitcoin.hash160(pk) == hash }
+          raise ArgumentError, 'The partial signature for the key of this input is missing.' unless sig
+          [sig, pubkey.htb]
+        elsif script.p2pk?
+          sig = partial_sigs[script.chunks[0].pushed_data.bth]
+          raise ArgumentError, 'The partial signature for the key of this input is missing.' unless sig
+          [sig]
+        elsif script.multisig?
+          # Signatures are pushed in the order of the keys in the script, which is what OP_CHECKMULTISIG requires,
+          # and only as many as the threshold needs.
+          threshold = Bitcoin::Opcodes.opcode_to_small_int(script.chunks[0].opcode)
+          sigs = script.get_multisig_pubkeys.map { |pubkey| partial_sigs[pubkey.bth] }.compact
+          raise ArgumentError, "Not enough signatures: #{threshold} required, #{sigs.size} present." if sigs.size < threshold
+          [''] + sigs.first(threshold) # The empty item is consumed by the extra pop of OP_CHECKMULTISIG.
+        else
+          raise ArgumentError, "Finalizing a script of this type is not supported: #{script}"
+        end
+      end
 
       # Whether +a+ and +b+ are the same field value. Unlike ==, this does not raise
       # NoMethodError when only one of them is nil.

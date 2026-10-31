@@ -262,10 +262,11 @@ module Bitcoin
       end
 
       # finalize tx.
-      # TODO This feature is experimental and support only multisig.
+      # Finalize every input. See Bitcoin::PSBT::Input#finalize! for the supported script types.
       # @return [Bitcoin::PSBT::Tx] finalized PSBT.
+      # @raise [ArgumentError] If an input cannot be finalized.
       def finalize!
-        inputs.each {|input|input.finalize!}
+        inputs.each_with_index { |input, i| input.finalize!(tx.in[i].out_point.index) }
         self
       end
 
