@@ -164,6 +164,7 @@ module Bitcoin
         case algo
         when :ecdsa
           sig = ecdsa_signature_parse_der_lax(sig)
+          return false unless sig
           secp256k1_module.verify_sig(data, sig, pubkey)
         when :schnorr
           secp256k1_module.verify_sig(data, sig, xonly_pubkey, algo: :schnorr)
@@ -394,18 +395,65 @@ module Bitcoin
       MIN_PRIV_KEY_MOD_ORDER <= value && value <= MAX_PRIV_KEY_MOD_ORDER
     end
 
-    # Supported violations include negative integers, excessive padding, garbage
-    # at the end, and overly long length descriptors. This is safe to use in
-    # Bitcoin because since the activation of BIP66, signatures are verified to be
-    # strict DER before being passed to this module, and we know it supports all
-    # violations present in the blockchain before that point.
+    # Parse a DER signature the way ecdsa_signature_parse_der_lax in Bitcoin Core does, and return it
+    # as strict DER for the backend. Supported violations include negative integers, excessive padding,
+    # garbage at the end, and overly long length descriptors. This is safe to use in Bitcoin because
+    # since the activation of BIP66, signatures are verified to be strict DER before being passed to
+    # this method, and it supports all violations present in the blockchain before that point.
+    # @param [String] sig a signature with binary format, without the sighash type.
+    # @return [String, nil] the signature as strict DER, or nil when it cannot be parsed or R or S is
+    #   zero or not below the curve order, which Bitcoin Core also treats as an invalid signature.
     def ecdsa_signature_parse_der_lax(sig)
-      sig_array = sig.unpack('C*')
-      len_r = sig_array[3]
-      r = sig_array[4...(len_r+4)].pack('C*').bth
-      len_s = sig_array[len_r + 5]
-      s = sig_array[(len_r + 6)...(len_r + 6 + len_s)].pack('C*').bth
-      ECDSA::Signature.new(r.to_i(16), s.to_i(16)).to_der
+      bytes = sig.unpack('C*')
+      pos = 0
+      return nil if bytes[pos] != 0x30 # sequence tag
+      pos += 1
+      return nil if pos >= bytes.size
+      len_byte = bytes[pos] # the sequence length is skipped, however long it claims to be
+      pos += 1
+      if len_byte & 0x80 != 0
+        len_byte -= 0x80
+        return nil if len_byte > bytes.size - pos
+        pos += len_byte
+      end
+      r, pos = parse_lax_der_integer(bytes, pos)
+      return nil unless r
+      s, _ = parse_lax_der_integer(bytes, pos)
+      return nil unless s
+      order = ECDSA::Group::Secp256k1.order
+      return nil if r.zero? || s.zero? || r >= order || s >= order
+      ECDSA::Signature.new(r, s).to_der
+    end
+
+    # Parse one INTEGER of a lax DER signature starting at +pos+.
+    # @return [Array(Integer, Integer), nil] the value and the position after it, or nil.
+    def parse_lax_der_integer(bytes, pos)
+      return nil if pos >= bytes.size || bytes[pos] != 0x02 # integer tag
+      pos += 1
+      return nil if pos >= bytes.size
+      len_byte = bytes[pos]
+      pos += 1
+      if len_byte & 0x80 != 0
+        len_byte -= 0x80
+        return nil if len_byte > bytes.size - pos
+        while len_byte > 0 && bytes[pos] == 0 # leading zeros of the length
+          pos += 1
+          len_byte -= 1
+        end
+        return nil if len_byte >= 4
+        len = 0
+        len_byte.times do
+          len = (len << 8) + bytes[pos]
+          pos += 1
+        end
+      else
+        len = len_byte
+      end
+      return nil if len > bytes.size - pos
+      # Read as an unsigned number: a leading 0x80 bit, which strict DER would call negative, and
+      # leading zero padding are both accepted.
+      value = len.zero? ? 0 : bytes[pos, len].pack('C*').unpack1('H*').to_i(16)
+      [value, pos + len]
     end
 
     def valid_pubkey?

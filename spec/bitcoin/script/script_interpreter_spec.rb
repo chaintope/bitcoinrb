@@ -130,6 +130,22 @@ describe Bitcoin::ScriptInterpreter, use_secp256k1: true do
       expect(verify(sign.call(right), right, Bitcoin::SCRIPT_VERIFY_STRICTENC)).to eq([false, Bitcoin::SCRIPT_ERR_PUBKEYTYPE])
     end
 
+    it 'should parse a signature leniently without DERSIG but still require its structure' do
+      key = Bitcoin::Key.generate
+      spk = Bitcoin::Script.new << key.pubkey << Bitcoin::Opcodes::OP_CHECKSIG
+      credit_tx = build_credit_tx(spk, 0)
+      tx = build_spending_tx(Bitcoin::Script.new, credit_tx, Bitcoin::ScriptWitness.new, 0)
+      der = key.sign(tx.sighash_for_input(0, spk))
+      script_sig = ->(sig) { Bitcoin::Script.new << (sig + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')) }
+      long_form = "\x30\x81".b + [der.bytesize - 2].pack('C') + der[2..]
+      wrong_seq_tag = "\x31".b + der[1..]
+      wrong_int_tag = der[0, 2] + "\x03".b + der[3..]
+      expect(verify(script_sig.call(long_form), spk, Bitcoin::SCRIPT_VERIFY_NONE)).to eq([true, Bitcoin::SCRIPT_ERR_OK])
+      expect(verify(script_sig.call(long_form), spk, Bitcoin::SCRIPT_VERIFY_DERSIG)).to eq([false, Bitcoin::SCRIPT_ERR_SIG_DER])
+      expect(verify(script_sig.call(wrong_seq_tag), spk, Bitcoin::SCRIPT_VERIFY_NONE)).to eq([false, Bitcoin::SCRIPT_ERR_EVAL_FALSE])
+      expect(verify(script_sig.call(wrong_int_tag), spk, Bitcoin::SCRIPT_VERIFY_NONE)).to eq([false, Bitcoin::SCRIPT_ERR_EVAL_FALSE])
+    end
+
     it 'should accept an undefined opcode in a branch which is not executed' do
       # OP_0 OP_IF 0xbb OP_ENDIF OP_1, as a bare script and wrapped in P2SH.
       script = raw('0063bb6851')

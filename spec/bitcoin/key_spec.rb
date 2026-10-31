@@ -147,8 +147,76 @@ describe Bitcoin::Key do
         key
       }
       it 'should not report it as an invalid signature' do
-        expect { subject.verify('00' * 70, '00' * 32) }.to raise_error(Interrupt)
+        # The signature has to parse, since a signature which does not is rejected before the backend runs.
+        digest = Bitcoin.sha256('message')
+        expect { subject.verify(subject.sign(digest), digest) }.to raise_error(Interrupt)
       end
+    end
+  end
+
+  describe '#verify with a lax DER signature' do
+    # Signatures without DERSIG are parsed like ecdsa_signature_parse_der_lax in Bitcoin Core.
+    let(:key) { Bitcoin::Key.generate }
+    let(:digest) { Bitcoin.sha256('lax der') }
+    let(:sig) { key.sign(digest) }
+    let(:r) { ECDSA::Format::SignatureDerString.decode(sig).r }
+    let(:s) { ECDSA::Format::SignatureDerString.decode(sig).s }
+
+    # Minimal big-endian bytes of +value+, as strict DER would encode them (with a 0x00 pad when the high bit is set).
+    def int_bytes(value)
+      bytes = value.to_s(16).then { |h| h.length.odd? ? '0' + h : h }.htb
+      bytes.getbyte(0) >= 0x80 ? "\x00".b + bytes : bytes
+    end
+
+    def der(r_bytes, s_bytes, seq_len: nil, r_tag: 0x02, seq_tag: 0x30)
+      body = [r_tag, r_bytes.bytesize].pack('C*') + r_bytes + [0x02, s_bytes.bytesize].pack('C*') + s_bytes
+      [seq_tag, seq_len || body.bytesize].pack('C*') + body
+    end
+
+    it 'should verify the strict encoding' do
+      expect(key.verify(der(int_bytes(r), int_bytes(s)), digest)).to be true
+    end
+
+    it 'should accept a long form length for the sequence and for an integer' do
+      body = der(int_bytes(r), int_bytes(s))[2..]
+      expect(key.verify("\x30\x81".b + [body.bytesize].pack('C') + body, digest)).to be true
+      expect(key.verify("\x30\x82".b + [body.bytesize].pack('n') + body, digest)).to be true
+      # 0x80 alone: a length with no bytes, which Bitcoin Core treats as "skip nothing".
+      expect(key.verify("\x30\x80".b + body, digest)).to be true
+      r_bytes, s_bytes = int_bytes(r), int_bytes(s)
+      long_r = "\x30".b + [body.bytesize + 1].pack('C') + "\x02\x81".b + [r_bytes.bytesize].pack('C') + r_bytes + "\x02".b + [s_bytes.bytesize].pack('C') + s_bytes
+      expect(key.verify(long_r, digest)).to be true
+    end
+
+    it 'should ignore the sequence length, excessive padding and trailing garbage' do
+      expect(key.verify(der(int_bytes(r), int_bytes(s), seq_len: 0x7f), digest)).to be true
+      expect(key.verify(der("\x00\x00".b + int_bytes(r), "\x00".b + int_bytes(s)), digest)).to be true
+      expect(key.verify(der(int_bytes(r), int_bytes(s)) + "\xde\xad\xbe\xef".b, digest)).to be true
+    end
+
+    it 'should read an integer with its high bit set as unsigned' do
+      # Strip the 0x00 pad of a value whose high bit is set, which strict DER calls a negative number.
+      # About half of all signatures have such an R, so sign until one turns up.
+      100.times do |i|
+        k = Bitcoin::Key.generate
+        sig = ECDSA::Format::SignatureDerString.decode(k.sign(digest))
+        r_bytes, s_bytes = int_bytes(sig.r), int_bytes(sig.s)
+        next unless r_bytes.getbyte(0) == 0
+        expect(k.verify(der(r_bytes[1..], s_bytes), digest)).to be true
+        break
+      end
+    end
+
+    it 'should reject a wrong tag, a truncated signature and an out of range integer' do
+      expect(key.verify(der(int_bytes(r), int_bytes(s), seq_tag: 0x31), digest)).to be false
+      expect(key.verify(der(int_bytes(r), int_bytes(s), r_tag: 0x03), digest)).to be false
+      expect(key.verify(der(int_bytes(r), int_bytes(s))[0..-2], digest)).to be false
+      expect(key.verify("\x30\x81".b, digest)).to be false
+      expect(key.verify('', digest)).to be false
+      order = ECDSA::Group::Secp256k1.order
+      expect(key.verify(der(int_bytes(r + order), int_bytes(s)), digest)).to be false
+      expect(key.verify(der(int_bytes(r), int_bytes(0)), digest)).to be false
+      expect(key.verify(der(int_bytes(r), "\xff".b * 33), digest)).to be false
     end
   end
 
