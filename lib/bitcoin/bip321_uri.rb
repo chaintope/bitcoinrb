@@ -1,5 +1,6 @@
 require 'uri'
 require 'cgi'
+require 'bigdecimal'
 
 module Bitcoin
   # BIP-321 URI

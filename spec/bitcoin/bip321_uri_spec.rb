@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'open3'
 
 RSpec.describe Bitcoin::BIP321URI do
 
@@ -123,6 +124,17 @@ RSpec.describe Bitcoin::BIP321URI do
 
       # Invalid sp address
       expect{described_class.parse('bitcoin:?sp=sp1qsilentpayment')}.to raise_error(ArgumentError, /Invalid sp address specified./)
+    end
+  end
+
+  describe 'amount parsing in a process which loads nothing but this gem' do
+    it 'should parse an amount with only require "bitcoin"' do
+      # bigdecimal is a bundled gem since Ruby 3.4 and is not loaded by the interpreter on its own. In the test
+      # suite other gems load it, so the check has to run in a fresh process.
+      script = 'require "bitcoin"; puts Bitcoin::BIP321URI.parse("bitcoin:1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2?amount=1.5").satoshi'
+      out, err, status = Open3.capture3(RbConfig.ruby, '-I', File.expand_path('../../lib', __dir__), '-e', script)
+      expect(status.success?).to be(true), err
+      expect(out.strip).to eq('150000000')
     end
   end
 
