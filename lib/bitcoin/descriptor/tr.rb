@@ -65,14 +65,40 @@ module Bitcoin
       end
 
       def validate_tree!(tree)
-        return if tree.nil? || tree.is_a?(Expression)
-        if tree.is_a?(Array)
+        return if tree.nil?
+        if tree.is_a?(Expression)
+          validate_leaf!(tree)
+        elsif tree.is_a?(Array)
           tree.each do |item|
             validate_tree!(item)
           end
         else
           raise ArgumentError, "tree must be a expression or array of expression."
         end
+      end
+
+      # Check that +leaf+ can be a tapscript leaf. Bitcoin Core allows pk(), multi_a(), sortedmulti_a() and
+      # miniscript inside tr(); miniscript is not supported here. Any other expression, such as a wrapper
+      # which produces a scriptPubKey, would end up as a tapleaf nobody can spend.
+      # @param [Bitcoin::Descriptor::Expression] leaf
+      # @raise [ArgumentError]
+      def validate_leaf!(leaf)
+        message = case leaf.type
+                  when :pk, :multi_a, :sortedmulti_a then nil
+                  when :multi, :sortedmulti then 'Can only have multi/sortedmulti at top level, in sh(), or in wsh().'
+                  when :wpkh then 'Can only have wpkh() at top level or inside sh().'
+                  when :sh then 'Can only have sh() at top level.'
+                  when :wsh then 'Can only have wsh() at top level or inside sh().'
+                  when :addr then 'Can only have addr() at top level.'
+                  when :combo then 'Can only have combo() at top level.'
+                  when :raw then 'Can only have raw() at top level.'
+                  when :tr then 'Can only have tr() at top level.'
+                  when :rawtr then 'Can only have rawtr() at top level.'
+                  else "#{leaf.type}() is not allowed in a tr() tree."
+                  end
+        raise ArgumentError, message if message
+        keys = leaf.is_a?(KeyExpression) ? [leaf.extracted_key] : leaf.keys.map { |k| leaf.extract_pubkey(k) }
+        raise ArgumentError, "Uncompressed key are not allowed." unless keys.all?(&:compressed?)
       end
 
       def tree_string(tree)

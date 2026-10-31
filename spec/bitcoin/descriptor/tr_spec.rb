@@ -52,6 +52,40 @@ RSpec.describe Bitcoin::Descriptor::Tr, network: :mainnet do
     let(:uncompressed) { '04a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd5b8dec5235a0fa8722476c7709c02559e3aa73aa03918ba2d492eea75abea235' }
     let(:hybrid) { '06a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd5b8dec5235a0fa8722476c7709c02559e3aa73aa03918ba2d492eea75abea235' }
 
+    it 'should accept pk(), multi_a() and sortedmulti_a() as leaves' do
+      expect(Bitcoin::Descriptor.parse("tr(#{key},pk(#{compressed}))").to_hex).to be_a(String)
+      expect(Bitcoin::Descriptor.parse("tr(#{key},multi_a(1,#{key},#{compressed}))").to_hex).to be_a(String)
+      expect(Bitcoin::Descriptor.parse("tr(#{key},{pk(#{key}),sortedmulti_a(1,#{key},#{compressed})})").to_hex).to be_a(String)
+    end
+
+    it 'should reject an expression which is not a tapscript leaf' do
+      {
+        "multi(1,#{compressed})" => 'Can only have multi/sortedmulti at top level, in sh(), or in wsh().',
+        "sortedmulti(1,#{compressed})" => 'Can only have multi/sortedmulti at top level, in sh(), or in wsh().',
+        "wpkh(#{compressed})" => 'Can only have wpkh() at top level or inside sh().',
+        "sh(pk(#{compressed}))" => 'Can only have sh() at top level.',
+        "wsh(pk(#{compressed}))" => 'Can only have wsh() at top level or inside sh().',
+        "addr(1BitcoinEaterAddressDontSendf59kuE)" => 'Can only have addr() at top level.',
+        "combo(#{compressed})" => 'Can only have combo() at top level.',
+        "raw(51)" => 'Can only have raw() at top level.',
+        "tr(#{key})" => 'Can only have tr() at top level.',
+        "rawtr(#{key})" => 'Can only have rawtr() at top level.',
+        "pkh(#{compressed})" => 'pkh() is not allowed in a tr() tree.'
+      }.each do |leaf, message|
+        expect { Bitcoin::Descriptor.parse("tr(#{key},#{leaf})") }.to raise_error(ArgumentError, message), leaf
+        expect { Bitcoin::Descriptor.parse("tr(#{key},{pk(#{key}),#{leaf}})") }.to raise_error(ArgumentError, message), leaf
+      end
+      expect { tr(key, [pk(key), wpkh(compressed)]) }.to raise_error(ArgumentError, 'Can only have wpkh() at top level or inside sh().')
+    end
+
+    it 'should reject an uncompressed or hybrid key in a leaf' do
+      expect { Bitcoin::Descriptor.parse("tr(#{key},pk(#{uncompressed}))") }.to raise_error(ArgumentError, 'Uncompressed key are not allowed.')
+      expect { Bitcoin::Descriptor.parse("tr(#{key},multi_a(1,#{key},#{uncompressed}))") }.to raise_error(ArgumentError, 'Uncompressed key are not allowed.')
+      expect { Bitcoin::Descriptor.parse("tr(#{key},{pk(#{key}),{pk(#{key}),pk(#{uncompressed})}})") }.to raise_error(ArgumentError, 'Uncompressed key are not allowed.')
+      # A hybrid key is rejected as a public key before the compression is looked at.
+      expect { Bitcoin::Descriptor.parse("tr(#{key},pk(#{hybrid}))") }.to raise_error(ArgumentError, 'Invalid public key.')
+    end
+
     it 'should keep the commas of a leaf expression inside braces' do
       desc = "tr(#{key},{multi_a(1,#{key},#{compressed}),{pk(#{key}),sortedmulti_a(2,#{compressed},#{key})}})"
       tr = Bitcoin::Descriptor.parse(desc)
