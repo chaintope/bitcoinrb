@@ -77,6 +77,8 @@ module Bitcoin
 
           version, program = redeem_script.witness_data
           return false unless verify_witness_program(witness, version, program, true)
+          # Bypass the cleanstack check at the end. The actual stack is obviously not clean for witness programs.
+          stack.resize!(1, Script.encode_number(0))
         end
       end
 

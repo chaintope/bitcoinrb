@@ -56,12 +56,14 @@ module Bitcoin
       has_witness = false
       if in_count.zero? && !non_witness
         tx.marker = 0
-        tx.flag = buf.read(1).unpack1('c')
+        tx.flag = buf.read(1).unpack1('C')
         if tx.flag.zero?
           buf.pos -= 1
         else
           in_count = Bitcoin.unpack_var_int_from_io(buf)
-          has_witness = true
+          # Bit 0 of the flag announces the witnesses. Bitcoin Core rejects any other bit after reading
+          # the inputs and outputs, see below.
+          has_witness = tx.flag & 1 == 1
         end
       end
 
@@ -78,7 +80,11 @@ module Bitcoin
         in_count.times do |i|
           tx.inputs[i].script_witness = Bitcoin::ScriptWitness.parse_from_payload(buf)
         end
+        # A tx whose witnesses are all empty is serialized without them, so this encoding has no
+        # txid-preserving reading and Bitcoin Core rejects it.
+        raise ArgumentError, 'Superfluous witness record.' unless tx.witness?
       end
+      raise ArgumentError, 'Unknown transaction optional data.' if tx.flag && (tx.flag & ~1) != 0
 
       raise ArgumentError, 'Transaction has unexpected data.' if strict &&  (buf.pos + 4) != buf.length
       tx.lock_time = buf.read(4).unpack1('V')

@@ -333,6 +333,29 @@ describe Bitcoin::Tx, use_secp256k1: true do
     end
   end
 
+  describe 'parse_from_payload with the witness marker' do
+    # version, marker, flag, one input spending 00..00:ffffffff, one output of 1 satoshi, witnesses, lock time
+    def tx_hex(flag, witness)
+      '01000000' + '00' + flag + '01' + ('00' * 32) + 'ffffffff' + '00' + 'ffffffff' + '01' + '0100000000000000' + '00' + witness + '00000000'
+    end
+
+    it 'should parse a tx with a witness' do
+      tx = Bitcoin::Tx.parse_from_payload(tx_hex('01', '0101aa').htb)
+      expect(tx.in.size).to eq(1)
+      expect(tx.in[0].script_witness.stack).to eq(['aa'.htb])
+      expect(tx.to_hex).to eq(tx_hex('01', '0101aa'))
+    end
+
+    it 'should reject a flag with a bit other than the witness bit' do
+      expect { Bitcoin::Tx.parse_from_payload(tx_hex('02', '').htb) }.to raise_error(ArgumentError, 'Unknown transaction optional data.')
+      expect { Bitcoin::Tx.parse_from_payload(tx_hex('03', '0101aa').htb) }.to raise_error(ArgumentError, 'Unknown transaction optional data.')
+    end
+
+    it 'should reject witnesses which are all empty' do
+      expect { Bitcoin::Tx.parse_from_payload(tx_hex('01', '00').htb) }.to raise_error(ArgumentError, 'Superfluous witness record.')
+    end
+  end
+
   describe 'all flags in STANDARD_SCRIPT_VERIFY_FLAGS' do
     it 'present in map_flag_names' do
       standard_flags_missing = Bitcoin::STANDARD_SCRIPT_VERIFY_FLAGS

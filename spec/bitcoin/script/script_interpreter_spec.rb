@@ -164,6 +164,15 @@ describe Bitcoin::ScriptInterpreter, use_secp256k1: true do
       expect(verify(both_empty, spk, nullfail)).to eq([true, Bitcoin::SCRIPT_ERR_OK])
     end
 
+    it 'should leave a clean stack after a P2SH-wrapped witness program of an unknown version' do
+      # A witness program of a version above 1 is anyone-can-spend, so the witness is not evaluated and
+      # the stack is reset to one element, for the bare and for the P2SH-wrapped form alike.
+      program = Bitcoin::Script.new << Bitcoin::Opcodes::OP_2 << ('11' * 20)
+      witness = Bitcoin::ScriptWitness.new(["\x01".b, "\x02".b])
+      expect(verify(Bitcoin::Script.new, program, flags, witness: witness)).to eq([true, Bitcoin::SCRIPT_ERR_OK])
+      expect(verify(Bitcoin::Script.new << program.to_hex, program.to_p2sh, flags, witness: witness)).to eq([true, Bitcoin::SCRIPT_ERR_OK])
+    end
+
     it 'should accept an undefined opcode in a branch which is not executed' do
       # OP_0 OP_IF 0xbb OP_ENDIF OP_1, as a bare script and wrapped in P2SH.
       script = raw('0063bb6851')
