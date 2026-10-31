@@ -5,6 +5,7 @@ module Bitcoin
       def initialize(key)
         raise ArgumentError, 'musig() is not allowed in wpkh().' if key.is_a?(MuSig)
         super(key)
+        validate_not_xonly!(key)
         raise ArgumentError, "Uncompressed key are not allowed." unless extract_pubkey(key).compressed?
       end
 

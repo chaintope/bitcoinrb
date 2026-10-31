@@ -18,6 +18,7 @@ module Bitcoin
       def validate!(script)
         super(script)
         raise ArgumentError, 'A function is needed within P2WSH.' unless script.is_a?(Expression)
+        raise ArgumentError, 'x-only public key is only allowed inside tr().' if script.is_a?(Pk) && script.xonly_key?
         if script.is_a?(Wpkh) || script.is_a?(Wsh)
           raise ArgumentError, "Can only have #{script.type}() at top level or inside sh()."
         end

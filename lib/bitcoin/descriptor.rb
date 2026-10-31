@@ -175,6 +175,8 @@ module Bitcoin
         combo(args_str)
       when 'multi', 'sortedmulti', 'multi_a', 'sortedmulti_a'
         args = args_str.split(',')
+        # Only a plain decimal number, as ToIntegral in Bitcoin Core: no sign, no space, no other characters.
+        raise ArgumentError, "Multisig threshold '#{args[0]}' is not valid." unless args[0] =~ /\A[0-9]+\z/
         threshold = args[0].to_i
         keys = args[1..-1]
         case exp

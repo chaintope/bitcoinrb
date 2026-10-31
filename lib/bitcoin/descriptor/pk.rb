@@ -17,7 +17,14 @@ module Bitcoin
 
       def to_hex
         raise ArgumentError, 'musig() is not allowed in top-level pk().' if musig?
+        validate_not_xonly!(key)
         super
+      end
+
+      # Whether the key is given as an x-only key, which only a tr() tree can hold.
+      # @return [Boolean]
+      def xonly_key?(k = key)
+        super(k)
       end
 
       # Convert to bitcoin script.

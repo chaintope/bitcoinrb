@@ -7,6 +7,11 @@ module Bitcoin
         :combo
       end
 
+      def initialize(key)
+        super(key)
+        validate_not_xonly!(key)
+      end
+
       def to_hex
         raise ArgumentError, 'musig() is not allowed in top-level combo().' if musig?
       end

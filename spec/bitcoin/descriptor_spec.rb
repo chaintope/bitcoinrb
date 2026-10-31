@@ -286,4 +286,58 @@ describe Bitcoin::Descriptor, network: :mainnet do
     end
   end
 
+
+  describe 'key expression rules' do
+    let(:xprv) { 'xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi' }
+    let(:xpub) { 'xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8' }
+    let(:compressed) { '03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd' }
+    let(:xonly) { 'a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd' }
+
+    it 'should accept h as the hardened marker, but not H' do
+      apostrophe = Bitcoin::Descriptor.parse("pkh(#{xprv}/0'/1)").to_hex
+      expect(Bitcoin::Descriptor.parse("pkh(#{xprv}/0h/1)").to_hex).to eq(apostrophe)
+      # Bitcoin Core accepts only ' and the lower case h.
+      expect { Bitcoin::Descriptor.parse("pkh(#{xprv}/0H/1)") }.to raise_error(ArgumentError, 'Key path value is not a valid value.')
+      expect(Bitcoin::Descriptor.parse("pkh(#{xprv}/0h/1)").to_s).to eq("pkh(#{xprv}/0h/1)")
+      expect { Bitcoin::Descriptor.parse("pkh(#{xpub}/0h)") }.to raise_error(ArgumentError, 'xpub can not derive hardened key.')
+    end
+
+    it 'should reject a hardened index of 2^31 or above' do
+      expect(Bitcoin::Descriptor.parse("pkh(#{xprv}/2147483647')").to_hex).to be_a(String)
+      expect { Bitcoin::Descriptor.parse("pkh(#{xprv}/2147483648')") }.to raise_error(ArgumentError, 'Key path value is out of range.')
+      expect { Bitcoin::Descriptor.parse("pkh(#{xprv}/2147483648h)") }.to raise_error(ArgumentError, 'Key path value is out of range.')
+    end
+
+    it 'should validate the path of a key origin' do
+      expect(Bitcoin::Descriptor.parse("pkh([deadbeef/0h/1'/2]#{compressed})").to_hex).to be_a(String)
+      expect { Bitcoin::Descriptor.parse("pkh([deadbeef/abc]#{compressed})") }.to raise_error(ArgumentError, 'Key path value is not a valid value.')
+      expect { Bitcoin::Descriptor.parse("pkh([deadbeef/0/]#{compressed})") }.to raise_error(ArgumentError, 'Key path value is not a valid value.')
+      expect { Bitcoin::Descriptor.parse("pkh([deadbeef/2147483648]#{compressed})") }.to raise_error(ArgumentError, 'Key path value is out of range.')
+      expect { Bitcoin::Descriptor.parse("pkh(#{xpub}/)") }.to raise_error(ArgumentError, 'Key path value is not a valid value.')
+    end
+
+    it 'should only allow an x-only key inside tr()' do
+      expect(Bitcoin::Descriptor.parse("tr(#{xonly})").to_hex).to be_a(String)
+      expect(Bitcoin::Descriptor.parse("rawtr(#{xonly})").to_hex).to be_a(String)
+      expect(Bitcoin::Descriptor.parse("tr(#{xonly},pk(#{xonly}))").to_hex).to be_a(String)
+      expect(Bitcoin::Descriptor.parse("tr(#{xonly},{pk(#{xonly}),multi_a(1,#{xonly},#{compressed})})").to_hex).to be_a(String)
+      message = 'x-only public key is only allowed inside tr().'
+      ["pk(#{xonly})", "pkh(#{xonly})", "wpkh(#{xonly})", "combo(#{xonly})", "sh(pk(#{xonly}))", "wsh(pk(#{xonly}))",
+       "sh(wsh(pk(#{xonly})))", "sh(pkh(#{xonly}))", "multi(1,#{xonly},#{compressed})", "sortedmulti(1,#{compressed},#{xonly})",
+       "wsh(multi(1,#{xonly}))", "pkh([deadbeef/0]#{xonly})"].each do |desc|
+        expect { Bitcoin::Descriptor.parse(desc).to_hex }.to raise_error(ArgumentError, message), desc
+      end
+      expect { pkh(xonly) }.to raise_error(ArgumentError, message)
+      expect { multi(1, xonly) }.to raise_error(ArgumentError, message)
+      expect { pk(xonly).to_hex }.to raise_error(ArgumentError, message)
+    end
+
+    it 'should only accept a plain decimal multisig threshold' do
+      expect(Bitcoin::Descriptor.parse("sh(multi(01,#{compressed}))").to_hex).to eq(Bitcoin::Descriptor.parse("sh(multi(1,#{compressed}))").to_hex)
+      ['1a', ' 1', '+1', '0x1', '1.0', ''].each do |threshold|
+        expect { Bitcoin::Descriptor.parse("multi(#{threshold},#{compressed})") }.
+          to raise_error(ArgumentError, "Multisig threshold '#{threshold}' is not valid."), threshold.inspect
+      end
+    end
+  end
 end

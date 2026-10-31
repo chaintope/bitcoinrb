@@ -20,6 +20,7 @@ module Bitcoin
       def validate!(script)
         super(script)
         raise ArgumentError, 'A function is needed within P2SH.' unless script.is_a?(Expression)
+        raise ArgumentError, 'x-only public key is only allowed inside tr().' if script.is_a?(Pk) && script.xonly_key?
         script_size = script.to_script.size
         if script_size > Bitcoin::MAX_SCRIPT_ELEMENT_SIZE
           raise ArgumentError,

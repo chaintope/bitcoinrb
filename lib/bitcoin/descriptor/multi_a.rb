@@ -19,6 +19,10 @@ module Bitcoin
 
       private
 
+      def xonly_allowed?
+        true
+      end
+
       def multisig_script(keys)
         script = Bitcoin::Script.new
         keys.each.with_index do |k, i|

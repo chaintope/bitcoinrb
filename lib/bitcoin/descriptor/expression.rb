@@ -54,16 +54,17 @@ module Bitcoin
         if key.start_with?('[') # BIP32 fingerprint
           raise ArgumentError, "Multiple ']' characters found for a single pubkey." if key.count('[') > 1 || key.count(']') > 1
           info = key[1...key.index(']')]
-          fingerprint, *paths = info.split('/')
+          fingerprint, *paths = info.split('/', -1) # keep a trailing empty element, so that a trailing '/' is rejected
           raise ArgumentError, "Fingerprint '#{fingerprint}' is not hex." unless fingerprint.valid_hex?
           raise ArgumentError, "Fingerprint '#{fingerprint}' is not 4 bytes." unless fingerprint.size == 8
+          paths.each { |path| parse_path_element(path) } # The origin path is not derived, but it has to be a path.
           key = key[(key.index(']') + 1)..-1]
         else
           raise ArgumentError, 'Invalid key origin.' if key.include?(']')
         end
 
         # check BIP32 derivation path
-        key, *paths = key.split('/')
+        key, *paths = key.split('/', -1)
 
         raise ArgumentError, "No key provided." unless key
 
@@ -97,22 +98,41 @@ module Bitcoin
       def derive_path(key, paths)
         is_private = key.is_a?(Bitcoin::ExtKey)
         paths.each do |path|
-          raise ArgumentError, 'xpub can not derive hardened key.' if !is_private && path.end_with?("'")
           raise ArgumentError, 'Key ranges are not supported.' if path.include?("*")
           raise ArgumentError, 'Key multipath are not supported.' if path.include?("<")
-          if is_private
-            hardened = path.end_with?("'")
-            path = hardened ? path[0..-2] : path
-            raise ArgumentError, 'Key path value is not a valid value.' unless path =~ /^[0-9]+$/
-            raise ArgumentError, 'Key path value is out of range.' if !hardened && path.to_i >= Bitcoin::HARDENED_THRESHOLD
-            key = key.derive(path.to_i, hardened)
-          else
-            raise ArgumentError, 'Key path value is not a valid value.' unless path =~ /^[0-9]+$/
-            raise ArgumentError, 'Key path value is out of range.' if path.to_i >= Bitcoin::HARDENED_THRESHOLD
-            key = key.derive(path.to_i)
-          end
+          index, hardened = parse_path_element(path)
+          raise ArgumentError, 'xpub can not derive hardened key.' if hardened && !is_private
+          key = is_private ? key.derive(index, hardened) : key.derive(index)
         end
         key
+      end
+
+      # Parse one element of a derivation path. A hardened index is marked with ' or h, as BIP-380 allows.
+      # @param [String] path The element, e.g. "0", "0'" or "0h".
+      # @return [Array(Integer, Boolean)] the index and whether it is hardened.
+      # @raise [ArgumentError] If it is not a number below 2^31.
+      def parse_path_element(path)
+        hardened = path.end_with?("'", 'h')
+        index = hardened ? path[0..-2] : path
+        raise ArgumentError, 'Key path value is not a valid value.' unless index =~ /\A[0-9]+\z/
+        raise ArgumentError, 'Key path value is out of range.' if index.to_i >= Bitcoin::HARDENED_THRESHOLD
+        [index.to_i, hardened]
+      end
+
+      # Whether +key+ is given as a 32 byte x-only public key. Such a key is only valid inside tr().
+      # @param [String, MuSig] key KEY string.
+      # @return [Boolean]
+      def xonly_key?(key)
+        return false unless key.is_a?(String)
+        key = key[(key.index(']') + 1)..-1] if key.include?(']')
+        key = key.split('/').first.to_s
+        key.length == 64 && key.valid_hex?
+      end
+
+      # Raise unless +key+ is usable outside tr().
+      # @raise [ArgumentError]
+      def validate_not_xonly!(key)
+        raise ArgumentError, 'x-only public key is only allowed inside tr().' if xonly_key?(key)
       end
 
       def ==(other)
