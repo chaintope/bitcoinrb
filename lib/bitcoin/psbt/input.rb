@@ -258,14 +258,15 @@ module Bitcoin
            tap_key_sig tap_internal_key tap_merkle_root].each do |name|
           combined.send("#{name}=", field.call(name))
         end
-        # Maps: the union, with this input's value kept for a key present on both sides.
+        # Maps: the union. For a key present on both sides this input's value is kept, as Bitcoin Core's
+        # combiner inserts the other map into its own.
         combined.partial_sigs = merge_partial_sigs(psbi.partial_sigs)
         %i[hd_key_paths ripemd160_preimages sha256_preimages hash160_preimages hash256_preimages
            tap_script_sigs tap_leaf_scripts tap_bip32_derivations].each do |name|
-          combined.send("#{name}=", send(name).merge(psbi.send(name)))
+          combined.send("#{name}=", psbi.send(name).merge(send(name)))
         end
         combined.proprietaries = PSBT.merge_proprietaries(proprietaries, psbi.proprietaries)
-        combined.unknowns = Hash[unknowns.merge(psbi.unknowns).sort]
+        combined.unknowns = Hash[psbi.unknowns.merge(unknowns).sort]
         combined
       end
 
@@ -338,7 +339,7 @@ module Bitcoin
       # @param [Hash] others partial signatures of the other input.
       # @return [Hash]
       def merge_partial_sigs(others)
-        sigs = partial_sigs.merge(others)
+        sigs = others.merge(partial_sigs)
         script = [redeem_script, witness_script].compact.find(&:multisig?)
         return sigs unless script
         ordered = {}

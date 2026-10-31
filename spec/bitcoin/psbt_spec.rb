@@ -604,6 +604,42 @@ describe Bitcoin::PSBT do
       end
     end
 
+    context 'a map key is present on both sides' do
+      it 'should keep the value of the receiver, as the combiner of Bitcoin Core does' do
+        key = Bitcoin::Key.generate
+        a = Bitcoin::PSBT::Input.new
+        b = Bitcoin::PSBT::Input.new
+        a.partial_sigs[key.pubkey] = "\x30\x01\x01".b
+        b.partial_sigs[key.pubkey] = "\x30\x01\x02".b
+        a.hd_key_paths[key.pubkey] = Bitcoin::PSBT::HDKeyPath.new(key.pubkey, Bitcoin::PSBT::KeyOriginInfo.new(fingerprint: '00000001', key_paths: [0]))
+        b.hd_key_paths[key.pubkey] = Bitcoin::PSBT::HDKeyPath.new(key.pubkey, Bitcoin::PSBT::KeyOriginInfo.new(fingerprint: '00000002', key_paths: [1]))
+        a.unknowns['f0'] = 'aa'
+        b.unknowns['f0'] = 'bb'
+        expect(a.merge(b).partial_sigs[key.pubkey]).to eq("\x30\x01\x01".b)
+        expect(b.merge(a).partial_sigs[key.pubkey]).to eq("\x30\x01\x02".b)
+        expect(a.merge(b).hd_key_paths[key.pubkey].info.fingerprint).to eq('00000001')
+        expect(b.merge(a).hd_key_paths[key.pubkey].info.fingerprint).to eq('00000002')
+        expect(a.merge(b).unknowns['f0']).to eq('aa')
+        expect(b.merge(a).unknowns['f0']).to eq('bb')
+        # The same for a multisig input, whose signatures are ordered by the script.
+        other = Bitcoin::Key.generate
+        a.witness_script = Bitcoin::Script.to_multisig_script(2, [other.pubkey, key.pubkey])
+        b.witness_script = a.witness_script
+        b.partial_sigs[other.pubkey] = "\x30\x01\x03".b
+        expect(a.merge(b).partial_sigs).to eq({ other.pubkey => "\x30\x01\x03".b, key.pubkey => "\x30\x01\x01".b })
+
+        o1 = Bitcoin::PSBT::Output.new
+        o2 = Bitcoin::PSBT::Output.new
+        o1.hd_key_paths[key.pubkey] = a.hd_key_paths[key.pubkey]
+        o2.hd_key_paths[key.pubkey] = b.hd_key_paths[key.pubkey]
+        o1.tap_bip32_derivations[key.xonly_pubkey] = '00000000010000000000'
+        o2.tap_bip32_derivations[key.xonly_pubkey] = '00000000020000000000'
+        expect(o1.merge(o2).hd_key_paths[key.pubkey].info.fingerprint).to eq('00000001')
+        expect(o1.merge(o2).tap_bip32_derivations[key.xonly_pubkey]).to eq('00000000010000000000')
+        expect(o2.merge(o1).tap_bip32_derivations[key.xonly_pubkey]).to eq('00000000020000000000')
+      end
+    end
+
     context 'every field' do
       let(:key) { Bitcoin::Key.generate }
       let(:tx) {

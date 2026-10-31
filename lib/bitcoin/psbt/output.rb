@@ -99,10 +99,11 @@ module Bitcoin
         %i[redeem_script witness_script tap_internal_key tap_tree].each do |name|
           combined.send("#{name}=", PSBT.merge_field(send(name), psbo.send(name), "Output's #{name}"))
         end
-        combined.hd_key_paths = hd_key_paths.merge(psbo.hd_key_paths)
-        combined.tap_bip32_derivations = tap_bip32_derivations.merge(psbo.tap_bip32_derivations)
+        # Maps: the union, with this output's value kept for a key present on both sides.
+        combined.hd_key_paths = psbo.hd_key_paths.merge(hd_key_paths)
+        combined.tap_bip32_derivations = psbo.tap_bip32_derivations.merge(tap_bip32_derivations)
         combined.proprietaries = PSBT.merge_proprietaries(proprietaries, psbo.proprietaries)
-        combined.unknowns = Hash[unknowns.merge(psbo.unknowns).sort]
+        combined.unknowns = Hash[psbo.unknowns.merge(unknowns).sort]
         combined
       end
 

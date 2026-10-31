@@ -260,7 +260,7 @@ module Bitcoin
         combined.xpubs = (xpubs + psbt.xpubs).uniq { |x| x.xpub.to_payload }
         combined.version_number = PSBT.merge_field(version_number, psbt.version_number, "Tx's version_number")
         combined.proprietaries = PSBT.merge_proprietaries(proprietaries, psbt.proprietaries)
-        combined.unknowns = Hash[unknowns.merge(psbt.unknowns).sort]
+        combined.unknowns = Hash[psbt.unknowns.merge(unknowns).sort]
         combined
       end
 
