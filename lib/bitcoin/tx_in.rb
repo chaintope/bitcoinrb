@@ -39,9 +39,9 @@ module Bitcoin
       if sig_length == 0
         i.script_sig = Bitcoin::Script.new
       else
-        i.script_sig = Script.parse_from_payload(buf.read(sig_length))
+        i.script_sig = Script.parse_from_payload(Bitcoin.read_exact(buf, sig_length))
       end
-      i.sequence = buf.read(4).unpack1('V')
+      i.sequence = Bitcoin.read_exact(buf, 4).unpack1('V')
       i
     end
 

@@ -5,14 +5,15 @@ module Bitcoin
     module HeadersParser
 
       def parse_from_payload(payload)
+        raise Bitcoin::Message::Error, 'Payload is too short.' if payload.bytesize < 4
         ver, payload = payload.unpack('Va*')
         size, payload = Bitcoin.unpack_var_int(payload)
         hashes = []
         buf = StringIO.new(payload)
         size.times do
-          hashes << buf.read(32).bth
+          hashes << Bitcoin.read_exact(buf, 32).bth
         end
-        new(ver, hashes, buf.read(32).bth)
+        new(ver, hashes, Bitcoin.read_exact(buf, 32).bth)
       end
 
       def to_payload

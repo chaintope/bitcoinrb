@@ -16,9 +16,9 @@ module Bitcoin
 
     def self.parse_from_payload(payload)
       buf = payload.is_a?(String) ? StringIO.new(payload) : payload
-      value = buf.read(8).unpack1('Q<')
+      value = Bitcoin.read_exact(buf, 8).unpack1('Q<')
       script_size = Bitcoin.unpack_var_int_from_io(buf)
-      new(value: value, script_pubkey: Script.parse_from_payload(buf.read(script_size)))
+      new(value: value, script_pubkey: Script.parse_from_payload(Bitcoin.read_exact(buf, script_size)))
     end
 
     def to_payload

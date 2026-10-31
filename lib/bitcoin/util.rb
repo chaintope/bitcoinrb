@@ -14,7 +14,19 @@ module Bitcoin
 
     def unpack_var_string(payload)
       size, payload = unpack_var_int(payload)
-      size && size > 0 ? payload.unpack("a#{size}a*") : ['', payload.to_s]
+      raise ArgumentError, 'Variable length string is truncated.' if payload.bytesize < size
+      [payload.byteslice(0, size), payload.byteslice(size..-1)]
+    end
+
+    # Read exactly +size+ bytes from +buf+.
+    # @param [StringIO] buf
+    # @param [Integer] size
+    # @return [String] the bytes read.
+    # @raise [ArgumentError] If +buf+ ends before +size+ bytes.
+    def read_exact(buf, size)
+      data = size.zero? ? ''.b : buf.read(size)
+      raise ArgumentError, 'Payload is truncated.' if data.nil? || data.bytesize != size
+      data
     end
 
     def pack_var_int(i)
@@ -32,32 +44,34 @@ module Bitcoin
     end
 
     # @return an integer for a valid payload, otherwise nil
+    # Decode a CompactSize at the head of +payload+.
+    # @return [Array(Integer, String)] the value and the rest of the payload.
+    # @raise [ArgumentError] If the encoding is truncated or not canonical.
     def unpack_var_int(payload)
-      case payload.unpack1('C')
-      when 0xfd
-        payload.unpack('xva*')
-      when 0xfe
-        payload.unpack('xVa*')
-      when 0xff
-        payload.unpack('xQ<a*')
-      else
-        payload.unpack('Ca*')
-      end
+      buf = StringIO.new(payload)
+      value = unpack_var_int_from_io(buf)
+      [value, buf.read.to_s]
     end
 
     # @return an integer for a valid payload, otherwise nil
+    # Decode a CompactSize from +buf+. As ReadCompactSize in Bitcoin Core, a value encoded with more
+    # bytes than it needs is rejected, so every value has exactly one encoding.
+    # @param [StringIO] buf
+    # @return [Integer]
+    # @raise [ArgumentError] If the encoding is truncated or not canonical.
     def unpack_var_int_from_io(buf)
-      uchar = buf.read(1)&.unpack1('C')
-      case uchar
-      when 0xfd
-        buf.read(2)&.unpack1('v')
-      when 0xfe
-        buf.read(4)&.unpack1('V')
-      when 0xff
-        buf.read(8)&.unpack1('Q<')
-      else
-        uchar
-      end
+      first = buf.read(1)
+      raise ArgumentError, 'CompactSize is truncated.' if first.nil?
+      uchar = first.unpack1('C')
+      size, format, minimum = case uchar
+                              when 0xfd then [2, 'v', 0xfd]
+                              when 0xfe then [4, 'V', 0x10000]
+                              when 0xff then [8, 'Q<', 0x100000000]
+                              else return uchar
+                              end
+      value = read_exact(buf, size).unpack1(format)
+      raise ArgumentError, 'CompactSize is not canonical.' if value < minimum
+      value
     end
 
     def pack_boolean(b)
@@ -66,6 +80,7 @@ module Bitcoin
 
     def unpack_boolean(payload)
       data, payload = payload.unpack('Ca*')
+      raise ArgumentError, 'Payload is truncated.' if data.nil?
       [(data.zero? ? false : true), payload]
     end
 

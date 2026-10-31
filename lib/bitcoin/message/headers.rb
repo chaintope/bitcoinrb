@@ -22,17 +22,13 @@ module Bitcoin
       def self.parse_from_payload(payload)
         buf = StringIO.new(payload)
         header_count = Bitcoin.unpack_var_int_from_io(buf)
-        raise Bitcoin::Message::Error, 'Invalid headers payload. header count is missing.' if header_count.nil?
         raise Bitcoin::Message::Error, "Invalid headers payload. header count #{header_count} exceeds #{MAX_HEADERS_RESULTS}." if header_count > MAX_HEADERS_RESULTS
         h = new
         header_count.times do
-          header = buf.read(80)
-          raise Bitcoin::Message::Error, 'Invalid headers payload. header is truncated.' if header.nil? || header.bytesize < 80
-          h.headers << Bitcoin::BlockHeader.parse_from_payload(header)
+          h.headers << Bitcoin::BlockHeader.parse_from_payload(Bitcoin.read_exact(buf, 80))
           # The tx count is a CompactSize, which Bitcoin Core reads and ignores since a headers message
           # carries no tx. Reading a single byte here misaligned every header behind a longer encoding.
-          tx_count = Bitcoin.unpack_var_int_from_io(buf)
-          raise Bitcoin::Message::Error, 'Invalid headers payload. tx count is missing.' if tx_count.nil?
+          Bitcoin.unpack_var_int_from_io(buf)
         end
         h
       end

@@ -31,6 +31,7 @@ module Bitcoin
       def self.parse_from_payload(payload)
         message, payload = Bitcoin.unpack_var_string(payload)
         code, payload = payload.unpack('Ca*')
+        raise Bitcoin::Message::Error, 'Reject payload is too short.' if code.nil?
         reason, payload = Bitcoin.unpack_var_string(payload)
         extra = ['tx', 'block'].include?(message) ? payload.bth : payload
         new(message, code, reason, extra)

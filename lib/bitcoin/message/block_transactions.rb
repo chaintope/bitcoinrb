@@ -15,7 +15,7 @@ module Bitcoin
 
       def self.parse_from_payload(payload)
         buf = StringIO.new(payload)
-        block_hash = buf.read(32).bth
+        block_hash = Bitcoin.read_exact(buf, 32).bth
         tx_count = Bitcoin.unpack_var_int_from_io(buf)
         txn = tx_count.times.map{Bitcoin::Tx.parse_from_payload(buf)}
         self.new(block_hash, txn)

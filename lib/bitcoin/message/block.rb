@@ -19,14 +19,10 @@ module Bitcoin
 
       def self.parse_from_payload(payload)
         buf = StringIO.new(payload)
-        header = Bitcoin::BlockHeader.parse_from_payload(buf.read(80))
-        transactions = []
-        unless buf.eof?
-          tx_count = Bitcoin.unpack_var_int_from_io(buf)
-          tx_count.times do
-            transactions << Bitcoin::Tx.parse_from_payload(buf)
-          end
-        end
+        header = Bitcoin::BlockHeader.parse_from_payload(Bitcoin.read_exact(buf, 80))
+        # A block message always carries its tx count, which may be 0 only in a block nobody can produce.
+        tx_count = Bitcoin.unpack_var_int_from_io(buf)
+        transactions = tx_count.times.map { Bitcoin::Tx.parse_from_payload(buf) }
         new(header, transactions)
       end
 

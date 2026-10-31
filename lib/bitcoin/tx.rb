@@ -50,13 +50,13 @@ module Bitcoin
     def self.parse_from_payload(payload, non_witness: false, strict: false)
       buf = payload.is_a?(String) ? StringIO.new(payload) : payload
       tx = new
-      tx.version = buf.read(4).unpack1('V')
+      tx.version = Bitcoin.read_exact(buf, 4).unpack1('V')
 
       in_count = Bitcoin.unpack_var_int_from_io(buf)
       has_witness = false
       if in_count.zero? && !non_witness
         tx.marker = 0
-        tx.flag = buf.read(1).unpack1('C')
+        tx.flag = Bitcoin.read_exact(buf, 1).unpack1('C')
         if tx.flag.zero?
           buf.pos -= 1
         else
@@ -87,7 +87,7 @@ module Bitcoin
       raise ArgumentError, 'Unknown transaction optional data.' if tx.flag && (tx.flag & ~1) != 0
 
       raise ArgumentError, 'Transaction has unexpected data.' if strict &&  (buf.pos + 4) != buf.length
-      tx.lock_time = buf.read(4).unpack1('V')
+      tx.lock_time = Bitcoin.read_exact(buf, 4).unpack1('V')
       tx
     end
 

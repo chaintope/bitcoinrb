@@ -14,7 +14,7 @@ module Bitcoin
       return self.new if buf.eof?
       size = Bitcoin.unpack_var_int_from_io(buf)
       stack = size.times.map do
-        buf.read(Bitcoin.unpack_var_int_from_io(buf))
+        Bitcoin.read_exact(buf, Bitcoin.unpack_var_int_from_io(buf))
       end
       self.new(stack)
     end

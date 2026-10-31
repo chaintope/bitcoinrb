@@ -31,11 +31,11 @@ describe Bitcoin::Message::BlockTransactionRequest do
   end
 
   it 'should reject a truncated payload' do
-    expect { described_class.parse_from_payload(block_hash.htb[0...31]) }.to raise_error(Bitcoin::Message::Error, /block hash is missing/)
-    expect { described_class.parse_from_payload(block_hash.htb) }.to raise_error(Bitcoin::Message::Error, /index count is missing/)
+    expect { described_class.parse_from_payload(block_hash.htb[0...31]) }.to raise_error(ArgumentError, 'Payload is truncated.')
+    expect { described_class.parse_from_payload(block_hash.htb) }.to raise_error(ArgumentError, 'CompactSize is truncated.')
     # Count 2 with a single one-byte index: the count check passes only when the bytes are there, so
     # make the second index a varint whose prefix is present but whose body is not.
-    expect { described_class.parse_from_payload(block_hash.htb + "\x02\x00\xfd".b) }.to raise_error(Bitcoin::Message::Error, /index is missing/)
+    expect { described_class.parse_from_payload(block_hash.htb + "\x02\x00\xfd".b) }.to raise_error(ArgumentError, 'Payload is truncated.')
   end
 
 end

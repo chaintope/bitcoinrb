@@ -12,8 +12,10 @@ describe Bitcoin::Util do
 
     it 'should unpack var string' do
       expect(util.unpack_var_string("\x04hoge").first).to eq('hoge')
+      expect(util.unpack_var_string("\x04hogefuga")).to eq(['hoge', 'fuga'])
       expect(util.unpack_var_string("\x00").first).to eq('')
-      expect(util.unpack_var_string('').first).to eq('')
+      expect { util.unpack_var_string('') }.to raise_error(ArgumentError, 'CompactSize is truncated.')
+      expect { util.unpack_var_string("\x05hoge") }.to raise_error(ArgumentError, 'Variable length string is truncated.')
     end
 
     it 'should pack var int' do
@@ -31,8 +33,19 @@ describe Bitcoin::Util do
       expect(util.unpack_var_int([0xfd, 0xff, 0xff].pack('C*')).first).to eq(65535)
       expect(util.unpack_var_int([0xfe, 0x00, 0x00, 0x01, 0x00].pack('C*')).first).to eq(65536)
       expect(util.unpack_var_int([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff].pack('C*')).first).to eq(0xffffffffffffffff)
-      expect(util.unpack_var_int([0xff].pack('C*')).first).to be_nil
-      expect(util.unpack_var_int('').first).to be_nil
+      expect(util.unpack_var_int([0xfd, 0xfd, 0x00, 0xaa].pack('C*'))).to eq([253, "\xaa".b])
+      expect { util.unpack_var_int([0xff].pack('C*')) }.to raise_error(ArgumentError, 'Payload is truncated.')
+      expect { util.unpack_var_int('') }.to raise_error(ArgumentError, 'CompactSize is truncated.')
+    end
+
+    it 'should reject a var int which is not encoded with the fewest bytes' do
+      # Every value has one canonical encoding, as ReadCompactSize in Bitcoin Core requires.
+      ["\xfd\xfc\x00", "\xfd\x00\x00", "\xfe\xff\xff\x00\x00", "\xff\xff\xff\xff\xff\x00\x00\x00\x00"].each do |hex|
+        expect { util.unpack_var_int_from_io(StringIO.new(hex.b)) }.to raise_error(ArgumentError, 'CompactSize is not canonical.'), hex.inspect
+      end
+      expect(util.unpack_var_int_from_io(StringIO.new("\xfd\xfd\x00".b))).to eq(253)
+      expect(util.unpack_var_int_from_io(StringIO.new("\xfe\x00\x00\x01\x00".b))).to eq(65536)
+      expect(util.unpack_var_int_from_io(StringIO.new("\xff\x00\x00\x00\x00\x01\x00\x00\x00".b))).to eq(2**32)
     end
 
     it 'should unpack var int from io' do
@@ -42,8 +55,15 @@ describe Bitcoin::Util do
       expect(util.unpack_var_int_from_io(StringIO.new([0xfd, 0xff, 0xff].pack('C*')))).to eq(65535)
       expect(util.unpack_var_int_from_io(StringIO.new([0xfe, 0x00, 0x00, 0x01, 0x00].pack('C*')))).to eq(65536)
       expect(util.unpack_var_int_from_io(StringIO.new([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff].pack('C*')))).to eq(0xffffffffffffffff)
-      expect(util.unpack_var_int_from_io(StringIO.new([0xff].pack('C*')))).to be_nil
-      expect(util.unpack_var_int_from_io(StringIO.new)).to be_nil
+      expect { util.unpack_var_int_from_io(StringIO.new([0xff].pack('C*'))) }.to raise_error(ArgumentError, 'Payload is truncated.')
+      expect { util.unpack_var_int_from_io(StringIO.new) }.to raise_error(ArgumentError, 'CompactSize is truncated.')
+    end
+
+    it 'should read exact bytes' do
+      expect(util.read_exact(StringIO.new("abc".b), 2)).to eq('ab')
+      expect(util.read_exact(StringIO.new("abc".b), 0)).to eq('')
+      expect { util.read_exact(StringIO.new("abc".b), 4) }.to raise_error(ArgumentError, 'Payload is truncated.')
+      expect { util.read_exact(StringIO.new(''.b), 1) }.to raise_error(ArgumentError, 'Payload is truncated.')
     end
 
     it 'should pack boolean' do

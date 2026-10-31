@@ -25,7 +25,7 @@ module Bitcoin
     # @return [Bitcoin::OutPoint]
     def self.parse_from_payload(payload)
       buf = payload.is_a?(String) ? StringIO.new(payload) : payload
-      hash, index = buf.read(36).unpack('a32V')
+      hash, index = Bitcoin.read_exact(buf, 36).unpack('a32V')
       OutPoint.new(hash.bth, index)
     end
 

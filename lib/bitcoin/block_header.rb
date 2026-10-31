@@ -26,7 +26,7 @@ module Bitcoin
     # @return [Bitcoin::BlockHeader]
     def self.parse_from_payload(payload)
       buf = payload.is_a?(String) ? StringIO.new(payload) : payload
-      version, prev_hash, merkle_root, time, bits, nonce = buf.read(80).unpack('Va32a32VVV')
+      version, prev_hash, merkle_root, time, bits, nonce = Bitcoin.read_exact(buf, 80).unpack('Va32a32VVV')
       new(version, prev_hash.bth, merkle_root.bth, time, bits, nonce)
     end
 

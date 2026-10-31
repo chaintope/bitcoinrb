@@ -31,19 +31,31 @@ module Bitcoin
         @relay = opts[:relay] || false
       end
 
+      # The part every version message has: version, services, timestamp and the receiving address.
+      MIN_PAYLOAD_SIZE = 4 + 8 + 8 + 26
+
+      # Parse a version message. As Bitcoin Core does, the sending address and nonce, the user agent, the
+      # start height and the relay flag are each read only when the payload still has data, so a message
+      # from an old protocol version which stops early is accepted with the remaining fields empty.
       def self.parse_from_payload(payload)
-        version, services, timestamp, local_addr, remote_addr, nonce, rest = payload.unpack('VQ<Q<a26a26Q<a*')
-        v = new
+        raise Bitcoin::Message::Error, 'Version payload is too short.' if payload.bytesize < MIN_PAYLOAD_SIZE
+        version, services, timestamp, local_addr, rest = payload.unpack('VQ<Q<a26a*')
+        v = new(remote_addr: NetworkAddr.new(time: nil), nonce: 0, user_agent: '', start_height: 0)
         v.version = version
         v.services = services
         v.timestamp = timestamp
         v.local_addr = NetworkAddr.parse_from_payload(local_addr)
-        v.remote_addr = NetworkAddr.parse_from_payload(remote_addr)
-        v.nonce = nonce
-        user_agent, rest = unpack_var_string(rest)
-        start_height, rest = rest.unpack('Va*')
-        v.user_agent = user_agent
-        v.start_height = start_height
+        unless rest.empty?
+          raise Bitcoin::Message::Error, 'Version payload is truncated.' if rest.bytesize < 26 + 8
+          remote_addr, nonce, rest = rest.unpack('a26Q<a*')
+          v.remote_addr = NetworkAddr.parse_from_payload(remote_addr)
+          v.nonce = nonce
+        end
+        v.user_agent, rest = unpack_var_string(rest) unless rest.empty?
+        unless rest.empty?
+          raise Bitcoin::Message::Error, 'Version payload is truncated.' if rest.bytesize < 4
+          v.start_height, rest = rest.unpack('Va*')
+        end
         v.relay = v.unpack_relay_field(rest).first
         v
       end

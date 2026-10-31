@@ -9,7 +9,7 @@ module Bitcoin
         buf = StringIO.new(payload)
         i = new
         size.times do
-          i.inventories << Inventory.parse_from_payload(buf.read(36))
+          i.inventories << Inventory.parse_from_payload(Bitcoin.read_exact(buf, 36))
         end
         i
       end

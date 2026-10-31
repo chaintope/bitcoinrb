@@ -106,46 +106,46 @@ module Bitcoin
         buf = payload.is_a?(String) ? StringIO.new(payload) : payload
         has_time = buf.size > 26
         addr = NetworkAddr.new(time: nil)
-        addr.time = buf.read(4).unpack1('V') if has_time
-        addr.services = buf.read(8).unpack1('Q<')
-        addr.addr = IPAddr::new_ntoh(buf.read(16))
-        addr.port = buf.read(2).unpack1('n')
+        addr.time = Bitcoin.read_exact(buf, 4).unpack1('V') if has_time
+        addr.services = Bitcoin.read_exact(buf, 8).unpack1('Q<')
+        addr.addr = IPAddr::new_ntoh(Bitcoin.read_exact(buf, 16))
+        addr.port = Bitcoin.read_exact(buf, 2).unpack1('n')
         addr
       end
 
       # Load addr payload with addr v2 format.
       def self.load_addr_v2_payload(payload)
         buf = payload.is_a?(String) ? StringIO.new(payload) : payload
-        addr = NetworkAddr.new(time: buf.read(4).unpack1('V'))
+        addr = NetworkAddr.new(time: Bitcoin.read_exact(buf, 4).unpack1('V'))
         addr.services = Bitcoin.unpack_var_int_from_io(buf)
-        addr.net = buf.read(1).unpack1('C')
+        addr.net = Bitcoin.read_exact(buf, 1).unpack1('C')
         raise Bitcoin::Message::Error, "Unknown network id: #{addr.net}" unless NETWORK_ID.value?(addr.net)
         addr_len = Bitcoin.unpack_var_int_from_io(buf)
         addr.addr = case addr.net 
                     when NETWORK_ID[:ipv4]
                       raise Bitcoin::Message::Error, "Invalid IPv4 address." unless addr_len == 4
-                      IPAddr::new_ntoh(buf.read(addr_len))
+                      IPAddr::new_ntoh(Bitcoin.read_exact(buf, addr_len))
                     when NETWORK_ID[:ipv6]
                       raise Bitcoin::Message::Error, "Invalid IPv6 address." unless addr_len == 16
-                      a = IPAddr::new_ntoh(buf.read(addr_len))
+                      a = IPAddr::new_ntoh(Bitcoin.read_exact(buf, addr_len))
                       raise Bitcoin::Message::Error, "Invalid IPv6 address." if a.ipv4_mapped?
                       a
                     when NETWORK_ID[:tor_v2]
                       raise Bitcoin::Message::Error, "Invalid Tor v2 address." unless addr_len == 10
-                      buf.read(addr_len).bth
+                      Bitcoin.read_exact(buf, addr_len).bth
                     when NETWORK_ID[:tor_v3]
                       raise Bitcoin::Message::Error, "Invalid Tor v3 address." unless addr_len == 32
-                      buf.read(addr_len).bth
+                      Bitcoin.read_exact(buf, addr_len).bth
                     when NETWORK_ID[:i2p]
                       raise Bitcoin::Message::Error, "Invalid I2P address." unless addr_len == 32
-                      buf.read(addr_len).bth
+                      Bitcoin.read_exact(buf, addr_len).bth
                     when NETWORK_ID[:cjdns]
                       raise Bitcoin::Message::Error, "Invalid CJDNS address." unless addr_len == 16
-                      a = IPAddr::new_ntoh(buf.read(addr_len))
+                      a = IPAddr::new_ntoh(Bitcoin.read_exact(buf, addr_len))
                       raise Bitcoin::Message::Error, "Invalid CJDNS address." unless a.to_s.start_with?('fc00:')
                       a
                     end
-        addr.port = buf.read(2).unpack1('n')
+        addr.port = Bitcoin.read_exact(buf, 2).unpack1('n')
         addr
       end
 

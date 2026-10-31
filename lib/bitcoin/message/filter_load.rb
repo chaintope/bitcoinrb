@@ -28,14 +28,14 @@ module Bitcoin
           raise Bitcoin::Message::Error,
                 "filter size must be less than or equal to #{Bitcoin::BloomFilter::MAX_BLOOM_FILTER_SIZE}."
         end
-        filter = buf.read(filter_count).unpack('C*')
-        func_count = buf.read(4).unpack1('V')
+        filter = Bitcoin.read_exact(buf, filter_count).unpack('C*')
+        func_count = Bitcoin.read_exact(buf, 4).unpack1('V')
         if func_count > Bitcoin::BloomFilter::MAX_HASH_FUNCS
           raise Bitcoin::Message::Error,
                 "hash funcs must be less than or equal to #{Bitcoin::BloomFilter::MAX_HASH_FUNCS}."
         end
-        tweak = buf.read(4).unpack1('V')
-        flag = buf.read(1).unpack1('C')
+        tweak = Bitcoin.read_exact(buf, 4).unpack1('V')
+        flag = Bitcoin.read_exact(buf, 1).unpack1('C')
         FilterLoad.new(Bitcoin::BloomFilter.new(filter, func_count, tweak), flag)
       end
 

@@ -11,10 +11,12 @@ module Bitcoin
       # @param [String] value value with binary format.
       def initialize(key, value)
         buf = StringIO.new(key)
-        id_len = Bitcoin.unpack_var_int_from_io(buf)
-        @identifier = id_len.nil? ? nil : buf.read(id_len)
-        @sub_type = Bitcoin.unpack_var_int_from_io(buf)
-        raise ArgumentError, 'Invalid proprietary key.' if @identifier.nil? || @identifier.bytesize != id_len || @sub_type.nil?
+        begin
+          @identifier = Bitcoin.read_exact(buf, Bitcoin.unpack_var_int_from_io(buf))
+          @sub_type = Bitcoin.unpack_var_int_from_io(buf)
+        rescue ArgumentError
+          raise ArgumentError, 'Invalid proprietary key.'
+        end
         @value = value
       end
 

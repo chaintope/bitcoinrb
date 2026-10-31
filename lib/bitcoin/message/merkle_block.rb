@@ -19,15 +19,15 @@ module Bitcoin
       def self.parse_from_payload(payload)
         m = new
         buf = StringIO.new(payload)
-        m.header = Bitcoin::BlockHeader.parse_from_payload(buf.read(80))
-        m.tx_count = buf.read(4).unpack1('V')
+        m.header = Bitcoin::BlockHeader.parse_from_payload(Bitcoin.read_exact(buf, 80))
+        m.tx_count = Bitcoin.read_exact(buf, 4).unpack1('V')
         hash_count = Bitcoin.unpack_var_int_from_io(buf)
         hash_count.times do
-          m.hashes << buf.read(32).bth
+          m.hashes << Bitcoin.read_exact(buf, 32).bth
         end
         flag_count = Bitcoin.unpack_var_int_from_io(buf)
         # A sequence of bits packed eight in a byte with the least significant bit first.
-        m.flags = buf.read(flag_count).bth
+        m.flags = Bitcoin.read_exact(buf, flag_count).bth
         # Reject a tree an untrusted peer could use to exhaust memory or CPU in #partial_tree.
         begin
           Bitcoin::PartialTree.validate!(m.tx_count, m.hashes, Bitcoin.byte_to_bit(m.flags.htb))

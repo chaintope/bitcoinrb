@@ -16,6 +16,7 @@ module Bitcoin
       end
 
       def self.parse_from_payload(payload)
+        raise Bitcoin::Message::Error, 'Payload must be 33 bytes.' unless payload.bytesize == 33
         type, hash = payload.unpack('CH*')
         self.new(type, hash)
       end

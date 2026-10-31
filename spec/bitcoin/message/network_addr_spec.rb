@@ -15,11 +15,11 @@ describe Bitcoin::Message::NetworkAddr do
 
     context 'IPv6' do
       it 'should be processed.' do
-        a = Bitcoin::Message::NetworkAddr.parse_from_payload('70cc29600902100102030405060708090a0b0c0d0e0f1000'.htb,
+        a = Bitcoin::Message::NetworkAddr.parse_from_payload('70cc29600902100102030405060708090a0b0c0d0e0f100000'.htb,
                                                              type: Bitcoin::Message::NetworkAddr::TYPE[:addr_v2])
         expect(a.addr_string).to eq('102:304:506:708:90a:b0c:d0e:f10')
         #  Valid IPv6, contains embedded "internal".
-        a = Bitcoin::Message::NetworkAddr.parse_from_payload('70cc2960090210fd6b88c08724ca978112ca1bbdcafac200'.htb,
+        a = Bitcoin::Message::NetworkAddr.parse_from_payload('70cc2960090210fd6b88c08724ca978112ca1bbdcafac20000'.htb,
                                                              type: Bitcoin::Message::NetworkAddr::TYPE[:addr_v2])
         expect(a.addr_string).to eq('zklycewkdo64v6wc.internal')
         # Invalid IPv6, with bogus length.
@@ -35,7 +35,7 @@ describe Bitcoin::Message::NetworkAddr do
 
     context 'Tor v2' do
       it 'should be processed.' do
-        a = Bitcoin::Message::NetworkAddr.parse_from_payload('70cc296009030af1f2f3f4f5f6f7f8f9fa00'.htb,
+        a = Bitcoin::Message::NetworkAddr.parse_from_payload('70cc296009030af1f2f3f4f5f6f7f8f9fa0000'.htb,
                                                              type: Bitcoin::Message::NetworkAddr::TYPE[:addr_v2])
         expect(a.addr_string).to eq('6hzph5hv6337r6p2.onion')
         # Invalid tor v2, with bogus length.
@@ -47,7 +47,7 @@ describe Bitcoin::Message::NetworkAddr do
 
     context 'Tor v3' do
       it 'should be processed.' do
-        a = Bitcoin::Message::NetworkAddr.parse_from_payload('70cc296009042079bcc625184b05194975c28b66b66b0469f7f6556fb1ac3189a79b40dda32f1f00'.htb,
+        a = Bitcoin::Message::NetworkAddr.parse_from_payload('70cc296009042079bcc625184b05194975c28b66b66b0469f7f6556fb1ac3189a79b40dda32f1f0000'.htb,
                                                              type: Bitcoin::Message::NetworkAddr::TYPE[:addr_v2])
         expect(a.addr_string).to eq('pg6mmjiyjmcrsslvykfwnntlaru7p5svn6y2ymmju6nubxndf4pscryd.onion')
         # Invalid tor v3, with bogus length.
@@ -59,7 +59,7 @@ describe Bitcoin::Message::NetworkAddr do
 
     context 'I2P' do
       it 'should be processed.' do
-        a = Bitcoin::Message::NetworkAddr.parse_from_payload('70cc2960090520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a8700'.htb,
+        a = Bitcoin::Message::NetworkAddr.parse_from_payload('70cc2960090520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a870000'.htb,
                                                              type: Bitcoin::Message::NetworkAddr::TYPE[:addr_v2])
         expect(a.addr_string).to eq('ukeu3k5oycgaauneqgtnvselmt4yemvoilkln7jpvamvfx7dnkdq.b32.i2p')
         # Invalid I2P, with bogus length.
@@ -71,7 +71,7 @@ describe Bitcoin::Message::NetworkAddr do
 
     context 'CJDNS' do
       it 'should be processed.' do
-        a = Bitcoin::Message::NetworkAddr.parse_from_payload('70cc2960090610fc00000100020003000400050006000700'.htb,
+        a = Bitcoin::Message::NetworkAddr.parse_from_payload('70cc2960090610fc0000010002000300040005000600070000'.htb,
                                                              type: Bitcoin::Message::NetworkAddr::TYPE[:addr_v2])
         expect(a.addr_string).to eq('fc00:1:2:3:4:5:6:7')
         # Invalid CJDNS, wrong prefix.

@@ -21,11 +21,11 @@ module Bitcoin
 
       def self.parse_from_payload(payload)
         buf = StringIO.new(payload)
-        type = buf.read(1).unpack1("C")
-        hash = buf.read(32).bth
-        header = buf.read(32).bth
+        type = Bitcoin.read_exact(buf, 1).unpack1("C")
+        hash = Bitcoin.read_exact(buf, 32).bth
+        header = Bitcoin.read_exact(buf, 32).bth
         count = Bitcoin.unpack_var_int_from_io(buf)
-        hashes = count.times.map{buf.read(32).bth}
+        hashes = count.times.map{Bitcoin.read_exact(buf, 32).bth}
         self.new(type, hash, header, hashes)
       end
 

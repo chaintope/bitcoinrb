@@ -23,7 +23,7 @@ module Bitcoin
 
       def self.parse_from_payload(payload)
         buf = StringIO.new(payload)
-        version, salt = buf.read(16).unpack('VQ<')
+        version, salt = Bitcoin.read_exact(buf, 12).unpack('VQ<')
         SendTxRcncl.new(version, salt)
       end
 
