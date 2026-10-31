@@ -525,11 +525,107 @@ describe Bitcoin::PSBT do
     let(:prev_tx) {
       Bitcoin::Tx.parse_from_payload('0200000001aad73931018bd25f84ae400b68848be09db706eac2ac18298babee71ab656f8b0000000000feffffff0180f0fa020000000017a9140fb9463421696b82c833af241c78c17ddbde49348700000000'.htb)
     }
-    context 'utxo is missing in one of them' do
-      it 'raise ArgumentError' do
+    context 'utxo is present in one of them' do
+      it 'should take it, as a combiner takes the union of the maps' do
         input = Bitcoin::PSBT::Input.new(non_witness_utxo: prev_tx)
-        expect{input.merge(Bitcoin::PSBT::Input.new)}.
+        expect(input.merge(Bitcoin::PSBT::Input.new).non_witness_utxo).to eq(prev_tx)
+        expect(Bitcoin::PSBT::Input.new.merge(input).non_witness_utxo).to eq(prev_tx)
+      end
+    end
+
+    context 'a field differs between them' do
+      it 'raise ArgumentError' do
+        other_tx = Bitcoin::Tx.parse_from_payload(prev_tx.to_payload)
+        other_tx.lock_time = 1
+        expect{Bitcoin::PSBT::Input.new(non_witness_utxo: prev_tx).merge(Bitcoin::PSBT::Input.new(non_witness_utxo: other_tx))}.
           to raise_error(ArgumentError, 'The Partially Signed Input\'s non_witness_utxo are different.')
+        a = Bitcoin::PSBT::Input.new.tap { |i| i.tap_internal_key = 'aa' * 32 }
+        b = Bitcoin::PSBT::Input.new.tap { |i| i.tap_internal_key = 'bb' * 32 }
+        expect { a.merge(b) }.to raise_error(ArgumentError, 'The Partially Signed Input\'s tap_internal_key are different.')
+      end
+    end
+
+    context 'every field' do
+      let(:key) { Bitcoin::Key.generate }
+      let(:tx) {
+        tx = Bitcoin::Tx.new
+        tx.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new('11' * 32, 0))
+        tx.out << Bitcoin::TxOut.new(value: 1, script_pubkey: Bitcoin::Script.new << Bitcoin::Opcodes::OP_1)
+        tx
+      }
+      let(:control_block) { Bitcoin::Taproot::ControlBlock.new(0, Bitcoin::TAPROOT_LEAF_TAPSCRIPT, key.xonly_pubkey, ['cc' * 32]) }
+
+      it 'should keep the fields of both sides' do
+        a = Bitcoin::PSBT::Tx.new(tx)
+        b = Bitcoin::PSBT::Tx.new(tx)
+        # global
+        a.xpubs << Bitcoin::PSBT::GlobalXpub.new(Bitcoin::ExtKey.generate_master('00' * 32).ext_pubkey, Bitcoin::PSBT::KeyOriginInfo.new(fingerprint: 'deadbeef', key_paths: []))
+        b.xpubs << a.xpubs.first
+        b.xpubs << Bitcoin::PSBT::GlobalXpub.new(Bitcoin::ExtKey.generate_master('01' * 32).derive(1).ext_pubkey, Bitcoin::PSBT::KeyOriginInfo.new(fingerprint: 'deadbeef', key_paths: [1]))
+        a.version_number = 0
+        a.proprietaries << Bitcoin::PSBT::Proprietary.new("\x01a\x00".b, 'v'.b)
+        b.proprietaries << Bitcoin::PSBT::Proprietary.new("\x01a\x00".b, 'other'.b) # same key, first wins
+        b.proprietaries << Bitcoin::PSBT::Proprietary.new("\x01b\x00".b, 'w'.b)
+        # input
+        a.inputs[0].witness_utxo = Bitcoin::TxOut.new(value: 1, script_pubkey: Bitcoin::Script.to_p2wpkh(key.hash160))
+        a.inputs[0].tap_internal_key = key.xonly_pubkey
+        a.inputs[0].tap_key_sig = '00' * 64
+        a.inputs[0].sha256_preimages['aa' * 32] = 'bb'
+        a.inputs[0].partial_sigs[key.pubkey] = "\x30\x01\x01".b
+        a.inputs[0].proprietaries << Bitcoin::PSBT::Proprietary.new("\x01a\x00".b, 'v'.b)
+        b.inputs[0].tap_merkle_root = 'cc' * 32
+        b.inputs[0].tap_script_sigs['dd' * 64] = 'ee' * 64
+        b.inputs[0].tap_leaf_scripts[control_block] = '51c0'
+        b.inputs[0].tap_bip32_derivations[key.xonly_pubkey] = '00'
+        b.inputs[0].hash160_preimages['ff' * 20] = '01'
+        b.inputs[0].final_script_witness = Bitcoin::ScriptWitness.new(['01'.htb])
+        # output
+        a.outputs[0].tap_internal_key = key.xonly_pubkey
+        a.outputs[0].proprietaries << Bitcoin::PSBT::Proprietary.new("\x01a\x00".b, 'v'.b)
+        b.outputs[0].tap_tree = '00'
+        b.outputs[0].tap_bip32_derivations[key.xonly_pubkey] = '00'
+
+        [[a.merge(b), 'v'.b], [b.merge(a), 'other'.b]].each do |m, own_value|
+          expect(m.xpubs.size).to eq(2)
+          expect(m.version_number).to eq(0)
+          # A proprietary record present on both sides keeps the value of the receiver.
+          expect(m.proprietaries.map { |p| [p.identifier, p.value] }).to match_array([['a'.b, own_value], ['b'.b, 'w'.b]])
+          i = m.inputs[0]
+          expect(i.witness_utxo).to eq(a.inputs[0].witness_utxo)
+          expect(i.tap_internal_key).to eq(key.xonly_pubkey)
+          expect(i.tap_key_sig).to eq('00' * 64)
+          expect(i.tap_merkle_root).to eq('cc' * 32)
+          expect(i.sha256_preimages).to eq({ 'aa' * 32 => 'bb' })
+          expect(i.hash160_preimages).to eq({ 'ff' * 20 => '01' })
+          expect(i.partial_sigs).to eq({ key.pubkey => "\x30\x01\x01".b })
+          expect(i.tap_script_sigs).to eq({ 'dd' * 64 => 'ee' * 64 })
+          expect(i.tap_leaf_scripts).to eq({ control_block => '51c0' })
+          expect(i.tap_bip32_derivations).to eq({ key.xonly_pubkey => '00' })
+          expect(i.final_script_witness).to eq(b.inputs[0].final_script_witness)
+          expect(i.proprietaries.size).to eq(1)
+          o = m.outputs[0]
+          expect(o.tap_internal_key).to eq(key.xonly_pubkey)
+          expect(o.tap_tree).to eq('00')
+          expect(o.tap_bip32_derivations).to eq({ key.xonly_pubkey => '00' })
+          expect(o.proprietaries.size).to eq(1)
+          # The merged PSBT serializes and parses back with everything in it.
+          parsed = Bitcoin::PSBT::Tx.parse_from_payload(m.to_payload)
+          expect(parsed.inputs[0].tap_leaf_scripts.keys.first).to eq(control_block)
+          expect(parsed.to_payload).to eq(m.to_payload)
+        end
+      end
+
+      it 'should not duplicate a tap leaf script given under the same control block' do
+        a = Bitcoin::PSBT::Tx.new(tx)
+        b = Bitcoin::PSBT::Tx.new(tx)
+        a.inputs[0].tap_leaf_scripts[control_block] = '51c0'
+        b.inputs[0].tap_leaf_scripts[Bitcoin::Taproot::ControlBlock.parse_from_payload(control_block.to_payload)] = '51c0'
+        expect(a.merge(b).inputs[0].tap_leaf_scripts.size).to eq(1)
+        # And a PSBT carrying the same control block twice is rejected when parsed.
+        payload = a.to_payload
+        leaf_record = Bitcoin::PSBT.serialize_to_vector(Bitcoin::PSBT::PSBT_IN_TYPES[:tap_leaf_script], key: control_block.to_payload, value: '51c0'.htb)
+        expect { Bitcoin::PSBT::Tx.parse_from_payload(payload.sub(leaf_record, leaf_record * 2)) }.
+          to raise_error(ArgumentError, 'Duplicate Key, key for tap leaf script value already provided.')
       end
     end
   end

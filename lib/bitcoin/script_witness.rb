@@ -19,6 +19,10 @@ module Bitcoin
       self.new(stack)
     end
 
+    def ==(other)
+      other.is_a?(ScriptWitness) && stack == other.stack
+    end
+
     def empty?
       stack.empty?
     end

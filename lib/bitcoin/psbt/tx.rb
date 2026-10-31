@@ -257,6 +257,9 @@ module Bitcoin
           combined.outputs[index] = o.merge(psbt.outputs[index])
         end
 
+        combined.xpubs = (xpubs + psbt.xpubs).uniq { |x| x.xpub.to_payload }
+        combined.version_number = PSBT.merge_field(version_number, psbt.version_number, "Tx's version_number")
+        combined.proprietaries = PSBT.merge_proprietaries(proprietaries, psbt.proprietaries)
         combined.unknowns = Hash[unknowns.merge(psbt.unknowns).sort]
         combined
       end

@@ -54,6 +54,26 @@ module Bitcoin
 
     module_function
 
+    # Combine one field of two PSBT maps the way a BIP-174 combiner does: a value present on one side only is
+    # taken, equal values are kept, and different values are a conflict.
+    # @param [Object] a The value of one map, or nil.
+    # @param [Object] b The value of the other map, or nil.
+    # @param [String] name The field, for the error message, e.g. "Input's non_witness_utxo".
+    # @return [Object] the combined value.
+    # @raise [ArgumentError] If both are present and differ.
+    def self.merge_field(a, b, name)
+      return b if a.nil?
+      return a if b.nil?
+      raise ArgumentError, "The Partially Signed #{name} are different." unless a == b
+      a
+    end
+
+    # Combine two lists of proprietary records, keeping the first record for a key which appears in both.
+    # @return [Array[Bitcoin::PSBT::Proprietary]]
+    def self.merge_proprietaries(a, b)
+      (a + b).uniq(&:key)
+    end
+
     def self.serialize_to_vector(key_type, key: nil, value: nil)
       key_len = Bitcoin.pack_var_int(key_type).bytesize
       key_len += key.bytesize if key

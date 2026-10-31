@@ -249,20 +249,21 @@ module Bitcoin
       # @return [Bitcoin::PSBT::Input] combined object.
       def merge(psbi)
         raise ArgumentError, 'The argument psbt must be an instance of Bitcoin::PSBT::Input.' unless psbi.is_a?(Bitcoin::PSBT::Input)
-        raise ArgumentError, 'The Partially Signed Input\'s non_witness_utxo are different.' unless same_field?(non_witness_utxo, psbi.non_witness_utxo)
-        raise ArgumentError, 'The Partially Signed Input\'s witness_utxo are different.' unless same_field?(witness_utxo, psbi.witness_utxo)
-        raise ArgumentError, 'The Partially Signed Input\'s sighash_type are different.' if sighash_type && psbi.sighash_type && sighash_type != psbi.sighash_type
-        raise ArgumentError, 'The Partially Signed Input\'s redeem_script are different.' unless same_field?(redeem_script, psbi.redeem_script)
-        raise ArgumentError, 'The Partially Signed Input\'s witness_script are different.' unless same_field?(witness_script, psbi.witness_script)
-        combined = Bitcoin::PSBT::Input.new(non_witness_utxo: non_witness_utxo, witness_utxo: witness_utxo)
+        field = ->(name) { PSBT.merge_field(send(name), psbi.send(name), "Input's #{name}") }
+        combined = Bitcoin::PSBT::Input.new(non_witness_utxo: field.call(:non_witness_utxo), witness_utxo: field.call(:witness_utxo))
+        # Fields which hold one value: present on one side, or equal on both.
+        %i[redeem_script witness_script sighash_type final_script_sig final_script_witness
+           tap_key_sig tap_internal_key tap_merkle_root].each do |name|
+          combined.send("#{name}=", field.call(name))
+        end
+        # Maps: the union, with this input's value kept for a key present on both sides.
+        combined.partial_sigs = merge_partial_sigs(psbi.partial_sigs)
+        %i[hd_key_paths ripemd160_preimages sha256_preimages hash160_preimages hash256_preimages
+           tap_script_sigs tap_leaf_scripts tap_bip32_derivations].each do |name|
+          combined.send("#{name}=", send(name).merge(psbi.send(name)))
+        end
+        combined.proprietaries = PSBT.merge_proprietaries(proprietaries, psbi.proprietaries)
         combined.unknowns = Hash[unknowns.merge(psbi.unknowns).sort]
-        combined.redeem_script = redeem_script
-        combined.witness_script = witness_script
-        combined.sighash_type = sighash_type
-        sigs = Hash[partial_sigs.merge(psbi.partial_sigs)]
-        redeem_script.get_multisig_pubkeys.each{|pubkey|combined.partial_sigs[pubkey.bth] = sigs[pubkey.bth] if sigs[pubkey.bth]} if redeem_script&.multisig?
-        witness_script.get_multisig_pubkeys.each{|pubkey|combined.partial_sigs[pubkey.bth] = sigs[pubkey.bth] if sigs[pubkey.bth]} if witness_script&.multisig?
-        combined.hd_key_paths = hd_key_paths.merge(psbi.hd_key_paths)
         combined
       end
 
@@ -329,6 +330,20 @@ module Bitcoin
 
       private
 
+      # The union of the partial signatures of this input and +others+. Signatures for the keys of a multisig
+      # redeem or witness script come first in the order of the script, which keeps the serialization stable,
+      # and any other signature follows.
+      # @param [Hash] others partial signatures of the other input.
+      # @return [Hash]
+      def merge_partial_sigs(others)
+        sigs = partial_sigs.merge(others)
+        script = [redeem_script, witness_script].compact.find(&:multisig?)
+        return sigs unless script
+        ordered = {}
+        script.get_multisig_pubkeys.each { |pubkey| ordered[pubkey.bth] = sigs[pubkey.bth] if sigs[pubkey.bth] }
+        ordered.merge(sigs)
+      end
+
       # The scriptPubKey this input spends.
       # @param [Integer, nil] prevout_index The index of the output in +non_witness_utxo+.
       # @return [Bitcoin::Script]
@@ -384,15 +399,6 @@ module Bitcoin
         else
           raise ArgumentError, "Finalizing a script of this type is not supported: #{script}"
         end
-      end
-
-      # Whether +a+ and +b+ are the same field value. Unlike ==, this does not raise
-      # NoMethodError when only one of them is nil.
-      # @return [Boolean]
-      def same_field?(a, b)
-        return true if a.nil? && b.nil?
-        return false if a.nil? || b.nil?
-        a == b
       end
 
     end

@@ -94,13 +94,14 @@ module Bitcoin
       # @return [Bitcoin::PSBT::Output] combined object.
       def merge(psbo)
         raise ArgumentError, 'The argument psbt must be an instance of Bitcoin::PSBT::Output.' unless psbo.is_a?(Bitcoin::PSBT::Output)
-        raise ArgumentError, 'The Partially Signed Output\'s redeem_script are different.' unless redeem_script == psbo.redeem_script
-        raise ArgumentError, 'The Partially Signed Output\'s witness_script are different.' unless witness_script == psbo.witness_script
         combined = Bitcoin::PSBT::Output.new
-        combined.redeem_script = redeem_script
-        combined.witness_script = witness_script
-        combined.unknowns = Hash[unknowns.merge(psbo.unknowns).sort]
+        %i[redeem_script witness_script tap_internal_key tap_tree].each do |name|
+          combined.send("#{name}=", PSBT.merge_field(send(name), psbo.send(name), "Output's #{name}"))
+        end
         combined.hd_key_paths = hd_key_paths.merge(psbo.hd_key_paths)
+        combined.tap_bip32_derivations = tap_bip32_derivations.merge(psbo.tap_bip32_derivations)
+        combined.proprietaries = PSBT.merge_proprietaries(proprietaries, psbo.proprietaries)
+        combined.unknowns = Hash[unknowns.merge(psbo.unknowns).sort]
         combined
       end
 

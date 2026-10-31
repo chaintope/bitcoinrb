@@ -41,7 +41,12 @@ module Bitcoin
       end
 
       def ==(other)
-        to_payload == other.to_payload
+        other.is_a?(ControlBlock) && to_payload == other.to_payload
+      end
+      alias eql? ==
+
+      def hash
+        to_payload.hash
       end
     end
   end
