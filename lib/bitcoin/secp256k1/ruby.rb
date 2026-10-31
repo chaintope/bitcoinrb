@@ -102,14 +102,20 @@ module Bitcoin
         digest = ECDSA.normalize_digest(data, group.bit_length)
         field = ECDSA::PrimeField.new(group.order)
 
-        unless rec & 2 == 0
-          r = field.mod(r + group.order)
+        # Bit 1 of the recovery id says the x coordinate of R is r + n rather than r. It only fits in the
+        # field when r < p - n, and libsecp256k1 rejects the signature otherwise. r + n must not be
+        # reduced modulo n here, which would turn it back into r.
+        x = r
+        if rec & 2 != 0
+          return nil if r >= group.field.prime - group.order
+          x = r + group.order
         end
 
         is_odd = (rec & 1 == 1)
-        y_coordinate = group.solve_for_y(r).find{|y| is_odd ? y.odd? : y.even?}
+        y_coordinate = group.solve_for_y(x).find{|y| is_odd ? y.odd? : y.even?}
+        return nil if y_coordinate.nil? # x is not on the curve
 
-        p = group.new_point([r, y_coordinate])
+        p = group.new_point([x, y_coordinate])
 
         inv_r = field.inverse(r)
         u1 = field.mod(inv_r * digest)

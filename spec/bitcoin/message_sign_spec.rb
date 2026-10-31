@@ -142,6 +142,16 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
     end
   end
 
+  describe 'legacy signature with bit 1 of the recovery id set' do
+    it 'should not verify, since the recovered point does not exist' do
+      key = Bitcoin::Key.generate
+      sig = Base64.strict_decode64(described_class.sign_message(key, 'message'))
+      expect(described_class.verify_message(key.to_p2pkh, Base64.strict_encode64(sig), 'message')).to be true
+      flipped = [sig.getbyte(0) + 2].pack('C') + sig[1..]
+      expect(described_class.verify_message(key.to_p2pkh, Base64.strict_encode64(flipped), 'message')).to be false
+    end
+  end
+
   describe 'Random data' do
     it 'generate same signature between ruby and libsecp256k1', use_secp256k1: true do
       Parallel.each(1..100) do

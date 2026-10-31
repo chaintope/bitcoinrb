@@ -90,6 +90,25 @@ describe Bitcoin::Secp256k1::Ruby do
     end
   end
 
+  describe '#recover_compact' do
+    let(:key) { Bitcoin::Key.generate }
+    let(:digest) { Bitcoin.sha256('recover') }
+    let(:signature) { key.sign_compact(digest) }
+
+    it 'should recover the key with its own recovery id' do
+      expect(Bitcoin::Secp256k1::Ruby.recover_compact(digest, signature, true).pubkey).to eq(key.pubkey)
+    end
+
+    it 'should not recover a key when bit 1 of the recovery id is set for an r below the curve order' do
+      # Bit 1 means the x coordinate is r + n. That only fits in the field for r < p - n, which is about
+      # 2^-128 of all signatures, so for this signature libsecp256k1 fails and so must this backend.
+      # It used to reduce r + n modulo n, which gave r back and the same key as without the bit.
+      header = signature.getbyte(0) + 2
+      flipped = [header].pack('C') + signature[1..]
+      expect(Bitcoin::Secp256k1::Ruby.recover_compact(digest, flipped, true)).to be_nil
+    end
+  end
+
   describe '#valid_xonly_pubkey' do
     context 'valid public key' do
       it 'should return true.' do
