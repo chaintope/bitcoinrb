@@ -40,6 +40,36 @@ describe Bitcoin::Block do
         expect(subject.valid_merkle_root?).to be false
       end
     end
+
+    context 'when the last tx is duplicated (CVE-2012-2459)' do
+      # Duplicating the last tx of an odd list, or the last pair of a list whose next level is odd, keeps
+      # the merkle root, so the header still matches. The block has to be rejected anyway.
+      def block_with(txs)
+        header = subject.header.dup
+        block = Bitcoin::Block.new(header, txs)
+        header.merkle_root = block.calculate_merkle_root
+        block
+      end
+
+      it 'should be false' do
+        txs = subject.transactions
+        odd = block_with(txs[0, 3])
+        expect(odd.valid_merkle_root?).to be true
+        expect(odd.merkle_root_mutated?).to be false
+        mutated = block_with(txs[0, 3] + [txs[2]])
+        expect(mutated.calculate_merkle_root).to eq(odd.calculate_merkle_root)
+        expect(mutated.merkle_root_mutated?).to be true
+        expect(mutated.valid_merkle_root?).to be false
+        # Six txs: the second level has three hashes, so duplicating the last two txs keeps the root.
+        six = block_with(txs[0, 6])
+        mutated = block_with(txs[0, 6] + txs[4, 2])
+        expect(mutated.calculate_merkle_root).to eq(six.calculate_merkle_root)
+        expect(mutated.valid_merkle_root?).to be false
+        # Parsed from the wire the result is the same.
+        payload = Bitcoin::Message::Block.new(mutated.header, mutated.transactions).to_payload
+        expect(Bitcoin::Block.parse_from_payload(payload).valid_merkle_root?).to be false
+      end
+    end
   end
 
   describe '#valid_witness_commitment?' do

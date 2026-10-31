@@ -67,7 +67,7 @@ module Bitcoin
         nodes = nodes.each_slice(2).map { |m|
           parent = Node.new
           parent.left = m[0]
-          parent.right = m[1] ? m[1] : m[0].dup
+          parent.right = m[1] ? m[1] : m[0].dup.tap { |n| n.duplicated = true }
           parent
         }
       end
@@ -86,9 +86,13 @@ module Bitcoin
       attr_accessor :parent
       attr_accessor :left
       attr_accessor :right
+      # Whether this node stands in for a missing right child, as the last node of a level with an odd
+      # count is paired with a copy of itself. Such a copy is equal to its sibling by construction.
+      attr_accessor :duplicated
 
       def initialize(value = nil)
         @value = value
+        @duplicated = false
       end
 
       def left=(node)
@@ -103,8 +107,12 @@ module Bitcoin
 
       def value
         return @value if @value
-        self.right = left.dup unless right
-        Bitcoin.double_sha256([left.value + right.value].pack('H*')).bth
+        self.right = left.dup.tap { |n| n.duplicated = true } unless right
+        left_value, right_value = left.value, right.value
+        # Two identical branches mean the hashes under them are not unique, which is how the duplicated
+        # tx of CVE-2012-2459 hides in a merkleblock. Bitcoin Core marks such a tree as bad.
+        raise ArgumentError, 'Invalid partial tree. The left and right branches are identical.' if !right.duplicated && left_value == right_value
+        Bitcoin.double_sha256([left_value + right_value].pack('H*')).bth
       end
 
       def root?
@@ -123,7 +131,7 @@ module Bitcoin
         return nil if root? && (flag.zero? || (left.nil? && right.nil?) || (left.partial? && right.partial?))
         return parent.next_partial if flag.zero? || leaf?
         return left unless left.partial?
-        self.right = left.dup unless right
+        self.right = left.dup.tap { |n| n.duplicated = true } unless right
         right.partial? ? parent.next_partial : right
       end
 

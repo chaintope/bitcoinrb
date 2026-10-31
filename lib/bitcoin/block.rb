@@ -66,8 +66,25 @@ module Bitcoin
     end
 
     # check the merkle root in the block header matches merkle root calculated from tx list.
+    # A tx list with the duplication of CVE-2012-2459 is reported as invalid even though its root
+    # matches, as Bitcoin Core does, since the same root also belongs to the list without the duplicate.
     def valid_merkle_root?
-      calculate_merkle_root == header.merkle_root
+      !merkle_root_mutated? && calculate_merkle_root == header.merkle_root
+    end
+
+    # Whether the tx list is a mutation of another list with the same merkle root (CVE-2012-2459).
+    # Duplicating the last tx of a level with an odd count leaves the root unchanged, and it shows up as
+    # two identical hashes next to each other at some level of the tree. The last hash of an odd level is
+    # paired with itself by construction and is not a mutation. See ComputeMerkleRoot in Bitcoin Core.
+    # @return [Boolean]
+    def merkle_root_mutated?
+      hashes = transactions.map(&:tx_hash)
+      while hashes.size > 1
+        hashes.each_slice(2) { |left, right| return true if right && left == right }
+        hashes << hashes.last if hashes.size.odd?
+        hashes = hashes.each_slice(2).map { |left, right| Bitcoin.double_sha256([left + right].pack('H*')).bth }
+      end
+      false
     end
 
     # calculate merkle root from tx list.

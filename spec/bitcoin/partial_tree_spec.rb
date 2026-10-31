@@ -131,6 +131,22 @@ describe Bitcoin::PartialTree do
     end
   end
 
+  describe 'duplicated hashes (CVE-2012-2459)' do
+    let(:hashes) { 3.times.map { |i| Bitcoin.double_sha256([i].pack('C')).bth } }
+
+    it 'should reject a tree whose left and right branches are identical' do
+      three = Bitcoin::PartialTree.build(3, hashes, '1' * 7)
+      expect { three.merkle_root }.not_to raise_error
+      # Four txs where the fourth repeats the third: the same root as the three tx tree.
+      four = Bitcoin::PartialTree.build(4, hashes + [hashes.last], '1' * 7)
+      expect { four.merkle_root }.to raise_error(ArgumentError, 'Invalid partial tree. The left and right branches are identical.')
+      # The same with only the duplicated pair matched: the left subtree comes as one hash and the pair as two.
+      left = Bitcoin.double_sha256([hashes[0] + hashes[1]].pack('H*')).bth
+      pair = Bitcoin::PartialTree.build(4, [left, hashes[2], hashes[2]], '10111')
+      expect { pair.merkle_root }.to raise_error(ArgumentError, /identical/)
+    end
+  end
+
   describe 'find_node' do
     let(:tree) do
       # H1 = 3612262624047ee87660be1a707519a443b1c1ce3d248cbfc6c15870f6c5daa2
