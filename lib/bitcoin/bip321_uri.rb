@@ -43,6 +43,7 @@ module Bitcoin
       if amount
         amount = BigDecimal(amount) if amount.is_a?(Integer)
         raise ArgumentError, "amount must be BigDecimal or integer." unless amount.is_a?(BigDecimal)
+        validate_amount!(amount)
         @amount = amount
       end
       raise ArgumentError, "label must be string." if label && !label.is_a?(String)
@@ -83,52 +84,84 @@ module Bitcoin
 
       raise ArgumentError, "other_params must be Hash." unless other_params.is_a?(Hash)
       other_params.keys.each do |key|
-        raise ArgumentError, 'An unsupported reqparam is included.' if key.start_with?('req-')
+        raise ArgumentError, 'An unsupported reqparam is included.' if key.downcase.start_with?('req-')
       end
       @other_params = other_params
     end
 
+    # The keys which hold one value. BIP-321 forbids a second label, message, pop or amount, and this
+    # class holds one value for the other payment instructions it knows.
+    SINGLE_VALUE_KEYS = %w[amount label message pop lightning lno pay sp].freeze
+    # The largest amount a URI may ask for, in BTC.
+    MAX_AMOUNT = BigDecimal(21_000_000)
+
     # Parse BIP-321 URI string.
+    # The scheme and the query keys are case-insensitive, values are percent-decoded as RFC 3986 says
+    # (a '+' stays a '+'), the amount has to match the grammar *digit ["." *digit], and a key which is not
+    # known here may appear more than once, in which case its values are collected in an Array.
     # @param [String] BIP-321 URI.
     # @return [Bitcoin::BIP321URI]
     # @raise [ArgumentError]
     def self.parse(uri)
       raise ArgumentError, "uri must be string." unless uri.is_a?(String)
       raise ArgumentError, "Invalid uri scheme." unless uri.downcase.start_with?('bitcoin:')
-      uri = uri[8..-1]
-      addr, params = uri.split('?', 2)
+      body, query = uri[8..-1].split('?', 2)
+      addr = body.nil? || body.empty? ? nil : body
+      params = {}
+      others = {}
       req_pop = false
       query_addrs = []
-      params = if params
-                 decoded = URI.decode_www_form(params)
-                 decoded = decoded.map do |k, v|
-                   if k == 'req-pop'
-                     req_pop = true
-                     k = 'pop'
-                   end
-                   if %w[bc tb bcrt].include?(k.downcase)
-                     raise ArgumentError, "#{k} not allowed in current network." unless Bitcoin.chain_params.bech32_hrp == k.downcase
-                     query_addrs << v
-                     nil
-                   else
-                     [k, v]
-                   end
-                 end.compact
-                 keys = decoded.map(&:first)
-                 duplicate_key = keys.detect { |key| keys.count(key) > 1 }
-                 raise ArgumentError, "#{duplicate_key} must not appear twice." if duplicate_key
-                 decoded.to_h.except('')
-               else
-                 {}
-               end
-      addr = nil if addr.empty?
-      amount = params['amount'] ? BigDecimal(params['amount']) : nil
-      excluded_keys = %w[amount label message pop lightning lno pay sp]
-      others = params.except(*excluded_keys)
+      (query ? query.split('&') : []).each do |pair|
+        next if pair.empty?
+        raw_key, raw_value = pair.split('=', 2)
+        key = percent_decode(raw_key).downcase
+        next if key.empty?
+        value = raw_value.nil? ? nil : percent_decode(raw_value)
+        if key == 'req-pop'
+          req_pop = true
+          key = 'pop'
+        end
+        if %w[bc tb bcrt].include?(key)
+          raise ArgumentError, "#{key} not allowed in current network." unless Bitcoin.chain_params.bech32_hrp == key
+          # The key names the human readable part of the address it carries.
+          raise ArgumentError, "#{key} must hold a bech32 address with the prefix #{key}." unless value.to_s.downcase.start_with?("#{key}1")
+          query_addrs << value
+        elsif SINGLE_VALUE_KEYS.include?(key)
+          raise ArgumentError, "#{key} must not appear twice." if params.key?(key)
+          params[key] = value
+        else
+          raise ArgumentError, 'An unsupported reqparam is included.' if key.start_with?('req-')
+          # BIP-321: a key this implementation does not know may appear more than once.
+          others[key] = others.key?(key) ? Array(others[key]) + [value] : value
+        end
+      end
+      amount = params['amount'] ? parse_amount(params['amount']) : nil
       BIP321URI.new(address: addr, amount: amount, label: params['label'], message: params['message'],
                     pop: params['pop'], lightning: params['lightning'], lno: params['lno'],
                     pay: params['pay'], sp: params['sp'], other_params: others, req_pop: req_pop, query_addrs: query_addrs)
     end
+
+    # Parse the value of an amount parameter.
+    # @param [String] str The value, which has to be *digit ["." *digit] with at most 8 decimal places.
+    # @return [BigDecimal]
+    # @raise [ArgumentError]
+    def self.parse_amount(str)
+      m = str.match(/\A([0-9]*)(?:\.([0-9]*))?\z/)
+      raise ArgumentError, "Invalid amount: #{str}" if m.nil? || (m[1].empty? && m[2].to_s.empty?)
+      raise ArgumentError, "Invalid amount: #{str}. An amount has at most 8 decimal places." if m[2].to_s.length > 8
+      amount = BigDecimal(str.end_with?('.') ? str + '0' : (str.start_with?('.') ? '0' + str : str))
+      raise ArgumentError, "Invalid amount: #{str}. It exceeds #{MAX_AMOUNT.to_i} BTC." if amount > MAX_AMOUNT
+      amount
+    end
+
+    # Percent-decode a URI component as RFC 3986 does. Unlike form decoding, a '+' is a literal '+'.
+    # @param [String] str
+    # @return [String]
+    def self.percent_decode(str)
+      URI.decode_www_form_component(str.gsub('+', '%2B'))
+    end
+
+    private_class_method :parse_amount, :percent_decode
 
     # Get all addresses contained in the URI body and query parameters
     # @return [Array] An array of address.
@@ -159,12 +192,22 @@ module Bitcoin
       base_params['pay'] = pay if pay
 
       all_params = base_params.merge other_params
-      params = all_params.map do |k, v|
-        "#{k}=#{CGI.escape(v).gsub('+', '%20')}"
+      params = all_params.flat_map do |k, values|
+        values = values.nil? ? [nil] : Array(values) # a key given without a value is written as the key alone
+        values.map { |v| v.nil? ? k : "#{k}=#{CGI.escape(v).gsub('+', '%20')}" }
       end
       params += query_addrs.map {|addr| "#{Bitcoin.chain_params.bech32_hrp}=#{addr}"}
       uri << "?#{params.join('&')}" unless params.empty?
       uri
+    end
+
+    private
+
+    # @raise [ArgumentError] If +amount+ is negative, above MAX_AMOUNT or finer than a satoshi.
+    def validate_amount!(amount)
+      raise ArgumentError, 'amount must not be negative.' if amount.negative?
+      raise ArgumentError, "amount must not exceed #{MAX_AMOUNT.to_i} BTC." if amount > MAX_AMOUNT
+      raise ArgumentError, 'amount must not have more than 8 decimal places.' unless (amount * 100_000_000).frac.zero?
     end
   end
 end

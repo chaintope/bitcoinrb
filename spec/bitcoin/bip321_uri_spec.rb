@@ -127,6 +127,66 @@ RSpec.describe Bitcoin::BIP321URI do
     end
   end
 
+  describe 'query parsing rules', network: :mainnet do
+    let(:addr) { '17T9tBC2dSpusL1rhT4T4AV4if963Tpfym' }
+
+    it 'should accept only an amount of the form *digit ["." *digit] with at most 8 decimals' do
+      { '50' => 5_000_000_000, '50.00' => 5_000_000_000, '1.' => 100_000_000, '.5' => 50_000_000,
+        '0.00000001' => 1, '21000000' => 2_100_000_000_000_000 }.each do |value, satoshi|
+        expect(described_class.parse("bitcoin:#{addr}?amount=#{value}").satoshi).to eq(satoshi), value
+      end
+      ['-1', '1e8', '1E-3', '1_000', '0x10', '%201', 'Infinity', 'NaN', '', '.', '50,000.00'].each do |value|
+        expect { described_class.parse("bitcoin:#{addr}?amount=#{value}") }.to raise_error(ArgumentError, /Invalid amount/), value
+      end
+      expect { described_class.parse("bitcoin:#{addr}?amount=0.123456789") }.to raise_error(ArgumentError, /at most 8 decimal places/)
+      expect { described_class.parse("bitcoin:#{addr}?amount=21000000.00000001") }.to raise_error(ArgumentError, /exceeds 21000000 BTC/)
+    end
+
+    it 'should validate an amount given to the constructor' do
+      expect(described_class.new(address: addr, amount: BigDecimal('0.5')).satoshi).to eq(50_000_000)
+      expect { described_class.new(address: addr, amount: BigDecimal('-1')) }.to raise_error(ArgumentError, 'amount must not be negative.')
+      expect { described_class.new(address: addr, amount: BigDecimal('0.000000001')) }.to raise_error(ArgumentError, /8 decimal places/)
+      expect { described_class.new(address: addr, amount: 21_000_001) }.to raise_error(ArgumentError, /must not exceed/)
+    end
+
+    it 'should treat the query keys as case-insensitive' do
+      uri = described_class.parse("bitcoin:#{addr}?AMOUNT=1&Label=x&REQ-POP=cb%3a")
+      expect(uri.satoshi).to eq(100_000_000)
+      expect(uri.label).to eq('x')
+      expect(uri.pop).to eq('cb:')
+      expect(uri.req_pop).to be true
+      expect(uri.other_params).to be_empty
+      expect { described_class.parse("bitcoin:#{addr}?label=a&LABEL=b") }.to raise_error(ArgumentError, 'label must not appear twice.')
+      expect { described_class.parse("bitcoin:#{addr}?Req-foo=1") }.to raise_error(ArgumentError, 'An unsupported reqparam is included.')
+      expect(described_class.parse('bitcoin:?BC=bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4').addresses).to eq(['bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4'])
+    end
+
+    it 'should percent-decode values as RFC 3986 does, leaving a + as it is' do
+      expect(described_class.parse("bitcoin:#{addr}?label=a+b").label).to eq('a+b')
+      expect(described_class.parse("bitcoin:#{addr}?label=a%20b%2Bc").label).to eq('a b+c')
+      expect(described_class.new(address: addr, label: 'a+b c').to_s).to eq("bitcoin:#{addr}?label=a%2Bb%20c")
+    end
+
+    it 'should allow an unknown key more than once and a key without a value' do
+      uri = described_class.parse("bitcoin:#{addr}?foo=1&foo=2&bar")
+      expect(uri.other_params).to eq({ 'foo' => %w[1 2], 'bar' => nil })
+      expect(uri.to_s).to eq("bitcoin:#{addr}?foo=1&foo=2&bar")
+      expect { described_class.parse("bitcoin:#{addr}?lightning=a&lightning=b") }.to raise_error(ArgumentError, 'lightning must not appear twice.')
+    end
+
+    it 'should require the address of a bc parameter to be a bech32 address' do
+      expect { described_class.parse("bitcoin:?bc=#{addr}") }.to raise_error(ArgumentError, 'bc must hold a bech32 address with the prefix bc.')
+      expect { described_class.parse('bitcoin:?bc=bc1notanaddress') }.to raise_error(ArgumentError, /Invalid address/)
+    end
+
+    it 'should parse a URI with neither an address nor a query' do
+      uri = described_class.parse('bitcoin:')
+      expect(uri.addresses).to be_empty
+      expect(uri.amount).to be_nil
+      expect(uri.to_s).to eq('bitcoin:')
+    end
+  end
+
   describe 'amount parsing in a process which loads nothing but this gem' do
     it 'should parse an amount with only require "bitcoin"' do
       # bigdecimal is a bundled gem since Ruby 3.4 and is not loaded by the interpreter on its own. In the test
