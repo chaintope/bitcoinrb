@@ -121,6 +121,9 @@ module Bitcoin
         if (self.chunk_counter + 1) % rekey_interval == 0
           self.key = key_stream_bytes(32)
           self.block_counter = 0
+          # The rest of the current block belongs to the old key. The reference implementation starts the
+          # new key with a fresh keystream, and so does Bitcoin Core by seeking the cipher after SetKey.
+          self.key_stream = ''.b
         end
         self.chunk_counter += 1
         ret

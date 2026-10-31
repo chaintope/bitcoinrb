@@ -64,6 +64,7 @@ module Bitcoin
           when PSBT_OUT_TYPES[:tap_bip32_derivation]
             raise ArgumentError, 'Duplicate Key, key for tap bip32 derivation value already provided.' if output.tap_bip32_derivations[key.bth]
             raise ArgumentError, 'Size of key was not the expected size for the type tap bip32 derivation' unless key.bytesize == X_ONLY_PUBKEY_SIZE
+            PSBT.validate_tap_bip32_derivation!(value)
             output.tap_bip32_derivations[key.bth] = value.bth
           else
             unknown_key = (Bitcoin.pack_var_int(key_type) + key).bth

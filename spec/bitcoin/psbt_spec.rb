@@ -483,6 +483,64 @@ describe Bitcoin::PSBT do
     end
   end
 
+  describe 'record values which do not have the length their type requires' do
+    let(:key) { Bitcoin::Key.generate }
+    let(:empty_psbt) {
+      tx = Bitcoin::Tx.new
+      tx.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new('11' * 32, 0))
+      tx.out << Bitcoin::TxOut.new(value: 1, script_pubkey: Bitcoin::Script.new << Bitcoin::Opcodes::OP_1)
+      Bitcoin::PSBT::Tx.new(tx).to_payload
+    }
+
+    # Insert +record+ into the (empty) input map of the PSBT.
+    def with_input_record(record)
+      empty_psbt[0..-3] + record + "\x00\x00".b
+    end
+
+    def record(type, key, value)
+      Bitcoin::PSBT.serialize_to_vector(Bitcoin::PSBT::PSBT_IN_TYPES[type], key: key, value: value)
+    end
+
+    it 'should reject an HD key path whose value is not a fingerprint and 4 byte indexes' do
+      expect(Bitcoin::PSBT::Tx.parse_from_payload(with_input_record(record(:bip32_derivation, key.pubkey.htb, 'deadbeef01000000'.htb))).inputs[0].hd_key_paths.size).to eq(1)
+      ['', 'deadbeef010000'].each do |value|
+        expect { Bitcoin::PSBT::Tx.parse_from_payload(with_input_record(record(:bip32_derivation, key.pubkey.htb, value.htb))) }.
+          to raise_error(ArgumentError, 'Invalid length for HD key path.')
+      end
+    end
+
+    it 'should reject a tap leaf script without a leaf version byte' do
+      cb = Bitcoin::Taproot::ControlBlock.new(0, Bitcoin::TAPROOT_LEAF_TAPSCRIPT, key.xonly_pubkey)
+      expect(Bitcoin::PSBT::Tx.parse_from_payload(with_input_record(record(:tap_leaf_script, cb.to_payload, 'c0'.htb))).inputs[0].tap_leaf_scripts.size).to eq(1)
+      expect { Bitcoin::PSBT::Tx.parse_from_payload(with_input_record(record(:tap_leaf_script, cb.to_payload, ''.b))) }.
+        to raise_error(ArgumentError, 'Tap leaf script value must have a leaf version.')
+    end
+
+    it 'should reject a tap bip32 derivation value which is not leaf hashes and a key path' do
+      expect(Bitcoin::PSBT::Tx.parse_from_payload(with_input_record(record(:tap_bip32_derivation, key.xonly_pubkey.htb, '00deadbeef'.htb))).inputs[0].tap_bip32_derivations.size).to eq(1)
+      expect(Bitcoin::PSBT::Tx.parse_from_payload(with_input_record(record(:tap_bip32_derivation, key.xonly_pubkey.htb, ('01' + 'aa' * 32 + 'deadbeef' + '01000000').htb))).inputs[0].tap_bip32_derivations.size).to eq(1)
+      expect { Bitcoin::PSBT::Tx.parse_from_payload(with_input_record(record(:tap_bip32_derivation, key.xonly_pubkey.htb, '00'.htb))) }.
+        to raise_error(ArgumentError, 'Invalid length for HD key path.')
+      expect { Bitcoin::PSBT::Tx.parse_from_payload(with_input_record(record(:tap_bip32_derivation, key.xonly_pubkey.htb, ('02' + 'aa' * 32).htb))) }.
+        to raise_error(ArgumentError, 'Invalid tap bip32 derivation value.')
+    end
+
+    it 'should reject a proprietary key which is cut short' do
+      expect { Bitcoin::PSBT::Tx.parse_from_payload(with_input_record(record(:proprietary, "\x05ab".b, 'v'.b))) }.
+        to raise_error(ArgumentError, 'Invalid proprietary key.')
+      expect { Bitcoin::PSBT::Tx.parse_from_payload(with_input_record(record(:proprietary, "\x02ab".b, 'v'.b))) }.
+        to raise_error(ArgumentError, 'Invalid proprietary key.')
+      expect(Bitcoin::PSBT::Tx.parse_from_payload(with_input_record(record(:proprietary, "\x02ab\x00".b, 'v'.b))).inputs[0].proprietaries.size).to eq(1)
+    end
+
+    it 'should reject base64 with characters outside the alphabet' do
+      valid = Base64.strict_encode64(empty_psbt)
+      expect(Bitcoin::PSBT::Tx.parse_from_base64(valid).to_payload).to eq(empty_psbt)
+      expect { Bitcoin::PSBT::Tx.parse_from_base64(valid + '!!') }.to raise_error(ArgumentError)
+      expect { Bitcoin::PSBT::Tx.parse_from_base64("#{valid[0, 10]}\n#{valid[10..]}") }.to raise_error(ArgumentError)
+    end
+  end
+
   describe 'Bitcoin::PSBT::Input#parse_from_buf' do
     context 'duplicate proprietary key' do
       it 'raise ArgumentError' do
@@ -576,14 +634,14 @@ describe Bitcoin::PSBT do
         b.inputs[0].tap_merkle_root = 'cc' * 32
         b.inputs[0].tap_script_sigs['dd' * 64] = 'ee' * 64
         b.inputs[0].tap_leaf_scripts[control_block] = '51c0'
-        b.inputs[0].tap_bip32_derivations[key.xonly_pubkey] = '00'
+        b.inputs[0].tap_bip32_derivations[key.xonly_pubkey] = '00deadbeef' # no leaf hash, fingerprint, empty path
         b.inputs[0].hash160_preimages['ff' * 20] = '01'
         b.inputs[0].final_script_witness = Bitcoin::ScriptWitness.new(['01'.htb])
         # output
         a.outputs[0].tap_internal_key = key.xonly_pubkey
         a.outputs[0].proprietaries << Bitcoin::PSBT::Proprietary.new("\x01a\x00".b, 'v'.b)
         b.outputs[0].tap_tree = '00'
-        b.outputs[0].tap_bip32_derivations[key.xonly_pubkey] = '00'
+        b.outputs[0].tap_bip32_derivations[key.xonly_pubkey] = '00deadbeef'
 
         [[a.merge(b), 'v'.b], [b.merge(a), 'other'.b]].each do |m, own_value|
           expect(m.xpubs.size).to eq(2)
@@ -600,13 +658,13 @@ describe Bitcoin::PSBT do
           expect(i.partial_sigs).to eq({ key.pubkey => "\x30\x01\x01".b })
           expect(i.tap_script_sigs).to eq({ 'dd' * 64 => 'ee' * 64 })
           expect(i.tap_leaf_scripts).to eq({ control_block => '51c0' })
-          expect(i.tap_bip32_derivations).to eq({ key.xonly_pubkey => '00' })
+          expect(i.tap_bip32_derivations).to eq({ key.xonly_pubkey => '00deadbeef' })
           expect(i.final_script_witness).to eq(b.inputs[0].final_script_witness)
           expect(i.proprietaries.size).to eq(1)
           o = m.outputs[0]
           expect(o.tap_internal_key).to eq(key.xonly_pubkey)
           expect(o.tap_tree).to eq('00')
-          expect(o.tap_bip32_derivations).to eq({ key.xonly_pubkey => '00' })
+          expect(o.tap_bip32_derivations).to eq({ key.xonly_pubkey => '00deadbeef' })
           expect(o.proprietaries.size).to eq(1)
           # The merged PSBT serializes and parses back with everything in it.
           parsed = Bitcoin::PSBT::Tx.parse_from_payload(m.to_payload)

@@ -49,7 +49,7 @@ module Bitcoin
       # @param [String] base64 a Partially Signed Bitcoin Transaction data with Base64 format.
       # @return [Bitcoin::PartiallySignedTx]
       def self.parse_from_base64(base64)
-        self.parse_from_payload(Base64.decode64(base64))
+        self.parse_from_payload(Base64.strict_decode64(base64))
       end
 
       # parse Partially Signed Bitcoin Transaction data.

@@ -136,6 +136,7 @@ module Bitcoin
             begin
               cb = Bitcoin::Taproot::ControlBlock.parse_from_payload(key)
               raise ArgumentError, 'Duplicate Key, key for tap leaf script value already provided.' if input.tap_leaf_scripts[cb]
+              raise ArgumentError, 'Tap leaf script value must have a leaf version.' if value.bytesize < 1
               input.tap_leaf_scripts[cb] = value.bth
             rescue Bitcoin::Taproot::Error => e
               raise ArgumentError, e.message
@@ -143,6 +144,7 @@ module Bitcoin
           when PSBT_IN_TYPES[:tap_bip32_derivation]
             raise ArgumentError, 'Duplicate Key, key for tap bip32 derivation value already provided.' if input.tap_bip32_derivations[key.bth]
             raise ArgumentError, 'Size of key was not the expected size for the type tap bip32 derivation' unless key.bytesize == X_ONLY_PUBKEY_SIZE
+            PSBT.validate_tap_bip32_derivation!(value)
             input.tap_bip32_derivations[key.bth] = value.bth
           when PSBT_IN_TYPES[:tap_internal_key]
             raise ArgumentError, 'Size of key was not the expected size for the type tap internal key' unless key_len == 1

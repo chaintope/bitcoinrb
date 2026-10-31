@@ -14,6 +14,8 @@ module Bitcoin
       end
 
       def self.parse_from_payload(payload)
+        # A fingerprint and zero or more 4 byte indexes, as Bitcoin Core requires.
+        raise ArgumentError, 'Invalid length for HD key path.' if payload.bytesize < 4 || (payload.bytesize - 4) % 4 != 0
         buf = StringIO.new(payload)
         self.new(fingerprint: buf.read(4).bth, key_paths: buf.read.unpack('V*'))
       end

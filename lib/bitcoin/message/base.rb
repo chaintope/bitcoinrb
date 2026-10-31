@@ -7,6 +7,9 @@ module Bitcoin
       include Bitcoin::Util
       extend Bitcoin::Util
 
+      # The size of the message header: magic, command, length and checksum.
+      HEADER_SIZE = 24
+
       # generate message header (binary format)
       # https://bitcoin.org/en/developer-reference#message-headers
       def to_pkt
@@ -28,10 +31,14 @@ module Bitcoin
       # @return [Bitcoin::Message::XXX] An instance of a class that inherits Bitcoin::Message::Base
       # @raise [ArgumentError] Occurs for data that cannot be decoded.
       def self.from_pkt(message)
+        raise ArgumentError, 'Message header is too short.' if message.bytesize < HEADER_SIZE
         buf = StringIO.new(message)
         magic = buf.read(4)
         raise ArgumentError, 'Invalid magic.' unless magic == Bitcoin.chain_params.magic_head.htb
-        command = buf.read(12).delete("\x00")
+        # The command is padded with NUL bytes to 12. Bitcoin Core rejects a command with a non-NUL byte
+        # after its first NUL.
+        command, padding = buf.read(12).split("\x00", 2)
+        raise ArgumentError, 'Invalid command.' if command.nil? || padding&.delete("\x00")&.bytesize.to_i > 0
         # The length is announced by the peer, so it is checked before it is used to read.
         length = buf.read(4).unpack1('V')
         if length > MAX_PROTOCOL_MESSAGE_LENGTH

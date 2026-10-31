@@ -114,9 +114,12 @@ module Bitcoin
       return nil if header.version < 2
       coinbase_tx = transactions[0]
       return nil unless coinbase_tx.coinbase_tx?
-      buf = StringIO.new(coinbase_tx.inputs[0].script_sig.to_payload)
-      len = Bitcoin.unpack_var_int_from_io(buf)
-      buf.read(len).reverse.bth.to_i(16)
+      # BIP-34: the height is the first push of the coinbase scriptSig, as a script number. A height from
+      # 1 to 16 is pushed with OP_1 to OP_16, which is not a data push.
+      chunk = coinbase_tx.inputs[0].script_sig.chunks.first
+      return nil if chunk.nil?
+      return Bitcoin::Script.decode_number(chunk.pushed_data.bth) if chunk.pushdata?
+      Bitcoin::Opcodes.opcode_to_small_int(chunk.opcode)
     end
 
   end

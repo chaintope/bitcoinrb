@@ -74,6 +74,18 @@ module Bitcoin
       (a + b).uniq(&:key)
     end
 
+    # Check the value of a tap bip32 derivation record (BIP-371): a compact size count of leaf hashes,
+    # the hashes, then a fingerprint and the 4 byte indexes of the path.
+    # @param [String] value the value with binary format.
+    # @raise [ArgumentError]
+    def self.validate_tap_bip32_derivation!(value)
+      buf = StringIO.new(value)
+      count = Bitcoin.unpack_var_int_from_io(buf)
+      raise ArgumentError, 'Invalid tap bip32 derivation value.' if count.nil? || count * 32 > buf.size - buf.pos
+      rest = buf.size - buf.pos - count * 32
+      raise ArgumentError, 'Invalid length for HD key path.' if rest < 4 || (rest - 4) % 4 != 0
+    end
+
     def self.serialize_to_vector(key_type, key: nil, value: nil)
       key_len = Bitcoin.pack_var_int(key_type).bytesize
       key_len += key.bytesize if key

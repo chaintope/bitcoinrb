@@ -105,6 +105,24 @@ describe Bitcoin::Block do
       end
     end
 
+    context 'height pushed as OP_1 to OP_16' do
+      def block_with_height(height)
+        coinbase = Bitcoin::Tx.new
+        coinbase.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.create_coinbase_outpoint, script_sig: Bitcoin::Script.new << height << 'aa')
+        coinbase.out << Bitcoin::TxOut.new(value: 0, script_pubkey: Bitcoin::Script.new)
+        header = Bitcoin::BlockHeader.new(2, '00' * 32, '00' * 32, 0, 0, 0)
+        Bitcoin::Block.new(header, [coinbase])
+      end
+
+      it 'return block height' do
+        # A script number from 1 to 16 is pushed as OP_1 to OP_16, 17 and above as data.
+        expect(block_with_height(1).height).to eq(1)
+        expect(block_with_height(16).height).to eq(16)
+        expect(block_with_height(17).height).to eq(17)
+        expect(block_with_height(21106).height).to eq(21106)
+      end
+    end
+
     context 'block versoin 1' do
       subject { # height is 21105. testnet last version 1 block.
         payload = load_block('000000009020a075cc7af813d46a1ef24eb2b0035e131937153146cc3711542a').htb

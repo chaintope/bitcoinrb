@@ -12,8 +12,9 @@ module Bitcoin
       def initialize(key, value)
         buf = StringIO.new(key)
         id_len = Bitcoin.unpack_var_int_from_io(buf)
-        @identifier = buf.read(id_len)
+        @identifier = id_len.nil? ? nil : buf.read(id_len)
         @sub_type = Bitcoin.unpack_var_int_from_io(buf)
+        raise ArgumentError, 'Invalid proprietary key.' if @identifier.nil? || @identifier.bytesize != id_len || @sub_type.nil?
         @value = value
       end
 

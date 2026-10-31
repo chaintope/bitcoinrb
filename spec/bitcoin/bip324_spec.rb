@@ -24,6 +24,25 @@ RSpec.describe Bitcoin::BIP324 do
     end
   end
 
+  describe 'FSChaCha20' do
+    # Vectors of Bitcoin Core's crypto_tests: the ciphertext of the first chunk after the key rotation.
+    # They only match when the keystream left over from the old key is discarded at the rotation.
+    [
+      ['000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f', '00' * 32, 256,
+       'a93df4ef03011f3db95f60d996e1785df5de38fc39bfcb663a47bb5561928349'],
+      ['01', '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f', 5, 'ea'],
+      ['e93fdb5c762804b9a706816aca31e35b11d2aa3080108ef46a5b1f1508819c0a',
+       '8ec4c3ccdaea336bdeb245636970be01266509b33f3d2642504eaf412206207a', 4096,
+       '8bfaa4eacff308fdb4a94a5ff25bd9d0c1f84b77f81239f67ff39d6e1ac280c9']
+    ].each do |plaintext, key, interval, expected|
+      it "should rotate the key after #{interval} chunks" do
+        cipher = Bitcoin::BIP324::FSChaCha20.new(key.htb, interval)
+        interval.times { cipher.encrypt(plaintext.htb) }
+        expect(cipher.encrypt(plaintext.htb).bth).to eq(expected)
+      end
+    end
+  end
+
   describe "xswiftec_inv" do
     it do
       xswiftec_inv_vectors.each do |v|
