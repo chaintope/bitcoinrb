@@ -131,6 +131,51 @@ describe Bitcoin::PartialTree do
     end
   end
 
+  describe 'hashes and flags which do not describe one tree' do
+    # Three txs with the third one matched: the first pair comes as one hash, then the third tx.
+    let(:txids) { 3.times.map { |i| Bitcoin.double_sha256([i].pack('C')).bth } }
+    let(:pair) { Bitcoin.double_sha256([txids[0] + txids[1]].pack('H*')).bth }
+    let(:root) { Bitcoin.double_sha256([pair + Bitcoin.double_sha256([txids[2] * 2].pack('H*')).bth].pack('H*')).bth }
+
+    it 'should build the tree from the hashes and flags Bitcoin Core produces' do
+      tree = Bitcoin::PartialTree.build(3, [pair, txids[2]], '10110000')
+      expect(tree.merkle_root).to eq(root)
+      expect(tree.find_node(txids[2]).index).to eq(2)
+      # The bits after the last one the tree needs are the padding of the last byte, whatever their value.
+      expect(Bitcoin::PartialTree.build(3, [pair, txids[2]], '10111111').merkle_root).to eq(root)
+    end
+
+    it 'should raise when the hashes run out' do
+      expect { Bitcoin::PartialTree.build(3, [pair], '10110000') }.
+        to raise_error(ArgumentError, 'Invalid partial tree. The hashes ran out.')
+    end
+
+    it 'should raise when the flags run out' do
+      expect { Bitcoin::PartialTree.build(3, [pair, txids[2]], '101') }.
+        to raise_error(ArgumentError, 'Invalid partial tree. The flags ran out.')
+    end
+
+    it 'should raise when a hash is left over' do
+      expect { Bitcoin::PartialTree.build(3, [pair, txids[2], txids[0]], '10110000') }.
+        to raise_error(ArgumentError, 'Invalid partial tree. Not every hash was used.')
+      # The root alone stands for the block, so the second hash has no place.
+      expect { Bitcoin::PartialTree.build(3, [root, txids[2]], '00000000') }.
+        to raise_error(ArgumentError, 'Invalid partial tree. Not every hash was used.')
+    end
+
+    it 'should raise when a flag bit outside the padding is left over' do
+      expect { Bitcoin::PartialTree.build(3, [pair, txids[2]], '10110000' + '00000000') }.
+        to raise_error(ArgumentError, 'Invalid partial tree. Not every flag bit was used.')
+    end
+
+    it 'should raise from the merkleblock message which carries them' do
+      header = Bitcoin::BlockHeader.new(1, '00' * 32, root, 0, 0, 0)
+      payload = header.to_payload << [3].pack('V') << Bitcoin.pack_var_int(1) << pair.htb << Bitcoin.pack_var_int(1) << '0d'.htb
+      expect { Bitcoin::Message::MerkleBlock.parse_from_payload(payload).partial_tree }.
+        to raise_error(ArgumentError, 'Invalid partial tree. The hashes ran out.')
+    end
+  end
+
   describe 'duplicated hashes (CVE-2012-2459)' do
     let(:hashes) { 3.times.map { |i| Bitcoin.double_sha256([i].pack('C')).bth } }
 

@@ -19,6 +19,9 @@ module Bitcoin
     end
 
     # https://bitcoin.org/en/developer-reference#creating-a-merkleblock-message
+    # The tree is read depth first the way Bitcoin Core's CPartialMerkleTree::TraverseAndExtract does, and
+    # like Core it is rejected when the flags or the hashes run out, when a hash is left over, or when a flag
+    # bit outside the padding of the last byte is left over.
     # @param [Integer] tx_count The number of transactions in the block.
     # @param [Array] hashes Array of hash values with hex format.
     # @param [String] flags The sequence of bits, a string of '0' and '1'.
@@ -26,24 +29,12 @@ module Bitcoin
     # @raise [ArgumentError] If the given parameters are out of range or inconsistent.
     def self.build(tx_count, hashes, flags)
       validate!(tx_count, hashes, flags)
-      flags = flags.each_char.map(&:to_i)
+      bits = flags.each_char.map(&:to_i)
       root = build_initial_tree( Array.new(tx_count) { Node.new })
-      current_node = root
-      hash_index = 0
-      flags.each do |f|
-        current_node.flag = f
-        if f.zero? || current_node.leaf?
-          current_node.value = hashes[hash_index]
-          hash_index += 1
-        end
-        current_node = current_node.next_partial
-        if hash_index == hashes.size
-          if current_node&.leaf?
-            current_node.value = hashes.last
-          end
-          break
-        end
-      end
+      used = { bits: 0, hashes: 0 }
+      traverse(root, bits, hashes, used)
+      raise ArgumentError, 'Invalid partial tree. Not every hash was used.' unless used[:hashes] == hashes.size
+      raise ArgumentError, 'Invalid partial tree. Not every flag bit was used.' unless (used[:bits] + 7) / 8 == (bits.size + 7) / 8
       new(root)
     end
 
@@ -60,6 +51,29 @@ module Bitcoin
       # There must be at least one bit per node in the partial tree, and at least one node per hash.
       raise ArgumentError, 'flags must have at least one bit per hash.' if flags.size < hashes.size
     end
+
+    # Read the flag bit of +node+ and, for a node which is neither a leaf nor the parent of a match, the
+    # hash which stands for it. The right child of the last node of an odd level repeats the left one and
+    # has no flag or hash of its own.
+    # @raise [ArgumentError] If the flags or the hashes run out.
+    def self.traverse(node, bits, hashes, used)
+      raise ArgumentError, 'Invalid partial tree. The flags ran out.' if used[:bits] >= bits.size
+      node.flag = bits[used[:bits]]
+      used[:bits] += 1
+      if node.flag.zero? || node.leaf?
+        raise ArgumentError, 'Invalid partial tree. The hashes ran out.' if used[:hashes] >= hashes.size
+        node.value = hashes[used[:hashes]]
+        used[:hashes] += 1
+      else
+        traverse(node.left, bits, hashes, used)
+        if node.right.duplicated
+          node.right.value = node.left.value
+        else
+          traverse(node.right, bits, hashes, used)
+        end
+      end
+    end
+    private_class_method :traverse
 
     def self.build_initial_tree(nodes)
       raise ArgumentError, 'nodes must not be empty.' if nodes.empty?
@@ -107,7 +121,6 @@ module Bitcoin
 
       def value
         return @value if @value
-        self.right = left.dup.tap { |n| n.duplicated = true } unless right
         left_value, right_value = left.value, right.value
         # Two identical branches mean the hashes under them are not unique, which is how the duplicated
         # tx of CVE-2012-2459 hides in a merkleblock. Bitcoin Core marks such a tree as bad.
@@ -125,14 +138,6 @@ module Bitcoin
 
       def partial?
         !flag.nil?
-      end
-
-      def next_partial
-        return nil if root? && (flag.zero? || (left.nil? && right.nil?) || (left.partial? && right.partial?))
-        return parent.next_partial if flag.zero? || leaf?
-        return left unless left.partial?
-        self.right = left.dup.tap { |n| n.duplicated = true } unless right
-        right.partial? ? parent.next_partial : right
       end
 
       # calculate the depth of this node in the tree.
