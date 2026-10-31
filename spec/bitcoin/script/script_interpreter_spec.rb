@@ -146,6 +146,24 @@ describe Bitcoin::ScriptInterpreter, use_secp256k1: true do
       expect(verify(script_sig.call(wrong_int_tag), spk, Bitcoin::SCRIPT_VERIFY_NONE)).to eq([false, Bitcoin::SCRIPT_ERR_EVAL_FALSE])
     end
 
+    it 'should apply NULLFAIL to every signature of a failed CHECKMULTISIG, also to one which verified' do
+      keys = 3.times.map { Bitcoin::Key.generate }
+      # 2-of-3 which is expected to fail, so NOT turns the failure into success.
+      spk = Bitcoin::Script.to_multisig_script(2, keys.map(&:pubkey)) << Bitcoin::Opcodes::OP_NOT
+      credit_tx = build_credit_tx(spk, 0)
+      tx = build_spending_tx(Bitcoin::Script.new, credit_tx, Bitcoin::ScriptWitness.new, 0)
+      sig3 = keys[2].sign(tx.sighash_for_input(0, spk)) + [Bitcoin::SIGHASH_TYPE[:all]].pack('C')
+      nullfail = Bitcoin::SCRIPT_VERIFY_DERSIG | Bitcoin::SCRIPT_VERIFY_STRICTENC | Bitcoin::SCRIPT_VERIFY_NULLFAIL
+      # One empty signature and one valid one. The valid one is consumed while checking, but it is still a
+      # non-empty signature of a failed operation.
+      one_valid = Bitcoin::Script.new << Bitcoin::Opcodes::OP_0 << Bitcoin::Opcodes::OP_0 << sig3
+      expect(verify(one_valid, spk, nullfail)).to eq([false, Bitcoin::SCRIPT_ERR_SIG_NULLFAIL])
+      expect(verify(one_valid, spk, nullfail & ~Bitcoin::SCRIPT_VERIFY_NULLFAIL)).to eq([true, Bitcoin::SCRIPT_ERR_OK])
+      # Both empty: the failure is clean.
+      both_empty = Bitcoin::Script.new << Bitcoin::Opcodes::OP_0 << Bitcoin::Opcodes::OP_0 << Bitcoin::Opcodes::OP_0
+      expect(verify(both_empty, spk, nullfail)).to eq([true, Bitcoin::SCRIPT_ERR_OK])
+    end
+
     it 'should accept an undefined opcode in a branch which is not executed' do
       # OP_0 OP_IF 0xbb OP_ENDIF OP_1, as a bare script and wrapped in P2SH.
       script = raw('0063bb6851')

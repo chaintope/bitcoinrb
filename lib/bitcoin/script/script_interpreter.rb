@@ -506,7 +506,8 @@ module Bitcoin
 
                   sigs = pop_string(sig_count)
                   sigs = [sigs] if sigs.is_a?(String)
-                  
+                  all_sigs = sigs.dup # the loop below drops a signature once it verifies
+
                   subscript = script.subscript(opts[:begincodehash]..-1)
 
                   if sig_version == :base
@@ -533,8 +534,9 @@ module Bitcoin
                   end
 
                   if !success && flag?(SCRIPT_VERIFY_NULLFAIL)
-                    sigs.each do |sig|
-                      # If the operation failed, we require that all signatures must be empty vector
+                    # If the operation failed, we require that all signatures must be empty vector, including
+                    # the ones which did verify, as Bitcoin Core checks every signature element on the stack.
+                    all_sigs.each do |sig|
                       return set_error(SCRIPT_ERR_SIG_NULLFAIL) if sig.bytesize > 0
                     end
                   end
