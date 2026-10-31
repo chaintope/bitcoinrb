@@ -24,10 +24,14 @@ module Bitcoin
         header = Bitcoin::BlockHeader.parse_from_payload(Bitcoin.read_exact(buf, 80))
         nonce = Bitcoin.read_exact(buf, 8).unpack1('q<*')
         short_ids_len = Bitcoin.unpack_var_int_from_io(buf)
+        raise Bitcoin::Message::Error, "cmpctblock tx count #{short_ids_len} exceeds #{MAX_COMPACT_BLOCK_TX_COUNT}." if short_ids_len > MAX_COMPACT_BLOCK_TX_COUNT
         short_ids = short_ids_len.times.map do
            Bitcoin.read_exact(buf, 6).reverse.bth.to_i(16)
         end
         prefilled_txn_len = Bitcoin.unpack_var_int_from_io(buf)
+        if short_ids_len + prefilled_txn_len > MAX_COMPACT_BLOCK_TX_COUNT
+          raise Bitcoin::Message::Error, "cmpctblock tx count #{short_ids_len + prefilled_txn_len} exceeds #{MAX_COMPACT_BLOCK_TX_COUNT}."
+        end
         prefilled_txn = prefilled_txn_len.times.map do
           PrefilledTx.parse_from_io(buf)
         end

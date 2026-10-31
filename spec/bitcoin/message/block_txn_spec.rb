@@ -18,4 +18,12 @@ describe Bitcoin::Message::BlockTxn do
     end
   end
 
+
+  describe 'tx count' do
+    it 'should reject more transactions than a block can hold' do
+      limit = Bitcoin::Message::MAX_COMPACT_BLOCK_TX_COUNT
+      expect { Bitcoin::Message::BlockTransactions.parse_from_payload('aa'.htb * 32 + Bitcoin.pack_var_int(limit + 1)) }.
+        to raise_error(Bitcoin::Message::Error, "blocktxn tx count #{limit + 1} exceeds #{limit}.")
+    end
+  end
 end

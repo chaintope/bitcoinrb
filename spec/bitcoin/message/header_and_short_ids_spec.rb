@@ -30,4 +30,18 @@ describe Bitcoin::Message::HeaderAndShortIDs do
     end
   end
 
+
+  describe 'tx count' do
+    it 'should reject more transactions than a block can hold' do
+      header = ('01000000' + '00' * 32 + '11' * 32 + '29ab5f49' + 'ffff001d' + '1dac2b7c').htb
+      limit = Bitcoin::Message::MAX_COMPACT_BLOCK_TX_COUNT
+      expect(limit).to eq(100_000)
+      expect { Bitcoin::Message::HeaderAndShortIDs.parse_from_payload(header + [1].pack('Q<') + Bitcoin.pack_var_int(limit + 1)) }.
+        to raise_error(Bitcoin::Message::Error, "cmpctblock tx count #{limit + 1} exceeds #{limit}.")
+      # The short ids and the prefilled transactions together are bounded as well.
+      payload = header + [1].pack('Q<') + Bitcoin.pack_var_int(limit) + "\x00".b * 6 * limit + Bitcoin.pack_var_int(1)
+      expect { Bitcoin::Message::HeaderAndShortIDs.parse_from_payload(payload) }.
+        to raise_error(Bitcoin::Message::Error, "cmpctblock tx count #{limit + 1} exceeds #{limit}.")
+    end
+  end
 end

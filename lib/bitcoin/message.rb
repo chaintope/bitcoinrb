@@ -1,6 +1,21 @@
 module Bitcoin
   module Message
 
+    # The most addresses an addr or addrv2 message may carry (MAX_ADDR_TO_SEND in Bitcoin Core).
+    MAX_ADDR_TO_SEND = 1000
+    # The most inventories an inv, getdata or notfound message may carry (MAX_INV_SZ).
+    MAX_INV_SZ = 50_000
+    # The most hashes a block locator may carry (MAX_LOCATOR_SZ).
+    MAX_LOCATOR_SZ = 101
+    # The longest user agent of a version message (MAX_SUBVERSION_LENGTH).
+    MAX_SUBVERSION_LENGTH = 256
+    # The most filter headers a cfheaders message may carry (MAX_GETCFHEADERS_SIZE).
+    MAX_CFHEADERS_RESULTS = 2000
+    # The most transactions a compact block or its blocktxn may refer to. No block holds more, since a
+    # transaction serializes to at least MIN_SERIALIZABLE_TRANSACTION_WEIGHT.
+    MAX_COMPACT_BLOCK_TX_COUNT = MAX_BLOCK_WEIGHT / MIN_SERIALIZABLE_TRANSACTION_WEIGHT
+
+
     autoload :Base, 'bitcoin/message/base'
     autoload :Inventory, 'bitcoin/message/inventory'
     autoload :InventoriesParser, 'bitcoin/message/inventories_parser'

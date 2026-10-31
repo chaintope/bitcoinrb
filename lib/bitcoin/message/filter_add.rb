@@ -15,7 +15,9 @@ module Bitcoin
       end
 
       def self.parse_from_payload(payload)
-        new(Bitcoin.unpack_var_string(payload).first.bth)
+        element = Bitcoin.unpack_var_string(payload).first
+        raise Bitcoin::Message::Error, "filteradd element size #{element.bytesize} exceeds #{Bitcoin::MAX_SCRIPT_ELEMENT_SIZE}." if element.bytesize > Bitcoin::MAX_SCRIPT_ELEMENT_SIZE
+        new(element.bth)
       end
 
       def to_payload

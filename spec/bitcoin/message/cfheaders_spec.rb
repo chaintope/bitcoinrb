@@ -16,4 +16,13 @@ describe Bitcoin::Message::CFHeaders do
     end
   end
 
+
+  describe 'number of filter headers' do
+    it 'should accept 2000 and reject 2001' do
+      hashes = Array.new(2000) { 'cc' * 32 }
+      expect(Bitcoin::Message::CFHeaders.parse_from_payload(Bitcoin::Message::CFHeaders.new(0, 'aa' * 32, 'bb' * 32, hashes).to_payload).filter_hashes.size).to eq(2000)
+      payload = "\x00".b + ('aa' * 32).htb + ('bb' * 32).htb + Bitcoin.pack_var_int(2001)
+      expect { Bitcoin::Message::CFHeaders.parse_from_payload(payload) }.to raise_error(Bitcoin::Message::Error, 'cfheaders size 2001 exceeds 2000.')
+    end
+  end
 end

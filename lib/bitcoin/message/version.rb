@@ -51,7 +51,10 @@ module Bitcoin
           v.remote_addr = NetworkAddr.parse_from_payload(remote_addr)
           v.nonce = nonce
         end
-        v.user_agent, rest = unpack_var_string(rest) unless rest.empty?
+        unless rest.empty?
+          v.user_agent, rest = unpack_var_string(rest)
+          raise Bitcoin::Message::Error, "user agent size #{v.user_agent.bytesize} exceeds #{MAX_SUBVERSION_LENGTH}." if v.user_agent.bytesize > MAX_SUBVERSION_LENGTH
+        end
         unless rest.empty?
           raise Bitcoin::Message::Error, 'Version payload is truncated.' if rest.bytesize < 4
           v.start_height, rest = rest.unpack('Va*')

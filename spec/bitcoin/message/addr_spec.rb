@@ -26,4 +26,13 @@ describe Bitcoin::Message::Addr do
     end
   end
 
+
+  describe 'number of addresses' do
+    it 'should accept 1000 and reject 1001, as Bitcoin Core does' do
+      one = Bitcoin::Message::NetworkAddr.new.to_payload
+      expect(Bitcoin::Message::Addr.parse_from_payload(Bitcoin.pack_var_int(1000) + one * 1000).addrs.size).to eq(1000)
+      expect { Bitcoin::Message::Addr.parse_from_payload(Bitcoin.pack_var_int(1001) + one * 1001) }.
+        to raise_error(Bitcoin::Message::Error, 'addr message size 1001 exceeds 1000.')
+    end
+  end
 end

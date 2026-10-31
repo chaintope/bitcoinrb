@@ -99,4 +99,12 @@ describe Bitcoin::Message::Version do
     end
   end
 
+
+  describe 'user agent size' do
+    it 'should accept 256 bytes and reject 257, as Bitcoin Core does' do
+      expect(Bitcoin::Message::Version.parse_from_payload(Bitcoin::Message::Version.new(user_agent: 'a' * 256).to_payload).user_agent).to eq('a' * 256)
+      expect { Bitcoin::Message::Version.parse_from_payload(Bitcoin::Message::Version.new(user_agent: 'a' * 257).to_payload) }.
+        to raise_error(Bitcoin::Message::Error, 'user agent size 257 exceeds 256.')
+    end
+  end
 end

@@ -30,4 +30,14 @@ describe Bitcoin::Message::GetHeaders do
     end
   end
 
+
+  describe 'locator size' do
+    it 'should accept 101 hashes and reject 102, as Bitcoin Core does' do
+      hashes = Array.new(101) { 'aa' * 32 }
+      expect(Bitcoin::Message::GetHeaders.parse_from_payload(Bitcoin::Message::GetHeaders.new(70015, hashes).to_payload).hashes.size).to eq(101)
+      payload = [70015].pack('V') + Bitcoin.pack_var_int(102) + ('aa' * 32).htb * 102 + ('00' * 32).htb
+      expect { Bitcoin::Message::GetHeaders.parse_from_payload(payload) }.to raise_error(Bitcoin::Message::Error, 'getheaders locator size 102 exceeds 101.')
+      expect { Bitcoin::Message::GetBlocks.parse_from_payload(payload) }.to raise_error(Bitcoin::Message::Error, 'getblocks locator size 102 exceeds 101.')
+    end
+  end
 end

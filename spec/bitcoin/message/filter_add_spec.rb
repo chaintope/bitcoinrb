@@ -20,4 +20,12 @@ describe Bitcoin::Message::FilterAdd do
     end
   end
 
+
+  describe 'element size' do
+    it 'should accept 520 bytes and reject 521, as Bitcoin Core does' do
+      expect(Bitcoin::Message::FilterAdd.parse_from_payload(Bitcoin.pack_var_string("\xaa".b * 520)).element).to eq('aa' * 520)
+      expect { Bitcoin::Message::FilterAdd.parse_from_payload(Bitcoin.pack_var_string("\xaa".b * 521)) }.
+        to raise_error(Bitcoin::Message::Error, 'filteradd element size 521 exceeds 520.')
+    end
+  end
 end

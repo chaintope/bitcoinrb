@@ -27,4 +27,15 @@ describe Bitcoin::Message::Inv do
     end
   end
 
+
+  describe 'number of inventories' do
+    it 'should accept 50000 and reject 50001, as Bitcoin Core does' do
+      one = Bitcoin::Message::Inventory.new(1, 'aa' * 32).to_payload
+      expect(Bitcoin::Message::Inv.parse_from_payload(Bitcoin.pack_var_int(50_000) + one * 50_000).inventories.size).to eq(50_000)
+      expect { Bitcoin::Message::Inv.parse_from_payload(Bitcoin.pack_var_int(50_001) + one * 50_001) }.
+        to raise_error(Bitcoin::Message::Error, 'inv message size 50001 exceeds 50000.')
+      expect { Bitcoin::Message::GetData.parse_from_payload(Bitcoin.pack_var_int(50_001)) }.
+        to raise_error(Bitcoin::Message::Error, 'getdata message size 50001 exceeds 50000.')
+    end
+  end
 end

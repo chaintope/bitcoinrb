@@ -8,6 +8,7 @@ module Bitcoin
         raise Bitcoin::Message::Error, 'Payload is too short.' if payload.bytesize < 4
         ver, payload = payload.unpack('Va*')
         size, payload = Bitcoin.unpack_var_int(payload)
+        raise Bitcoin::Message::Error, "#{self::COMMAND} locator size #{size} exceeds #{MAX_LOCATOR_SZ}." if size > MAX_LOCATOR_SZ
         hashes = []
         buf = StringIO.new(payload)
         size.times do

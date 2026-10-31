@@ -6,6 +6,7 @@ module Bitcoin
 
       def parse_from_payload(payload)
         size, payload = Bitcoin.unpack_var_int(payload)
+        raise Bitcoin::Message::Error, "#{self::COMMAND} message size #{size} exceeds #{MAX_INV_SZ}." if size > MAX_INV_SZ
         buf = StringIO.new(payload)
         i = new
         size.times do

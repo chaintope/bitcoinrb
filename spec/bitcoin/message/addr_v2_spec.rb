@@ -58,4 +58,11 @@ RSpec.describe Bitcoin::Message::AddrV2 do
     end
   end
 
+
+  describe 'number of addresses' do
+    it 'should reject more than 1000 addresses' do
+      payload = Bitcoin.pack_var_int(1001)
+      expect { Bitcoin::Message::AddrV2.parse_from_payload(payload) }.to raise_error(Bitcoin::Message::Error, 'addrv2 message size 1001 exceeds 1000.')
+    end
+  end
 end

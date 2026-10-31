@@ -17,6 +17,7 @@ module Bitcoin
         buf = StringIO.new(payload)
         block_hash = Bitcoin.read_exact(buf, 32).bth
         tx_count = Bitcoin.unpack_var_int_from_io(buf)
+        raise Bitcoin::Message::Error, "blocktxn tx count #{tx_count} exceeds #{MAX_COMPACT_BLOCK_TX_COUNT}." if tx_count > MAX_COMPACT_BLOCK_TX_COUNT
         txn = tx_count.times.map{Bitcoin::Tx.parse_from_payload(buf)}
         self.new(block_hash, txn)
       end

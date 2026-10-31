@@ -25,6 +25,7 @@ module Bitcoin
         hash = Bitcoin.read_exact(buf, 32).bth
         header = Bitcoin.read_exact(buf, 32).bth
         count = Bitcoin.unpack_var_int_from_io(buf)
+        raise Bitcoin::Message::Error, "cfheaders size #{count} exceeds #{MAX_CFHEADERS_RESULTS}." if count > MAX_CFHEADERS_RESULTS
         hashes = count.times.map{Bitcoin.read_exact(buf, 32).bth}
         self.new(type, hash, header, hashes)
       end

@@ -18,6 +18,7 @@ module Bitcoin
       def self.parse_from_payload(payload)
         buf = StringIO.new(payload)
         addr_count = Bitcoin.unpack_var_int_from_io(buf)
+        raise Bitcoin::Message::Error, "addr message size #{addr_count} exceeds #{MAX_ADDR_TO_SEND}." if addr_count > MAX_ADDR_TO_SEND
         addr = new
         addr_count.times do
           addr.addrs << NetworkAddr.parse_from_payload(buf)
