@@ -6,7 +6,7 @@ module Bitcoin
     # https://github.com/bitcoin/bips/blob/master/bip-0152.mediawiki#HeaderAndShortIDs
     class HeaderAndShortIDs
       attr_accessor :header
-      attr_accessor :nonce
+      attr_accessor :nonce # 64 bit unsigned integer
       attr_accessor :short_ids
       attr_accessor :prefilled_txn
       attr_accessor :siphash_key
@@ -16,13 +16,13 @@ module Bitcoin
         @nonce = nonce
         @short_ids = short_ids
         @prefilled_txn = prefilled_txn
-        @siphash_key = Bitcoin.sha256(header.to_payload << [nonce].pack('q<*'))[0...16]
+        @siphash_key = Bitcoin.sha256(header.to_payload << [nonce].pack('Q<'))[0...16]
       end
 
       def self.parse_from_payload(payload)
         buf = StringIO.new(payload)
         header = Bitcoin::BlockHeader.parse_from_payload(Bitcoin.read_exact(buf, 80))
-        nonce = Bitcoin.read_exact(buf, 8).unpack1('q<*')
+        nonce = Bitcoin.read_exact(buf, 8).unpack1('Q<')
         short_ids_len = Bitcoin.unpack_var_int_from_io(buf)
         raise Bitcoin::Message::Error, "cmpctblock tx count #{short_ids_len} exceeds #{MAX_COMPACT_BLOCK_TX_COUNT}." if short_ids_len > MAX_COMPACT_BLOCK_TX_COUNT
         short_ids = short_ids_len.times.map do
@@ -40,7 +40,7 @@ module Bitcoin
 
       def to_payload
         p = header.to_payload
-        p << [nonce].pack('q<*')
+        p << [nonce].pack('Q<')
         p << Bitcoin.pack_var_int(short_ids.size)
         p << short_ids.map{|id|sprintf('%012x', id).htb.reverse}.join
         p << Bitcoin.pack_var_int(prefilled_txn.size)

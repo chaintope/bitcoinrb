@@ -44,4 +44,17 @@ describe Bitcoin::Message::HeaderAndShortIDs do
         to raise_error(Bitcoin::Message::Error, "cmpctblock tx count #{limit + 1} exceeds #{limit}.")
     end
   end
+
+  describe 'nonce' do
+    it 'should be read and written as a 64 bit unsigned integer' do
+      header = Bitcoin::BlockHeader.new(1, '00' * 32, '00' * 32, 0, 0, 0)
+      nonce = 0xffffffffffffffff
+      payload = Bitcoin::Message::HeaderAndShortIDs.new(header, nonce).to_payload
+      expect(payload[80, 8]).to eq("\xff".b * 8)
+      parsed = Bitcoin::Message::HeaderAndShortIDs.parse_from_payload(payload)
+      expect(parsed.nonce).to eq(nonce)
+      expect(parsed.siphash_key).to eq(Bitcoin.sha256(header.to_payload + ("\xff".b * 8))[0...16])
+      expect(parsed.to_payload).to eq(payload)
+    end
+  end
 end
