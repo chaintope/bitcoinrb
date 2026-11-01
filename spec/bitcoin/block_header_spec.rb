@@ -42,6 +42,25 @@ describe Bitcoin::BlockHeader do
 
       header.bits = 0x1c654657
       expect(header.difficulty_target).to eq(0x0000000065465700000000000000000000000000000000000000000000000000)
+
+      # An exponent below 3 shifts the mantissa right, dropping the low bytes as Bitcoin Core's SetCompact does.
+      header.bits = 0x0200ffff
+      expect(header.difficulty_target).to eq(0xff)
+      header.bits = 0x01003456
+      expect(header.difficulty_target).to eq(0)
+      # The sign bit makes the target negative.
+      header.bits = 0x1d80ffff
+      expect(header.difficulty_target).to eq(-0x00000000ffff0000000000000000000000000000000000000000000000000000)
+      expect(header.work).to eq(0)
+      # A target which does not fit in 256 bits.
+      expect(Bitcoin::BlockHeader.compact_overflow?(0xff7fffff)).to be true
+      expect(Bitcoin::BlockHeader.compact_overflow?(0x23010000)).to be true
+      expect(Bitcoin::BlockHeader.compact_overflow?(0x210100ff)).to be true
+      expect(Bitcoin::BlockHeader.compact_overflow?(0x220100ff)).to be true
+      expect(Bitcoin::BlockHeader.compact_overflow?(0x220000ff)).to be false
+      expect(Bitcoin::BlockHeader.compact_overflow?(0xff000000)).to be false
+      header.bits = 0xff7fffff
+      expect(header.work).to eq(0)
     end
   end
 
@@ -54,6 +73,40 @@ describe Bitcoin::BlockHeader do
       expect(subject.valid_pow?).to be true
       subject.bits = 496604799
       expect(subject.valid_pow?).to be false
+    end
+
+    # The cases of Bitcoin Core's pow_tests, with the hash of the header stubbed.
+    context 'the target is out of range', network: :mainnet do
+      let(:pow_limit) { 0x00000000ffff0000000000000000000000000000000000000000000000000000 }
+      let(:header) { Bitcoin::BlockHeader.new(1, '00' * 32, '00' * 32, 0, 0x1d00ffff, 0) }
+
+      def pow_with(bits, hash)
+        header.bits = bits
+        allow(header).to receive(:block_id).and_return('%064x' % hash)
+        header.valid_pow?
+      end
+
+      it 'should reject a negative, zero, overflowing or too easy target' do
+        expect(pow_with(0x1d80ffff, 1)).to be false # negative target
+        expect(pow_with(0x00000000, 0)).to be false # zero target
+        expect(pow_with(0xff7fffff, 1)).to be false # overflow target
+        expect(pow_with(0x1d01fffe, 1)).to be false # too easy target: twice the proof of work limit
+        expect(pow_with(0x1d00ffff, 1)).to be true  # the proof of work limit itself
+      end
+
+      it 'should accept a hash equal to the target and reject a greater one' do
+        expect(pow_with(0x1d00ffff, pow_limit)).to be true
+        expect(pow_with(0x1d00ffff, pow_limit + 1)).to be false
+        expect(pow_with(0x1d00ffff, pow_limit * 2)).to be false
+      end
+
+      it 'should apply the proof of work limit of the current chain' do
+        Bitcoin.chain_params = :regtest
+        expect(pow_with(0x207fffff, 1)).to be true
+        expect(pow_with(0x1d01fffe, 1)).to be true # easier than mainnet's limit, within regtest's
+        expect(pow_with(0x20800000, 1)).to be false # negative
+        Bitcoin.chain_params = :mainnet
+      end
     end
   end
 

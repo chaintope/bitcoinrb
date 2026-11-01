@@ -34,12 +34,30 @@ module Bitcoin
       [version, prev_hash.htb, merkle_root.htb, time, bits, nonce].pack('Va32a32VVV')
     end
 
+    # Decode a compact target the way Bitcoin Core's arith_uint256::SetCompact does.
+    # @param [Integer] compact The 32 bit compact encoding, such as the bits of a block header.
+    # @return [Integer] The target. It is negative when the sign bit is set, and it may not fit in
+    # 256 bits, see .compact_overflow?.
+    def self.decode_compact(compact)
+      exponent = (compact >> 24) & 0xff
+      mantissa = compact & 0x7fffff
+      target = exponent <= 3 ? mantissa >> (8 * (3 - exponent)) : mantissa << (8 * (exponent - 3))
+      (compact & 0x800000).zero? ? target : -target
+    end
+
+    # Whether the target of +compact+ does not fit in 256 bits, as Bitcoin Core's SetCompact reports it.
+    # @param [Integer] compact The 32 bit compact encoding.
+    # @return [Boolean]
+    def self.compact_overflow?(compact)
+      exponent = (compact >> 24) & 0xff
+      mantissa = compact & 0x7fffff
+      mantissa != 0 && (exponent > 34 || (mantissa > 0xff && exponent > 33) || (mantissa > 0xffff && exponent > 32))
+    end
+
     # compute difficulty target from bits.
+    # @return [Integer] see .decode_compact.
     def difficulty_target
-      exponent = ((bits >> 24) & 0xff)
-      mantissa = bits & 0x7fffff
-      mantissa *= -1 if (bits & 0x800000) > 0
-      (mantissa * 2 ** (8 * (exponent - 3)))
+      BlockHeader.decode_compact(bits)
     end
 
     def hash
@@ -60,9 +78,14 @@ module Bitcoin
       valid_pow? && valid_timestamp?
     end
 
-    # evaluate valid proof of work.
+    # evaluate valid proof of work, as Bitcoin Core's CheckProofOfWork does: the target has to be positive,
+    # fit in 256 bits and be no easier than the proof of work limit of the current chain, and the block
+    # hash has to be no greater than the target.
     def valid_pow?
-      block_id.hex < difficulty_target
+      target = difficulty_target
+      return false if target <= 0 || BlockHeader.compact_overflow?(bits)
+      return false if target > BlockHeader.decode_compact(Bitcoin.chain_params.proof_of_work_limit)
+      block_id.hex <= target
     end
 
     # evaluate valid timestamp.
@@ -75,7 +98,7 @@ module Bitcoin
     # @return [Integer] a chain work.
     def work
       target = difficulty_target
-      return 0 if target < 1
+      return 0 if target < 1 || BlockHeader.compact_overflow?(bits)
       115792089237316195423570985008687907853269984665640564039457584007913129639936.div(target + 1) # 115792089237316195423570985008687907853269984665640564039457584007913129639936 is 2**256
     end
 
