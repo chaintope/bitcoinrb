@@ -20,11 +20,11 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency 'ecdsa_ext', '~> 0.5.1'
+  spec.add_runtime_dependency 'ecdsa_ext', '~> 0.6.0'
   spec.add_runtime_dependency 'murmurhash3', '~> 0.1.7'
-  spec.add_runtime_dependency 'bech32', '>= 1.5.0'
+  spec.add_runtime_dependency 'bech32', '>= 1.6.0'
   spec.add_runtime_dependency 'siphash'
-  spec.add_runtime_dependency 'bip-schnorr', '>= 0.7.0'
+  spec.add_runtime_dependency 'bip-schnorr', '>= 0.8.0'
   spec.add_runtime_dependency 'base32', '>= 0.3.4'
   spec.add_runtime_dependency 'base64', '~> 0.2.0'
   spec.add_runtime_dependency 'bigdecimal'
