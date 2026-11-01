@@ -271,7 +271,8 @@ module Bitcoin
       end
 
       # Finalize this input, building the final scriptSig and witness from the partial signatures and scripts.
-      # Supported: P2PKH, P2PK, bare multisig, P2WPKH, P2WSH and P2SH wrapping any of them. Anything else,
+      # Supported: P2PKH, P2PK, bare multisig, P2WPKH, P2WSH, P2SH wrapping any of them, and P2TR by the key
+      # path or a pk() or multi_a() leaf script. Anything else,
       # a missing script or too few signatures raises rather than producing an unspendable input.
       # @param [Integer] prevout_index The index of the output this input spends, used to look up the scriptPubKey
       #   in +non_witness_utxo+. Not needed when +witness_utxo+ or a redeem/witness script is present.
@@ -291,17 +292,26 @@ module Bitcoin
             satisfaction(redeem_script).each { |item| final_script_sig << item }
             final_script_sig << redeem_script.to_payload
           end
+        elsif script_pubkey.p2tr?
+          self.final_script_witness = Bitcoin::ScriptWitness.new(taproot_witness_stack)
         elsif script_pubkey.witness_program?
           self.final_script_witness = Bitcoin::ScriptWitness.new(witness_stack(script_pubkey))
         else
           self.final_script_sig = Bitcoin::Script.new
           satisfaction(script_pubkey).each { |item| final_script_sig << item }
         end
+        # A finalized input carries nothing but the final scripts, as Bitcoin Core's finalizer leaves it.
         self.partial_sigs = {}
         self.hd_key_paths = {}
         self.redeem_script = nil
         self.witness_script = nil
         self.sighash_type = nil
+        self.tap_key_sig = nil
+        self.tap_script_sigs = {}
+        self.tap_leaf_scripts = {}
+        self.tap_bip32_derivations = {}
+        self.tap_internal_key = nil
+        self.tap_merkle_root = nil
         self
       end
 
@@ -402,6 +412,76 @@ module Bitcoin
         else
           raise ArgumentError, "Finalizing a script of this type is not supported: #{script}"
         end
+      end
+
+      # The witness stack spending a P2TR output, built as Bitcoin Core's SignTaproot does: the key path
+      # signature if there is one, otherwise the smallest witness among the leaf scripts whose signatures are
+      # all present.
+      # @return [Array[String]] stack items with binary format.
+      def taproot_witness_stack
+        return [tap_key_sig.htb] if tap_key_sig
+        stacks = tap_leaf_scripts.map do |control_block, value|
+          payload = value.htb
+          leaf_ver = payload[-1].ord # BIP-371: the script followed by its leaf version.
+          next unless leaf_ver == Bitcoin::TAPROOT_LEAF_TAPSCRIPT && leaf_ver == control_block.leaf_ver
+          script = Bitcoin::Script.parse_from_payload(payload[0...-1])
+          leaf_hash = Bitcoin::Taproot::LeafNode.new(script, leaf_ver).leaf_hash.bth
+          sigs = tapscript_satisfaction(script, leaf_hash)
+          sigs + [script.to_payload, control_block.to_payload] if sigs
+        end.compact
+        if stacks.empty?
+          raise ArgumentError, 'Neither the key path signature nor the signatures of a leaf script are present.'
+        end
+        stacks.min_by { |stack| [Bitcoin::ScriptWitness.new(stack).to_payload.bytesize, stack.last] }
+      end
+
+      # The stack items which satisfy the tapscript +script+, built from the tap script signatures.
+      # @param [Bitcoin::Script] script A pk() or multi_a() leaf script.
+      # @param [String] leaf_hash The leaf hash of +script+ with hex format.
+      # @return [Array[String], nil] items with binary format, or nil if the signatures are not all present.
+      def tapscript_satisfaction(script, leaf_hash)
+        chunks = script.chunks
+        # pk(): <32 byte key> OP_CHECKSIG
+        if chunks.size == 2 && xonly_push?(chunks[0]) && chunks[1].opcode == Bitcoin::Opcodes::OP_CHECKSIG
+          sig = tap_script_sigs[chunks[0].pushed_data.bth + leaf_hash]
+          return sig && [sig.htb]
+        end
+        # multi_a(): <key> OP_CHECKSIG (<key> OP_CHECKSIGADD)* <k> OP_NUMEQUAL
+        keys, threshold = multi_a_keys(chunks)
+        return nil unless keys
+        # OP_CHECKSIG takes the top item, so the signature for the first key is the last item pushed. The first
+        # k signatures found are used and every other key gets an empty item, as in Bitcoin Core.
+        good = 0
+        sigs = keys.reverse.map do |key|
+          sig = tap_script_sigs[key + leaf_hash]
+          next '' unless sig && good < threshold
+          good += 1
+          sig.htb
+        end
+        good == threshold ? sigs : nil
+      end
+
+      def xonly_push?(chunk)
+        chunk.pushdata? && chunk.pushed_data.bytesize == Bitcoin::X_ONLY_PUBKEY_SIZE
+      end
+
+      # @param [Array[String]] chunks The chunks of a script.
+      # @return [Array, nil] The x-only keys with hex format and the threshold of a multi_a() script, or nil.
+      def multi_a_keys(chunks)
+        return nil unless chunks.size >= 4 && chunks.size.even? && chunks[-1].opcode == Bitcoin::Opcodes::OP_NUMEQUAL
+        keys = []
+        chunks[0...-2].each_slice(2).with_index do |(key, op), i|
+          return nil unless xonly_push?(key) && op.opcode == (i.zero? ? Bitcoin::Opcodes::OP_CHECKSIG : Bitcoin::Opcodes::OP_CHECKSIGADD)
+          keys << key.pushed_data.bth
+        end
+        k = chunks[-2]
+        threshold = if k.pushdata?
+                      Bitcoin::Script.decode_number(k.pushed_data.bth)
+                    elsif (Bitcoin::Opcodes::OP_1..Bitcoin::Opcodes::OP_16).cover?(k.opcode)
+                      Bitcoin::Opcodes.opcode_to_small_int(k.opcode)
+                    end
+        return nil unless threshold && threshold.between?(1, keys.size)
+        [keys, threshold]
       end
 
     end

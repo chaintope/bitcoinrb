@@ -1008,4 +1008,117 @@ describe Bitcoin::PSBT do
       expect(parsed.to_payload).to eq(psbt.to_payload)
     end
   end
+
+  describe 'Bitcoin::PSBT::Input#finalize! for a P2TR input' do
+    let(:internal_key) { Bitcoin::Key.new(priv_key: '11' * 32) }
+    let(:keys) { (1..3).map { |i| Bitcoin::Key.new(priv_key: ('%02x' % (0x20 + i)) * 32) } }
+    let(:pk_leaf) { Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.new << keys[0].xonly_pubkey << Bitcoin::Opcodes::OP_CHECKSIG) }
+    let(:multi_a_leaf) {
+      script = Bitcoin::Script.new
+      keys.each_with_index { |k, i| script << k.xonly_pubkey << (i.zero? ? Bitcoin::Opcodes::OP_CHECKSIG : Bitcoin::Opcodes::OP_CHECKSIGADD) }
+      Bitcoin::Taproot::LeafNode.new(script << 2 << Bitcoin::Opcodes::OP_NUMEQUAL)
+    }
+    let(:builder) { Bitcoin::Taproot::SimpleBuilder.new(internal_key.xonly_pubkey, [pk_leaf, multi_a_leaf]) }
+    let(:script_pubkey) { Bitcoin::Script.to_p2tr(builder.tweak_public_key) }
+    let(:prevouts) { [Bitcoin::TxOut.new(value: 100_000, script_pubkey: script_pubkey)] }
+    let(:psbt) {
+      tx = Bitcoin::Tx.new
+      tx.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.from_txid('11' * 32, 0))
+      tx.out << Bitcoin::TxOut.new(value: 90_000, script_pubkey: script_pubkey)
+      psbt = Bitcoin::PSBT::Tx.new(tx)
+      psbt.inputs[0].witness_utxo = prevouts[0]
+      psbt.inputs[0].tap_internal_key = internal_key.xonly_pubkey
+      psbt.inputs[0].tap_merkle_root = builder.send(:merkle_root)
+      psbt
+    }
+
+    def leaf_value(leaf)
+      leaf.script.to_hex + [leaf.leaf_ver].pack('C').bth
+    end
+
+    def add_leaf(psbt, leaf)
+      psbt.inputs[0].tap_leaf_scripts[builder.control_block(leaf)] = leaf_value(leaf)
+    end
+
+    def add_script_sig(psbt, leaf, key)
+      sighash = psbt.tx.sighash_for_input(0, sig_version: :tapscript, prevouts: prevouts,
+                                          hash_type: Bitcoin::SIGHASH_TYPE[:default], opts: { leaf_hash: leaf.leaf_hash })
+      sig = key.sign(sighash, algo: :schnorr)
+      psbt.inputs[0].tap_script_sigs[key.xonly_pubkey + leaf.leaf_hash.bth] = sig.bth
+      sig
+    end
+
+    def expect_finalized_and_spendable(psbt)
+      input = psbt.inputs[0]
+      expect(input.final_script_witness).not_to be_nil
+      expect(input.tap_key_sig).to be_nil
+      expect(input.tap_script_sigs).to be_empty
+      expect(input.tap_leaf_scripts).to be_empty
+      expect(input.tap_internal_key).to be_nil
+      expect(input.tap_merkle_root).to be_nil
+      tx = Bitcoin::PSBT::Tx.parse_from_payload(psbt.to_payload).extract_tx
+      expect(tx.verify_input_sig(0, script_pubkey, amount: prevouts[0].value, prevouts: prevouts)).to be true
+    end
+
+    it 'should put the key path signature alone on the witness stack' do
+      sighash = psbt.tx.sighash_for_input(0, sig_version: :taproot, prevouts: prevouts, hash_type: Bitcoin::SIGHASH_TYPE[:default])
+      sig = builder.tweak_private_key(internal_key).sign(sighash, algo: :schnorr)
+      psbt.inputs[0].tap_key_sig = sig.bth
+      add_leaf(psbt, pk_leaf) # The key path wins over a leaf script, whether or not it could be satisfied.
+      psbt.finalize!
+      expect(psbt.inputs[0].final_script_witness.stack).to eq([sig])
+      expect_finalized_and_spendable(psbt)
+    end
+
+    it 'should spend a pk() leaf with its signature, the script and the control block' do
+      add_leaf(psbt, pk_leaf)
+      sig = add_script_sig(psbt, pk_leaf, keys[0])
+      psbt.finalize!
+      expect(psbt.inputs[0].final_script_witness.stack).to eq([sig, pk_leaf.script.to_payload, builder.control_block(pk_leaf).to_payload])
+      expect_finalized_and_spendable(psbt)
+    end
+
+    it 'should spend a multi_a() leaf with the signatures in the reverse order of the keys' do
+      add_leaf(psbt, multi_a_leaf)
+      sig1 = add_script_sig(psbt, multi_a_leaf, keys[0])
+      sig3 = add_script_sig(psbt, multi_a_leaf, keys[2])
+      psbt.finalize!
+      expect(psbt.inputs[0].final_script_witness.stack).
+        to eq([sig3, '', sig1, multi_a_leaf.script.to_payload, builder.control_block(multi_a_leaf).to_payload])
+      expect_finalized_and_spendable(psbt)
+    end
+
+    it 'should use the first k signatures it finds for a multi_a() leaf, as Bitcoin Core does' do
+      add_leaf(psbt, multi_a_leaf)
+      add_script_sig(psbt, multi_a_leaf, keys[0])
+      sig2 = add_script_sig(psbt, multi_a_leaf, keys[1])
+      sig3 = add_script_sig(psbt, multi_a_leaf, keys[2])
+      psbt.finalize!
+      expect(psbt.inputs[0].final_script_witness.stack.first(3)).to eq([sig3, sig2, ''])
+      expect_finalized_and_spendable(psbt)
+    end
+
+    it 'should choose the leaf with the smallest witness when more than one can be spent' do
+      add_leaf(psbt, pk_leaf)
+      add_leaf(psbt, multi_a_leaf)
+      add_script_sig(psbt, multi_a_leaf, keys[0])
+      add_script_sig(psbt, multi_a_leaf, keys[1])
+      sig = add_script_sig(psbt, pk_leaf, keys[0])
+      psbt.finalize!
+      expect(psbt.inputs[0].final_script_witness.stack).to eq([sig, pk_leaf.script.to_payload, builder.control_block(pk_leaf).to_payload])
+      expect_finalized_and_spendable(psbt)
+    end
+
+    it 'should raise when neither the key path nor a leaf script can be spent' do
+      error = 'Neither the key path signature nor the signatures of a leaf script are present.'
+      expect { psbt.finalize! }.to raise_error(ArgumentError, error)
+      add_leaf(psbt, multi_a_leaf)
+      add_script_sig(psbt, multi_a_leaf, keys[1]) # one of two
+      expect { psbt.finalize! }.to raise_error(ArgumentError, error)
+      add_leaf(psbt, pk_leaf)
+      add_script_sig(psbt, pk_leaf, keys[1]) # a signature of the wrong key
+      expect { psbt.finalize! }.to raise_error(ArgumentError, error)
+      expect(psbt.inputs[0].final_script_witness).to be_nil
+    end
+  end
 end
