@@ -88,7 +88,7 @@ module Bitcoin
         raise ArgumentError, 'An unsupported reqparam is included.' if key.downcase.start_with?('req-')
         # A key without a value is nil, and a key given more than once holds its values in an Array.
         values = value.is_a?(Array) ? value : [value]
-        unless values.all? { |v| v.nil? || v.is_a?(String) }
+        unless !values.empty? && values.all? { |v| v.nil? || v.is_a?(String) }
           raise ArgumentError, "other_params['#{key}'] must be a String, nil or an Array of them."
         end
       end

@@ -1119,6 +1119,8 @@ describe Bitcoin::PSBT do
       add_script_sig(psbt, pk_leaf, keys[1]) # a signature of the wrong key
       expect { psbt.finalize! }.to raise_error(ArgumentError, error)
       expect(psbt.inputs[0].final_script_witness).to be_nil
+      psbt.inputs[0].tap_leaf_scripts[builder.control_block(pk_leaf)] = ''
+      expect { psbt.finalize! }.to raise_error(ArgumentError, 'Tap leaf script value must have a leaf version.')
     end
   end
 end

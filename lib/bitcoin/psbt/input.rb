@@ -422,6 +422,7 @@ module Bitcoin
         return [tap_key_sig.htb] if tap_key_sig
         stacks = tap_leaf_scripts.map do |control_block, value|
           payload = value.htb
+          raise ArgumentError, 'Tap leaf script value must have a leaf version.' if payload.empty?
           leaf_ver = payload[-1].ord # BIP-371: the script followed by its leaf version.
           next unless leaf_ver == Bitcoin::TAPROOT_LEAF_TAPSCRIPT && leaf_ver == control_block.leaf_ver
           script = Bitcoin::Script.parse_from_payload(payload[0...-1])

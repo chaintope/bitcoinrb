@@ -232,6 +232,9 @@ RSpec.describe Bitcoin::BIP321URI do
       expect { described_class.new(address: addr, other_params: { 'x' => ['a', 1] }) }.
         to raise_error(ArgumentError, "other_params['x'] must be a String, nil or an Array of them.")
       expect { described_class.new(address: addr, other_params: { x: 'a' }) }.to raise_error(ArgumentError, 'other_params keys must be String.')
+      # An empty Array would be written as nothing, so it is not a value and not a payment instruction.
+      expect { described_class.new(other_params: { 'x' => [] }) }.
+        to raise_error(ArgumentError, "other_params['x'] must be a String, nil or an Array of them.")
     end
   end
 end

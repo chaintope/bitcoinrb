@@ -227,6 +227,7 @@ describe Bitcoin::ExtKey, network: :mainnet do
       expect { Bitcoin::ExtKey.generate_master('00' * 15) }.to raise_error(ArgumentError, 'The seed must be 16 to 64 bytes.')
       expect { Bitcoin::ExtKey.generate_master('00' * 65) }.to raise_error(ArgumentError, 'The seed must be 16 to 64 bytes.')
       expect { Bitcoin::ExtKey.generate_master('') }.to raise_error(ArgumentError, 'The seed must be 16 to 64 bytes.')
+      expect { Bitcoin::ExtKey.generate_master(nil) }.to raise_error(ArgumentError, 'The seed must be a hex string.')
     end
   end
 

@@ -22,6 +22,7 @@ module Bitcoin
     # @params [String] seed a seed data with hex format.
     def self.generate_master(seed)
       # BIP-32: the seed is between 128 and 512 bits.
+      raise ArgumentError, 'The seed must be a hex string.' unless seed.is_a?(String)
       raise ArgumentError, 'The seed must be 16 to 64 bytes.' unless (16..64).cover?(seed.htb.bytesize)
       ext_key = ExtKey.new
       ext_key.depth = ext_key.number = 0
