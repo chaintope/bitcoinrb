@@ -21,6 +21,8 @@ module Bitcoin
     # generate master key from seed.
     # @params [String] seed a seed data with hex format.
     def self.generate_master(seed)
+      # BIP-32: the seed is between 128 and 512 bits.
+      raise ArgumentError, 'The seed must be 16 to 64 bytes.' unless (16..64).cover?(seed.htb.bytesize)
       ext_key = ExtKey.new
       ext_key.depth = ext_key.number = 0
       ext_key.parent_fingerprint = MASTER_FINGERPRINT
@@ -148,6 +150,7 @@ module Bitcoin
     end
 
     def self.parse_from_payload(payload)
+      raise ArgumentError, 'Invalid extended key length.' unless payload.bytesize == BIP32_EXTKEY_WITH_VERSION_SIZE
       buf = StringIO.new(payload)
       ext_key = ExtKey.new
       ext_key.ver = buf.read(4).bth # version
@@ -323,6 +326,7 @@ module Bitcoin
     end
 
     def self.parse_from_payload(payload)
+      raise ArgumentError, 'Invalid extended key length.' unless payload.bytesize == BIP32_EXTKEY_WITH_VERSION_SIZE
       buf = StringIO.new(payload)
       ext_pubkey = ExtPubkey.new
       ext_pubkey.ver = buf.read(4).bth # version

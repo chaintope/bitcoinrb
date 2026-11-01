@@ -977,6 +977,20 @@ describe Bitcoin::PSBT do
     end
   end
 
+  describe 'Bitcoin::PSBT::Input#add_sig' do
+    it 'should only accept a valid public key' do
+      input = Bitcoin::PSBT::Input.new
+      sig = "\x30\x01\x01\x01".b
+      ['zz', '02' + '00' * 32, '02' + '11' * 31, "\x02".b * 33, nil, 123].each do |pubkey|
+        expect { input.add_sig(pubkey, sig) }.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_PUBLIC_KEY), pubkey.inspect
+      end
+      key = Bitcoin::Key.new(priv_key: '01' * 32)
+      input.add_sig(key.pubkey, sig)
+      input.add_sig(Bitcoin::Key.new(priv_key: '02' * 32, key_type: Bitcoin::Key::TYPES[:uncompressed]).pubkey, sig)
+      expect(input.partial_sigs.size).to eq(2)
+    end
+  end
+
   describe 'a PSBT with an uncompressed public key' do
     it 'should parse the partial signature and the BIP-32 derivation of the key' do
       key = Bitcoin::Key.new(priv_key: '02' * 32, key_type: Bitcoin::Key::TYPES[:uncompressed])

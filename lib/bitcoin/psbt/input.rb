@@ -240,6 +240,7 @@ module Bitcoin
       # @param [String] pubkey a public key with hex format.
       # @param [String] sig a signature.
       def add_sig(pubkey, sig)
+        PSBT.parse_pubkey(pubkey)
         raise ArgumentError, 'The sighash in signature is invalid.' if sighash_type && sig.unpack('C*')[-1] != sighash_type
         raise ArgumentError, 'Duplicate Key, input partial signature for pubkey already provided.' if partial_sigs[pubkey]
         partial_sigs[pubkey] = sig

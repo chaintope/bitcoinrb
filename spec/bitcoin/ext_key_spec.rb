@@ -220,7 +220,28 @@ describe Bitcoin::ExtKey, network: :mainnet do
     end
   end
 
+  describe '.generate_master' do
+    it 'should accept a seed of 16 to 64 bytes, as BIP-32 says' do
+      expect(Bitcoin::ExtKey.generate_master('00' * 16).depth).to eq(0)
+      expect(Bitcoin::ExtKey.generate_master('00' * 64).depth).to eq(0)
+      expect { Bitcoin::ExtKey.generate_master('00' * 15) }.to raise_error(ArgumentError, 'The seed must be 16 to 64 bytes.')
+      expect { Bitcoin::ExtKey.generate_master('00' * 65) }.to raise_error(ArgumentError, 'The seed must be 16 to 64 bytes.')
+      expect { Bitcoin::ExtKey.generate_master('') }.to raise_error(ArgumentError, 'The seed must be 16 to 64 bytes.')
+    end
+  end
+
   describe '#parse_from_payload' do
+    it 'should only accept a payload of 78 bytes' do
+      xpub = '0488b21e03bef5a2f98000000204466b9cc8e161e966409ca52986c584f07e9dc81f735db683c3ff6ec7b1503f0357bfe1e341d01c69fe5654309956cbea516822fba8a601743a012a7896ee8dc2'.htb
+      xprv = '0488ade4025c1bd648000000012a7857631386ba23dacac34180dd1983734e444fdbf774041578e9b6adb37c19003c6cb8d0f6a264c91ea8b5030fadaa8e538b020f0a387421a12de9319dc93368'.htb
+      [[Bitcoin::ExtPubkey, xpub], [Bitcoin::ExtKey, xprv]].each do |klass, payload|
+        expect { klass.parse_from_payload(payload + "\x00".b) }.to raise_error(ArgumentError, 'Invalid extended key length.')
+        expect { klass.parse_from_payload(payload[0...-1]) }.to raise_error(ArgumentError, 'Invalid extended key length.')
+        expect { klass.from_base58(Bitcoin::Base58.encode(payload.bth + '00' + Bitcoin.calc_checksum(payload.bth + '00'))) }.
+          to raise_error(ArgumentError, 'Invalid extended key length.')
+      end
+    end
+
     it 'should deserialize key object.' do
       ext_pubkey = Bitcoin::ExtPubkey.parse_from_payload('0488b21e03bef5a2f98000000204466b9cc8e161e966409ca52986c584f07e9dc81f735db683c3ff6ec7b1503f0357bfe1e341d01c69fe5654309956cbea516822fba8a601743a012a7896ee8dc2'.htb)
       expect(ext_pubkey.to_base58).to eq('xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5')

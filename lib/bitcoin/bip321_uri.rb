@@ -83,8 +83,14 @@ module Bitcoin
       end
 
       raise ArgumentError, "other_params must be Hash." unless other_params.is_a?(Hash)
-      other_params.keys.each do |key|
+      other_params.each do |key, value|
+        raise ArgumentError, 'other_params keys must be String.' unless key.is_a?(String)
         raise ArgumentError, 'An unsupported reqparam is included.' if key.downcase.start_with?('req-')
+        # A key without a value is nil, and a key given more than once holds its values in an Array.
+        values = value.is_a?(Array) ? value : [value]
+        unless values.all? { |v| v.nil? || v.is_a?(String) }
+          raise ArgumentError, "other_params['#{key}'] must be a String, nil or an Array of them."
+        end
       end
       @other_params = other_params
 

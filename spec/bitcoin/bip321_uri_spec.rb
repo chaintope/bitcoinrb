@@ -220,4 +220,18 @@ RSpec.describe Bitcoin::BIP321URI do
       expect{described_class.parse(raw_uri)}.to raise_error(ArgumentError, "bc not allowed in current network.")
     end
   end
+  describe 'other_params given to the constructor', network: :mainnet do
+    let(:addr) { '17T9tBC2dSpusL1rhT4T4AV4if963Tpfym' }
+
+    it 'should hold a String, nil or an Array of them for each key' do
+      uri = described_class.new(address: addr, other_params: { 'foo' => ['a', nil, 'b'], 'bar' => nil, 'baz' => 'c' })
+      expect(uri.to_s).to eq("bitcoin:#{addr}?foo=a&foo&foo=b&bar&baz=c")
+      expect(described_class.parse(uri.to_s).other_params).to eq(uri.other_params)
+      expect { described_class.new(address: addr, other_params: { 'x' => 1 }) }.
+        to raise_error(ArgumentError, "other_params['x'] must be a String, nil or an Array of them.")
+      expect { described_class.new(address: addr, other_params: { 'x' => ['a', 1] }) }.
+        to raise_error(ArgumentError, "other_params['x'] must be a String, nil or an Array of them.")
+      expect { described_class.new(address: addr, other_params: { x: 'a' }) }.to raise_error(ArgumentError, 'other_params keys must be String.')
+    end
+  end
 end
