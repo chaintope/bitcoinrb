@@ -15,7 +15,7 @@ module Bitcoin
     end
 
     def write(data, nbits)
-      raise "nbits must be between 0 and 64" if nbits < 0 || nbits > 64
+      raise ArgumentError, 'nbits must be between 0 and 64' if nbits < 0 || nbits > 64
       while nbits > 0
         bits = [8 - offset, nbits].min
         tmp = (data << (64 - nbits)) & 0b1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111
@@ -49,7 +49,7 @@ module Bitcoin
 
     # offset
     def read(nbits)
-      raise 'nbits must be between 0 and 64' if nbits < 0 || nbits > 64
+      raise ArgumentError, 'nbits must be between 0 and 64' if nbits < 0 || nbits > 64
       data = 0
       while nbits > 0
         if offset == 8

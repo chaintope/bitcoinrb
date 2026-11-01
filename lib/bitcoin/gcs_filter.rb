@@ -21,14 +21,18 @@ module Bitcoin
     # @param [Array] elements the filter elements.
     # @param [String] encoded_filter encoded filter with hex format.
     # @return [Bitcoin::GCSFilter]
+    # @raise [ArgumentError] If a parameter is out of range, or +encoded_filter+ is not the encoding of
+    # exactly N elements, as Bitcoin Core's GCSFilter checks it.
     def initialize(key, p, m, elements: nil, encoded_filter: nil)
-      raise 'specify either elements or encoded_filter.' if elements.nil? && encoded_filter.nil?
-      raise 'p must be <= 32' if p > 32
-      @key = key
+      raise ArgumentError, 'specify either elements or encoded_filter.' if elements.nil? && encoded_filter.nil?
+      raise ArgumentError, 'key must be 16 bytes.' unless key.is_a?(String) && key.bytesize == 16
+      raise ArgumentError, 'p must be between 0 and 32.' unless p.is_a?(Integer) && p.between?(0, 32)
+      raise ArgumentError, 'm must be a positive integer.' unless m.is_a?(Integer) && m > 0
+      @key = key.b
       @p = p
       @m = m
       if elements
-        raise 'elements size must be < 2**32.' if elements.size >= MAX_ELEMENTS_SIZE
+        raise ArgumentError, 'elements size must be < 2**32.' if elements.size >= MAX_ELEMENTS_SIZE
         @n = elements.size
         encoded = Bitcoin.pack_var_int(@n)
         bit_writer = Bitcoin::BitStreamWriter.new
@@ -45,8 +49,19 @@ module Bitcoin
         encoded << bit_writer.stream
         @encoded = encoded.bth
       else
+        raise ArgumentError, 'encoded_filter must be a hex string.' unless encoded_filter.is_a?(String) && encoded_filter.valid_hex?
         @encoded = encoded_filter
-        @n, payload = Bitcoin.unpack_var_int(encoded_filter.htb)
+        buf = StringIO.new(encoded_filter.htb)
+        @n = Bitcoin.unpack_var_int_from_io(buf)
+        raise ArgumentError, 'N must be < 2**32.' if @n >= MAX_ELEMENTS_SIZE
+        # The filter has to hold exactly N elements: neither fewer, nor bytes after the last one.
+        bit_reader = Bitcoin::BitStreamReader.new(buf.read)
+        begin
+          @n.times { golomb_rice_decode(bit_reader, p) }
+        rescue IOError
+          raise ArgumentError, 'encoded_filter is truncated.'
+        end
+        raise ArgumentError, 'encoded_filter contains excess data.' unless bit_reader.stream.eof?
       end
     end
 
@@ -59,7 +74,7 @@ module Bitcoin
     # @param [String] element with binary format.
     # @return [Integer]
     def hash_to_range(element)
-      hash = SipHash.digest(key, element)
+      hash = SipHash.digest(key, element.b) # bytes, whatever the encoding of the string says
       map_into_range(hash, f)
     end
 
