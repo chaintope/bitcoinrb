@@ -457,7 +457,7 @@ module Bitcoin
     end
 
     def valid_pubkey?
-      !pubkey.nil? && pubkey.size > 0
+      !pubkey.nil? && pubkey.size > 0 && pubkey.valid_hex?
     end
 
     # check whether the signature is low-R

@@ -121,7 +121,11 @@ module Bitcoin
     end
 
     # hex string convert to binary
+    # @raise [ArgumentError] If this is not a hex string of even length. An odd length would be padded
+    # with a zero nibble and a character which is not a hex digit would be read as one, so that for
+    # example a 63 character private key would silently become a different key.
     def htb
+      raise ArgumentError, 'Not a hex string of even length.' unless valid_hex?
       [self].pack('H*')
     end
 
@@ -190,9 +194,9 @@ module Bitcoin
     end
 
     # whether value is hex or not hex
-    # @return [Boolean] return true if data is hex
+    # @return [Boolean] return true if data is hex of even length, including an empty string.
     def valid_hex?
-      !self[/\H/]
+      length.even? && !self[/\H/]
     end
 
   end

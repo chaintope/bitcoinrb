@@ -27,7 +27,7 @@ describe Bitcoin::Multisig do
   describe '#sort_p2sh_multisig_signatures' do
     let(:tx) do
       Bitcoin::Tx.new.tap do |tx|
-        out_point = Bitcoin::OutPoint.new("txid", 0)
+        out_point = Bitcoin::OutPoint.new('00' * 32, 0)
         tx.inputs << Bitcoin::TxIn.new(out_point: out_point)
         tx.outputs << Bitcoin::TxOut.new(value: 10_000_000, script_pubkey: p2sh[0])
       end
@@ -68,7 +68,7 @@ describe Bitcoin::Multisig do
   describe '#sort_witness_multisig_signatures' do
     let(:tx) do
       Bitcoin::Tx.new.tap do |tx|
-        out_point = Bitcoin::OutPoint.new("txid", 0)
+        out_point = Bitcoin::OutPoint.new('00' * 32, 0)
         tx.inputs << Bitcoin::TxIn.new(out_point: out_point)
         tx.outputs << Bitcoin::TxOut.new(value: 10_000_000, script_pubkey: Bitcoin::Script.new)
       end

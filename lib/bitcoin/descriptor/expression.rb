@@ -55,8 +55,8 @@ module Bitcoin
           raise ArgumentError, "Multiple ']' characters found for a single pubkey." if key.count('[') > 1 || key.count(']') > 1
           info = key[1...key.index(']')]
           fingerprint, *paths = info.split('/', -1) # keep a trailing empty element, so that a trailing '/' is rejected
-          raise ArgumentError, "Fingerprint '#{fingerprint}' is not hex." unless fingerprint.valid_hex?
           raise ArgumentError, "Fingerprint '#{fingerprint}' is not 4 bytes." unless fingerprint.size == 8
+          raise ArgumentError, "Fingerprint '#{fingerprint}' is not hex." unless fingerprint.valid_hex?
           paths.each { |path| parse_path_element(path) } # The origin path is not derived, but it has to be a path.
           key = key[(key.index(']') + 1)..-1]
         else

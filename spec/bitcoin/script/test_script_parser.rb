@@ -47,7 +47,7 @@ module Bitcoin
           if w.start_with?('0x') && w[2..-1].length > 0 && hex?(w[2..-1])
             append_data = parse_hex(w[2..-1]).htb
           elsif Bitcoin::Opcodes.name_to_opcode('OP_' + w)
-            append_data = Bitcoin::Opcodes.name_to_opcode('OP_' + w).to_s(16).htb
+            append_data = [Bitcoin::Opcodes.name_to_opcode('OP_' + w)].pack('C')
           end
           script.chunks[-1] = latest_chunk + append_data
         end

@@ -75,6 +75,28 @@ describe Bitcoin do
       @foo = ["bar"]
     end
   end
+  describe 'String#htb' do
+    it 'should only convert a hex string of even length' do
+      expect('00ff'.htb).to eq("\x00\xff".b)
+      expect(''.htb).to eq(''.b)
+      expect('ABcd'.htb).to eq("\xab\xcd".b)
+      # An odd length would be padded with a zero nibble, and a character which is not a hex digit read as one.
+      ['abc', 'zz', 'ab cd', "ab\n", 'あ', 'a' * 63].each do |str|
+        expect { str.htb }.to raise_error(ArgumentError, 'Not a hex string of even length.'), str.inspect
+      end
+      expect(''.valid_hex?).to be true
+      expect('abc'.valid_hex?).to be false
+      expect('abcd'.valid_hex?).to be true
+    end
+
+    it 'should keep a key of the wrong length out of Bitcoin::Key' do
+      expect { Bitcoin::Key.new(priv_key: 'a' * 63) }.to raise_error(ArgumentError, 'Not a hex string of even length.')
+      expect { Bitcoin::Key.new(pubkey: 'L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY2', key_type: Bitcoin::Key::TYPES[:compressed]) }.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_PUBLIC_KEY)
+      expect { Bitcoin::ExtKey.generate_master('ab' * 16 + 'c') }.to raise_error(ArgumentError, 'Not a hex string of even length.')
+      expect { Bitcoin::Mnemonic.new('english').to_mnemonic('zz' * 16) }.to raise_error(ArgumentError, 'Not a hex string of even length.')
+    end
+  end
+
   describe '#build_json' do
     it 'should handle string in array' do
       expect(["a", "b", "c"].build_json).to eq "[\"a\",\"b\",\"c\"]"

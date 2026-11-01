@@ -40,7 +40,7 @@ def read_csv(relative_path)
 end
 
 def load_block(hash)
-  File.read(File.join(File.dirname(__FILE__), 'fixtures', "block/#{hash}"))
+  File.read(File.join(File.dirname(__FILE__), 'fixtures', "block/#{hash}")).strip
 end
 
 def load_payment(file_name)

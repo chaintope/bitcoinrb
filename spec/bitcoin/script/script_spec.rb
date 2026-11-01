@@ -5,7 +5,7 @@ describe Bitcoin::Script do
 
   describe '#append_data' do
     context 'data < 0xff' do
-      subject { Bitcoin::Script.new << 'foo' }
+      subject { Bitcoin::Script.new << 'f880' }
       it 'should be append' do
         expect(subject.to_hex).to eq('02f880')
       end
@@ -473,7 +473,7 @@ describe Bitcoin::Script do
 
   describe '#subscript' do
     subject {
-      Bitcoin::Script.new << OP_DUP << OP_HASH160 << 'pubkeyhash' << OP_EQUALVERIFY << OP_CHECKSIG
+      Bitcoin::Script.new << OP_DUP << OP_HASH160 << ('00' * 20) << OP_EQUALVERIFY << OP_CHECKSIG
     }
     it 'should be split' do
       expect(subject.subscript(0..-1)).to eq(subject)
