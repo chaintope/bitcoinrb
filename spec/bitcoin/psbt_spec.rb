@@ -965,4 +965,15 @@ describe Bitcoin::PSBT do
       end
     end
   end
+
+  describe 'Bitcoin::PSBT::Tx.parse_from_payload with data after the last output map' do
+    it 'should raise ArgumentError, as Bitcoin Core does' do
+      payload = '70736274ff01003f0200000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000ffffffff010000000000000000036a010000000000000af00102030405060708090f0102030405060708090a0b0c0d0e0f0000'.htb
+      expect(Bitcoin::PSBT::Tx.parse_from_payload(payload).to_payload).to eq(payload)
+      ["\x00".b, "\x01\x00".b, 'junk'.b].each do |extra|
+        expect { Bitcoin::PSBT::Tx.parse_from_payload(payload + extra) }.to raise_error(ArgumentError, 'Extra data after PSBT.')
+      end
+      expect { Bitcoin::PSBT::Tx.parse_from_base64(Base64.strict_encode64(payload + "\x00".b)) }.to raise_error(ArgumentError, 'Extra data after PSBT.')
+    end
+  end
 end

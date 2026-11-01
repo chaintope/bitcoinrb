@@ -130,6 +130,7 @@ module Bitcoin
         end
 
         raise ArgumentError, 'Outputs provided does not match the number of outputs in transaction.' unless partial_tx.outputs.size == partial_tx.tx.out.size
+        raise ArgumentError, 'Extra data after PSBT.' unless buf.eof?
 
         partial_tx
       end
