@@ -405,4 +405,49 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
       }.to raise_error(ArgumentError, /not supported/)
     end
   end
+
+  describe 'BIP-322 upgradeable rules' do
+    let(:key) { Bitcoin::Key.new(priv_key: 'd97f5108f11cda6eeebaaa420fef0726b1f898060b98489fa3098463c0032866') }
+    let(:message) { 'hello' }
+
+    # A simple signature spending the script path of +leaf+ with +stack+ in front of the script and control block.
+    def script_path_signature(leaf, stack = [])
+      builder = Bitcoin::Taproot::SimpleBuilder.new(key.xonly_pubkey, [leaf])
+      address = builder.build.to_addr
+      witness = Bitcoin::ScriptWitness.new(stack + [leaf.script.to_payload, builder.control_block(leaf).to_payload])
+      [address, 'smp' + Base64.strict_encode64(witness.to_payload)]
+    end
+
+    it 'should not accept a proof by an OP_SUCCESSx leaf, which needs no signature' do
+      address, sig = script_path_signature(Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.parse_from_payload("\xbb".b))) # OP_SUCCESS187
+      expect(described_class.verify_message(address, sig, message)).to be false
+      expect(described_class.verify_message(address, sig, 'another message')).to be false
+    end
+
+    it 'should not accept a proof by a leaf of an unknown version' do
+      address, sig = script_path_signature(Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.new << Bitcoin::Opcodes::OP_1, 0xc2))
+      expect(described_class.verify_message(address, sig, message)).to be false
+    end
+
+    it 'should not accept a proof by a signature for a public key of an unknown type' do
+      # A 33 byte key in tapscript is an unknown key type, for which any non-empty signature passes OP_CHECKSIG.
+      leaf = Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.new << key.pubkey << Bitcoin::Opcodes::OP_CHECKSIG)
+      address, sig = script_path_signature(leaf, ["\x00".b * 64])
+      expect(described_class.verify_message(address, sig, message)).to be false
+    end
+
+    it 'should still accept a proof by a known leaf script' do
+      leaf = Bitcoin::Taproot::LeafNode.new(Bitcoin::Script.new << key.xonly_pubkey << Bitcoin::Opcodes::OP_CHECKSIG)
+      builder = Bitcoin::Taproot::SimpleBuilder.new(key.xonly_pubkey, [leaf])
+      address = builder.build.to_addr
+      digest = described_class.message_hash(message, legacy: false)
+      tx = described_class.to_sign_tx(digest, address)
+      prevout = Bitcoin::TxOut.new(script_pubkey: builder.build, value: 0)
+      sighash = tx.sighash_for_input(0, sig_version: :tapscript, prevouts: [prevout], hash_type: Bitcoin::SIGHASH_TYPE[:default], opts: { leaf_hash: leaf.leaf_hash })
+      witness = Bitcoin::ScriptWitness.new([key.sign(sighash, algo: :schnorr), leaf.script.to_payload, builder.control_block(leaf).to_payload])
+      sig = 'smp' + Base64.strict_encode64(witness.to_payload)
+      expect(described_class.verify_message(address, sig, message)).to be true
+      expect(described_class.verify_message(address, sig, 'another message')).to be false
+    end
+  end
 end

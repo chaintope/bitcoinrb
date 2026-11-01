@@ -15,7 +15,9 @@ module Bitcoin
     SIGNATURE_PREFIX_FULL = 'ful'
     SIGNATURE_PREFIX_POF = 'pof'
 
-    # BIP-322 Required rules
+    # BIP-322 required rules, and its upgradeable rules: a proof which relies on a reserved NOP, a witness
+    # version above 1, an unknown taproot leaf version, an OP_SUCCESSx or an unknown public key type is not
+    # valid, since such a script succeeds without any signature.
     BIP322_VERIFY_FLAGS = [
       SCRIPT_VERIFY_P2SH, SCRIPT_VERIFY_DERSIG, SCRIPT_VERIFY_STRICTENC,
       SCRIPT_VERIFY_LOW_S, SCRIPT_VERIFY_NULLFAIL, SCRIPT_VERIFY_MINIMALDATA,
@@ -23,7 +25,10 @@ module Bitcoin
       SCRIPT_VERIFY_CONST_SCRIPTCODE,
       SCRIPT_VERIFY_WITNESS, SCRIPT_VERIFY_TAPROOT,
       SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS,
-      SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM
+      SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM,
+      SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION,
+      SCRIPT_VERIFY_DISCOURAGE_OP_SUCCESS,
+      SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_PUBKEYTYPE
     ].inject(:|)
 
     # Sign a message.
