@@ -32,9 +32,39 @@ describe Bitcoin::RPC::BitcoinCoreClient do
     end
 
     context 'server responded with error' do
-      it 'should raise with response' do
+      it 'should raise Bitcoin::RPC::Error with the code and message of the response' do
+        stub_request(:post, server_url).to_return(status: 500, body: JSON.generate({ 'error': { 'code': -8, 'message': 'RPC ERROR' }, 'result': nil }))
+        expect { client.rpccommand }.to raise_error(Bitcoin::RPC::Error, 'RPC ERROR') do |e|
+          expect(e.code).to eq(-8)
+          expect(e.http_status).to eq(500)
+          expect(e.data).to eq({ 'code' => -8, 'message' => 'RPC ERROR' })
+          expect(e).to be_a(RuntimeError) # as the error raised before Bitcoin::RPC::Error was
+        end
+        # A code given as a string is read as the integer it holds.
         stub_request(:post, server_url).to_return(body: JSON.generate({ 'error': { 'code': '-1', 'message': 'RPC ERROR' } }))
-        expect { client.rpccommand }.to raise_error(RuntimeError, '{"code":"-1","message":"RPC ERROR"}')
+        expect { client.rpccommand }.to raise_error(Bitcoin::RPC::Error) { |e| expect(e.code).to eq(-1) }
+      end
+
+      it 'should raise Bitcoin::RPC::Error for an answer which is not a JSON-RPC response' do
+        stub_request(:post, server_url).to_return(status: [401, 'Unauthorized'], body: '')
+        expect { client.rpccommand }.to raise_error(Bitcoin::RPC::Error, 'Bitcoin Core answered HTTP 401 Unauthorized without a JSON-RPC response.') do |e|
+          expect(e.code).to be_nil
+          expect(e.http_status).to eq(401)
+        end
+        stub_request(:post, server_url).to_return(body: '[1]')
+        expect { client.rpccommand }.to raise_error(Bitcoin::RPC::Error, /not a JSON-RPC response/)
+      end
+
+      it 'should raise Bitcoin::RPC::Error when the response answers another request' do
+        stub_request(:post, server_url).to_return(body: JSON.generate({ 'result': 'x', 'error': nil, 'id': 'other' }))
+        expect { client.rpccommand }.to raise_error(Bitcoin::RPC::Error, /is not the id of the request/)
+      end
+
+      it 'should accept the response which echoes the id of the request' do
+        stub_request(:post, server_url).to_return do |request|
+          { body: JSON.generate({ 'result': 'x', 'error': nil, 'id': JSON.parse(request.body)['id'] }) }
+        end
+        expect(client.rpccommand).to eq('x')
       end
     end
 
@@ -50,7 +80,7 @@ describe Bitcoin::RPC::BitcoinCoreClient do
     context 'contains escaped unicode' do
       it 'should unescape it' do
         stub_request(:post, server_url).to_return(
-            body: '{"result":{"label":"\u3042\u00e9"},"error":null,"id":"jsonrpc"}'
+            body: '{"result":{"label":"\u3042\u00e9"},"error":null}'
         )
         expect(client.rpc_command['label']).to eq("あé")
       end
@@ -59,7 +89,7 @@ describe Bitcoin::RPC::BitcoinCoreClient do
       # JSON.parse lets a value close its own string and inject arbitrary JSON into the result.
       it 'should not let an escaped quote break out of the string' do
         stub_request(:post, server_url).to_return(
-            body: '{"result":{"label":"a\u0022,\u0022result\u0022:\u0022INJECTED"},"error":null,"id":"jsonrpc"}'
+            body: '{"result":{"label":"a\u0022,\u0022result\u0022:\u0022INJECTED"},"error":null}'
         )
         expect(client.rpc_command).to eq({ 'label' => 'a","result":"INJECTED' })
       end

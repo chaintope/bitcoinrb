@@ -14,6 +14,15 @@ module Bitcoin
     # client.listunspent
     # client.getblockchaininfo
     #
+    # An error answered by Bitcoin Core raises Bitcoin::RPC::Error, which carries the error code:
+    #
+    # begin
+    #   client.getblock('00')
+    # rescue Bitcoin::RPC::Error => e
+    #   e.code     # => -8
+    #   e.message  # => "blockhash must be of length 64 (not 2, for '00')"
+    # end
+    #
     class BitcoinCoreClient
 
       attr_reader :config
@@ -61,11 +70,15 @@ module Bitcoin
         str.to_s.b.gsub(/[^A-Za-z0-9\-._~]/) { |c| format('%%%02X', c.ord) }
       end
 
+      # Send +command+ to Bitcoin Core and return the result.
+      # @raise [Bitcoin::RPC::Error] If Bitcoin Core answers an error, or an answer which is not the JSON-RPC
+      # response to this request.
       def request(command, *params)
+        id = SecureRandom.hex(8)
         data = {
             :method => command,
             :params => params,
-            :id => 'jsonrpc'
+            :id => id
         }
         uri = server_uri
         http = Net::HTTP.new(uri.hostname, uri.port)
@@ -75,11 +88,24 @@ module Bitcoin
         request.content_type = 'application/json'
         request.body = data.to_json
         response = http.request(request)
+        http_status = response.code.to_i
         # Unescape \uXXXX with JSON.parse itself. Doing it beforehand lets a " contained in
         # a string value close that string and inject arbitrary JSON into the parsed result.
-        json_data = JSON.parse(response.body)
+        begin
+          json_data = JSON.parse(response.body.to_s)
+        rescue JSON::ParserError
+          # Bitcoin Core answers an error as JSON, so this is for example a 401 from the wrong credentials.
+          raise Error.new("Bitcoin Core answered HTTP #{http_status} #{response.message} without a JSON-RPC response.", http_status: http_status)
+        end
+        unless json_data.is_a?(Hash)
+          raise Error.new("Bitcoin Core answered something which is not a JSON-RPC response: #{response.body}", http_status: http_status)
+        end
+        # Bitcoin Core echoes the id of the request, so a different one is the answer to another request.
+        if json_data.key?('id') && !json_data['id'].nil? && json_data['id'] != id
+          raise Error.new("The id of the JSON-RPC response #{json_data['id'].inspect} is not the id of the request #{id.inspect}.", http_status: http_status)
+        end
         response = convert_floats_to_strings(json_data)
-        raise response['error'].to_json if response['error']
+        raise Error.from_response(response['error'], http_status: http_status) if response['error']
         response['result']
       end
       
