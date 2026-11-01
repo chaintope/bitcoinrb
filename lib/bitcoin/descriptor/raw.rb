@@ -8,7 +8,7 @@ module Bitcoin
       # @param [String] hex
       def initialize(hex)
         raise ArgumentError, "Raw script must be string." unless hex.is_a?(String)
-        raise ArgumentError, "Raw script is not hex." unless hex.valid_hex?
+        raise ArgumentError, "Raw script is not hex." if hex.empty? || !hex.valid_hex?
         @hex = hex
       end
 

@@ -18,6 +18,7 @@ module Bitcoin
       # @return [Bitcoin::Descriptor::MuSig]
       def initialize(keys, path = nil)
         raise ArgumentError, "keys must be an array." unless keys.is_a?(Array)
+        raise ArgumentError, 'musig() requires at least one key.' if keys.empty?
         unless path.nil?
           raise ArgumentError, "path must be String." unless path.is_a?(String)
           raise ArgumentError, "path must be start with /." unless path.start_with?("/")

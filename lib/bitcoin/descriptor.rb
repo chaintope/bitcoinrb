@@ -153,8 +153,13 @@ module Bitcoin
     def parse(string, top_level = true)
       validate_checksum!(string)
       content, _ = string.split('#')
-      exp, args_str, path = content.match(/(\w+)\((.+)\)(.*)/).captures # split "tag(10, 20)/0/1"
+      matched = content.to_s.match(/\A(\w+)\((.*)\)(.*)\z/) # split "tag(10, 20)/0/1"
+      raise ArgumentError, "Invalid descriptor format: '#{string}'." unless matched
+      exp, args_str, path = matched.captures
       raise ArgumentError, 'Invalid format.' if exp != 'musig' && !path.empty?
+      if %w[pk pkh wpkh sh wsh combo raw addr rawtr].include?(exp) && split_two(args_str)[1]
+        raise ArgumentError, "#{exp}() takes one argument."
+      end
 
       case exp
       when 'pk'
@@ -198,13 +203,7 @@ module Bitcoin
       when 'tr'
         key, tree = split_two(args_str)
         key = parse(key) if key.include?('(')
-        if tree.nil?
-          tr(key)
-        elsif tree.start_with?('{')
-          tr(key, parse_nested_string(tree))
-        else
-          tr(key, parse(tree, false))
-        end
+        tree.nil? ? tr(key) : tr(key, parse_tree_string(tree))
       when 'rawtr'
         if args_str.include?('(')
           rawtr(parse(args_str, false))
@@ -244,42 +243,58 @@ module Bitcoin
       end
     end
 
-    def parse_nested_string(string)
-      return nil if string.nil?
-      stack = []
-      current = []
-      buffer = ""
-      paren_depth = 0 # Braces and commas inside a script expression, such as multi_a(1,A,B), belong to that expression.
-      string.each_char do |c|
-        if paren_depth > 0 || c == '('
-          paren_depth += 1 if c == '('
-          paren_depth -= 1 if c == ')'
-          buffer << c
-          next
+    # Parse the script tree of a tr() expression the way Bitcoin Core does. A tree is a script expression or
+    # '{' tree ',' tree '}', and nothing may follow it.
+    # @param [String] string The arguments of tr() after the key.
+    # @return [Bitcoin::Descriptor::Expression, Array] A leaf, or a two element Array of subtrees.
+    # @raise [ArgumentError] If +string+ is not a tree.
+    def parse_tree_string(string)
+      rest = string
+      branches = [] # one entry per open brace: false while in its left subtree, true while in its right one
+      lefts = []    # the finished left subtree of every brace which is in its right subtree
+      tree = loop do
+        while rest.start_with?('{')
+          rest = rest[1..]
+          branches << false
+          raise ArgumentError, "tr() supports at most #{TAPROOT_CONTROL_MAX_NODE_COUNT} nesting levels." if branches.size > TAPROOT_CONTROL_MAX_NODE_COUNT
         end
-        case c
-        when '{'
-          stack << current
-          current = []
-        when '}'
-          unless buffer.empty?
-            current << parse(buffer, false)
-            buffer = ""
-          end
-          nested = current
-          current = stack.pop
-          current << nested
-        when ','
-          unless buffer.empty?
-            current << parse(buffer, false)
-            buffer = ""
-          end
-        else
-          buffer << c
+        leaf, rest = take_expression(rest)
+        raise ArgumentError, 'tr(): expected script expression.' if leaf.empty?
+        node = parse(leaf, false)
+        # Close every brace whose right subtree this finishes.
+        while branches.any? && branches.last
+          raise ArgumentError, "tr(): expected '}' after script expression." unless rest.start_with?('}')
+          rest = rest[1..]
+          branches.pop
+          node = [lefts.pop, node]
+        end
+        break node if branches.empty?
+        # This finishes the left subtree of a brace, so its right one follows a comma.
+        raise ArgumentError, "tr(): expected ',' after script expression." unless rest.start_with?(',')
+        rest = rest[1..]
+        branches[-1] = true
+        lefts << node
+      end
+      raise ArgumentError, "tr(): expected ')' after script expression." unless rest.empty?
+      tree
+    end
+
+    # Split off the leading script or key expression of +string+. It ends at the first ',', ')' or '}'
+    # outside any parentheses or braces, as Expr does in Bitcoin Core.
+    # @param [String] string
+    # @return [Array] The expression and the rest of +string+.
+    def take_expression(string)
+      level = 0
+      string.each_char.with_index do |c, i|
+        if c == '(' || c == '{'
+          level += 1
+        elsif level > 0 && (c == ')' || c == '}')
+          level -= 1
+        elsif level.zero? && (c == ')' || c == '}' || c == ',')
+          return [string[0...i], string[i..]]
         end
       end
-      current << parse(buffer, false) unless buffer.empty?
-      current.first
+      [string, '']
     end
 
     def split_two(content)

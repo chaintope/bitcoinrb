@@ -340,4 +340,49 @@ describe Bitcoin::Descriptor, network: :mainnet do
       end
     end
   end
+
+  describe 'malformed descriptor strings' do
+    let(:keys) { (1..3).map { |i| Bitcoin::Key.new(priv_key: '%064x' % i).pubkey } }
+    let(:k) { keys[0] }
+
+    it 'should raise ArgumentError for a string which is not expression(arguments)' do
+      ['', 'pk', 'pk(', 'raw(515', '()', 'sh()', "wsh(pk(#{k})", 'tr()', "tr(,#{k})", "tr(#{k},{pk(#{k}),pk(#{k})"].each do |desc|
+        expect { described_class.parse(desc) }.to raise_error(ArgumentError), desc
+      end
+      expect { described_class.parse('pk') }.to raise_error(ArgumentError, "Invalid descriptor format: 'pk'.")
+      expect { described_class.parse('sh()') }.to raise_error(ArgumentError, "Invalid descriptor format: ''.")
+      expect { described_class.parse("sh(pk(#{k}),pk(#{k}))") }.to raise_error(ArgumentError, 'sh() takes one argument.')
+      expect { described_class.parse("pkh(#{k},#{k})") }.to raise_error(ArgumentError, 'pkh() takes one argument.')
+      expect { described_class.parse('musig()') }.to raise_error(ArgumentError, 'musig() requires at least one key.')
+      expect { described_class.parse('raw()') }.to raise_error(ArgumentError, 'Raw script is not hex.')
+    end
+
+    it 'should only accept a tr() tree of the form script or {tree,tree}' do
+      valid = "tr(#{k},{{pk(#{keys[1]}),pk(#{keys[2]})},pk(#{k})})"
+      expect(described_class.parse(valid).to_s).to eq(valid)
+      expect(described_class.parse("tr(#{k},pk(#{keys[1]}))").to_s).to eq("tr(#{k},pk(#{keys[1]}))")
+      {
+        "tr(#{k},)" => 'tr(): expected script expression.',
+        "tr(#{k},{})" => 'tr(): expected script expression.',
+        "tr(#{k},{pk(#{k}),})" => 'tr(): expected script expression.',
+        "tr(#{k},{pk(#{k})})" => "tr(): expected ',' after script expression.",
+        "tr(#{k},{pk(#{k}),pk(#{k})},)" => "tr(): expected ')' after script expression.",
+        "tr(#{k},{pk(#{k}),pk(#{k})}})" => "tr(): expected ')' after script expression.",
+        "tr(#{k},{pk(#{k}),pk(#{k})}x)" => "tr(): expected ')' after script expression.",
+        "tr(#{k},pk(#{k})})" => "tr(): expected ')' after script expression.",
+        "tr(#{k},{pk(#{k}),pk(#{k})}#{',pk(' + k + ')'})" => "tr(): expected ')' after script expression.",
+      }.each do |desc, message|
+        expect { described_class.parse(desc) }.to raise_error(ArgumentError, message), desc
+      end
+      deep = ('{' * 129) + "pk(#{k})"
+      expect { described_class.parse("tr(#{k},#{deep})") }.
+        to raise_error(ArgumentError, 'tr() supports at most 128 nesting levels.')
+    end
+
+    it 'should not give a single script for combo()' do
+      expect { described_class.parse("combo(#{k})").to_hex }.
+        to raise_error(ArgumentError, 'combo() expands to several scripts. Use #to_scripts.')
+      expect(described_class.parse("combo(#{k})").to_scripts.size).to eq(4)
+    end
+  end
 end

@@ -12,8 +12,15 @@ module Bitcoin
         validate_not_xonly!(key)
       end
 
-      def to_hex
+      # combo() stands for several scripts, see #to_scripts.
+      # @raise [ArgumentError] always.
+      def to_script
         raise ArgumentError, 'musig() is not allowed in top-level combo().' if musig?
+        raise ArgumentError, 'combo() expands to several scripts. Use #to_scripts.'
+      end
+
+      def to_hex
+        to_script
       end
 
       def to_scripts
