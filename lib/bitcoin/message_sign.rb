@@ -148,7 +148,7 @@ module Bitcoin
 
     def validate_format!(format)
       unless [FORMAT_LEGACY, FORMAT_FULL, FORMAT_SIMPLE].include?(format)
-        raise ArgumentError "Invalid format specified."
+        raise ArgumentError, "Invalid format specified."
       end
     end
 

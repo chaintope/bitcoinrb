@@ -8,8 +8,10 @@ module Bitcoin
   #     Bitcoin.pack_var_int(5)
   module Util
 
+    # Serialize +payload+ as a CompactSize length followed by its bytes.
+    # @param [String] payload The bytes, whatever encoding the string carries.
     def pack_var_string(payload)
-      pack_var_int(payload.bytesize) + payload
+      pack_var_int(payload.bytesize) + payload.b
     end
 
     def unpack_var_string(payload)

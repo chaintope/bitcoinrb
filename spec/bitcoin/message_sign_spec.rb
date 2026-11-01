@@ -450,4 +450,30 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
       expect(described_class.verify_message(address, sig, 'another message')).to be false
     end
   end
+
+  describe 'a message which is not ASCII' do
+    let(:key) { Bitcoin::Key.new(priv_key: 'd97f5108f11cda6eeebaaa420fef0726b1f898060b98489fa3098463c0032866') }
+
+    it 'should hash the bytes of the message whatever its length, as Bitcoin Core does' do
+      # 150 bytes: the CompactSize of the length is the single byte 0x96, which is not ASCII and so could not be
+      # joined to a UTF-8 string.
+      message = 'あ' * 50
+      prefix = Bitcoin.chain_params.message_magic
+      expected = Bitcoin.double_sha256([prefix.bytesize].pack('C') + prefix.b + [message.bytesize].pack('C') + message.b)
+      expect(described_class.message_hash(message)).to eq(expected)
+      expect(described_class.message_hash(message)).to eq(described_class.message_hash(message.b))
+      sig = described_class.sign_message(key, message)
+      expect(described_class.verify_message(key.to_p2pkh, sig, message)).to be true
+      expect(described_class.verify_message(key.to_p2pkh, sig, 'あ' * 49)).to be false
+      sig = described_class.sign_message(key, message, format: :simple, address: key.to_p2wpkh)
+      expect(described_class.verify_message(key.to_p2wpkh, sig, message)).to be true
+    end
+  end
+
+  describe '#sign_message with an unknown format' do
+    it 'should raise ArgumentError' do
+      key = Bitcoin::Key.generate
+      expect { described_class.sign_message(key, 'x', format: :bogus) }.to raise_error(ArgumentError, 'Invalid format specified.')
+    end
+  end
 end
