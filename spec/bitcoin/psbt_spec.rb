@@ -976,4 +976,22 @@ describe Bitcoin::PSBT do
       expect { Bitcoin::PSBT::Tx.parse_from_base64(Base64.strict_encode64(payload + "\x00".b)) }.to raise_error(ArgumentError, 'Extra data after PSBT.')
     end
   end
+
+  describe 'a PSBT with an uncompressed public key' do
+    it 'should parse the partial signature and the BIP-32 derivation of the key' do
+      key = Bitcoin::Key.new(priv_key: '02' * 32, key_type: Bitcoin::Key::TYPES[:uncompressed])
+      tx = Bitcoin::Tx.new
+      tx.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new('11' * 32, 0))
+      tx.out << Bitcoin::TxOut.new(value: 1, script_pubkey: Bitcoin::Script.to_p2pkh('00' * 20))
+      psbt = Bitcoin::PSBT::Tx.new(tx)
+      psbt.inputs[0].add_sig(key.pubkey, "\x30\x01\x01\x01".b)
+      psbt.inputs[0].hd_key_paths[key.pubkey] = Bitcoin::PSBT::HDKeyPath.new(key.pubkey, Bitcoin::PSBT::KeyOriginInfo.new(fingerprint: '00000001', key_paths: [0]))
+      psbt.outputs[0].hd_key_paths[key.pubkey] = psbt.inputs[0].hd_key_paths[key.pubkey]
+      parsed = Bitcoin::PSBT::Tx.parse_from_payload(psbt.to_payload)
+      expect(parsed.inputs[0].partial_sigs.keys).to eq([key.pubkey])
+      expect(parsed.inputs[0].hd_key_paths.keys).to eq([key.pubkey])
+      expect(parsed.outputs[0].hd_key_paths.keys).to eq([key.pubkey])
+      expect(parsed.to_payload).to eq(psbt.to_payload)
+    end
+  end
 end

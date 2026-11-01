@@ -68,6 +68,20 @@ module Bitcoin
       a
     end
 
+    # Parse the public key of a PSBT record, which is 33 bytes compressed or 65 bytes uncompressed.
+    # @param [String] hex The public key with hex format.
+    # @return [Bitcoin::Key]
+    # @raise [ArgumentError] If +hex+ is not a valid public key.
+    def self.parse_pubkey(hex)
+      unless hex.is_a?(String) && hex.valid_hex? && [Bitcoin::Key::COMPRESSED_PUBLIC_KEY_SIZE, Bitcoin::Key::PUBLIC_KEY_SIZE].include?(hex.size / 2)
+        raise ArgumentError, Errors::Messages::INVALID_PUBLIC_KEY
+      end
+      key_type = hex.size == Bitcoin::Key::PUBLIC_KEY_SIZE * 2 ? Bitcoin::Key::TYPES[:uncompressed] : Bitcoin::Key::TYPES[:compressed]
+      key = Bitcoin::Key.new(pubkey: hex, key_type: key_type)
+      raise ArgumentError, Errors::Messages::INVALID_PUBLIC_KEY unless key.fully_valid_pubkey?
+      key
+    end
+
     # Combine two lists of proprietary records, keeping the first record for a key which appears in both.
     # @return [Array[Bitcoin::PSBT::Proprietary]]
     def self.merge_proprietaries(a, b)
