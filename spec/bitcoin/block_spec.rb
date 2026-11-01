@@ -92,6 +92,39 @@ describe Bitcoin::Block do
         expect(subject.valid_witness_commitment?).to be false
       end
     end
+
+    context 'more than one output looks like a commitment' do
+      let(:bogus) { Bitcoin::TxOut.new(value: 0, script_pubkey: Bitcoin::Script.parse_from_payload(('6a24aa21a9ed' + '00' * 32).htb)) }
+
+      it 'should use the last one, as Bitcoin Core does' do
+        subject.transactions[0].outputs.unshift(bogus)
+        expect(subject.valid_witness_commitment?).to be true
+        subject.transactions[0].outputs << bogus
+        expect(subject.valid_witness_commitment?).to be false
+      end
+    end
+
+    context 'the coinbase has an output of OP_RETURN alone' do
+      it 'should not be taken for a commitment' do
+        subject.transactions[0].outputs << Bitcoin::TxOut.new(value: 0, script_pubkey: Bitcoin::Script.parse_from_payload('6a'.htb))
+        subject.transactions[0].outputs << Bitcoin::TxOut.new(value: 0, script_pubkey: Bitcoin::Script.parse_from_payload('6a51'.htb))
+        expect(subject.valid_witness_commitment?).to be true
+      end
+    end
+
+    context 'the witness reserved value is not one item of 32 bytes' do
+      it 'should be false' do
+        reserved = subject.transactions[0].inputs[0].script_witness.stack[0]
+        subject.transactions[0].inputs[0].script_witness.stack << reserved
+        expect(subject.valid_witness_commitment?).to be false
+        subject.transactions[0].inputs[0].script_witness.stack.pop
+        subject.transactions[0].inputs[0].script_witness.stack[0] = reserved[0...-1]
+        expect(subject.valid_witness_commitment?).to be false
+        subject.transactions[0].inputs[0].script_witness.stack.clear
+        expect(subject.valid_witness_commitment?).to be false
+        expect { subject.calculate_witness_commitment }.to raise_error(ArgumentError, 'The witness reserved value is missing.')
+      end
+    end
   end
 
   describe '#height' do

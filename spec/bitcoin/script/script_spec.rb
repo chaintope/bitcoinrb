@@ -599,6 +599,21 @@ describe Bitcoin::Script do
         # invalid commitment hash length
         script = Bitcoin::Script.parse_from_payload('6a24aa21a9ed670436c55de638c8100326d72998157a61aab2af1a8d4c5785f9093134b78e'.htb)
         expect(script.witness_commitment).to be nil
+        # Bitcoin Core only recognizes a direct push of 0x24 bytes, not PUSHDATA1 or a longer push.
+        script = Bitcoin::Script.parse_from_payload('6a4c24aa21a9ed670436c55de638c8100326d72998157a61aab2af1a8d4c5785f9093134b78e33'.htb)
+        expect(script.witness_commitment).to be nil
+        script = Bitcoin::Script.parse_from_payload('6a28aa21a9ed670436c55de638c8100326d72998157a61aab2af1a8d4c5785f9093134b78e3300000000'.htb)
+        expect(script.witness_commitment).to be nil
+        # OP_RETURN alone, or followed by an opcode, is not a commitment and not an error.
+        expect(Bitcoin::Script.parse_from_payload('6a'.htb).witness_commitment).to be nil
+        expect(Bitcoin::Script.parse_from_payload('6a51'.htb).witness_commitment).to be nil
+      end
+    end
+
+    context 'data after the commitment' do
+      it 'should be ignored, as Bitcoin Core only looks at the first 38 bytes' do
+        script = Bitcoin::Script.parse_from_payload('6a24aa21a9ed670436c55de638c8100326d72998157a61aab2af1a8d4c5785f9093134b78e330102'.htb)
+        expect(script.witness_commitment).to eq('670436c55de638c8100326d72998157a61aab2af1a8d4c5785f9093134b78e33')
       end
     end
   end

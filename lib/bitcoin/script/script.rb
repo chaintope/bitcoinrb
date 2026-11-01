@@ -334,11 +334,14 @@ module Bitcoin
     end
 
     # get witness commitment
+    # The witness commitment this script carries, if it is a commitment output as Bitcoin Core's
+    # GetWitnessCommitmentIndex recognizes it: at least 38 bytes which begin with OP_RETURN, a push of
+    # 0x24 bytes and the header aa21a9ed. Anything after the 32 byte commitment is ignored.
+    # @return [String, nil] The commitment with hex format, or nil if this is not a commitment output.
     def witness_commitment
-      return nil if !op_return? || op_return_data.bytesize < 36
-      buf = StringIO.new(op_return_data)
-      return nil unless buf.read(4).bth == WITNESS_COMMITMENT_HEADER
-      buf.read(32).bth
+      payload = to_payload
+      return nil if payload.bytesize < 38 || payload[0, 6] != "\x6a\x24".b + WITNESS_COMMITMENT_HEADER.htb
+      payload[6, 32].bth
     end
 
     # If this script is witness program, return its script code,

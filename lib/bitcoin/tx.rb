@@ -117,9 +117,10 @@ module Bitcoin
 
     # get the witness commitment of coinbase tx.
     # if this tx does not coinbase or not have commitment, return nil.
+    # When more than one output looks like a commitment, the last one counts, as in Bitcoin Core.
     def witness_commitment
       return nil unless coinbase_tx?
-      outputs.each do |output|
+      outputs.reverse_each do |output|
         commitment = output.script_pubkey.witness_commitment
         return commitment if commitment
       end

@@ -94,15 +94,30 @@ module Bitcoin
     end
 
     # check the witness commitment in coinbase tx matches witness commitment calculated from tx list.
+    # As in Bitcoin Core, the commitment is the last output of the coinbase which looks like one, and the
+    # witness of the coinbase input has to be exactly one item of 32 bytes, the witness reserved value.
+    # A block without a commitment output is not valid here.
     def valid_witness_commitment?
-      transactions[0].witness_commitment == calculate_witness_commitment
+      return false if transactions.empty?
+      commitment = transactions[0].witness_commitment
+      return false if commitment.nil? || !valid_witness_reserved_value?
+      commitment == calculate_witness_commitment
+    end
+
+    # Whether the witness of the coinbase input is one item of 32 bytes, see valid_witness_commitment?.
+    # @return [Boolean]
+    def valid_witness_reserved_value?
+      stack = transactions[0]&.inputs&.first&.script_witness&.stack
+      !stack.nil? && stack.size == 1 && stack[0].bytesize == 32
     end
 
     # calculate witness commitment from tx list.
+    # @raise [ArgumentError] If the coinbase input does not carry the witness reserved value.
     def calculate_witness_commitment
+      raise ArgumentError, 'The witness reserved value is missing.' unless valid_witness_reserved_value?
       witness_hashes = [COINBASE_WTXID]
       witness_hashes += (transactions[1..-1].map(&:witness_hash))
-      reserved_value = transactions[0].inputs[0].script_witness.stack.map(&:bth).join
+      reserved_value = transactions[0].inputs[0].script_witness.stack[0].bth
       tree = Merkle::BinaryTree.new(config: Merkle::Config.bitcoin(element_encoding: :hex), leaves: witness_hashes)
       root_hash = tree.compute_root
       Bitcoin.double_sha256([root_hash + reserved_value].pack('H*')).bth
