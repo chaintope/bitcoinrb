@@ -32,6 +32,19 @@ describe Bitcoin::KeyPath do
         expect{key_path.parse_key_path("m/0/4294967295")}.not_to raise_error
         expect{key_path.parse_key_path("m/4294967295")}.not_to raise_error
       end
+
+      it 'should read a trailing h as the hardened marker, like a trailing apostrophe' do
+        expect(key_path.parse_key_path("m/0h")).to eq([2147483648])
+        expect(key_path.parse_key_path("m/0h/1h/2h")).to eq([2147483648, 2147483649, 2147483650])
+        expect(key_path.parse_key_path("m/0'/1h/2")).to eq(key_path.parse_key_path("m/0h/1'/2"))
+        expect(key_path.parse_key_path("m/2147483647h")).to eq([4294967295])
+        expect{key_path.parse_key_path("m/0hh")}.to raise_error(ArgumentError, 'Invalid path.')
+        expect{key_path.parse_key_path("m/0H")}.to raise_error(ArgumentError, 'Invalid path.')
+        expect{key_path.parse_key_path("m/0'h")}.to raise_error(ArgumentError, 'Invalid path.')
+        expect{key_path.parse_key_path("m/h")}.to raise_error(ArgumentError, 'Invalid path.')
+        expect{key_path.parse_key_path("m/2147483648h")}.to raise_error(ArgumentError, 'Invalid path.')
+        expect{key_path.parse_key_path("m/2147483648'")}.to raise_error(ArgumentError, 'Invalid path.')
+      end
     end
 
     context 'invalid path' do

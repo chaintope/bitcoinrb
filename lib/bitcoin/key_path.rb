@@ -2,6 +2,7 @@ module Bitcoin
   module KeyPath
 
     # key path convert an array of derive number
+    # A hardened index is marked with a trailing ' or h, as Bitcoin Core's ParseHDKeypath reads it.
     # @param [String] path_string
     # @return [Array[Integer]] key path numbers.
     # @raise [ArgumentError] if invalid +path_string+.
@@ -14,11 +15,13 @@ module Bitcoin
           next if p == 'm'
           raise ArgumentError, "Invalid path." unless p == 'm'
         end
-        raise ArgumentError, "Invalid path." if p.count("'") > 1 || (p.count("'") == 1 && p[-1] != "'")
-        raise ArgumentError, "Invalid path." unless p.delete("'") =~ /^[0-9]+$/
-        value = (p[-1] == "'" ? p.delete("'").to_i + Bitcoin::HARDENED_THRESHOLD : p.to_i)
-        raise ArgumentError, "Invalid path." if value > 4294967295 # 4294967295 = 0xFFFFFFFF (uint32 max)
-        value
+        hardened = p.end_with?("'", 'h')
+        number = hardened ? p[0...-1] : p
+        raise ArgumentError, "Invalid path." unless number =~ /\A[0-9]+\z/
+        value = number.to_i
+        # 4294967295 = 0xFFFFFFFF (uint32 max)
+        raise ArgumentError, "Invalid path." if value > (hardened ? Bitcoin::HARDENED_THRESHOLD - 1 : 4294967295)
+        hardened ? value + Bitcoin::HARDENED_THRESHOLD : value
       end[1..-1]
     end
 
