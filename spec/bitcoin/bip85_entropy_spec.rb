@@ -63,6 +63,53 @@ describe Bitcoin::BIP85Entropy, network: :mainnet do
     it 'should derive entropy fo HEX' do
       expect(subject.first).to eq("492db4698cf3b73a5a24998aa3e9d7fa96275d85724a91e71aa2d645442f878555d078fd1f1f67e368976f04137b1f7a0d19232136ca50c44614af72b5582a5c")
     end
+
+    it 'should truncate the entropy to num_bytes, which is 16 to 64' do
+      entropy, result = master.derive("m/83696968'/128169'/32'/0'")
+      expect(entropy.size).to eq(64)
+      expect(result).to eq(entropy)
+      expect(master.derive("m/83696968'/128169'/16'/0'").first.size).to eq(32)
+      expect { master.derive("m/83696968'/128169'/15'/0'") }.to raise_error(ArgumentError, "num_bytes 15' must be between 16 and 64.")
+      expect { master.derive("m/83696968'/128169'/65'/0'") }.to raise_error(ArgumentError, "num_bytes 65' must be between 16 and 64.")
+    end
+  end
+
+  describe 'PWD BASE64' do
+    it 'should derive the password of the BIP-85 test vector' do
+      entropy, pwd = master.derive("m/83696968'/707764'/21'/0'")
+      expect(entropy).to eq('74a2e87a9ba0cdd549bdd2f9ea880d554c6c355b08ed25088cfa88f3f1c4f74632b652fd4a8f5fda43074c6f6964a3753b08bb5210c8f5e75c07a4c2a20bf6e9')
+      expect(pwd).to eq('dKLoepugzdVJvdL56ogNV')
+      expect(master.derive("m/83696968'/707764'/86'/0'").last.size).to eq(86)
+      expect { master.derive("m/83696968'/707764'/19'/0'") }.to raise_error(ArgumentError, "pwd_len 19' must be between 20 and 86.")
+      expect { master.derive("m/83696968'/707764'/87'/0'") }.to raise_error(ArgumentError, "pwd_len 87' must be between 20 and 86.")
+    end
+  end
+
+  describe 'PWD BASE85' do
+    it 'should derive the password of the BIP-85 test vector' do
+      entropy, pwd = master.derive("m/83696968'/707785'/12'/0'")
+      expect(entropy).to eq('f7cfe56f63dca2490f65fcbf9ee63dcd85d18f751b6b5e1c1b8733af6459c904a75e82b4a22efff9b9e69de2144b293aa8714319a054b6cb55826a8e51425209')
+      expect(pwd).to eq('_s`{TW89)i4`')
+      expect(master.derive("m/83696968'/707785'/80'/0'").last.size).to eq(80)
+      expect { master.derive("m/83696968'/707785'/9'/0'") }.to raise_error(ArgumentError, "pwd_len 9' must be between 10 and 80.")
+      expect { master.derive("m/83696968'/707785'/81'/0'") }.to raise_error(ArgumentError, "pwd_len 81' must be between 10 and 80.")
+    end
+  end
+
+  describe 'BIP39 Application with 15 and 21 words' do
+    it 'should derive a mnemonic of the requested length' do
+      mnemonic = Bitcoin::Mnemonic.new('english')
+      entropy, words = master.derive("m/83696968'/39'/0'/15'/0'")
+      expect(entropy.size).to eq(40)
+      expect(words.size).to eq(15)
+      expect(mnemonic.to_entropy(words)).to eq(entropy)
+      entropy, words = master.derive("m/83696968'/39'/0'/21'/0'")
+      expect(entropy.size).to eq(56)
+      expect(words.size).to eq(21)
+      expect(mnemonic.to_entropy(words)).to eq(entropy)
+      expect { master.derive("m/83696968'/39'/0'/13'/0'") }.to raise_error(ArgumentError, "Word length 13' does not supported.")
+      expect { master.derive("m/83696968'/39'/2'/12'/0'") }.to raise_error(ArgumentError, "bitcoinrb does not support language: 2'")
+    end
   end
 
   describe 'derive' do
@@ -71,6 +118,21 @@ describe Bitcoin::BIP85Entropy, network: :mainnet do
         # not 83696968'
         expect{master.derive("m/83696968/0'/0'")}.to raise_error(ArgumentError, 'Invalid BIP85 path format.')
         expect{master.derive("m/0'/0'/0'")}.to raise_error(ArgumentError, 'Invalid BIP85 path format.')
+        # Every index has to be hardened, and an application takes a fixed number of parameters.
+        expect{master.derive("m/83696968'/39'/0'/12'/0")}.to raise_error(ArgumentError, 'Every index of a BIP85 path must be hardened.')
+        expect{master.derive("m/83696968'/39'/0'/12'")}.to raise_error(ArgumentError, 'Invalid BIP85 path format.')
+        expect{master.derive("m/83696968'/39'/0'/12'/0'/7'")}.to raise_error(ArgumentError, 'Invalid BIP85 path format.')
+        expect{master.derive("m/83696968'/2'")}.to raise_error(ArgumentError, 'Invalid BIP85 path format.')
+        expect{master.derive("m/83696968'/32'/0'/1'")}.to raise_error(ArgumentError, 'Invalid BIP85 path format.')
+        expect{master.derive("m/83696968'/128169'/64'")}.to raise_error(ArgumentError, 'Invalid BIP85 path format.')
+      end
+    end
+
+    context 'an application this class does not know' do
+      it 'should return the 64 byte entropy as it is' do
+        entropy, result = master.derive("m/83696968'/828365'/0'")
+        expect(entropy.size).to eq(128)
+        expect(result).to eq(entropy)
       end
     end
   end
