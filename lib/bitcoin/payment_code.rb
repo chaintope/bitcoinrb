@@ -7,10 +7,15 @@ module Bitcoin
 
     attr_accessor :x_value
     attr_accessor :sign
+    attr_accessor :features_bits # the features byte with hex format. Only bit 0 may be set.
+    attr_accessor :reserve_field # the 13 reserved bytes with hex format, zero unless a future version says otherwise.
 
     VERSION_BYTE = '47'
     SUPPORT_VERSIONS = ['01']
     SUPPORT_SIGNS = ['02', '03']
+    PAYLOAD_SIZE = 80 # version, features, sign, x value, chain code and the reserved bytes.
+    # The Base58Check form: the 0x47 version byte, the payload and the checksum.
+    BASE58_PAYLOAD_SIZE = 1 + PAYLOAD_SIZE + 4
 
     def initialize
       @version = '01'
@@ -26,6 +31,9 @@ module Bitcoin
 
       payment_code = PaymentCode.new
       payment_code.depth = master_ext_key.depth
+      payment_code.number = master_ext_key.number
+      payment_code.parent_fingerprint = master_ext_key.parent_fingerprint
+      payment_code.ver = master_ext_key.ver
       payment_code.key = master_ext_key.key
       payment_code.sign = compressed_pubkey[0..1]
       payment_code.x_value = compressed_pubkey[2..-1]
@@ -50,28 +58,38 @@ module Bitcoin
     end
 
     # decode base58 encoded payment code
+    # The serialization is the 85 bytes of BIP-47: the 0x47 version byte, the 80 byte payload and the
+    # checksum. The features byte may only have bit 0 set, and the reserved bytes are kept as they are.
     # @params [String] base58_payment_code base58 encoded payment code
+    # @return [String] the 80 byte payload with binary format.
+    # @raise [ArgumentError] If +base58_payment_code+ is not a payment code.
     def self.from_base58(base58_payment_code)
+      raise ArgumentError, 'payment code must be string.' unless base58_payment_code.is_a?(String)
       hex = Bitcoin::Base58.decode(base58_payment_code)
-      version = hex[2..3]
-      sign = hex[6..7]
-      public_key = hex[8..71]
-      payment_code = hex[0...-8]
-
+      raise ArgumentError, 'invalid payment code length' unless hex.length == BASE58_PAYLOAD_SIZE * 2
       raise ArgumentError, 'invalid version byte' unless hex[0..1] == VERSION_BYTE
-      raise ArgumentError, 'invalid version' unless PaymentCode.support_version?(version)
-      raise ArgumentError, 'invalid sign' unless PaymentCode.support_sign?(sign)
-      raise ArgumentError, Errors::Messages::INVALID_PUBLIC_KEY unless Bitcoin::Key.new(pubkey: sign + public_key).fully_valid_pubkey?
+      payment_code = hex[0...-8]
       raise ArgumentError, Errors::Messages::INVALID_CHECKSUM unless Bitcoin.calc_checksum(payment_code) == hex[-8..-1]
 
-      x_value = payment_code[8..71]
-      chain_code_hex = payment_code[72..135]
+      version = hex[2..3]
+      features = hex[4..5]
+      sign = hex[6..7]
+      x_value = hex[8..71]
+      chain_code_hex = hex[72..135]
+      reserved = hex[136..161]
+
+      raise ArgumentError, 'invalid version' unless PaymentCode.support_version?(version)
+      raise ArgumentError, 'invalid features' unless (features.to_i(16) & 0xfe).zero?
+      raise ArgumentError, 'invalid sign' unless PaymentCode.support_sign?(sign)
+      raise ArgumentError, Errors::Messages::INVALID_PUBLIC_KEY unless Bitcoin::Key.new(pubkey: sign + x_value).fully_valid_pubkey?
 
       payment_code_pubkey = PaymentCode.new
       payment_code_pubkey.depth = 3
+      payment_code_pubkey.features_bits = features
       payment_code_pubkey.sign = sign
       payment_code_pubkey.x_value = x_value
       payment_code_pubkey.chain_code = [chain_code_hex].pack('H*')
+      payment_code_pubkey.reserve_field = reserved
 
       payment_code_pubkey.to_payload
     end

@@ -69,5 +69,34 @@ describe Bitcoin::PaymentCode, network: :mainnet do
       expect{Bitcoin::PaymentCode.from_base58('PM8TJrebgLcDCJa1ygSPNa3hrcG1C4t9j7MEKGVCep5MdnUsUZDPhW2oyA5P4H4N3KXauS4JSjj4gFikc6zdFz2ByvZ9dBvorEeKBZCydK5BMwrgNfyu').bth}.to raise_error(ArgumentError, 'invalid sign')
       expect{Bitcoin::PaymentCode.from_base58('PM8TJVeCupU7EcGA3XXTAfNRybqxPhdHa1NAPfYof2W9u4vuBhBEW7sdm6WYJRoYMEYm867vZyEbpDANpPEjGWc7HnYWMiMnDt6EFZubsjjvMNChusQi').bth}.to raise_error(ArgumentError, Bitcoin::Errors::Messages::INVALID_PUBLIC_KEY)
     end
+
+    # Base58Check encode +hex+ with the 0x47 version byte, as a payment code is.
+    def encode_payment_code(hex)
+      body = '47' + hex
+      Bitcoin::Base58.encode(body + Bitcoin.calc_checksum(body))
+    end
+
+    it 'should only accept the 85 byte serialization of BIP-47' do
+      payload = '010002b85034fb08a8bfefd22848238257b252721454bbbfba2c3667f168837ea2cdad671af9f65904632e2dcc0c6ad314e11d53fc82fa4c4ea27a4a14eccecc478fee00000000000000000000000000'
+      expect(Bitcoin::PaymentCode.from_base58(encode_payment_code(payload)).bth).to eq(payload)
+      # Without the chain code and the reserved bytes, or with bytes after them.
+      expect { Bitcoin::PaymentCode.from_base58(encode_payment_code(payload[0, 72])) }.to raise_error(ArgumentError, 'invalid payment code length')
+      expect { Bitcoin::PaymentCode.from_base58(encode_payment_code(payload + '00' * 20)) }.to raise_error(ArgumentError, 'invalid payment code length')
+      expect { Bitcoin::PaymentCode.from_base58(nil) }.to raise_error(ArgumentError, 'payment code must be string.')
+      expect { Bitcoin::PaymentCode.from_base58('') }.to raise_error(ArgumentError, 'invalid payment code length')
+    end
+
+    it 'should keep the features byte and the reserved bytes, and reject a features bit which is not defined' do
+      payload = '010102b85034fb08a8bfefd22848238257b252721454bbbfba2c3667f168837ea2cdad671af9f65904632e2dcc0c6ad314e11d53fc82fa4c4ea27a4a14eccecc478fee0102030405060708090a0b0c0d'
+      expect(Bitcoin::PaymentCode.from_base58(encode_payment_code(payload)).bth).to eq(payload)
+      expect { Bitcoin::PaymentCode.from_base58(encode_payment_code('0102' + payload[4..-1])) }.to raise_error(ArgumentError, 'invalid features')
+    end
+
+    it 'should give a payment code generated from a seed a complete extended key' do
+      payment_code = Bitcoin::PaymentCode.generate_master('64dca76abc9c6f0cf3d212d248c380c4622c8f93b2c425ec6a5567fd5db57e10d3e6f94a2f6af4ac2edb8998072aad92098db73558c323777abf5bd1082d970a')
+      expect(payment_code.number).to eq(2**31)
+      expect(payment_code.ext_pubkey.to_base58).to start_with('xpub')
+      expect(Bitcoin::ExtPubkey.from_base58(payment_code.ext_pubkey.to_base58).derive(0).addr).to eq(payment_code.notification_address)
+    end
   end
 end
