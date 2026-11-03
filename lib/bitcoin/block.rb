@@ -68,7 +68,9 @@ module Bitcoin
     # check the merkle root in the block header matches merkle root calculated from tx list.
     # A tx list with the duplication of CVE-2012-2459 is reported as invalid even though its root
     # matches, as Bitcoin Core does, since the same root also belongs to the list without the duplicate.
+    # A block without any tx has no merkle root, and is not valid (bad-blk-length in Bitcoin Core).
     def valid_merkle_root?
+      return false if transactions.empty?
       !merkle_root_mutated? && calculate_merkle_root == header.merkle_root
     end
 
@@ -88,7 +90,9 @@ module Bitcoin
     end
 
     # calculate merkle root from tx list.
+    # @raise [ArgumentError] If the block has no tx.
     def calculate_merkle_root
+      raise ArgumentError, 'A block without any tx has no merkle root.' if transactions.empty?
       tree = Merkle::BinaryTree.new(config: Merkle::Config.bitcoin(element_encoding: :hex), leaves: transactions.map(&:tx_hash))
       tree.compute_root
     end
@@ -128,7 +132,7 @@ module Bitcoin
     def height
       return nil if header.version < 2
       coinbase_tx = transactions[0]
-      return nil unless coinbase_tx.coinbase_tx?
+      return nil unless coinbase_tx&.coinbase_tx?
       # BIP-34: the height is the first push of the coinbase scriptSig, as a script number. A height from
       # 1 to 16 is pushed with OP_1 to OP_16, which is not a data push.
       chunk = coinbase_tx.inputs[0].script_sig.chunks.first

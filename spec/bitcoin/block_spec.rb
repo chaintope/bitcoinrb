@@ -182,4 +182,16 @@ describe Bitcoin::Block do
     end
   end
 
+  describe 'a block without any tx' do
+    subject { Bitcoin::Block.new(Bitcoin::BlockHeader.new(2, '00' * 32, '00' * 32, 0, 0x1d00ffff, 0), []) }
+
+    it 'should not be valid, and its helpers should not fail with an unrelated error' do
+      expect(subject.valid_merkle_root?).to be false
+      expect(subject.merkle_root_mutated?).to be false
+      expect { subject.calculate_merkle_root }.to raise_error(ArgumentError, 'A block without any tx has no merkle root.')
+      expect(subject.valid_witness_commitment?).to be false
+      expect(subject.height).to be_nil
+      expect(Bitcoin::Block.parse_from_payload(subject.header.to_payload + "\x00".b).valid_merkle_root?).to be false
+    end
+  end
 end
