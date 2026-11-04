@@ -27,13 +27,19 @@ module Bitcoin
         @account_key = account_key
       end
 
+      # Parse an account from the payload made by #to_payload.
+      # @param [String] payload
+      # @return [Bitcoin::Wallet::Account]
+      # @raise [ArgumentError] If the payload is truncated, has data after the account, or holds invalid values.
       def self.parse_from_payload(payload)
+        raise ArgumentError, 'payload must be a String.' unless payload.is_a?(String)
         buf = StringIO.new(payload)
-        account_key = Bitcoin::ExtPubkey.parse_from_payload(buf.read(78))
-        payload = buf.read
-        name, payload = Bitcoin.unpack_var_string(payload)
-        name = name.force_encoding('utf-8')
-        purpose, index, receive_depth, change_depth, lookahead = payload.unpack('V*')
+        account_key = Bitcoin::ExtPubkey.parse_from_payload(Bitcoin.read_exact(buf, 78))
+        name_size = Bitcoin.unpack_var_int_from_io(buf)
+        raise ArgumentError, 'Payload is truncated.' if name_size.nil?
+        name = Bitcoin.read_exact(buf, name_size).force_encoding('utf-8')
+        purpose, index, receive_depth, change_depth, lookahead = Bitcoin.read_exact(buf, 20).unpack('V5')
+        raise ArgumentError, 'Account payload has data after the account.' unless buf.eof?
         a = Account.new(account_key, purpose, index, name)
         a.receive_depth = receive_depth
         a.change_depth = change_depth
@@ -139,11 +145,14 @@ module Bitcoin
         account_key.derive(branch).derive(address_index)
       end
 
+      # @raise [ArgumentError] If a parameter is invalid or they do not match each other.
       def validate_params!(account_key, purpose, index)
-        raise 'account_key must be an instance of Bitcoin::ExtPubkey.' unless account_key.is_a?(Bitcoin::ExtPubkey)
-        raise 'Account key and index does not match.' unless account_key.number == (index + Bitcoin::HARDENED_THRESHOLD)
+        raise ArgumentError, 'account_key must be an instance of Bitcoin::ExtPubkey.' unless account_key.is_a?(Bitcoin::ExtPubkey)
+        raise ArgumentError, "purpose must be one of #{PURPOSE_TYPE.values.join(', ')}." unless PURPOSE_TYPE.value?(purpose)
+        raise ArgumentError, 'index must be an integer from 0 to 2**31 - 1.' unless index.is_a?(Integer) && index.between?(0, Bitcoin::HARDENED_THRESHOLD - 1)
+        raise ArgumentError, 'Account key and index does not match.' unless account_key.number == (index + Bitcoin::HARDENED_THRESHOLD)
         version_bytes = Bitcoin::ExtPubkey.version_from_purpose(purpose + Bitcoin::HARDENED_THRESHOLD)
-        raise 'The purpose and the account key do not match.' unless account_key.version == version_bytes
+        raise ArgumentError, 'The purpose and the account key do not match.' unless account_key.version == version_bytes
       end
 
     end
