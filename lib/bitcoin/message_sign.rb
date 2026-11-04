@@ -120,7 +120,8 @@ module Bitcoin
         verify_simple(addr_script, payload, message, prefix: prefix)
       when :full
         begin
-          tx = Bitcoin::Tx.parse_from_payload(payload)
+          # strict rejects bytes after the tx, as Bitcoin Core's DecodeTx does.
+          tx = Bitcoin::Tx.parse_from_payload(payload, strict: true)
         rescue StandardError
           raise ArgumentError, 'error parsing signature as full variant'
         end
@@ -203,8 +204,21 @@ module Bitcoin
     def verify_simple(addr_script, witness_payload, message, prefix:)
       digest = message_hash(message, prefix: prefix, legacy: false)
       tx = to_sign_tx(digest, addr_script.to_addr)
-      tx.in[0].script_witness = Bitcoin::ScriptWitness.parse_from_payload(witness_payload)
+      tx.in[0].script_witness = parse_simple_witness(witness_payload)
       run_interpreter(tx, addr_script)
+    end
+
+    # Parse the witness of a simple signature, which has to be exactly one serialized witness.
+    # @raise [ArgumentError] If the witness is truncated or followed by other bytes.
+    def parse_simple_witness(payload)
+      buf = StringIO.new(payload)
+      begin
+        witness = Bitcoin::ScriptWitness.parse_from_payload(buf)
+      rescue StandardError
+        raise ArgumentError, 'error parsing signature as simple variant'
+      end
+      raise ArgumentError, 'error parsing signature as simple variant' unless buf.eof?
+      witness
     end
 
     def verify_full(addr_script, tx, message, prefix:)
@@ -236,6 +250,7 @@ module Bitcoin
     private_class_method :validate_to_sign_tx!
     private_class_method :run_interpreter
     private_class_method :verify_simple
+    private_class_method :parse_simple_witness
     private_class_method :verify_full
     private_class_method :verify_legacy
   end

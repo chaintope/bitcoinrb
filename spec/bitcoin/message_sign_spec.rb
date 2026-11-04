@@ -523,4 +523,28 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
       end
     end
   end
+
+  describe '#verify_message with bytes after the signature' do
+    let(:key) { Bitcoin::Key.generate }
+    let(:address) { key.to_p2wpkh }
+    let(:message) { 'Hello World' }
+
+    def append(signature, data)
+      signature[0, 3] + Base64.strict_encode64(Base64.strict_decode64(signature[3..]) + data)
+    end
+
+    it 'should reject a simple signature whose witness is truncated or followed by other bytes' do
+      sig = described_class.sign_message(key, message, format: :simple, address: address)
+      expect(described_class.verify_message(address, sig, message)).to be true
+      expect { described_class.verify_message(address, append(sig, "\x00".b), message) }.to raise_error(ArgumentError, 'error parsing signature as simple variant')
+      truncated = sig[0, 3] + Base64.strict_encode64(Base64.strict_decode64(sig[3..])[0...-1])
+      expect { described_class.verify_message(address, truncated, message) }.to raise_error(ArgumentError, 'error parsing signature as simple variant')
+    end
+
+    it 'should reject a full signature whose tx is followed by other bytes' do
+      sig = described_class.sign_message(key, message, format: :full, address: address)
+      expect(described_class.verify_message(address, sig, message)).to be true
+      expect { described_class.verify_message(address, append(sig, "\x00".b), message) }.to raise_error(ArgumentError, 'error parsing signature as full variant')
+    end
+  end
 end
