@@ -10,6 +10,10 @@ module Bitcoin
 
       VERSION = 1
 
+      # A wallet id names the directory +wallet<id>+ under the path prefix, so that it may hold only
+      # letters, digits, '_' and '-'. A '/' or '..' would put the wallet outside the prefix.
+      WALLET_ID_PATTERN = /\A[A-Za-z0-9_-]+\z/
+
       # get wallet dir path
       def self.default_path_prefix
         "#{Bitcoin.base_dir}/db/wallet/"
@@ -17,9 +21,10 @@ module Bitcoin
 
       # Create new wallet. If wallet already exist, throw error.
       # The wallet generates a seed using SecureRandom and store to db at initialization.
-      # @param [String] wallet_id new wallet id.
+      # @param [Integer, String] wallet_id new wallet id, which consists of letters, digits, '_' and '-'.
       # @param [String] path_prefix wallet file path prefix.
       # @return [Bitcoin::Wallet::Base] the wallet
+      # @raise [ArgumentError] If +wallet_id+ is invalid or the wallet already exists.
       def self.create(wallet_id = 1, path_prefix = default_path_prefix, purpose = Account::PURPOSE_TYPE[:native_segwit])
         raise ArgumentError, "wallet_id : #{wallet_id} already exist." if self.exist?(wallet_id, path_prefix)
         w = self.new(wallet_id, path_prefix)
@@ -33,6 +38,7 @@ module Bitcoin
 
       # load wallet with specified +wallet_id+
       # @return [Bitcoin::Wallet::Base] the wallet
+      # @raise [ArgumentError] If +wallet_id+ is invalid or the wallet does not exist.
       def self.load(wallet_id, path_prefix = default_path_prefix)
         raise ArgumentError, "wallet_id : #{wallet_id} dose not exist." unless self.exist?(wallet_id, path_prefix)
         self.new(wallet_id, path_prefix)
@@ -140,14 +146,22 @@ module Bitcoin
       private
 
       def initialize(wallet_id, path_prefix)
+        self.class.validate_wallet_id!(wallet_id)
         @path = "#{path_prefix}wallet#{wallet_id}/"
         @db = Bitcoin::Wallet::DB.new(@path)
         @wallet_id = wallet_id
       end
 
       def self.exist?(wallet_id, path_prefix)
+        validate_wallet_id!(wallet_id)
         path = "#{path_prefix}wallet#{wallet_id}"
         Dir.exist?(path)
+      end
+
+      def self.validate_wallet_id!(wallet_id)
+        valid = (wallet_id.is_a?(Integer) && wallet_id >= 0) ||
+          (wallet_id.is_a?(String) && wallet_id.match?(WALLET_ID_PATTERN))
+        raise ArgumentError, "wallet_id must be a non-negative integer or a string of letters, digits, '_' and '-'." unless valid
       end
 
       # find account using +account_name+

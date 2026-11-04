@@ -68,6 +68,18 @@ describe Bitcoin::Wallet do
         expect{Bitcoin::Wallet::Base.create(1, TEST_WALLET_PATH)}.to raise_error(ArgumentError)
       end
     end
+
+    context 'wallet_id which names a directory outside the path prefix' do
+      it 'should raise error without creating the directory' do
+        message = "wallet_id must be a non-negative integer or a string of letters, digits, '_' and '-'."
+        ['/../../escaped', '1/../2', '..', '', "1\n", -1, 1.5, nil].each do |wallet_id|
+          expect{Bitcoin::Wallet::Base.create(wallet_id, TEST_WALLET_PATH)}.to raise_error(ArgumentError, message), wallet_id.inspect
+          expect{Bitcoin::Wallet::Base.load(wallet_id, TEST_WALLET_PATH)}.to raise_error(ArgumentError, message), wallet_id.inspect
+        end
+        expect(Dir.exist?("#{TEST_WALLET_PATH}wallet/../../escaped")).to be false
+        expect(Dir.glob("#{TEST_WALLET_PATH}../escaped*")).to be_empty
+      end
+    end
   end
 
   describe '#wallets_path' do
