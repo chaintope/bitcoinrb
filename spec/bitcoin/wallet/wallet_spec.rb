@@ -149,6 +149,65 @@ describe Bitcoin::Wallet do
     end
   end
 
+  describe 'account names' do
+    subject {
+      allow(Bitcoin::Wallet::MasterKey).to receive(:generate).and_return(test_master_key)
+      create_test_wallet(7)
+    }
+    let(:legacy) { Bitcoin::Wallet::Account::PURPOSE_TYPE[:legacy] }
+    after { subject.close }
+
+    it 'should reject the name of an existing account with a different purpose' do
+      expect{subject.create_account(legacy, 'Default')}.to raise_error(ArgumentError, 'Account already exists.')
+      expect(subject.accounts.size).to eq(1)
+    end
+
+    it 'should ask for the purpose when accounts of an older wallet share the name' do
+      path = "m/#{legacy}'/#{Bitcoin.chain_params.bip44_coin_type}'/1'"
+      account = Bitcoin::Wallet::Account.new(subject.master_key.derive(path).ext_pubkey, legacy, 1, 'Default')
+      account.wallet = subject
+      account.save
+      expect{subject.generate_new_address('Default')}.to raise_error(ArgumentError, 'More than one account has the name, specify the purpose.')
+      expect(subject.generate_new_address('Default', Bitcoin::Wallet::Account::PURPOSE_TYPE[:native_segwit])).to eq('tb1qd7spv5q28348xl4myc8zmh983w5jx32cjhkn97')
+      expect(Bitcoin::Script.parse_from_addr(subject.generate_new_address('Default', legacy)).p2pkh?).to be true
+    end
+
+    it 'should reject a name which is not valid UTF-8' do
+      expect{subject.create_account("\xff".b)}.to raise_error(ArgumentError, 'name must be valid UTF-8.')
+      expect{subject.create_account("\xff".dup.force_encoding('UTF-8'))}.to raise_error(ArgumentError, 'name must be valid UTF-8.')
+      expect{subject.create_account(nil)}.to raise_error(ArgumentError, 'name must be a String.')
+      account = subject.create_account('テスト'.encode('Shift_JIS'))
+      expect(account.name).to eq('テスト')
+      expect(subject.accounts.map(&:name)).to eq(['Default', 'テスト'])
+    end
+  end
+
+  describe '#get_balance' do
+    it 'should return the balance in satoshis' do
+      wallet = create_test_wallet(8)
+      expect(wallet.get_balance(wallet.accounts.first)).to eql(0)
+      wallet.close
+    end
+  end
+
+  describe '#decrypt' do
+    it 'should decrypt the seed and store it unencrypted' do
+      wallet = create_test_wallet(8)
+      seed = wallet.master_key.seed
+      wallet.encrypt('passphrase')
+      expect{wallet.decrypt('wrong')}.to raise_error(ArgumentError, 'Invalid passphrase.')
+      expect(wallet.master_key.encrypted).to be true
+      wallet.decrypt('passphrase')
+      expect(wallet.master_key.encrypted).to be false
+      expect(wallet.master_key.seed).to eq(seed)
+      wallet.close
+      loaded = Bitcoin::Wallet::Base.load(8, TEST_WALLET_PATH)
+      expect(loaded.master_key.encrypted).to be false
+      expect(loaded.master_key.seed).to eq(seed)
+      loaded.close
+    end
+  end
+
   describe '#watch_targets' do
     subject {
       # TODO add utxo outpoints data

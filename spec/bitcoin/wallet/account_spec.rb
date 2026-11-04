@@ -26,6 +26,8 @@ describe Bitcoin::Wallet::Account do
       end
       expect{Bitcoin::Wallet::Account.parse_from_payload(payload + "\x00".b)}.to raise_error(ArgumentError, 'Account payload has data after the account.')
       expect{Bitcoin::Wallet::Account.parse_from_payload(nil)}.to raise_error(ArgumentError, 'payload must be a String.')
+      invalid_name = payload[0, 78] + "\x01\xff".b + payload[(78 + 1 + 'テスト'.bytesize)..]
+      expect{Bitcoin::Wallet::Account.parse_from_payload(invalid_name)}.to raise_error(ArgumentError, 'name must be valid UTF-8.')
     end
   end
 

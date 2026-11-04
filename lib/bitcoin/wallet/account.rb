@@ -20,7 +20,7 @@ module Bitcoin
         validate_params!(account_key, purpose, index)
         @purpose = purpose
         @index = index
-        @name = name
+        @name = normalize_name(name)
         @receive_depth = 0
         @change_depth = 0
         @lookahead = 10
@@ -49,7 +49,7 @@ module Bitcoin
 
       def to_payload
         payload = account_key.to_payload
-        payload << Bitcoin.pack_var_string(name.unpack1('H*').htb)
+        payload << Bitcoin.pack_var_string(name.b)
         payload << [purpose, index, receive_depth, change_depth, lookahead].pack('V*')
         payload
       end
@@ -143,6 +143,17 @@ module Bitcoin
 
       def derive_key(branch, address_index)
         account_key.derive(branch).derive(address_index)
+      end
+
+      # The name is stored as its UTF-8 bytes and read back as UTF-8, so that it has to be valid UTF-8.
+      # @raise [ArgumentError] If +name+ is not a String which converts to valid UTF-8.
+      def normalize_name(name)
+        raise ArgumentError, 'name must be a String.' unless name.is_a?(String)
+        utf8 = name.encode(Encoding::UTF_8)
+        raise ArgumentError, 'name must be valid UTF-8.' unless utf8.valid_encoding?
+        utf8
+      rescue EncodingError
+        raise ArgumentError, 'name must be valid UTF-8.'
       end
 
       # @raise [ArgumentError] If a parameter is invalid or they do not match each other.

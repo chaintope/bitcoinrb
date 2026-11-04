@@ -73,10 +73,12 @@ module Bitcoin
 
       # create new account
       # @param [Integer] purpose BIP44's purpose.
-      # @param [String] name a account name.
+      # @param [String] name a account name, which has to be unique in the wallet whatever the purpose.
       # @return [Bitcoin::Wallet::Account]
+      # @raise [ArgumentError] If an account with +name+ already exists.
       def create_account(purpose = Account::PURPOSE_TYPE[:native_segwit], name)
-        raise ArgumentError.new('Account already exists.') if find_account(name, purpose)
+        # An account is looked up by its name alone, e.g. in #generate_new_address.
+        raise ArgumentError.new('Account already exists.') if find_account(name)
         index = accounts.size
         path = "m/#{purpose}'/#{Bitcoin.chain_params.bip44_coin_type}'/#{index}'"
         account_key = master_key.derive(path).ext_pubkey
@@ -88,18 +90,23 @@ module Bitcoin
 
       # get wallet balance.
       # @param [Bitcoin::Wallet::Account] account a account in the wallet.
+      # @return [Integer] the balance in satoshis.
       def get_balance(account)
         # TODO get from utxo db.
-        0.00000000
+        0
       end
 
       # create new bitcoin address for receiving payments.
       # @param [String] account_name an account name.
+      # @param [Integer] purpose BIP44's purpose of the account, which is required only when a wallet
+      # created by an older version has accounts of the same name with different purposes.
       # @return [String] generated address.
-      def generate_new_address(account_name)
-        account = find_account(account_name)
-        raise ArgumentError.new('Account does not exist.') unless account
-        account.create_receive.addr
+      # @raise [ArgumentError] If no account, or more than one account, matches.
+      def generate_new_address(account_name, purpose = nil)
+        candidates = accounts(purpose).select{|a| a.name == account_name}
+        raise ArgumentError.new('Account does not exist.') if candidates.empty?
+        raise ArgumentError.new('More than one account has the name, specify the purpose.') if candidates.size > 1
+        candidates.first.create_receive.addr
       end
 
       # get wallet version.
@@ -125,10 +132,12 @@ module Bitcoin
         db.register_master_key(master_key)
       end
 
-      # decrypt wallet
+      # decrypt wallet, and store its seed unencrypted.
       # @param [String] passphrase the wallet passphrase
+      # @raise [ArgumentError] If +passphrase+ is wrong.
       def decrypt(passphrase)
-
+        master_key.decrypt(passphrase)
+        db.register_master_key(master_key)
       end
 
       # wallet information
