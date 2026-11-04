@@ -4,6 +4,22 @@ module Bitcoin
 
     class Error < StandardError; end
 
+    # A checker which enforces the BIP-322 rule that all signatures use SIGHASH_ALL, or SIGHASH_DEFAULT
+    # where the output type supports it. A signature with any other hash type fails, as if it did not verify.
+    class BIP322Checker < Bitcoin::TxChecker
+
+      def check_sig(sig, pubkey, script_code, sig_version, allow_hybrid: false)
+        return false unless sig.empty? || sig.htb[-1].unpack1('C') == SIGHASH_TYPE[:all]
+        super
+      end
+
+      def check_schnorr_sig(sig, pubkey, sig_version, opts = {})
+        bytes = sig.htb
+        return set_error(SCRIPT_ERR_SCHNORR_SIG_HASHTYPE) if bytes.bytesize == 65 && bytes[-1].unpack1('C') != SIGHASH_TYPE[:all]
+        super
+      end
+    end
+
     module_function
 
     FORMAT_LEGACY = :legacy
@@ -201,7 +217,7 @@ module Bitcoin
 
     def run_interpreter(tx, script_pubkey)
       tx_out = Bitcoin::TxOut.new(script_pubkey: script_pubkey)
-      checker = Bitcoin::TxChecker.new(tx: tx, input_index: 0, prevouts: [tx_out])
+      checker = BIP322Checker.new(tx: tx, input_index: 0, prevouts: [tx_out])
       interpreter = Bitcoin::ScriptInterpreter.new(flags: BIP322_VERIFY_FLAGS, checker: checker)
       interpreter.verify_script(tx.in[0].script_sig, script_pubkey, tx.in[0].script_witness)
     end

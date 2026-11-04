@@ -476,4 +476,51 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
       expect { described_class.sign_message(key, 'x', format: :bogus) }.to raise_error(ArgumentError, 'Invalid format specified.')
     end
   end
+
+  describe '#verify_message with the hash type of a signature' do
+    let(:key) { Bitcoin::Key.generate }
+    let(:message) { 'Hello World' }
+
+    def to_sign_for(address)
+      digest = described_class.message_hash(message, legacy: false)
+      described_class.to_sign_tx(digest, address)
+    end
+
+    def p2wpkh_signature(hash_type)
+      address = key.to_p2wpkh
+      script = Bitcoin::Script.parse_from_addr(address)
+      tx = to_sign_for(address)
+      sighash = tx.sighash_for_input(0, script, sig_version: :witness_v0, amount: 0, hash_type: hash_type)
+      witness = Bitcoin::ScriptWitness.new([key.sign(sighash) + [hash_type].pack('C'), key.pubkey.htb])
+      'smp' + Base64.strict_encode64(witness.to_payload)
+    end
+
+    def p2tr_signature(hash_type)
+      tweaked = Bitcoin::Taproot.tweak_private_key(key, '')
+      address = Bitcoin::Script.to_p2tr(tweaked).to_addr
+      script = Bitcoin::Script.parse_from_addr(address)
+      tx = to_sign_for(address)
+      prevout = Bitcoin::TxOut.new(script_pubkey: script, value: 0)
+      sighash = tx.sighash_for_input(0, script, sig_version: :taproot, prevouts: [prevout], hash_type: hash_type)
+      sig = tweaked.sign(sighash, algo: :schnorr)
+      sig += [hash_type].pack('C') unless hash_type == Bitcoin::SIGHASH_TYPE[:default]
+      [address, 'smp' + Base64.strict_encode64(Bitcoin::ScriptWitness.new([sig]).to_payload)]
+    end
+
+    it 'should accept only SIGHASH_ALL for an ECDSA signature' do
+      expect(described_class.verify_message(key.to_p2wpkh, p2wpkh_signature(Bitcoin::SIGHASH_TYPE[:all]), message)).to be true
+      [0x02, 0x03, 0x81, 0x82, 0x83].each do |hash_type|
+        expect(described_class.verify_message(key.to_p2wpkh, p2wpkh_signature(hash_type), message)).to be(false), hash_type.to_s
+      end
+    end
+
+    it 'should accept SIGHASH_DEFAULT and SIGHASH_ALL for a schnorr signature' do
+      %i[default all].each do |type|
+        expect(described_class.verify_message(*p2tr_signature(Bitcoin::SIGHASH_TYPE[type]), message)).to be(true), type.to_s
+      end
+      [0x02, 0x03, 0x81, 0x82, 0x83].each do |hash_type|
+        expect(described_class.verify_message(*p2tr_signature(hash_type), message)).to be(false), hash_type.to_s
+      end
+    end
+  end
 end
