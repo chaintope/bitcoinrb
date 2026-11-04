@@ -547,4 +547,13 @@ RSpec.describe Bitcoin::MessageSign, network: :mainnet do
       expect { described_class.verify_message(address, append(sig, "\x00".b), message) }.to raise_error(ArgumentError, 'error parsing signature as full variant')
     end
   end
+
+  describe '#verify_message with a signature which is not a String' do
+    it 'should raise ArgumentError' do
+      address = Bitcoin::Key.generate.to_p2wpkh
+      [nil, 1].each do |signature|
+        expect { described_class.verify_message(address, signature, 'x') }.to raise_error(ArgumentError, 'signature must be a String.')
+      end
+    end
+  end
 end

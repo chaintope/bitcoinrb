@@ -92,7 +92,9 @@ module Bitcoin
     # @param [String] signature The signature in base64 format.
     # @param [String] message The message that was signed.
     # @return [Boolean] Verification result.
+    # @raise [ArgumentError] If +signature+ is not a String or cannot be decoded.
     def verify_message(address, signature, message, prefix: Bitcoin.chain_params.message_magic)
+      raise ArgumentError, 'signature must be a String.' unless signature.is_a?(String)
       addr_script = Bitcoin::Script.parse_from_addr(address)
       variant, body = case signature
                       when ''
