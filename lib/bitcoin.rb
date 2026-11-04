@@ -202,7 +202,10 @@ module Bitcoin
   end
 
   class ::Integer
+    # @return [String] the hex string of this integer, padded to an even length.
+    # @raise [ArgumentError] If this is negative, which has no such hex string: to_s(16) gives it a '-' sign.
     def to_even_length_hex
+      raise ArgumentError, 'A negative integer has no even length hex string.' if negative?
       hex = to_s(16)
       hex.rjust((hex.length / 2.0).ceil * 2, '0')
     end

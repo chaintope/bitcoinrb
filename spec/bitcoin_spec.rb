@@ -110,5 +110,11 @@ describe Bitcoin do
     it { expect(16.to_even_length_hex).to eq('10') }
     it { expect(255.to_even_length_hex).to eq('ff') }
     it { expect(256.to_even_length_hex).to eq('0100') }
+    it 'should reject a negative integer' do
+      [-1, -10, -256].each do |i|
+        expect{i.to_even_length_hex}.to raise_error(ArgumentError, 'A negative integer has no even length hex string.'), i.to_s
+        expect{i.itb}.to raise_error(ArgumentError, 'A negative integer has no even length hex string.'), i.to_s
+      end
+    end
   end
 end
