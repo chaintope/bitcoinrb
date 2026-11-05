@@ -719,7 +719,7 @@ describe Bitcoin::PSBT do
         # And a PSBT carrying the same control block twice is rejected when parsed.
         payload = a.to_payload
         leaf_record = Bitcoin::PSBT.serialize_to_vector(Bitcoin::PSBT::PSBT_IN_TYPES[:tap_leaf_script], key: control_block.to_payload, value: '51c0'.htb)
-        expect { Bitcoin::PSBT::Tx.parse_from_payload(payload.sub(leaf_record, leaf_record * 2)) }.
+        expect { Bitcoin::PSBT::Tx.parse_from_payload(payload.sub(leaf_record) { leaf_record * 2 }) }.
           to raise_error(ArgumentError, 'Duplicate Key, key for tap leaf script value already provided.')
       end
     end
