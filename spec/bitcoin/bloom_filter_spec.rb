@@ -39,6 +39,22 @@ describe Bitcoin::BloomFilter do
     end
   end
 
+  describe '.create_filter' do
+    it 'should compute the number of hash functions by the integer division of Bitcoin Core' do
+      # 11 bytes for 10 elements: 88 / 10 * log(2) is 5, while 88 * log(2) / 10 would be 6.
+      filter = Bitcoin::BloomFilter.create_filter(10, 0.01)
+      expect(filter.to_a.size).to eq(11)
+      expect(filter.hash_funcs).to eq(5)
+      expect(Bitcoin::BloomFilter.create_filter(3, 0.01).hash_funcs).to eq(5)
+    end
+
+    it 'should reject elements_length which is not a positive integer' do
+      [0, -1, 1.5, nil].each do |n|
+        expect { Bitcoin::BloomFilter.create_filter(n, 0.01) }.to raise_error(ArgumentError, 'elements_length must be a positive integer.'), n.inspect
+      end
+    end
+  end
+
   describe "#clear" do
     subject{ Bitcoin::BloomFilter.create_filter(3, 0.01) }
     it do

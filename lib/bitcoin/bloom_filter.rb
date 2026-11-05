@@ -19,12 +19,15 @@ module Bitcoin
     # @param [Integer] elements_length the number of elements
     # @param [Float] fp_rate the false positive rate chosen by the client
     # @param [Integer] tweak A random value to add to the seed value in the hash function used by the bloom filter
+    # @raise [ArgumentError] If +elements_length+ is not a positive integer.
     def self.create_filter(elements_length, fp_rate, tweak = 0)
+      raise ArgumentError, 'elements_length must be a positive integer.' unless elements_length.is_a?(Integer) && elements_length > 0
       # The size S of the filter in bytes is given by (-1 / pow(log(2), 2) * N * log(P)) / 8
       len = [[(-elements_length * Math.log(fp_rate) / (LN2_SQUARED * 8)).to_i, MAX_BLOOM_FILTER_SIZE].min, 1].max
       filter = Array.new(len, 0)
-      # The number of hash functions required is given by S * 8 / N * log(2)
-      hash_funcs = [[(filter.size * 8 * LN2 / elements_length).to_i, MAX_HASH_FUNCS].min, 1].max
+      # The number of hash functions required is given by S * 8 / N * log(2).
+      # S * 8 / N is an integer division, as in Bitcoin Core's CBloomFilter, so the same parameters make the same filter.
+      hash_funcs = [[(filter.size * 8 / elements_length * LN2).to_i, MAX_HASH_FUNCS].min, 1].max
       BloomFilter.new(filter, hash_funcs, tweak)
     end
 
