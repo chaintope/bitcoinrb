@@ -65,4 +65,21 @@ describe Bitcoin::Message::CmpctBlock do
     end
   end
 
+  describe 'HeaderAndShortIDs#short_id' do
+    let(:header_and_short_ids) do
+      header = Bitcoin::BlockHeader.parse_from_payload('0000002033781a817676c59166524c3a69b9fd3a9b2a6ed044ebdf7f4c040000000000000fbd4c2e418d224f14a9d7a98b7e1f209c2a0ab012753de877f7af00b73b5a65590e745affff001d2812f96d'.htb)
+      Bitcoin::Message::HeaderAndShortIDs.new(header, 7907921748630648002)
+    end
+
+    it 'should be the first 6 bytes of the little endian SipHash output, even with a leading zero byte' do
+      key = header_and_short_ids.siphash_key
+      # Find a txid whose SipHash output has a zero top byte.
+      txid = (0..).lazy.map { |i| format('%064x', i) }.find { |id| SipHash.digest(key, id.htb.reverse) < 2**56 }
+      digest = SipHash.digest(key, txid.htb.reverse)
+      expected = ([digest].pack('Q<')[0, 6] + "\x00\x00".b).unpack1('Q<')
+      expect(header_and_short_ids.short_id(txid)).to eq(expected)
+      expect(header_and_short_ids.short_id(txid)).to be < 2**48
+    end
+  end
+
 end

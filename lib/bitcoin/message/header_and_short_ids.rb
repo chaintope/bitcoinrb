@@ -52,8 +52,8 @@ module Bitcoin
       # @param [String] txid a transaction id
       # @return [Integer] 6 bytes short transaction id.
       def short_id(txid)
-        hash = SipHash.digest(siphash_key, txid.htb.reverse).to_even_length_hex
-        [hash].pack('H*')[2...8].bth.to_i(16)
+        # The low 6 bytes of the 64 bit SipHash output, which may have leading zero bytes.
+        SipHash.digest(siphash_key, txid.htb.reverse) & 0xffff_ffff_ffff
       end
 
     end
