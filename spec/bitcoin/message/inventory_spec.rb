@@ -23,6 +23,18 @@ describe Bitcoin::Message::Inventory do
       end
     end
 
+    context 'wtx payload' do
+      subject {
+        Bitcoin::Message::Inventory.parse_from_payload('05000000cbfb4ac9621ba90f7958cc8f726647105c2ece288eaa9018346639bbad6754ab'.htb)
+      }
+      it 'should be parsed' do
+        expect(subject.identifier).to eq(Bitcoin::Message::Inventory::MSG_WTX)
+        expect(subject.hash).to eq('cbfb4ac9621ba90f7958cc8f726647105c2ece288eaa9018346639bbad6754ab')
+        expect(subject.block?).to be false
+        expect(subject.to_payload.bth).to eq('05000000cbfb4ac9621ba90f7958cc8f726647105c2ece288eaa9018346639bbad6754ab')
+      end
+    end
+
     context 'invalid identifier' do
       it 'raise error' do
         expect{ Bitcoin::Message::Inventory.parse_from_payload('04000000cbfb4ac9621ba90f7958cc8f726647105c2ece288eaa9018346639bbad6754ab') }.to raise_error(Bitcoin::Message::Error)

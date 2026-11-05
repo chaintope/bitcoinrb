@@ -10,6 +10,7 @@ module Bitcoin
       MSG_BLOCK = 2
       MSG_FILTERED_BLOCK = 3
       MSG_CMPCT_BLOCK = 4
+      MSG_WTX = 5 # BIP-339, the hash is a wtxid.
       MSG_WITNESS_TX = SEGWIT_FLAG | MSG_TX
       MSG_WITNESS_BLOCK = SEGWIT_FLAG | MSG_BLOCK
       MSG_FILTERED_WITNESS_BLOCK = SEGWIT_FLAG | MSG_FILTERED_BLOCK
@@ -42,7 +43,7 @@ module Bitcoin
       private
 
       def valid_identifier?(identifier)
-        [MSG_TX, MSG_BLOCK, MSG_FILTERED_BLOCK, MSG_CMPCT_BLOCK, MSG_WITNESS_TX,
+        [MSG_TX, MSG_BLOCK, MSG_FILTERED_BLOCK, MSG_CMPCT_BLOCK, MSG_WTX, MSG_WITNESS_TX,
          MSG_WITNESS_BLOCK, MSG_FILTERED_WITNESS_BLOCK].include?(identifier)
       end
 
