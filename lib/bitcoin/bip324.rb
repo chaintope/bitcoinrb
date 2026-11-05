@@ -99,7 +99,7 @@ module Bitcoin
     # @return [String] ElligatorSwift public key with hex format.
     def xelligatorswift(x)
       loop do
-        u = SecureRandom.random_number(1..ECDSA::Group::Secp256k1.order).to_s(16)
+        u = SecureRandom.random_number(1...FIELD_SIZE).to_s(16) # a non-zero field element
         c = SecureRandom.random_number(CASE_COUNT)
         t = xswiftec_inv(x, u, c)
         unless t.nil?

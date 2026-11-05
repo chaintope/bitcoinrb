@@ -26,7 +26,9 @@ module Bitcoin
           u = key[0...32].bth
           t = key[32..-1].bth
           x = BIP324.xswiftec(u, t)
-          Bitcoin::Key.new(pubkey: "03#{x}")
+            # The Y coordinate has the parity of t, as BIP-324 and libsecp256k1 decode it.
+          prefix = BIP324::FIELD.mod(t.hex).odd? ? '03' : '02'
+          Bitcoin::Key.new(pubkey: "#{prefix}#{x}", key_type: Bitcoin::Key::TYPES[:compressed])
         end
       end
 

@@ -360,7 +360,11 @@ module Bitcoin
       if secp256k1_module.native?
         Bitcoin::BIP324::EllSwiftPubkey.new(secp256k1_module.ellswift_create(priv_key))
       else
-        Bitcoin::BIP324::EllSwiftPubkey.new(Bitcoin::BIP324.xelligatorswift(xonly_pubkey))
+        encoded = Bitcoin::BIP324.xelligatorswift(xonly_pubkey)
+        # t and -t decode to the same x, and the parity of t gives the Y coordinate, as libsecp256k1 encodes it.
+        t = encoded[64..-1].hex
+        t = Bitcoin::BIP324::FIELD.mod(-t) if t.odd? != to_point.y.odd?
+        Bitcoin::BIP324::EllSwiftPubkey.new(encoded[0...64] + ECDSA::Format::IntegerOctetString.encode(t, 32).bth)
       end
     end
 

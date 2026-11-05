@@ -11,6 +11,16 @@ RSpec.describe Bitcoin::BIP324 do
       decode_vectors.each do |v|
         k = Bitcoin::BIP324::EllSwiftPubkey.new(v['ellswift'])
         expect(k.decode.xonly_pubkey).to eq(v['x'])
+        # The Y coordinate has the parity of t.
+        t = Bitcoin::BIP324::FIELD.mod(v['ellswift'][64..-1].hex)
+        expect(k.decode.pubkey[0, 2]).to eq(t.odd? ? '03' : '02')
+      end
+    end
+
+    it 'should decode to the public key which was encoded' do
+      5.times do
+        key = Bitcoin::Key.generate
+        expect(key.create_ell_pubkey.decode.pubkey).to eq(key.pubkey)
       end
     end
   end
