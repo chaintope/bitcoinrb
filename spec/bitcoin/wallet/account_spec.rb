@@ -26,8 +26,15 @@ describe Bitcoin::Wallet::Account do
       end
       expect{Bitcoin::Wallet::Account.parse_from_payload(payload + "\x00".b)}.to raise_error(ArgumentError, 'Account payload has data after the account.')
       expect{Bitcoin::Wallet::Account.parse_from_payload(nil)}.to raise_error(ArgumentError, 'payload must be a String.')
+    end
+
+    it 'should load a name which is not valid UTF-8, stored by an older version' do
+      payload = '045f1cf6030ef4b1af8000000ad25ad4af81ddaf5f9577f082c333976c67038e0ab1674c2f1ae2c3f531f7198d0352b292231392201da3861e4004ffe41b1432de6f8545a080dde2988b8b8a716b09e38386e382b9e38388540000000a00000001000000010000000a000000'.htb
       invalid_name = payload[0, 78] + "\x01\xff".b + payload[(78 + 1 + 'テスト'.bytesize)..]
-      expect{Bitcoin::Wallet::Account.parse_from_payload(invalid_name)}.to raise_error(ArgumentError, 'name must be valid UTF-8.')
+      account = Bitcoin::Wallet::Account.parse_from_payload(invalid_name)
+      expect(account.name.b).to eq("\xff".b)
+      expect(account.index).to eq(10)
+      expect(account.to_payload).to eq(invalid_name)
     end
   end
 
@@ -45,8 +52,11 @@ describe Bitcoin::Wallet::Account do
       legacy = Bitcoin::Wallet::Account::PURPOSE_TYPE[:legacy]
       expect(Bitcoin::Wallet::Account.new(subject, legacy, 3).index).to eq(3)
       expect{Bitcoin::Wallet::Account.new(subject.to_base58, legacy, 3)}.to raise_error(ArgumentError, 'account_key must be an instance of Bitcoin::ExtPubkey.')
-      [0, 45, nil, '44'].each do |purpose|
-        expect{Bitcoin::Wallet::Account.new(subject, purpose, 3)}.to raise_error(ArgumentError, 'purpose must be one of 44, 49, 84.'), purpose.inspect
+      # m/86'/1'/0', a purpose which is not in PURPOSE_TYPE.
+      taproot_key = test_master_key.key.derive(2**31 + 86).derive(2**31 + 1).derive(2**31).ext_pubkey
+      expect(Bitcoin::Wallet::Account.new(taproot_key, 86, 0).purpose).to eq(86)
+      [-1, 2**31, nil, '44', 44.0].each do |purpose|
+        expect{Bitcoin::Wallet::Account.new(subject, purpose, 3)}.to raise_error(ArgumentError, 'purpose must be an integer from 0 to 2**31 - 1.'), purpose.inspect
       end
       [-1, 2**31, nil, '3', 3.0].each do |index|
         expect{Bitcoin::Wallet::Account.new(subject, legacy, index)}.to raise_error(ArgumentError, 'index must be an integer from 0 to 2**31 - 1.'), index.inspect

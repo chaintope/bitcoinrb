@@ -172,6 +172,16 @@ describe Bitcoin::Wallet do
       expect(Bitcoin::Script.parse_from_addr(subject.generate_new_address('Default', legacy)).p2pkh?).to be true
     end
 
+    it 'should load accounts whose name an older version stored without valid UTF-8' do
+      path = "m/#{legacy}'/#{Bitcoin.chain_params.bip44_coin_type}'/1'"
+      account = Bitcoin::Wallet::Account.new(subject.master_key.derive(path).ext_pubkey, legacy, 1)
+      account.instance_variable_set(:@name, "\x83e\x83X\x83g".dup.force_encoding('UTF-8')) # Shift_JIS bytes.
+      account.wallet = subject
+      account.save
+      expect(subject.accounts.size).to eq(2)
+      expect(subject.generate_new_address('Default')).to eq('tb1qd7spv5q28348xl4myc8zmh983w5jx32cjhkn97')
+    end
+
     it 'should reject a name which is not valid UTF-8' do
       expect{subject.create_account("\xff".b)}.to raise_error(ArgumentError, 'name must be valid UTF-8.')
       expect{subject.create_account("\xff".dup.force_encoding('UTF-8'))}.to raise_error(ArgumentError, 'name must be valid UTF-8.')

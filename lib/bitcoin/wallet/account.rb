@@ -40,7 +40,10 @@ module Bitcoin
         name = Bitcoin.read_exact(buf, name_size).force_encoding('utf-8')
         purpose, index, receive_depth, change_depth, lookahead = Bitcoin.read_exact(buf, 20).unpack('V5')
         raise ArgumentError, 'Account payload has data after the account.' unless buf.eof?
-        a = Account.new(account_key, purpose, index, name)
+        a = Account.new(account_key, purpose, index)
+        # A wallet made by an older version may hold a name which is not valid UTF-8. It is kept as stored,
+        # so that the wallet stays usable and #to_payload writes the same bytes back.
+        a.instance_variable_set(:@name, name)
         a.receive_depth = receive_depth
         a.change_depth = change_depth
         a.lookahead = lookahead
@@ -159,7 +162,8 @@ module Bitcoin
       # @raise [ArgumentError] If a parameter is invalid or they do not match each other.
       def validate_params!(account_key, purpose, index)
         raise ArgumentError, 'account_key must be an instance of Bitcoin::ExtPubkey.' unless account_key.is_a?(Bitcoin::ExtPubkey)
-        raise ArgumentError, "purpose must be one of #{PURPOSE_TYPE.values.join(', ')}." unless PURPOSE_TYPE.value?(purpose)
+        # Any BIP-44 style purpose is accepted, as an older version did. Its account key has to match it below.
+        raise ArgumentError, 'purpose must be an integer from 0 to 2**31 - 1.' unless purpose.is_a?(Integer) && purpose.between?(0, Bitcoin::HARDENED_THRESHOLD - 1)
         raise ArgumentError, 'index must be an integer from 0 to 2**31 - 1.' unless index.is_a?(Integer) && index.between?(0, Bitcoin::HARDENED_THRESHOLD - 1)
         raise ArgumentError, 'Account key and index does not match.' unless account_key.number == (index + Bitcoin::HARDENED_THRESHOLD)
         version_bytes = Bitcoin::ExtPubkey.version_from_purpose(purpose + Bitcoin::HARDENED_THRESHOLD)
