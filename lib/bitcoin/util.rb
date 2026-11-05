@@ -31,17 +31,20 @@ module Bitcoin
       data
     end
 
+    # Encode +i+ as a CompactSize.
+    # @param [Integer] i
+    # @return [String] the CompactSize with binary format.
+    # @raise [ArgumentError] If +i+ is not an integer from 0 to 2**64 - 1, which have no CompactSize.
     def pack_var_int(i)
+      raise ArgumentError, 'CompactSize must be an integer from 0 to 2**64 - 1.' unless i.is_a?(Integer) && i.between?(0, 0xffffffffffffffff)
       if i <  0xfd
         [i].pack('C')
       elsif i <= 0xffff
         [0xfd, i].pack('Cv')
       elsif i <= 0xffffffff
         [0xfe, i].pack('CV')
-      elsif i <= 0xffffffffffffffff
-        [0xff, i].pack('CQ<')
       else
-        raise "int(#{i}) too large!"
+        [0xff, i].pack('CQ<')
       end
     end
 
@@ -134,13 +137,14 @@ module Bitcoin
     # decode Base58 check encoding address.
     # @param [String] addr address.
     # @return [Array] hex and address version
+    # @raise [ArgumentError] If +addr+ is not a P2PKH or P2SH address of the current chain.
     def decode_base58_address(addr)
       hex = Base58.decode(addr)
       if hex.size == 50 && calc_checksum(hex[0...-8]) == hex[-8..-1]
-        raise 'Invalid version bytes.' unless [Bitcoin.chain_params.address_version, Bitcoin.chain_params.p2sh_version].include?(hex[0..1])
+        raise ArgumentError, 'Invalid version bytes.' unless [Bitcoin.chain_params.address_version, Bitcoin.chain_params.p2sh_version].include?(hex[0..1])
         [hex[2...-8], hex[0..1]]
       else
-        raise 'Invalid address.'
+        raise ArgumentError, 'Invalid address.'
       end
     end
 

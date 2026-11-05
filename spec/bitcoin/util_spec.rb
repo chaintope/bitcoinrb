@@ -24,6 +24,10 @@ describe Bitcoin::Util do
       expect(util.pack_var_int(253)).to eq([0xfd, 0xfd, 0x00].pack('C*'))
       expect(util.pack_var_int(65535)).to eq([0xfd, 0xff, 0xff].pack('C*'))
       expect(util.pack_var_int(65536)).to eq([0xfe, 0x00, 0x00, 0x01, 0x00].pack('C*'))
+      expect(util.pack_var_int(0xffffffffffffffff)).to eq(([0xff] * 9).pack('C*'))
+      [-1, -253, 2**64, 1.5, nil].each do |i|
+        expect { util.pack_var_int(i) }.to raise_error(ArgumentError, 'CompactSize must be an integer from 0 to 2**64 - 1.'), i.inspect
+      end
     end
 
     it 'should unpack var int' do
@@ -108,6 +112,14 @@ describe Bitcoin::Util do
     it 'should be encoded' do
       expect(subject[0]).to eq('46c2fbfbecc99a63148fa076de58cf29b0bcf0b0')
       expect(subject[1]).to eq('6f')
+    end
+
+    it 'should raise ArgumentError for an invalid address' do
+      expect { util.decode_base58_address('') }.to raise_error(ArgumentError, 'Invalid address.')
+      expect { util.decode_base58_address('1111') }.to raise_error(ArgumentError, 'Invalid address.')
+      expect { util.decode_base58_address('mmy7BEH1SUGAeSVUR22pt5hPaejo2645F2') }.to raise_error(ArgumentError, 'Invalid address.')
+      # A mainnet P2PKH address.
+      expect { util.decode_base58_address('17VZNX1SN5NtKa8UQFxwQbFeFc3iqRYhem') }.to raise_error(ArgumentError, 'Invalid version bytes.')
     end
   end
 
