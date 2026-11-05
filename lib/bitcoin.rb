@@ -50,7 +50,6 @@ module Bitcoin
   autoload :KeyPath, 'bitcoin/key_path'
   autoload :Descriptor, 'bitcoin/descriptor'
   autoload :SLIP39, 'bitcoin/slip39'
-  autoload :Aezeed, 'bitcoin/aezeed'
   autoload :PaymentCode, 'bitcoin/payment_code'
   autoload :BIP85Entropy, 'bitcoin/bip85_entropy'
   autoload :Errors, 'bitcoin/errors'
