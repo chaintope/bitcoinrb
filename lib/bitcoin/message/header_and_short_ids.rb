@@ -8,7 +8,7 @@ module Bitcoin
       attr_accessor :header
       attr_accessor :nonce # 64 bit unsigned integer
       attr_accessor :short_ids
-      attr_accessor :prefilled_txn
+      attr_accessor :prefilled_txn # Array of PrefilledTx, whose index is the position in the block.
       attr_accessor :siphash_key
 
       def initialize(header, nonce, short_ids = [], prefilled_txn = [])
@@ -32,8 +32,14 @@ module Bitcoin
         if short_ids_len + prefilled_txn_len > MAX_COMPACT_BLOCK_TX_COUNT
           raise Bitcoin::Message::Error, "cmpctblock tx count #{short_ids_len + prefilled_txn_len} exceeds #{MAX_COMPACT_BLOCK_TX_COUNT}."
         end
+        # The index of a prefilled tx is differentially encoded. Bitcoin Core keeps every decoded index within 16 bits.
+        offset = 0
         prefilled_txn = prefilled_txn_len.times.map do
-          PrefilledTx.parse_from_io(buf)
+          prefilled = PrefilledTx.parse_from_io(buf)
+          prefilled.index += offset
+          raise Bitcoin::Message::Error, 'Invalid cmpctblock payload. prefilled tx index overflowed 16 bits.' if prefilled.index > 0xffff
+          offset = prefilled.index + 1
+          prefilled
         end
         self.new(header, nonce, short_ids, prefilled_txn)
       end
@@ -44,7 +50,12 @@ module Bitcoin
         p << Bitcoin.pack_var_int(short_ids.size)
         p << short_ids.map{|id|sprintf('%012x', id).htb.reverse}.join
         p << Bitcoin.pack_var_int(prefilled_txn.size)
-        p << prefilled_txn.map(&:to_payload).join
+        prev = -1
+        prefilled_txn.each do |prefilled|
+          raise ArgumentError, 'prefilled tx indexes must be in ascending order.' unless prefilled.index > prev
+          p << PrefilledTx.new(prefilled.index - prev - 1, prefilled.tx).to_payload
+          prev = prefilled.index
+        end
         p
       end
 

@@ -57,4 +57,35 @@ describe Bitcoin::Message::HeaderAndShortIDs do
       expect(parsed.to_payload).to eq(payload)
     end
   end
+
+  describe 'prefilled tx index' do
+    let(:header) { Bitcoin::BlockHeader.new(1, '00' * 32, '00' * 32, 0, 0, 0) }
+    let(:tx) { Bitcoin::Tx.parse_from_payload('01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0704ffff001d0104ffffffff0100f2052a0100000043410496b538e853519c726a2c91e61ec11600ae1390813a627c66fb8be7947be63c52da7589379515d4e0a604f8141781e62294721166bf621e73a82cbf2342c858eeac00000000'.htb) }
+
+    it 'should be differentially encoded' do
+      prefilled = [0, 3, 4].map { |i| Bitcoin::Message::PrefilledTx.new(i, tx) }
+      h = Bitcoin::Message::HeaderAndShortIDs.new(header, 1, [], prefilled)
+      payload = h.to_payload
+      # header, nonce, no short ids, then three prefilled txs whose indexes are written as 0, 2 and 0.
+      buf = StringIO.new(payload[90..-1])
+      encoded = 3.times.map { Bitcoin::Message::PrefilledTx.parse_from_io(buf).index }
+      expect(encoded).to eq([0, 2, 0])
+      parsed = Bitcoin::Message::HeaderAndShortIDs.parse_from_payload(payload)
+      expect(parsed.prefilled_txn.map(&:index)).to eq([0, 3, 4])
+      expect(parsed.to_payload).to eq(payload)
+    end
+
+    it 'should reject an index which overflows 16 bits' do
+      payload = header.to_payload + [1].pack('Q<') + Bitcoin.pack_var_int(0) + Bitcoin.pack_var_int(2)
+      payload << Bitcoin.pack_var_int(0xffff) << tx.to_payload
+      expect { Bitcoin::Message::HeaderAndShortIDs.parse_from_payload(payload + Bitcoin.pack_var_int(0) + tx.to_payload) }.
+        to raise_error(Bitcoin::Message::Error, 'Invalid cmpctblock payload. prefilled tx index overflowed 16 bits.')
+    end
+
+    it 'should reject indexes which are not in ascending order' do
+      prefilled = [3, 3].map { |i| Bitcoin::Message::PrefilledTx.new(i, tx) }
+      expect { Bitcoin::Message::HeaderAndShortIDs.new(header, 1, [], prefilled).to_payload }.
+        to raise_error(ArgumentError, 'prefilled tx indexes must be in ascending order.')
+    end
+  end
 end
