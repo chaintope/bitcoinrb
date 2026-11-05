@@ -24,7 +24,7 @@ describe Bitcoin::Descriptor::Sp do
       end
 
       it 'raises error for to_script' do
-        expect { subject.to_script }.to raise_error(RuntimeError, /does not produce a fixed script/)
+        expect { subject.to_script }.to raise_error(RuntimeError, 'sp() descriptor does not produce a fixed script. Use to_addr instead.')
       end
 
       it 'generates descriptor string' do

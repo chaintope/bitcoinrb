@@ -92,10 +92,10 @@ module Bitcoin
       end
 
       # Silent payment descriptors do not produce a single script.
-      # Use to_address to get the silent payment address.
+      # Use to_addr to get the silent payment address.
       # @raise [RuntimeError]
       def to_script
-        raise RuntimeError, "sp() descriptor does not produce a fixed script. Use to_address instead."
+        raise RuntimeError, "sp() descriptor does not produce a fixed script. Use to_addr instead."
       end
 
       private
