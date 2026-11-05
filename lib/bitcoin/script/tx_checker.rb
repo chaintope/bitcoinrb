@@ -63,11 +63,16 @@ module Bitcoin
 
       begin
         sighash = tx.sighash_for_input(input_index, opts: opts, hash_type: hash_type, sig_version: sig_version, prevouts: prevouts)
-        key = Key.from_xonly_pubkey(pubkey)
-        key.verify(sig, sighash, algo: :schnorr)
       rescue ArgumentError
         return set_error(SCRIPT_ERR_SCHNORR_SIG_HASHTYPE)
       end
+      begin
+        key = Key.from_xonly_pubkey(pubkey)
+      rescue ArgumentError
+        # A public key which is not on the curve makes the signature fail, as XOnlyPubKey::VerifySchnorr in Bitcoin Core does.
+        return set_error(SCRIPT_ERR_SCHNORR_SIG)
+      end
+      key.verify(sig, sighash, algo: :schnorr)
     end
 
     def check_locktime(locktime)
