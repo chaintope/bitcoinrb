@@ -194,9 +194,13 @@ module Bitcoin
     end
 
     # whether value is hex or not hex
-    # @return [Boolean] return true if data is hex of even length, including an empty string.
+    # @return [Boolean] return true if data is hex of even length, including an empty string. A string
+    # which is not valid in its encoding, e.g. binary data labelled as UTF-8, is not hex either.
     def valid_hex?
-      length.even? && !self[/\H/]
+      # Matching the bytes does not raise for an invalid byte sequence. A valid ASCII compatible string
+      # is matched as it is, to avoid a copy.
+      bytes = valid_encoding? && encoding.ascii_compatible? ? self : b
+      bytes.bytesize.even? && !bytes.match?(/[^0-9a-fA-F]/)
     end
 
   end

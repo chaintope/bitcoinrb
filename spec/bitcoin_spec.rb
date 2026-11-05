@@ -68,6 +68,20 @@ describe Bitcoin do
       expect('aaaa'.valid_hex?).to be true
       expect('aaga'.valid_hex?).to be false
     end
+
+    it 'should be false for a string which is not valid in its encoding' do
+      [
+        "\xff\xfe".dup.force_encoding('UTF-8'), # Binary data labelled as UTF-8.
+        "ab\xff".dup.force_encoding('UTF-8'),
+        'abcd'.encode('UTF-16LE'),
+        'あい'
+      ].each do |str|
+        expect(str.valid_hex?).to be(false), str.inspect
+        expect { str.htb }.to raise_error(ArgumentError, 'Not a hex string of even length.'), str.inspect
+      end
+      expect('abcd'.b.valid_hex?).to be true
+      expect('abcd'.encode('US-ASCII').htb).to eq("\xab\xcd".b)
+    end
   end
 
   class Test
