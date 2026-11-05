@@ -31,6 +31,18 @@ module Bitcoin
         raise NotImplementedError
       end
 
+      # Generating a control block from a nested tree is not supported yet.
+      # @raise [NotImplementedError]
+      def control_block(leaf)
+        raise NotImplementedError, 'CustomDepthBuilder does not support control_block yet.'
+      end
+
+      # Generating an inclusion proof from a nested tree is not supported yet.
+      # @raise [NotImplementedError]
+      def inclusion_proof(leaf)
+        raise NotImplementedError, 'CustomDepthBuilder does not support inclusion_proof yet.'
+      end
+
       private
 
       def merkle_root
