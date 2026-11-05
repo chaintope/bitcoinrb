@@ -33,7 +33,11 @@ module Bitcoin
       tx_hash == COINBASE_HASH && index == COINBASE_INDEX
     end
 
+    # @raise [ArgumentError] If the index does not fit in 4 bytes. -1, the default, is written as 0xffffffff.
     def to_payload
+      unless index.is_a?(Integer) && index.between?(-1, COINBASE_INDEX)
+        raise ArgumentError, 'index must be an integer from 0 to 0xffffffff.'
+      end
       [tx_hash.htb, index].pack('a32V')
     end
 
@@ -42,7 +46,7 @@ module Bitcoin
     end
 
     def valid?
-      index >= 0 && (!coinbase? && tx_hash != COINBASE_HASH)
+      index.is_a?(Integer) && index.between?(0, COINBASE_INDEX) && (!coinbase? && tx_hash != COINBASE_HASH)
     end
 
     # convert hash to txid

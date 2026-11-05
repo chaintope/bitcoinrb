@@ -38,8 +38,11 @@ module Bitcoin
           return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-cb-length')
         end
       else
+        # Only the null prevout (zero hash and index 0xffffffff) is rejected, as COutPoint::IsNull in
+        # Bitcoin Core. An index of -1 is the default of OutPoint and serializes as 0xffffffff.
+        null_payload = OutPoint.create_coinbase_outpoint.to_payload
         tx.inputs.each do |i|
-          if i.out_point.nil? || !i.out_point.valid?
+          if i.out_point.nil? || i.out_point.to_payload == null_payload
             return state.DoS(10, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-txns-prevout-null')
           end
         end
@@ -47,33 +50,82 @@ module Bitcoin
       true
     end
 
-    # check proof of work
+    # Check the proof of work of a block header, as CheckBlockHeader in Bitcoin Core.
+    # @param [Bitcoin::BlockHeader] header
+    # @param [Bitcoin::ValidationState] state
+    # @return [Boolean]
     def check_block_header(header, state)
-      header.block_hash
-      header.bits
-
+      unless header.valid_pow?
+        return state.DoS(50, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'high-hash', debug_message: 'proof of work failed')
+      end
+      true
     end
 
+    # Check a block without any context, as CheckBlock in Bitcoin Core: the header, the merkle root,
+    # the size limits, the coinbase, every tx and the legacy sigop count.
+    # @param [Bitcoin::Block] block
+    # @param [Bitcoin::ValidationState] state
+    # @return [Boolean]
     def check_block(block, state)
-      # check block header
       return false unless check_block_header(block.header, state)
 
-      # check merkle root
+      txs = block.transactions
+      # A block without any tx has no merkle root to check, and fails the size limits below.
+      unless txs.empty?
+        if block.calculate_merkle_root != block.header.merkle_root
+          return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-txnmrklroot', corruption_in: true, debug_message: 'hashMerkleRoot mismatch')
+        end
+        # CVE-2012-2459
+        if block.merkle_root_mutated?
+          return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-txns-duplicate', corruption_in: true, debug_message: 'duplicate transaction')
+        end
+      end
 
-      # size limits
+      # Size limits, without the witness, which has not been checked for malleability.
+      if txs.empty? || txs.size * WITNESS_SCALE_FACTOR > MAX_BLOCK_WEIGHT || block.stripped_size * WITNESS_SCALE_FACTOR > MAX_BLOCK_WEIGHT
+        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-blk-length', debug_message: 'size limits failed')
+      end
 
-      # first tx is coinbase?
+      unless txs.first.coinbase_tx?
+        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-cb-missing', debug_message: 'first tx is not coinbase')
+      end
+      if txs[1..].any?(&:coinbase_tx?)
+        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-cb-multiple', debug_message: 'more than one coinbase')
+      end
 
-      # check tx count
+      txs.each { |tx| return false unless check_tx(tx, state) }
 
-      # check sigop count
+      sigops = txs.sum { |tx| legacy_sigop_count(tx) }
+      if sigops * WITNESS_SCALE_FACTOR > MAX_BLOCK_SIGOPS_COST
+        return state.DoS(100, reject_code: Message::Reject::CODE_INVALID, reject_reason: 'bad-blk-sigops', debug_message: 'out-of-bounds SigOpCount')
+      end
+      true
+    end
+
+    private
+
+    # Count the sigops of the scriptSigs and scriptPubkeys of +tx+, as GetLegacySigOpCount in Bitcoin Core:
+    # a CHECKMULTISIG counts as 20 whatever its key count.
+    def legacy_sigop_count(tx)
+      tx.inputs.sum { |i| script_sigop_count(i.script_sig) } + tx.outputs.sum { |o| script_sigop_count(o.script_pubkey) }
+    end
+
+    def script_sigop_count(script)
+      script.chunks.sum do |chunk|
+        next 0 if chunk.empty?
+        case chunk.opcode
+        when Opcodes::OP_CHECKSIG, Opcodes::OP_CHECKSIGVERIFY then 1
+        when Opcodes::OP_CHECKMULTISIG, Opcodes::OP_CHECKMULTISIGVERIFY then MAX_PUBKEYS_PER_MULTISIG
+        else 0
+        end
+      end
     end
 
   end
 
   class ValidationState
 
-    MODE = {valid: 0, invlid: 1, error: 2}
+    MODE = {valid: 0, invalid: 1, error: 2}
 
     attr_accessor :mode
     attr_accessor :n_dos

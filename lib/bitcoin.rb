@@ -38,6 +38,7 @@ module Bitcoin
   autoload :Base58, 'bitcoin/base58'
   autoload :Secp256k1, 'bitcoin/secp256k1'
   autoload :Mnemonic, 'bitcoin/mnemonic'
+  autoload :Validation, 'bitcoin/validation'
   autoload :ValidationState, 'bitcoin/validation'
   autoload :RPC, 'bitcoin/rpc'
   autoload :Wallet, 'bitcoin/wallet'
