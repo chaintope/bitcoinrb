@@ -45,7 +45,7 @@ describe Bitcoin::ChainParams do
         expect(subject.testnet4?).to be false
         expect(subject.genesis_block.header.to_hex).to eq('0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4adae5494dffff7f2002000000')
         expect(subject.genesis_block.header.block_hash).to eq('06226e46111a0b59caaf126043eb5bbf28c34f3a5e332a1fc7b2b73cf188910f')
-        expect(subject.dust_relay_fee).to eq(3600)
+        expect(subject.dust_relay_fee).to eq(Bitcoin::DUST_RELAY_TX_FEE)
       end
     end
 
