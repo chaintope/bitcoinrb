@@ -51,12 +51,14 @@ module Bitcoin
       end
 
       # get current wallet
+      # @return [Bitcoin::Wallet::Base] the wallet of the first wallet dir, or nil if there is none.
+      # Its wallet_id is an Integer if it consists of digits only, otherwise a String.
       def self.current_wallet(path_prefix = default_path_prefix)
-        path = wallet_paths(path_prefix).first # TODO default wallet selection
-        return nil unless path
-        path.slice!(path_prefix + 'wallet')
-        path.slice!('/')
-        self.load(path.to_i, path_prefix)
+        # TODO default wallet selection
+        ids = wallet_paths(path_prefix).map { |path| File.basename(path).delete_prefix('wallet') }
+        id = ids.find { |i| i.match?(WALLET_ID_PATTERN) } # A dir such as "wallet/" has no wallet id.
+        return nil unless id
+        self.load(id.match?(/\A[0-9]+\z/) ? id.to_i : id, path_prefix)
       end
 
       # get account list based on BIP-44

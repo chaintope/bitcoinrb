@@ -249,6 +249,27 @@ describe Bitcoin::Wallet do
     it 'should return wallet' do
       expect(subject.path).to start_with TEST_WALLET_PATH
     end
+
+    context 'with a wallet whose id is a string' do
+      let(:prefix) { "#{TEST_WALLET_PATH}current/" }
+      before { FileUtils.rm_r(prefix) if Dir.exist?(prefix) }
+      after { FileUtils.rm_r(prefix) if Dir.exist?(prefix) }
+
+      it 'should load the wallet with that id' do
+        expect(Bitcoin::Wallet::Base.current_wallet(prefix)).to be_nil
+        Bitcoin::Wallet::Base.create('main_wallet', prefix).close
+        FileUtils.mkdir_p("#{prefix}wallet/") # No wallet id.
+        wallet = Bitcoin::Wallet::Base.current_wallet(prefix)
+        expect(wallet.wallet_id).to eq('main_wallet')
+        expect(wallet.path).to eq("#{prefix}walletmain_wallet/")
+        expect(wallet.accounts.map(&:name)).to eq(['Default'])
+        wallet.close
+        Bitcoin::Wallet::Base.create(2, prefix).close
+        wallet = Bitcoin::Wallet::Base.current_wallet(prefix)
+        expect(wallet.wallet_id).to eql(2)
+        wallet.close
+      end
+    end
   end
 
 end
