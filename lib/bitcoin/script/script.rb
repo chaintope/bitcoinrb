@@ -92,15 +92,26 @@ module Bitcoin
       new << WITNESS_VERSION_V0 << redeem_script.to_sha256
     end
 
+    # The range of a decimal number in a script string, as ParseScript in Bitcoin Core: a number
+    # outside of it is not valid in a script.
+    MAX_SCRIPT_STRING_NUMBER = 0xffffffff
+
     # generate script from string.
+    # A number is pushed as a script number, as ParseScript in Bitcoin Core does: 0, -1 and 1 to 16
+    # become OP_0, OP_1NEGATE and OP_1 to OP_16, and any other number a push of its minimal encoding.
+    # @param [String] string script string such as the result of #to_s.
+    # @return [Bitcoin::Script]
+    # @raise [ArgumentError] If a number is out of -0xffffffff..0xffffffff or a token is not valid.
     def self.from_string(string)
       script = new
       string.split(' ').each do |v|
         opcode = Opcodes.name_to_opcode(v)
         if opcode
           script << (v =~ /^\d/ && Opcodes.small_int_to_opcode(v.ord) ? v.ord : opcode)
+        elsif number_token?(v)
+          script.send(:push_script_number, v.to_i)
         else
-          script << (number_token?(v) ? v.to_i : v)
+          script << v
         end
       end
       script
@@ -112,7 +123,8 @@ module Bitcoin
     # @param [String] token a token of the script string.
     # @return [Boolean] whether +token+ should be interpreted as a script number.
     def self.number_token?(token)
-      return false unless token =~ /^[0-9]+$/
+      return true if token =~ /\A-[0-9]+\z/ # A negative number cannot be pushed data.
+      return false unless token =~ /\A[0-9]+\z/
       token.length < 12 || token.length.odd?
     end
 
@@ -374,6 +386,24 @@ module Bitcoin
         self
       end
     end
+
+    # Push +n+ as a script number. Unlike #push_int, a number which is also an opcode, e.g. 172
+    # (OP_CHECKSIG), is not appended as that opcode.
+    # @raise [ArgumentError] If +n+ is out of -0xffffffff..0xffffffff.
+    def push_script_number(n)
+      unless n.between?(-MAX_SCRIPT_STRING_NUMBER, MAX_SCRIPT_STRING_NUMBER)
+        raise ArgumentError, 'decimal numeric value only allowed in the range -0xFFFFFFFF...0xFFFFFFFF.'
+      end
+      if n == 0
+        chunks << Opcodes::OP_0.chr
+      elsif n == -1 || n.between?(1, 16)
+        chunks << Opcodes.small_int_to_opcode(n).chr
+      else
+        append_data(Script.encode_number(n))
+      end
+      self
+    end
+    private :push_script_number
 
     # push integer to stack.
     def push_int(n)

@@ -429,6 +429,41 @@ describe Bitcoin::Script do
         expect(Bitcoin::Script.from_string('0 6234').to_payload).to eq('00025a18'.htb)
       end
     end
+
+    context 'a number which is also an opcode' do
+      it 'should be pushed as a script number' do
+        expect(Bitcoin::Script.from_string('100 OP_CHECKSEQUENCEVERIFY').to_hex).to eq('0164b2')
+        expect(Bitcoin::Script.from_string('144 OP_CHECKSEQUENCEVERIFY').to_hex).to eq('029000b2')
+        expect(Bitcoin::Script.from_string('172').to_hex).to eq('02ac00')
+        expect(Bitcoin::Script.from_string('17').to_hex).to eq('0111')
+        expect(Bitcoin::Script.from_string('0 16').to_hex).to eq('0060')
+      end
+    end
+
+    context 'a negative number' do
+      it 'should be pushed as a script number' do
+        expect(Bitcoin::Script.from_string('-1').to_hex).to eq('4f')
+        expect(Bitcoin::Script.from_string('-5 OP_ADD').to_hex).to eq('018593')
+        expect(Bitcoin::Script.from_string('-128').to_hex).to eq('028080')
+        expect(Bitcoin::Script.from_string('-4294967295').to_hex).to eq('05ffffffff80')
+      end
+    end
+
+    it 'should reject a number out of -0xffffffff..0xffffffff' do
+      message = 'decimal numeric value only allowed in the range -0xFFFFFFFF...0xFFFFFFFF.'
+      expect(Bitcoin::Script.from_string('4294967295').to_hex).to eq('05ffffffff00')
+      expect { Bitcoin::Script.from_string('4294967296') }.to raise_error(ArgumentError, message)
+      expect { Bitcoin::Script.from_string('-4294967296') }.to raise_error(ArgumentError, message)
+    end
+
+    it 'should restore the script of #to_s, whose pushes of up to 4 bytes are numbers' do
+      # Only a minimal push survives, as with the asm of Bitcoin Core: e.g. a push of 0x81 is printed as -1,
+      # which is read back as OP_1NEGATE.
+      ['ff00', '9000', 'ac00', '64', '85', 'ffffff7f', 'ffffffff'].each do |data|
+        script = Bitcoin::Script.new << data
+        expect(Bitcoin::Script.from_string(script.to_s).to_payload).to eq(script.to_payload), data
+      end
+    end
   end
 
   describe '#push_only?' do
