@@ -23,7 +23,7 @@ retarget_time: 1209600 # 2 weeks
 target_spacing: 600 # block interval
 max_money: 21000000
 bip34_height: 1
-proof_of_work_limit: 0x1d00ffff
+proof_of_work_limit: 0x1e0377ae
 dns_seeds:
   - "seed.signet.bitcoin.sprovoost.nl"
   - "seed.signet.achownodes.xyz"

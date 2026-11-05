@@ -83,4 +83,14 @@ describe Bitcoin::ChainParams do
     end
   end
 
+  describe 'genesis block' do
+    Bitcoin::AVAILABLE_NETWORKS.each do |network|
+      it "should be valid within the proof of work limit of #{network}", network: network do
+        header = Bitcoin.chain_params.genesis_block.header
+        expect(header.valid_pow?).to be true
+        expect(header.valid?).to be true
+      end
+    end
+  end
+
 end
