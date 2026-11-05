@@ -60,7 +60,16 @@ module Bitcoin
   SCRIPT_VERIFY_DISCOURAGE_OP_SUCCESS = (1 << 19) # Making unknown OP_SUCCESS non-standard
   SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_PUBKEYTYPE = (1 << 20) # Making unknown public key versions (in BIP 342 scripts) non-standard
 
-  MANDATORY_SCRIPT_VERIFY_FLAGS = SCRIPT_VERIFY_P2SH
+  # Script verification flags of the rules which every block has to follow, the soft forks which are now consensus.
+  MANDATORY_SCRIPT_VERIFY_FLAGS = [
+    SCRIPT_VERIFY_P2SH,
+    SCRIPT_VERIFY_DERSIG,
+    SCRIPT_VERIFY_NULLDUMMY,
+    SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY,
+    SCRIPT_VERIFY_CHECKSEQUENCEVERIFY,
+    SCRIPT_VERIFY_WITNESS,
+    SCRIPT_VERIFY_TAPROOT
+  ].inject(SCRIPT_VERIFY_NONE){|flags, f| flags |= f}
 
   # Standard script verification flags that standard transactions will comply with.
   STANDARD_SCRIPT_VERIFY_FLAGS = [

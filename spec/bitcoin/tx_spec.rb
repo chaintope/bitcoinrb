@@ -404,6 +404,17 @@ describe Bitcoin::Tx, use_secp256k1: true do
     end
   end
 
+  describe 'MANDATORY_SCRIPT_VERIFY_FLAGS' do
+    it 'should be the flags of the soft forks which are consensus' do
+      expect(Bitcoin::MANDATORY_SCRIPT_VERIFY_FLAGS).to eq(
+        Bitcoin::SCRIPT_VERIFY_P2SH | Bitcoin::SCRIPT_VERIFY_DERSIG | Bitcoin::SCRIPT_VERIFY_NULLDUMMY |
+        Bitcoin::SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | Bitcoin::SCRIPT_VERIFY_CHECKSEQUENCEVERIFY |
+        Bitcoin::SCRIPT_VERIFY_WITNESS | Bitcoin::SCRIPT_VERIFY_TAPROOT)
+      # Every standard tx follows the mandatory rules.
+      expect(Bitcoin::STANDARD_SCRIPT_VERIFY_FLAGS & Bitcoin::MANDATORY_SCRIPT_VERIFY_FLAGS).to eq(Bitcoin::MANDATORY_SCRIPT_VERIFY_FLAGS)
+    end
+  end
+
   def parse_script_flags(str_flags)
     return 0 if str_flags.empty? || str_flags == 'NONE'
     words = str_flags.split(',')
