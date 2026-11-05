@@ -15,6 +15,17 @@ describe Bitcoin::Message::Inv do
     end
   end
 
+  describe 'unknown inventory type' do
+    it 'should keep an inventory of an unknown type and the other inventories' do
+      payload = Bitcoin.pack_var_int(2) + Bitcoin::Message::Inventory.new(1, 'aa' * 32).to_payload +
+        [0x12345678].pack('V') + ('bb' * 32).htb
+      inv = Bitcoin::Message::Inv.parse_from_payload(payload)
+      expect(inv.inventories.map(&:identifier)).to eq([1, 0x12345678])
+      expect(inv.inventories.select(&:known?).map(&:hash)).to eq(['aa' * 32])
+      expect(inv.to_payload).to eq(payload)
+    end
+  end
+
   describe 'to_pkt' do
     subject {
       inv = Bitcoin::Message::Inv.new

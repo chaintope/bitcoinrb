@@ -18,8 +18,17 @@ module Bitcoin
       attr_accessor :identifier
       attr_accessor :hash
 
+      KNOWN_IDENTIFIERS = [MSG_TX, MSG_BLOCK, MSG_FILTERED_BLOCK, MSG_CMPCT_BLOCK, MSG_WTX, MSG_WITNESS_TX,
+                           MSG_WITNESS_BLOCK, MSG_FILTERED_WITNESS_BLOCK].freeze
+
+      # A type which is not known is kept as it is, and is left for the receiver to ignore, as Bitcoin Core does.
+      # @param [Integer] identifier The type of the inventory, a 32 bit unsigned integer.
+      # @param [String] hash The hash with hex format.
+      # @raise [Bitcoin::Message::Error] If +identifier+ is not a 32 bit unsigned integer.
       def initialize(identifier, hash)
-        raise Error, "invalid type identifier specified. identifier = #{identifier}" unless valid_identifier?(identifier)
+        unless identifier.is_a?(Integer) && identifier.between?(0, 0xffffffff)
+          raise Error, "invalid type identifier specified. identifier = #{identifier}"
+        end
         @identifier = identifier
         @hash = hash
       end
@@ -40,11 +49,10 @@ module Bitcoin
         [MSG_BLOCK, MSG_WITNESS_BLOCK, MSG_FILTERED_WITNESS_BLOCK].include?(identifier)
       end
 
-      private
-
-      def valid_identifier?(identifier)
-        [MSG_TX, MSG_BLOCK, MSG_FILTERED_BLOCK, MSG_CMPCT_BLOCK, MSG_WTX, MSG_WITNESS_TX,
-         MSG_WITNESS_BLOCK, MSG_FILTERED_WITNESS_BLOCK].include?(identifier)
+      # Whether the type of this inventory is one this library knows.
+      # @return [Boolean]
+      def known?
+        KNOWN_IDENTIFIERS.include?(identifier)
       end
 
     end
