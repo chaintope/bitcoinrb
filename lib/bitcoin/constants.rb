@@ -127,8 +127,9 @@ module Bitcoin
   # Maximum number length in bytes
   DEFAULT_MAX_NUM_SIZE = 4
 
-  # 80 bytes of data, +1 for OP_RETURN, +2 for the pushdata opcodes.
-  MAX_OP_RETURN_RELAY = 83
+  # The default -datacarriersize of Bitcoin Core, the total size of the OP_RETURN scriptPubKeys a standard tx may have.
+  # It is MAX_STANDARD_TX_WEIGHT / WITNESS_SCALE_FACTOR, so that the size of a standard tx is the only limit.
+  MAX_OP_RETURN_RELAY = 100_000
 
   # for script error
   SCRIPT_ERR_OK = 0

@@ -188,6 +188,9 @@ describe Bitcoin::Tx, use_secp256k1: true do
 
       # Check dust with default relay fee:
       dust_threshold = 546
+      # Up to MAX_DUST_OUTPUTS_PER_TX dust outputs, which Bitcoin Core relays as ephemeral dust.
+      Bitcoin::Tx::MAX_DUST_OUTPUTS_PER_TX.times { tx.out << Bitcoin::TxOut.new(value: 0, script_pubkey: tx.out[0].script_pubkey) }
+      expect(tx.standard?).to be true
       # dust
       tx.out[0].value = dust_threshold - 1
       expect(tx.standard?).to be false
@@ -203,16 +206,12 @@ describe Bitcoin::Tx, use_secp256k1: true do
       # not dust
       tx.out[0].value = 673
       expect(tx.standard?).to be true
+      Bitcoin.chain_params.dust_relay_fee = Bitcoin::DUST_RELAY_TX_FEE
+      tx.out.pop(Bitcoin::Tx::MAX_DUST_OUTPUTS_PER_TX)
 
-      # MAX_OP_RETURN_RELAY-byte TX_NULL_DATA (standard)
-      tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << '04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38'
-      expect(tx.out[0].script_pubkey.to_payload.bytesize).to eq(Bitcoin::MAX_OP_RETURN_RELAY)
+      # A large TX_NULL_DATA (standard)
+      tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << 'aa' * 10_000
       expect(tx.standard?).to be true
-
-      # MAX_OP_RETURN_RELAY+1-byte TX_NULL_DATA (non-standard)
-      tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << '04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3800'
-      expect(tx.out[0].script_pubkey.to_payload.bytesize).to eq(Bitcoin::MAX_OP_RETURN_RELAY + 1)
-      expect(tx.standard?).to be false
 
       # Data payload can be encoded in any way...
       tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << ''
@@ -230,22 +229,61 @@ describe Bitcoin::Tx, use_secp256k1: true do
       # ...so long as it only contains PUSHDATA's
       tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << OP_RETURN
       expect(tx.standard?).to be false
+      tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << '01' << OP_RETURN
+      expect(tx.standard?).to be false
 
       # TX_NULL_DATA w/o PUSHDATA
       tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN
       expect(tx.standard?).to be true
 
-      # Only one TX_NULL_DATA permitted in all cases
+      # More than one TX_NULL_DATA is permitted
       tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << '04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38'
       tx.outputs << Bitcoin::TxOut.new(script_pubkey: Bitcoin::Script.new << OP_RETURN << '04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38')
-      expect(tx.standard?).to be false
-
-      tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << '04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38'
-      tx.outputs[1].script_pubkey = Bitcoin::Script.new << OP_RETURN
-      expect(tx.standard?).to be false
+      expect(tx.standard?).to be true
 
       tx.outputs[0].script_pubkey = Bitcoin::Script.new << OP_RETURN
       tx.outputs[1].script_pubkey = Bitcoin::Script.new << OP_RETURN
+      expect(tx.standard?).to be true
+    end
+
+    it 'should share MAX_OP_RETURN_RELAY bytes among the TX_NULL_DATA outputs' do
+      stub_const('Bitcoin::MAX_OP_RETURN_RELAY', 83)
+      tx = Bitcoin::Tx.new
+      tx.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new('11' * 32, 0), script_sig: Bitcoin::Script.new << '00' * 32)
+      # 3 + 80 bytes, the limit by itself.
+      tx.out << Bitcoin::TxOut.new(script_pubkey: Bitcoin::Script.new << OP_RETURN << 'aa' * 80)
+      expect(tx.out[0].script_pubkey.size).to eq(83)
+      expect(tx.standard?).to be true
+      tx.out[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << 'aa' * 81
+      expect(tx.standard?).to be false
+      # Two outputs of 40 + 43 bytes fit, and one more byte does not.
+      tx.out[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << 'aa' * 38
+      tx.out << Bitcoin::TxOut.new(script_pubkey: Bitcoin::Script.new << OP_RETURN << 'aa' * 41)
+      expect(tx.out.sum { |o| o.script_pubkey.size }).to eq(83)
+      expect(tx.standard?).to be true
+      tx.out[1].script_pubkey = Bitcoin::Script.new << OP_RETURN << 'aa' * 42
+      expect(tx.standard?).to be false
+    end
+
+    it 'should check the version and the size without the witness' do
+      tx = Bitcoin::Tx.new
+      tx.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new('11' * 32, 0))
+      tx.out << Bitcoin::TxOut.new(script_pubkey: Bitcoin::Script.new << OP_RETURN << '00' * 4)
+      # 4 + 1 + 41 + 1 + 15 + 4 bytes
+      expect(tx.to_payload.bytesize).to eq(Bitcoin::Tx::MIN_STANDARD_TX_NONWITNESS_SIZE + 1)
+      tx.version = 2
+      expect(tx.standard?).to be true
+      tx.version = 3 # TRUC
+      expect(tx.standard?).to be true
+      [0, 4].each do |version|
+        tx.version = version
+        expect(tx.standard?).to be(false), version.to_s
+      end
+      tx.version = 2
+      # A witness does not count.
+      tx.out[0].script_pubkey = Bitcoin::Script.new << OP_RETURN << '00' * 2
+      tx.in[0].script_witness.stack << '00' * 100
+      expect(tx.serialize_old_format.bytesize).to eq(Bitcoin::Tx::MIN_STANDARD_TX_NONWITNESS_SIZE - 1)
       expect(tx.standard?).to be false
     end
   end

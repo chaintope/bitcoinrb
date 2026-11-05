@@ -227,8 +227,23 @@ module Bitcoin
     end
 
     # check whether standard script.
+    # Whether this script is a standard scriptPubKey, as IsStandard in Bitcoin Core judges it.
+    # An OP_RETURN script is standard up to MAX_OP_RETURN_RELAY bytes, which a tx shares among all of its
+    # OP_RETURN outputs. A bare multisig has at most 3 public keys.
+    # @return [Boolean]
     def standard?
-      p2pkh? | p2sh? | p2wpkh? | p2wsh? | p2tr? | multisig? | standard_op_return? || p2a?
+      p2pkh? || p2sh? || p2wpkh? || p2wsh? || p2tr? || p2a? || witness_unknown? ||
+        standard_p2pk? || standard_multisig? || standard_op_return?
+    end
+
+    # Whether this script is a witness program of a version which is not defined yet, which Bitcoin Core relays
+    # so that a future soft fork can use it. A version 0 program is defined only for 20 and 32 bytes.
+    # @return [Boolean]
+    def witness_unknown?
+      return false unless witness_program?
+      version, program = witness_data
+      return false if version == 0
+      !(version == 1 && (program.bytesize == 32 || program == P2A_PROGRAM))
     end
 
     # Check whether this script is a P2PKH format script.
@@ -299,13 +314,46 @@ module Bitcoin
       sig_count <= pubkey_count
     end
 
+    # Whether a public key is of a valid size for its header byte, as CPubKey::ValidSize in Bitcoin Core checks it.
+    def self.valid_pubkey_size?(data)
+      return false if data.nil? || data.empty?
+      case data.getbyte(0)
+      when 0x02, 0x03 then data.bytesize == 33
+      when 0x04, 0x06, 0x07 then data.bytesize == 65
+      else false
+      end
+    end
+    private_class_method :valid_pubkey_size?
+
+    # Whether this script is a P2PK script which is standard.
+    # @return [Boolean]
+    def standard_p2pk?
+      chunks.size == 2 && chunks[0].pushdata? && chunks[1].ord == OP_CHECKSIG &&
+        Bitcoin::Script.send(:valid_pubkey_size?, chunks[0].pushed_data)
+    end
+
+    # Whether this script is a bare multisig script which is standard, m-of-n with 1 <= m <= n <= 3.
+    # @return [Boolean]
+    def standard_multisig?
+      return false if chunks.size < 4 || chunks.last.ord != OP_CHECKMULTISIG
+      m = chunks[0].opcode
+      n = chunks[-2].opcode
+      return false unless m && n && (OP_1..OP_16).cover?(m) && (OP_1..OP_16).cover?(n)
+      m = Opcodes.opcode_to_small_int(m)
+      n = Opcodes.opcode_to_small_int(n)
+      keys = chunks[1...-2]
+      return false unless keys.size == n && keys.all? { |k| k.pushdata? && Bitcoin::Script.send(:valid_pubkey_size?, k.pushed_data) }
+      n <= 3 && m <= n
+    end
+
     def op_return?
       chunks.size >= 1 && chunks[0].ord == OP_RETURN
     end
 
+    # Whether this script is an OP_RETURN script which is standard, OP_RETURN followed by pushes only.
+    # @return [Boolean]
     def standard_op_return?
-      op_return? && size <= MAX_OP_RETURN_RELAY &&
-          (chunks.size == 1 || chunks[1].opcode <= OP_16)
+      op_return? && size <= MAX_OP_RETURN_RELAY && chunks[1..-1].all? { |c| c.opcode.nil? || c.opcode <= OP_16 }
     end
 
     def op_return_data

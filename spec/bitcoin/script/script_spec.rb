@@ -252,7 +252,7 @@ describe Bitcoin::Script do
       expect(subject.p2a?).to be false
       expect(subject.multisig?).to be false
       expect(subject.op_return?).to be false
-      expect(subject.standard?).to be false
+      expect(subject.standard?).to be true
       expect(subject.p2pk?).to be true
       expect(subject.to_addr).to be nil
     end
@@ -290,6 +290,43 @@ describe Bitcoin::Script do
     end
   end
 
+  describe '#standard?' do
+    let(:keys) { %w[021525ca2c0cbd42de7e4f5793c79887fbc8b136b5fe98b279581ef6959307f9e9 032ad705d98318241852ba9394a90e85f6afc8f7b5f445675040318a9d9ea29e35 0292ee82d9add0512294723f2c363aee24efdeb3f258cdaf5118a4fcf5263e92c9 02effb2edfcf826d43027feae226143bdac058ad2e87b7cec26f97af2d357ddefa] }
+
+    it 'should accept a bare multisig of at most 3 public keys' do
+      expect(Bitcoin::Script.to_multisig_script(1, keys[0, 1]).standard?).to be true
+      expect(Bitcoin::Script.to_multisig_script(3, keys[0, 3]).standard?).to be true
+      multisig = Bitcoin::Script.to_multisig_script(1, keys)
+      expect(multisig.multisig?).to be true
+      expect(multisig.standard?).to be false
+      # 0-of-1, and a key count which does not match the keys.
+      expect((Bitcoin::Script.new << OP_0 << keys[0] << OP_1 << OP_CHECKMULTISIG).standard?).to be false
+      expect((Bitcoin::Script.new << OP_1 << keys[0] << OP_2 << OP_CHECKMULTISIG).standard?).to be false
+      expect((Bitcoin::Script.new << OP_1 << '00' * 33 << OP_1 << OP_CHECKMULTISIG).standard?).to be false
+    end
+
+    it 'should accept a witness program of a version which is not defined yet' do
+      expect((Bitcoin::Script.new << OP_2 << 'aa' * 32).standard?).to be true
+      expect((Bitcoin::Script.new << OP_16 << 'aa' * 2).standard?).to be true
+      expect((Bitcoin::Script.new << OP_1 << 'aa' * 20).standard?).to be true
+      expect((Bitcoin::Script.new << OP_1 << 'aa' * 40).standard?).to be true
+      # A program of 41 bytes is not a witness program.
+      expect((Bitcoin::Script.new << OP_2 << 'aa' * 41).standard?).to be false
+      # Version 0 is defined only for 20 and 32 bytes.
+      expect((Bitcoin::Script.new << OP_0 << 'aa' * 21).standard?).to be false
+      expect(Bitcoin::Script.parse_from_payload('51024e73'.htb).witness_unknown?).to be false
+      expect(Bitcoin::Script.parse_from_payload('51024e73'.htb).standard?).to be true
+    end
+
+    it 'should accept a P2PK script of a valid public key size' do
+      expect((Bitcoin::Script.new << keys[0] << OP_CHECKSIG).standard?).to be true
+      expect((Bitcoin::Script.new << '04' + 'aa' * 64 << OP_CHECKSIG).standard?).to be true
+      expect((Bitcoin::Script.new << '06' + 'aa' * 64 << OP_CHECKSIG).standard?).to be true
+      expect((Bitcoin::Script.new << '02' + 'aa' * 64 << OP_CHECKSIG).standard?).to be false
+      expect((Bitcoin::Script.new << '05' + 'aa' * 32 << OP_CHECKSIG).standard?).to be false
+    end
+  end
+
   describe 'op_return script' do
     context 'within MAX_OP_RETURN_RELAY' do
       subject {
@@ -312,12 +349,14 @@ describe Bitcoin::Script do
     end
 
     context 'over MAX_OP_RETURN_RELAY' do
-      subject {
-        Bitcoin::Script.new << OP_RETURN << '04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3804678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef3800'
-      }
       it 'should correct op_return, but not standard' do
-        expect(subject.op_return?).to be true
-        expect(subject.standard?).to be false
+        # OP_RETURN, OP_PUSHDATA4 and 4 bytes of the length leave MAX_OP_RETURN_RELAY - 6 bytes for the data.
+        script = Bitcoin::Script.new << OP_RETURN << '00' * (Bitcoin::MAX_OP_RETURN_RELAY - 6)
+        expect(script.size).to eq(Bitcoin::MAX_OP_RETURN_RELAY)
+        expect(script.standard?).to be true
+        script = Bitcoin::Script.new << OP_RETURN << '00' * (Bitcoin::MAX_OP_RETURN_RELAY - 5)
+        expect(script.op_return?).to be true
+        expect(script.standard?).to be false
       end
     end
 

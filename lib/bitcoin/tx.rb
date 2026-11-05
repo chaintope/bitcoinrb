@@ -9,7 +9,15 @@ module Bitcoin
     include Bitcoin::HexConverter
     include SilentPayment
 
-    MAX_STANDARD_VERSION = 2
+    # Version 3 is TRUC (BIP-431).
+    MAX_STANDARD_VERSION = 3
+
+    # A tx smaller than this without the witness is not relayed, as it could be confused with a 64-byte merkle tree node.
+    MIN_STANDARD_TX_NONWITNESS_SIZE = 65
+
+    # The number of dust outputs a standard tx may have. Bitcoin Core relays a tx with one dust output only when
+    # the tx pays no fee and is spent by a child in the same package (ephemeral dust), which this class cannot see.
+    MAX_DUST_OUTPUTS_PER_TX = 1
 
     # The maximum weight for transactions we're willing to relay/mine
     MAX_STANDARD_TX_WEIGHT = 400000
@@ -166,10 +174,12 @@ module Bitcoin
       inputs.map { |i| i.script_witness.to_payload }.join
     end
 
-    # check this tx is standard.
+    # Whether this tx is standard, as IsStandardTx in Bitcoin Core judges it, and at least
+    # MIN_STANDARD_TX_NONWITNESS_SIZE bytes without the witness, as the mempool of Bitcoin Core requires.
     def standard?
-      return false if version > MAX_STANDARD_VERSION
+      return false if version < 1 || version > MAX_STANDARD_VERSION
       return false if weight > MAX_STANDARD_TX_WEIGHT
+      return false if serialize_old_format.bytesize < MIN_STANDARD_TX_NONWITNESS_SIZE
       inputs.each do |i|
         # Biggest 'standard' txin is a 15-of-15 P2SH multisig with compressed keys (remember the 520 byte limit on redeemScript size).
         # That works out to a (15*(33+1))+3=513 byte redeemScript, 513+1+15*(73+1)+3=1627
@@ -178,15 +188,19 @@ module Bitcoin
         return false if i.script_sig.size > 1650
         return false unless i.script_sig.push_only?
       end
-      data_count = 0
+      # The OP_RETURN outputs share MAX_OP_RETURN_RELAY bytes, however many of them there are.
+      data_bytes_left = MAX_OP_RETURN_RELAY
+      dust_count = 0
       outputs.each do |o|
         return false unless o.script_pubkey.standard?
-        data_count += 1 if o.script_pubkey.op_return?
-        # TODO add non P2SH multisig relay(permitbaremultisig)
-        return false if o.dust?
+        if o.script_pubkey.op_return?
+          return false if o.script_pubkey.size > data_bytes_left
+          data_bytes_left -= o.script_pubkey.size
+        elsif o.dust?
+          dust_count += 1
+        end
       end
-      return false if data_count > 1
-      true
+      dust_count <= MAX_DUST_OUTPUTS_PER_TX
     end
 
     # The serialized transaction size
